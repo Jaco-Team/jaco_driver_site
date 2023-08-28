@@ -20,9 +20,11 @@ export default function Price(props) {
     setActivePageRU('Расчет');
   }, [] )
   
-  if( !session || session.status == 'unauthenticated' ){
-    router.push('/auth', { scroll: false })
-  }
+  useEffect(() => {
+    if( session.status == 'unauthenticated' ){
+      router.push('/auth', { scroll: false })
+    }
+  }, [session] );
 
   return (
     <>
