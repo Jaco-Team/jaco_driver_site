@@ -1,0 +1,37 @@
+@import "./settings";
+
+.list_orders{
+    margin: 0;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 64px;
+    width: 100%;
+}
+
+.list{ 
+    margin-top: 64px!important;
+    margin: 0;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+    z-index: 3;
+
+    & .MuiGrid-item{
+        padding-left: 0;
+    }
+    & .MuiFormControl-root.MuiTextField-root{
+        width: 100%;
+    }
+
+    & > div:first-child{
+        display: flex;
+        justify-content: space-between;
+        & > button{
+            @include font_custom(1rem, 500, $colorMain);
+        }
+    }
+    & > div:last-child{
+        text-align: center;
+        @include font_custom(1.2rem, 800);
+    }
+}

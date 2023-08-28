@@ -1,0 +1,55 @@
+@import "./settings";
+
+.monthList{
+    & .MuiListItemText-root{
+        @include font30_400();
+        text-align: center;
+    }
+    & .active .MuiListItemText-root{
+        font-weight: 800!important;
+        color: $colorMain;
+    }
+}
+
+.graph{ 
+    margin-top: 64px!important;
+    margin-bottom: 50px!important;
+    margin: 0;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+    z-index: 3;
+
+    & .MuiGrid-item{
+        padding-left: 0;
+    }
+    & > div:first-child{
+        display: flex;
+        justify-content: center
+    }
+
+    & h1, h2{
+        @include font75_700();
+        text-align: start;
+        width: 100%;
+    }
+    
+    & p,b,span, th, td, button{
+        @include font30_400();
+    }
+    & b{
+        font-weight: 800!important;
+        
+    }
+    & li{ 
+        & > div{
+            padding-left: 0;
+        }
+        & span{
+            padding-left: 5px;
+        }
+    }
+    & #tableGraph th, #tableGraph td{
+        padding: 8px!important
+    }
+}

@@ -1,0 +1,44 @@
+@import "./settings";
+
+.auth{ 
+    margin: 0;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+    z-index: 3;
+
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+
+    & .MuiGrid-item{
+        padding-left: 0;
+    }
+    & > div:first-child{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding-top: 0;
+        margin-top: -200px;
+        & > *{
+            margin-top: 20px;
+        }
+
+        & > button{
+            width: 100%;
+        }
+        & > a{
+            align-self: flex-start;
+            @include font_custom(1rem, 400, $colorMain);
+            cursor: pointer;
+            line-height: 30px;
+        }
+        & > span{
+            @include font_custom(1rem, 800, $colorMain);
+            line-height: 30px;
+        }
+    }
+    
+    
+}

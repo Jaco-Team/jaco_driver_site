@@ -1,0 +1,338 @@
+@import "./settings";
+
+.modalOrderMap{
+    
+    & .MuiPaper-root.MuiDrawer-paper.MuiDrawer-paperAnchorBottom{
+        max-height: 75vh;
+    }
+    & .OrderCard, .modalOrderDelContent{
+        margin: 0px!important;
+        width: calc(100% - 40px)!important;
+        margin-bottom: 10px!important;
+    }
+
+    & .modalOrderDelContent{
+        & span{
+            @include font_custom(1.2rem, 400);
+        }
+        & span:last-child{
+            margin-bottom: 20px;
+        }
+    }
+
+    & .btnGOOD{
+        @include font_custom(1rem, 400, #fff);
+        background-color: #3caa3c;
+        
+        height: 50px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        margin: 20px;
+    }
+}
+
+
+
+.OrderCard{ 
+    display: flex; 
+    flex-direction: column; 
+    width: calc(100% - 60px); 
+    height: calc(100% - 40px);
+    //flex: 1 0 21%;
+    margin: 10px;
+    padding: 20px; 
+    background-color: #fff; 
+    border-radius: 10px;
+
+    -webkit-box-shadow: 1px 1px 10px 0px rgba(50, 50, 50, 0.75);
+    -moz-box-shadow:    1px 1px 10px 0px rgba(50, 50, 50, 0.75);
+    box-shadow:         1px 1px 10px 0px rgba(50, 50, 50, 0.75);
+
+    & a{
+        text-decoration: none;
+    }
+
+    & .number{
+        display: flex;
+        flex-direction: column; 
+        padding-bottom: 10px;
+        & > span{
+            @include font_custom(1.2rem, 500);
+        }
+    }
+    & .counts{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        padding-bottom: 10px;
+        & > span{
+            text-align: center;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            padding-left: 10px;
+            padding-right: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+            border-width: 1px;
+            
+
+            &.Blue{
+                @include font_custom(1rem, 500, #fff);
+                background-color: #2c75ff;
+            }
+            &.Purpur{
+                @include font_custom(1rem, 500, #fff);
+                background-color: #53377a;
+            }
+            &.Red{
+                @include font_custom(1rem, 500, #fff);
+                background-color: #fc2847;
+            }
+            &.Green{
+                @include font_custom(1rem, 500, #fff);
+                background-color: #3caa3c;
+            }
+        }
+    }
+    & .addr{
+        display: flex;
+        flex-direction: column;
+        width: 100%; 
+        padding-bottom: 15px;
+        & > .addr_1, .addr_2{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            & > span:first-child{
+                @include font_custom(1rem, 800);
+                padding-right: 5px;
+            }
+            & > span:last-child{
+                @include font_custom(1rem, 400);
+                padding-right: 5px;
+            }
+            
+        }
+        & > .addr_2{
+            & > b{
+                @include font_custom(1rem, 800);
+                padding-right: 5px;
+            }
+            & > span{
+                @include font_custom(1rem, 400);
+                padding-right: 5px;
+            }
+        }
+        & > .addr_3{
+            @include font_custom(1rem, 800);
+        }
+    }
+    & .by_time{
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding-bottom: 5px;
+        padding-top: 10px;
+        & > span:first-child{
+            @include font_custom(1rem, 800);
+            padding-right: 5px;
+        }
+        & > span:last-child{
+            @include font_custom(1rem, 400);
+        }
+    }
+    & .by_time_1{
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        & > span:first-child{
+            @include font_custom(1rem, 800);
+            padding-right: 5px;
+        }
+        & > span:last-child{
+            @include font_custom(1rem, 400);
+        }
+    }
+    & .comment{
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding-bottom: 5px;
+        width: 100%;
+        & > span:first-child{
+            @include font_custom(1rem, 800);
+            padding-right: 5px;
+        }
+        & > span:last-child{
+            @include font_custom(1rem, 400);
+        }
+    }
+    & .block_price{
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding-bottom: 5px;
+        width: 100%;
+        & > span:first-child{
+            @include font_custom(1rem, 800);
+            padding-right: 5px;
+        }
+        & > span.is_paid:last-child{
+            @include font_custom(1rem, 800, #fc2847);
+        }
+        & > span:not(.is_paid):last-child{
+            @include font_custom(1rem, 400);
+        }
+    }
+    & .action_get{
+        flex: 1;
+        display: flex; 
+        flex-direction: column; 
+        margin-left: 0; 
+        width: 100%;
+        align-items: center;
+        justify-content: flex-end;
+        padding-top: 20px;
+        & > a{
+            @include font_custom(1rem, 400);
+            background-color: #bababa;
+            width: 100%;
+            margin-bottom: 20px;
+
+            height: 50px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+        & > button{
+            @include font_custom(1rem, 400, #fff);
+            background-color: #3caa3c;
+            width: 100%;
+
+            height: 50px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+    }
+    & .action_my{
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+        justify-content: flex-end;
+        padding-top: 20px;
+        & > div{
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center; 
+            width: 100%;
+            & > button{
+                @include font_custom(1rem, 400, #fff);
+                background-color: #fc2847;
+                
+                height: 50px;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                border-radius: 10px;
+
+                width: 40%;
+                margin-right: 5px;
+            }
+            & > a{
+                @include font_custom(1rem, 400);
+                background-color: #bababa;
+                
+                height: 50px;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                border-radius: 10px;
+
+                margin-left: 10px;
+                flex: 1;
+            }
+        }
+        & > .finish{
+            width: 100%; 
+            margin-top: 20px;
+
+            @include font_custom(1rem, 400, #fff);
+            background-color: #3caa3c;
+            
+            height: 50px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+        & > .client{
+            width: 100%; 
+            margin-top: 20px;
+
+            @include font_custom(1rem, 400);
+            background-color: #ffcc00;
+            
+            height: 50px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+    }
+    & .action_other{
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        margin-left: 0px; 
+        width: 100%; 
+        align-items: center;
+        justify-content: flex-end;
+        padding-top: 20px;
+        & > button{
+            width: 100%; 
+            text-align: center;
+
+            @include font_custom(1rem, 400);
+            background-color: #bababa;
+            
+            height: 50px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+        & > a{
+            width: 100%; 
+            text-align: center;
+            margin-top: 20px;
+
+            @include font_custom(1rem, 400);
+            background-color: #bababa;
+            
+            height: 50px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+    }
+
+}

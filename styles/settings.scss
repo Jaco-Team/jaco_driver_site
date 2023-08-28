@@ -1,0 +1,347 @@
+@charset "utf-8";
+
+$Roboto: var(--inter-font);
+$Ubuntu: 'Ubuntu';
+$colorMain: #cc0033;
+$colorText: rgba(0, 0, 0, 0.8);
+
+$MyScale2: 0.072202166064982vw;
+$MyScale3: 0.108303249vw;
+$MyScale5: 0.18050541516245vw;
+$MyScale5_17: 0.18663vw;
+$MyScale10: 0.36101083032491vw;
+$MyScale11: 0.3971119133574vw;
+$MyScale15: 0.54151624548736vw;
+$MyScale20: 0.72202166064982vw;
+$MyScale22: 0.7942238267148vw;
+$MyScale23: 0.83032vw;
+$MyScale27: 0.974729vw;
+$MyScale28: 1.0108303249097vw;
+$MyScale30: 1.0830324909747vw;
+$MyScale37: 1.33574007vw;
+$MyScale40: 1.4440433212996vw;
+$MyScale40_8: 1.472924vw;
+$MyScale43: 1.5523465703971vw;
+$MyScale44: 1.5884476534296vw;
+$MyScale45: 1.62454873vw;
+$MyScale48: 1.7328519855vw;
+$MyScale49: 1.76894vw;
+$MyScale50: 1.80505415vw;
+$MyScale53: 1.913357400722vw;
+$MyScale60: 2.16606vw;
+$MyScale66: 2.3826714801444vw;
+$MyScale66_6: 2.407vw;
+$MyScale70: 2.5270758122744vw;
+$MyScale72: 2.5992779783394vw;
+$MyScale75: 2.7075812274368vw;
+$MyScale76: 2.7436823104693vw;
+$MyScale80: 2.8880866425993vw;
+$MyScale90: 3.2490974729242vw;
+$MyScale91: 3.2851985559567vw;
+$MyScale95: 3.4296028880866vw;
+$MyScale100: 3.6101083032491vw;
+$MyScale110: 3.971119133574vw;
+$MyScale120: 4.3321299638989vw;
+$MyScale123: 4.4405vw;
+$MyScale125: 4.512635379vw;
+$MyScale130: 4.693140794vw;
+$MyScale137: 4.945848375vw;
+$MyScale140: 5.05415vw;
+$MyScale144: 5.1985559566vw;
+$MyScale145: 5.2346570397112vw;
+$MyScale150: 5.4151624548vw;
+$MyScale160: 5.776173vw;
+$MyScale163: 5.884476vw;
+$MyScale170: 6.137184115vw;
+$MyScale180: 6.4982vw;
+$MyScale190: 6.8592057761733vw;
+$MyScale200: 7.2204vw;
+$MyScale206_67: 7.4610108vw;
+$MyScale208: 7.5090252vw;
+$MyScale210: 7.5812274368231vw;
+$MyScale220: 7.942238267vw;
+$MyScale240: 8.66425992vw;
+$MyScale270: 9.7472924187726vw;
+$MyScale280: 10.10830324vw;
+$MyScale290: 10.469314079422vw;
+$MyScale300: 10.830324vw;
+$MyScale320: 11.552346570397vw;
+$MyScale330: 11.913357vw;
+$MyScale340: 12.27436823vw;
+$MyScale380: 13.718411552vw;
+$MyScale390: 14.07942238vw;
+$MyScale398: 14.368231046931vw;
+$MyScale400: 14.44043vw;
+$MyScale440: 15.884476534vw;
+$MyScale475: 17.14801444vw;
+$MyScale480: 17.32851985vw;
+$MyScale500: 18.050541516vw;
+$MyScale510: 18.4115523vw;
+$MyScale560: 20.216606498195vw;
+$MyScale600: 21.660649819495vw;
+$MyScale640: 23.104693140794vw;
+$MyScale680: 24.548736462vw;
+$MyScale700: 25.2707581vw;
+$MyScale720: 25.99277978vw;
+$MyScale760: 27.436823104vw;
+$MyScale780: 28.158844765vw;
+$MyScale800: 28.88086642vw;
+$MyScale920: 33.212996389892vw;
+$MyScale960: 34.65703971vw;
+$MyScale995: 35.920577617329vw;
+$MyScale1000: 36.101083032491vw;
+$MyScale1080: 38.98916967509vw;
+$MyScale1542: 55.667870036vw;
+$MyScale1560: 56.31768953vw;
+$MyScale1960: 70.758122743vw;
+$MyScale2525: 91.15523465704vw;
+
+//$MyMaxWidth: 1170px;
+$MyMaxWidth: 600px;
+
+$MyScale3_mobile: 0.25641025641026vw;
+$MyScale20_mobile: 1.7094017094017vw;
+$MyScale40_mobile: 3.4188034188034vw;
+$MyScale50_mobile: 4.2735042735043vw;
+$MyScale55_mobile: 4.7008547008547vw;
+$MyScale80_mobile: 6.8376068376068vw;
+$MyScale100_mobile: 8.5470085470085vw;
+$MyScale140_mobile: 11.965811965812vw;
+$MyScale200_mobile: 17.094017094017vw;
+$MyScale244_mobile: 20.854700854701vw;
+$MyScale250_mobile: 21.367521367521vw;
+$MyScale400_mobile: 34.188034188034vw;
+$MyScale540_mobile: 46.153846153846vw;
+
+@mixin fonsNew($size: 1rem, $family: $Roboto, $color: $colorText) {
+  font-size: $size !important;
+  font-family: $family !important;
+  color: $color;
+}
+
+@mixin font_custom($size: 1rem, $weight: 300, $color: $colorText) {
+  font-style: normal;
+  font-weight: $weight;
+
+  @include fonsNew($size, var(--inter-font), $color);
+}
+
+@mixin fontH1() {
+  font-style: normal;
+  font-weight: 700;
+
+  @include fonsNew(2.6vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(1.7rem, var(--inter-font));
+  }
+}
+
+@mixin fontH2_custom() {
+  font-style: normal;
+  font-weight: 700;
+
+  @include fonsNew(2vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(1.2rem, var(--inter-font));
+  }
+}
+
+@mixin font20_400() {
+  font-style: normal;
+  font-weight: 400;
+
+  @include fonsNew(0.7vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(1rem, var(--inter-font));
+  }
+}
+
+@mixin font22_400() {
+  font-style: normal;
+  font-weight: 400;
+
+  @include fonsNew(0.7942238267148vw, var(--inter-font));
+
+  @media (max-width: $MyMaxWidth) {
+    @include fonsNew(1.8803418803419vw, var(--inter-font));
+  }
+}
+
+@mixin font22_400_() {
+  font-style: normal;
+  font-weight: 400;
+
+  @include fonsNew(0.85vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(1rem, var(--inter-font));
+  }
+}
+
+@mixin font25_400() {
+  font-style: normal;
+  font-weight: 400;
+
+  @include fonsNew(0.9vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(1rem, var(--inter-font));
+  }
+}
+
+@mixin font30_700() {
+  font-style: normal;
+  font-weight: 700;
+
+  @include fonsNew(1.0830324909747vw, var(--inter-font));
+
+  @media (max-width: $MyMaxWidth) {
+    @include fonsNew(1rem, var(--inter-font));
+  }
+}
+
+@mixin font30_400() {
+  font-style: normal;
+  font-weight: 400;
+
+  @include fonsNew(1.0830324909747vw, var(--inter-font));
+
+  @media (max-width: $MyMaxWidth) {
+    @include fonsNew(1rem, var(--inter-font));
+  }
+}
+
+@mixin font35_400() {
+  font-style: normal;
+  font-weight: 400;
+
+  @include fonsNew(1.2635379061372vw, var(--inter-font));
+
+  // @media (max-width: 960px) {
+  //   @include fonsNew(1.15rem, var(--inter-font));
+  // }
+}
+
+@mixin font50_500() {
+  font-style: normal;
+  font-weight: 500;
+
+  @include fonsNew(1.8050541516245vw, var(--inter-font));
+
+  @media (max-width: $MyMaxWidth) {
+    @include fonsNew(4.2735042735043vw, var(--inter-font));
+  }
+}
+
+@mixin font50_400() {
+  font-style: normal;
+  font-weight: 400;
+
+  @include fonsNew(1.73vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(1.73rem, var(--inter-font));
+  }
+}
+
+@mixin font50_300() {
+  font-style: normal;
+  font-weight: 300;
+
+  @include fonsNew(1.73vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(1.73rem, var(--inter-font));
+  }
+}
+
+@mixin font40_400() {
+  font-style: normal;
+  font-weight: 400;
+
+  @include fonsNew(1.4440433212996vw, var(--inter-font));
+
+  @media (max-width: $MyMaxWidth) {
+    @include fonsNew(3.4188034188034vw, var(--inter-font));
+  }
+}
+
+@mixin font40_500() {
+  font-style: normal;
+  font-weight: 500;
+
+  @include fonsNew(1.4440433212996vw, var(--inter-font));
+
+  // @media (max-width: 960px) {
+  //   @include fonsNew(1.4rem, var(--inter-font));
+  // }
+}
+
+@mixin font60_300() {
+  font-style: normal;
+  font-weight: 300;
+
+  @include fonsNew(2.2vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(2.2rem, var(--inter-font));
+  }
+}
+
+@mixin font60_500() {
+  font-style: normal;
+  font-weight: 500;
+
+  @include fonsNew(2.2vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(2.2rem, var(--inter-font));
+  }
+}
+
+@mixin font60_600() {
+  font-style: normal;
+  font-weight: 600;
+
+  @include fonsNew(2.2vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(2.2rem, var(--inter-font));
+  }
+}
+
+@mixin font75_700() {
+  font-style: normal;
+  font-weight: 700;
+
+  @include fonsNew(2.7075812274368vw, var(--inter-font));
+
+  @media (max-width: $MyMaxWidth) {
+    @include fonsNew(6.4102564102564vw, var(--inter-font));
+  }
+}
+
+@mixin font110_400() {
+  font-style: normal;
+  font-weight: 400;
+
+  @include fonsNew(4vw, var(--inter-font));
+
+  @media (max-width: 960px) {
+    @include fonsNew(4rem, var(--inter-font));
+  }
+}
+
+@mixin font120_700() {
+  font-style: normal;
+  font-weight: 700;
+
+  //@include fonsNew(4vw, var(--inter-font));
+
+  @media (max-width: $MyMaxWidth) {
+    @include fonsNew(10.25641025641vw, var(--inter-font));
+  }
+}

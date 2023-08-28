@@ -1,0 +1,13 @@
+@charset "utf-8";
+
+@import "./settings";
+
+body{
+    margin: 0px;
+}
+.MuiDrawer-paper li a, .MuiDrawer-paper li span{
+    text-decoration: none;
+    @include font_custom(1rem, 400);
+    line-height: 2rem;
+    padding: 0 40px;
+}
