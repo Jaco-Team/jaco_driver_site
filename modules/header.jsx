@@ -26,6 +26,7 @@ import { signOut } from 'next-auth/react';
 import { useHeaderStore, useOrdersStore } from '@/components/store.js';
 
 import AlertOrder from '@/components/AlertOrder';
+import PayModel from '@/components/PayModel';
 
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken } from "firebase/messaging";
@@ -169,6 +170,7 @@ export default function Header() {
       <ModalDelOrders />
       <AlertOrder />
       <LoadOrderSpiner />
+      <PayModel />
       
     </Box>
   )

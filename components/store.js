@@ -35,6 +35,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   del_orders: [],
 
   showPay: false,
+  payData: null,
 
   hideDelOrders: async() => {
     let idList = [];
@@ -233,7 +234,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       //get().getOrders(is_map);
 
       setTimeout( () => {
-        set({ is_load: false })
+        set({ is_load: false, showPay: true, payData: res.pay })
       }, 500 )
     }
   },
