@@ -5,67 +5,38 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import { useOrdersStore } from '@/components/store.js';
 
+import Script from 'next/script'
+
 export default function PayModel() {
   const [ showPay, payData ] = useOrdersStore( state => [ state.showPay, state.payData ] );
 
-  /*React.useEffect( () => {
+  const [ is_load, setIsLoad ] = React.useState(false);
+
+  React.useEffect( () => {
     if( payData ){
-      const checkout = new window.YooMoneyCheckoutWidget({
-        confirmation_token: payData.confirmation.confirmation_data, //Токен, который перед проведением оплаты нужно получить от ЮKassa
-        //return_url: 'https://jacofood.ru/'+this.state.city_name+'/profile', //Ссылка на страницу завершения оплаты, это может быть любая ваша страница
-
-        //При необходимости можно изменить цвета виджета, подробные настройки см. в документации
-        //customization: {
-        //Настройка цветовой схемы, минимум один параметр, значения цветов в HEX
-        //colors: {
-            //Цвет акцентных элементов: кнопка Заплатить, выбранные переключатели, опции и текстовые поля
-            //control_primary: '#00BF96', //Значение цвета в HEX
-
-            //Цвет платежной формы и ее элементов
-            //background: '#F2F3F5' //Значение цвета в HEX
-        //}
-        //},
-        
-        //bank_card
-        //sberbank
-        //sbp
-
-        customization: {
-            //payment_methods: ['bank_card']
-        },
-        error_callback: function(error) {
-          console.log(error)
-        }
-      });
-
-    
-
       setTimeout( () => {
-        checkout.render('payment-form');
+        setIsLoad(true)
       }, 300 )
     }
-  }, [payData] )*/
+  }, [payData] )
 
   return (
-    <Dialog onClose={ () => {} } open={showPay}>
-      <DialogTitle></DialogTitle>
+    <>
       
-      <div id="payment-form" style={{ marginTop: 50 }} />
+      { !is_load ? false : <Script src="./qr.nspk.ru_js_index-NF27QMF3.js" /> }
+      
 
-      { !payData ? false :
-        <iframe
-          id="inlineFrameExample"
-          title="Inline Frame Example"
-          width="300"
-          height="800"
-          src={payData?.confirmation.confirmation_data}
-        >
-        </iframe>
-      }
+      <Dialog onClose={ () => {} } open={showPay}>
+        <DialogTitle></DialogTitle>
+        
+        <div id="payment-form" style={{ marginTop: 50 }} />
 
-      <DialogActions>
-        <Button autoFocus>Хорошо</Button>
-      </DialogActions>
-    </Dialog>
+        <div id="app_url">{payData?.confirmation.confirmation_data}</div>
+
+        <DialogActions>
+          <Button>Хорошо</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

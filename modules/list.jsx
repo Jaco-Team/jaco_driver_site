@@ -17,7 +17,6 @@ import Button from '@mui/material/Button';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 
 import { useOrdersStore } from '@/components/store.js';
-import AlertOrder from '@/components/AlertOrder';
 
 function SwipeableTemporaryDrawer() {
 
@@ -79,7 +78,6 @@ export default function ListPage(){
       </Grid>
 
       <SwipeableTemporaryDrawer />
-      <AlertOrder />
     </>
   )
 }

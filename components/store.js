@@ -230,12 +230,11 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         set({ is_load: false })
       }, 500 )
     }else{
-      //get().closeOrderMap();
-      //get().getOrders(is_map);
 
       setTimeout( () => {
         set({ is_load: false, showPay: true, payData: res.pay })
       }, 500 )
+
     }
   },
 

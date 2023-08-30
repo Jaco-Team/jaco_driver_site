@@ -34,7 +34,37 @@
     }
 }
 
+.flex.flex-col.justify-center.font-bold{
+    display: none;
+}
+footer.w-content.pb-3{
+    display: none;
+}
+section.fixed.inset-x-0.bottom-0.z-10.transition-transform.duration-1000.translate-y-0{
+    display: none;
+}
+#app_url{
+    color: #fff;
+    overflow: hidden;
+}
+div.text-base{
+    display: none;
+}
 
+#payment-form{
+    & header{
+        & > div{
+            margin: 0 auto;
+            width: max-content;
+            & svg{
+                width: 100%;
+            }
+        } 
+    }
+    & canvas{
+        width: 100%;
+    }
+}
 
 .OrderCard{ 
     display: flex; 
