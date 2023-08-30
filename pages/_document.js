@@ -2,6 +2,8 @@ import { Html, Head, Main, NextScript } from 'next/document'
 
 import { roboto } from '@/ui/Font.js';
 
+//console.log( roboto )
+
 export default function Document() {
   return (
     <Html lang="ru" data-scroll="0">
