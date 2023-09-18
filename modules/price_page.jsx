@@ -17,6 +17,8 @@ import { usePriceStore } from '@/components/store.js';
 import MyDatepicker from '@/ui/MyDatepicker'
 import dayjs from 'dayjs';
 
+import Meta from '@/components/meta.js';
+
 export default function PricePage(){
 
   const [ date, setDate ] = useState( dayjs(new Date()) );
@@ -27,7 +29,8 @@ export default function PricePage(){
   }, [date] )
 
   return (
-    <Grid container spacing={3} className="price">
+    <Meta title='Расчет'>
+      <Grid container spacing={3} className="price">
       
       <Grid item xs={12} >
 
@@ -136,6 +139,7 @@ export default function PricePage(){
               
       </Grid>
 
-    </Grid>
+      </Grid>
+    </Meta>
   )
 }

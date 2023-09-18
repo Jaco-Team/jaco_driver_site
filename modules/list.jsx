@@ -5,7 +5,7 @@ import CachedIcon from '@mui/icons-material/Cached';
 
 import OrderCard from '@/modules/order_card';
 
-//import Meta from '@/components/meta.js';
+import Meta from '@/components/meta.js';
 
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -55,7 +55,7 @@ export default function ListPage(){
   }, [update_interval] );
 
   return (
-    <>
+    <Meta title='Список заказов'>
       <Grid container spacing={3} className="list">
         
         <Grid item xs={12}>
@@ -78,6 +78,6 @@ export default function ListPage(){
       </Grid>
 
       <SwipeableTemporaryDrawer />
-    </>
+    </Meta>
   )
 }

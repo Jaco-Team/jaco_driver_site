@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 
+import Meta from '@/components/meta.js';
+
 import { useRouter } from 'next/navigation'
 import Image from 'next/image';
 import { useSession, signIn } from 'next-auth/react';
 
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
-
-//import Meta from '@/components/meta.js';
 
 import { useLoginStore } from '@/components/store.js';
 import MyTextInput from '@/ui/MyTextinput';
@@ -48,7 +48,7 @@ export default function AuthPage(){
   }
 
   return (
-    <>
+    <Meta title='Авторизация'>
       <Grid container spacing={3} className="auth">
         
         <Grid item xs={12} md={4}>
@@ -72,6 +72,6 @@ export default function AuthPage(){
         </Grid>
         
       </Grid>
-    </>
+    </Meta>
   )
 }

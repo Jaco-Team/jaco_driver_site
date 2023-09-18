@@ -28,6 +28,8 @@ import { useSession } from 'next-auth/react';
 
 import dayjs from 'dayjs';
 
+import Meta from '@/components/meta.js';
+
 function SwipeableTemporaryDrawer() {
 
   const [ isOpenMenu, setOpenMenu, setCloseMenu, getGraph, month_list ] = useGraphStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.getGraph, state.month_list ] )
@@ -86,7 +88,8 @@ export default function GraphPage(){
   }, [session] )
 
   return (
-    <Grid container spacing={3} className="graph">
+    <Meta title='График работы'>
+      <Grid container spacing={3} className="graph">
       
       <Dialog
         open={is_open_modal}
@@ -368,6 +371,7 @@ export default function GraphPage(){
 
       <SwipeableTemporaryDrawer />
 
-    </Grid>
+      </Grid>
+    </Meta>
   )
 }

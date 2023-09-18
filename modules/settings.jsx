@@ -22,6 +22,8 @@ import { CirclePicker } from 'react-color';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 
+import Meta from '@/components/meta.js';
+
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
@@ -78,6 +80,7 @@ export default function SettingsPage(){
   }
 
   return (
+    <Meta title='Настройки'>
     <Grid container spacing={3} className="price">
       
       <Snackbar
@@ -172,5 +175,6 @@ export default function SettingsPage(){
       </Grid>
 
     </Grid>
+    </Meta>
   )
 }

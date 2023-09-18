@@ -4,7 +4,7 @@ import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import CachedIcon from '@mui/icons-material/Cached';
 
-//import Meta from '@/components/meta.js';
+import Meta from '@/components/meta.js';
 
 import Button from '@mui/material/Button';
 import Drawer from '@mui/material/Drawer';
@@ -45,7 +45,7 @@ export default function MapPage(){
   }, [update_interval] );
 
   return (
-    <>
+    <Meta title='Карта заказов'>
       <Grid container spacing={3} className="map_orders" id="map_orders" />
             
       <div style={{ position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '90%', left: '5%', bottom: 50, backgroundColor: '#000', opacity: 0.7, borderRadius: 60 }}>
@@ -62,6 +62,6 @@ export default function MapPage(){
       </div>
       
       <SwipeableTemporaryDrawer />
-    </>
+    </Meta>
   )
 }

@@ -21,7 +21,7 @@ const steps = [
 
 import { useLoginStore } from '@/components/store.js';
 
-//import Meta from '@/components/meta.js';
+import Meta from '@/components/meta.js';
 
 import MyTextInput from '@/ui/MyTextinput';
 
@@ -98,7 +98,7 @@ export default function RegistrationPage(){
   }
 
   return (
-    <>
+    <Meta title='Восстановление пароля'>
       <Backdrop style={{ zIndex: 999, color: '#fff' }} open={loader}>
         <CircularProgress color="inherit" />
       </Backdrop>
@@ -145,6 +145,6 @@ export default function RegistrationPage(){
         </Grid>
       
       </Grid>
-    </>
+    </Meta>
   )
 }

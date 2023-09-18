@@ -18,7 +18,7 @@ export default function List() {
   const [ getOrders, setToken ] = useOrdersStore( state => [ state.getOrders, state.setToken ] )
   
   useEffect( () => {
-    setActivePageRU('Карта заказов');
+    setActivePageRU('Список заказов');
   }, [] )
 
   useEffect(() => {
