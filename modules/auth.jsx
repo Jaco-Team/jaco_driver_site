@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import Meta from '@/components/meta.js';
 
@@ -12,6 +12,8 @@ import Button from '@mui/material/Button';
 import { useLoginStore } from '@/components/store.js';
 import MyTextInput from '@/ui/MyTextinput';
 import Logo from '@/public/Logo.png';
+
+import { roboto } from '@/ui/Font';
 
 export default function AuthPage(){
 
@@ -49,7 +51,7 @@ export default function AuthPage(){
 
   return (
     <Meta title='Авторизация'>
-      <Grid container spacing={3} className="auth">
+      <Grid container spacing={3} className={"auth " + roboto.variable}>
         
         <Grid item xs={12} md={4}>
           

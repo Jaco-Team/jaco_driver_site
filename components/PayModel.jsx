@@ -1,42 +1,41 @@
-import * as React from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@mui/material/Button';
-import DialogTitle from '@mui/material/DialogTitle';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
+import Drawer from '@mui/material/Drawer';
 import { useOrdersStore } from '@/components/store.js';
 
-import Script from 'next/script'
+import Script from 'next/script';
 
 export default function PayModel() {
-  const [ showPay, payData ] = useOrdersStore( state => [ state.showPay, state.payData ] );
+  const [showPay, payData, setShowPay] = useOrdersStore((state) => [state.showPay, state.payData, state.setShowPay]);
 
-  const [ is_load, setIsLoad ] = React.useState(false);
+  const [is_load, setIsLoad] = useState(false);
 
-  React.useEffect( () => {
-    if( payData ){
-      setTimeout( () => {
-        setIsLoad(true)
-      }, 300 )
+  useEffect(() => {
+    if (payData) {
+      setTimeout(() => {
+        setIsLoad(true);
+      }, 300);
     }
-  }, [payData] )
+  }, [payData]);
 
   return (
     <>
-      
-      { !is_load ? false : <Script src="./qr.nspk.ru_js_index-NF27QMF3.js" /> }
-      
+      {!is_load ? false : <Script src="./qr.nspk.ru_js_index-NF27QMF3.js" />}
 
-      <Dialog onClose={ () => {} } open={showPay}>
-        <DialogTitle></DialogTitle>
-        
-        <div id="payment-form" style={{ marginTop: 50 }} />
+      <Drawer
+        anchor={'bottom'}
+        open={showPay}
+        onClose={() => setShowPay(false)}
+        className="modalOrderPay"
+      >
+        <div className="lineModal" />
+
+        <div id="payment-form" />
 
         <div id="app_url">{payData?.confirmation.confirmation_data}</div>
 
-        <DialogActions>
-          <Button>Хорошо</Button>
-        </DialogActions>
-      </Dialog>
+        <Button className="btnGOOD">Хорошо</Button>
+      </Drawer>
     </>
   );
 }

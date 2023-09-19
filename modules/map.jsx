@@ -1,35 +1,13 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import CachedIcon from '@mui/icons-material/Cached';
+import Button from '@mui/material/Button';
 
 import Meta from '@/components/meta.js';
 
-import Button from '@mui/material/Button';
-import Drawer from '@mui/material/Drawer';
-
 import { useOrdersStore } from '@/components/store.js';
-import OrderCard from '@/modules/order_card';
-
-
-function SwipeableTemporaryDrawer() {
-
-  const [ isOpenOrderMap, closeOrderMap, showOrders ] = useOrdersStore( state => [ state.isOpenOrderMap, state.closeOrderMap, state.showOrders ] )
-
-  return (
-    <Drawer
-      anchor={'bottom'}
-      open={isOpenOrderMap}
-      onClose={ closeOrderMap }
-      className='modalOrderMap'
-    >
-      { showOrders.map( (item, key) =>
-        <OrderCard key={key} item={item} is_map={true} />
-      )}
-    </Drawer>
-  );
-}
 
 export default function MapPage(){
 
@@ -46,6 +24,7 @@ export default function MapPage(){
 
   return (
     <Meta title='Карта заказов'>
+      
       <Grid container spacing={3} className="map_orders" id="map_orders" />
             
       <div style={{ position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '90%', left: '5%', bottom: 50, backgroundColor: '#000', opacity: 0.7, borderRadius: 60 }}>
@@ -61,7 +40,6 @@ export default function MapPage(){
         { limit_count.length > 0 ? <Typography style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }} component="span">{limit_count}</Typography> : false }
       </div>
       
-      <SwipeableTemporaryDrawer />
     </Meta>
   )
 }

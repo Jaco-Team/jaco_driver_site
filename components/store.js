@@ -37,6 +37,20 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   showPay: false,
   payData: null,
 
+  modalFinish: false,
+  order_finish_id: null,
+  is_map: false,
+
+  // открытие закрытие модалки qr оплаты
+  setShowPay: (active) => {
+    set({showPay: active })
+  },
+
+  // открытие/закрытие модалки с подтверждением завершения заказа
+  setActiveConfirmFinish: (active, id, is_map) => {
+    set({ modalFinish: active, order_finish_id: id ?? null, is_map: is_map ?? false })
+  },
+
   hideDelOrders: async() => {
     let idList = [];
 
@@ -52,7 +66,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     
     const res = await api('orders', data);
 
-    this.setState({
+    set({
       del_orders: []
     })
   },
@@ -137,6 +151,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }, {
       enableHighAccuracy: true
     })
+
+    set({ is_load: false })
   },
 
   actionFinishOrder: (order_id, is_map = false) => {
@@ -213,6 +229,9 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
 
   actionPayOrder: async(order_id, is_map) => {
+
+    set({ is_load: true })
+
     let data = {
       type: 'get_pay_qr',
       token: get().token,

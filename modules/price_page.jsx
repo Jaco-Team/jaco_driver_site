@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import Grid from '@mui/material/Grid';
 import List from '@mui/material/List';
@@ -19,6 +19,8 @@ import dayjs from 'dayjs';
 
 import Meta from '@/components/meta.js';
 
+import { roboto } from '@/ui/Font';
+
 export default function PricePage(){
 
   const [ date, setDate ] = useState( dayjs(new Date()) );
@@ -30,7 +32,7 @@ export default function PricePage(){
 
   return (
     <Meta title='Расчет'>
-      <Grid container spacing={3} className="price">
+      <Grid container spacing={3} className={"price " + roboto.variable}>
       
       <Grid item xs={12} >
 

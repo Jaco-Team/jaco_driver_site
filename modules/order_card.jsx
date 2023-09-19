@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 
 import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Grid';
 
-//import Meta from '@/components/meta.js';
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 
 import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import Tooltip, { tooltipClasses } from '@mui/material/Tooltip';
 
 import { useOrdersStore } from '@/components/store.js';
+
+import { roboto } from '@/ui/Font';
 
 const HtmlTooltip = styled(({ className, ...props }) => (
   <Tooltip {...props} classes={{ popper: className }} />
@@ -28,10 +33,18 @@ const HtmlTooltip = styled(({ className, ...props }) => (
 export default function OrderCard({item, is_map = false}){
 
   const [ openTooltip, setOpenTooltip ] = useState(false);
-  const [ actionFinishOrder, actionCencelOrder, actionGetOrder, actionFakeOrder, actionPayOrder ] = useOrdersStore( state => [ state.actionFinishOrder, state.actionCencelOrder, state.actionGetOrder, state.actionFakeOrder, state.actionPayOrder ] )
+  const [ actionFinishOrder, actionCencelOrder, actionGetOrder, actionFakeOrder, actionPayOrder, setActiveConfirmFinish, is_load ] = useOrdersStore( state => [ state.actionFinishOrder, state.actionCencelOrder, state.actionGetOrder, state.actionFakeOrder, state.actionPayOrder, state.setActiveConfirmFinish, state.is_load ] )
 
   return(
-    <div className='OrderCard'>
+    <>
+
+    <Backdrop style={{ zIndex: 99 }} open={is_load}>
+      <CircularProgress color="inherit" />
+    </Backdrop>
+
+    <div className={"OrderCard " + roboto.variable}>
+
+      <div className="lineModal" />
           
       <div className='number'>
         <Typography component="span">{item.id_text}</Typography>
@@ -164,10 +177,6 @@ export default function OrderCard({item, is_map = false}){
           <Typography component="span">{item.sdacha}₽ ( {item.sum_sdacha}₽ )</Typography>
         </div>
       }
-
-      <div className='action_get'>
-        <Button onClick={ () => actionPayOrder(item.id, is_map) }>Тестовая оплата</Button>
-      </div>
       
       { parseInt(item.is_get) == 0 ?
         <div className='action_get'>
@@ -186,6 +195,12 @@ export default function OrderCard({item, is_map = false}){
             </div>
             
             { parseInt(item.status_order) == 6 ? null :
+              parseInt(item.is_my) === 1 && parseInt(item.online_pay) === 0 ?
+              <Grid className='finish_group'>
+                <Button  onClick={() => setActiveConfirmFinish(true, item.id, is_map)}>Завершить</Button>
+                <Button  onClick={ () => actionPayOrder(item.id, is_map) } ><QrCodeScannerIcon /></Button>
+              </Grid>
+              :
               <Button className='finish' onClick={ () => actionFinishOrder(item.id, is_map) }>Завершить</Button>
             }
 
@@ -200,7 +215,7 @@ export default function OrderCard({item, is_map = false}){
           </div>
       }
       
-      
     </div>
+    </>
   )
 }

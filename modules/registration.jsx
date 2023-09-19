@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { useRouter } from 'next/navigation'
 import Image from 'next/image';
@@ -26,6 +26,8 @@ import Meta from '@/components/meta.js';
 import MyTextInput from '@/ui/MyTextinput';
 
 import Logo from '@/public/Logo.png';
+
+import { roboto } from '@/ui/Font';
 
 export default function RegistrationPage(){
 
@@ -103,7 +105,7 @@ export default function RegistrationPage(){
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      <Grid container spacing={3} className="auth">
+      <Grid container spacing={3} className={"auth " + roboto.variable}>
         
         <Grid item xs={12} md={4}>
           <Image

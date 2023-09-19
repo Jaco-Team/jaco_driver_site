@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link'
 
 import AppBar from '@mui/material/AppBar';
@@ -31,7 +31,53 @@ import PayModel from '@/components/PayModel';
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken } from "firebase/messaging";
 
-function SwipeableTemporaryDrawer() {
+import OrderCard from '@/modules/order_card';
+
+import { roboto } from '@/ui/Font';
+
+function DrawerMap() {
+
+  const [ isOpenOrderMap, closeOrderMap, showOrders ] = useOrdersStore( state => [ state.isOpenOrderMap, state.closeOrderMap, state.showOrders ] )
+
+  return (
+    <Drawer
+      anchor={'bottom'}
+      open={isOpenOrderMap}
+      onClose={ closeOrderMap }
+      className={'modalOrderMap ' + roboto.variable}
+    >
+      { showOrders.map( (item, key) =>
+        <OrderCard key={key} item={item} is_map={true} />
+      )}
+    </Drawer>
+  );
+}
+
+function DrawerList() {
+
+  const [ isOpenMenu, setOpenMenu, setCloseMenu, types, setType ] = useOrdersStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.types, state.setType ] )
+
+  return (
+    <SwipeableDrawer
+      anchor={'bottom'}
+      open={isOpenMenu}
+      onClose={setCloseMenu}
+      onOpen={setOpenMenu}
+    >
+      <List className={'monthList ' + roboto.variable}>
+        { types.map( (item, key) =>
+          <ListItem disablePadding key={key} onClick={ () => setType(item) }>
+            <ListItemButton>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          </ListItem>
+        ) }
+      </List>
+    </SwipeableDrawer>
+  );
+}
+
+function DrawerHeader() {
 
   const [ isOpenMenu, setOpenMenu, setCloseMenu ] = useHeaderStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu ] )
 
@@ -42,7 +88,7 @@ function SwipeableTemporaryDrawer() {
       onClose={setCloseMenu}
       onOpen={setOpenMenu}
     >
-      <List>
+      <List className={roboto.variable}>
         
         <ListItem disablePadding onClick={setCloseMenu}>
           <ListItemButton>
@@ -89,8 +135,10 @@ function ModalDelOrders() {
       anchor={'bottom'}
       open={ del_orders.length > 0 ? true : false }
       onClose={ hideDelOrders }
-      className='modalOrderMap'
+      className={'modalOrderMap ' + roboto.variable}
     >
+       <div className="lineModal" />
+       
       <Typography style={{ fontSize: 20, paddingTop: 10, paddingBottom: 10, color: '#000', textAlign: 'center', fontWeight: 'bold' }} component="h6">Удаленные заказы</Typography>
 
       <div className='modalOrderDelContent' style={{ height: 300, width: '100%', overflow: 'auto', padding: 20, paddingTop: 10 }}>
@@ -166,7 +214,9 @@ export default function Header() {
         </Toolbar>
       </AppBar>
 
-      <SwipeableTemporaryDrawer />
+      <DrawerMap />
+      <DrawerList />
+      <DrawerHeader />
       <ModalDelOrders />
       <AlertOrder />
       <LoadOrderSpiner />

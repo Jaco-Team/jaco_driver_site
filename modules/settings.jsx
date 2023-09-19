@@ -24,6 +24,8 @@ import MuiAlert from '@mui/material/Alert';
 
 import Meta from '@/components/meta.js';
 
+import { roboto } from '@/ui/Font';
+
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
@@ -81,7 +83,7 @@ export default function SettingsPage(){
 
   return (
     <Meta title='Настройки'>
-    <Grid container spacing={3} className="price">
+    <Grid container spacing={3} className={"price " + roboto.variable}>
       
       <Snackbar
         anchorOrigin={{ vertical, horizontal }}

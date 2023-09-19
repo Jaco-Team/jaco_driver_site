@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -30,6 +30,8 @@ import dayjs from 'dayjs';
 
 import Meta from '@/components/meta.js';
 
+import { roboto } from '@/ui/Font';
+
 function SwipeableTemporaryDrawer() {
 
   const [ isOpenMenu, setOpenMenu, setCloseMenu, getGraph, month_list ] = useGraphStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.getGraph, state.month_list ] )
@@ -41,7 +43,7 @@ function SwipeableTemporaryDrawer() {
       onClose={setCloseMenu}
       onOpen={setOpenMenu}
     >
-      <List className='monthList'>
+      <List className={'monthList ' + roboto.variable}>
         { month_list.map( (item, key) =>
           <ListItem disablePadding key={key} className={ parseInt(item.is_active) == 1 ? 'active' : '' } onClick={ () => getGraph(item.day) }>
             <ListItemButton>
@@ -89,13 +91,14 @@ export default function GraphPage(){
 
   return (
     <Meta title='График работы'>
-      <Grid container spacing={3} className="graph">
+      <Grid container spacing={3} className={"graph " + roboto.variable}>
       
       <Dialog
         open={is_open_modal}
         onClose={ () => setis_open_modal(false) }
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
+        className={roboto.variable}
       >
         <DialogContent>
           { !showErrOrder ? null :
