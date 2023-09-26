@@ -10,7 +10,6 @@ import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
 
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
-import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -40,16 +39,17 @@ function DrawerMap() {
   const [ isOpenOrderMap, closeOrderMap, showOrders ] = useOrdersStore( state => [ state.isOpenOrderMap, state.closeOrderMap, state.showOrders ] )
 
   return (
-    <Drawer
+    <SwipeableDrawer
       anchor={'bottom'}
       open={isOpenOrderMap}
       onClose={ closeOrderMap }
       className={'modalOrderMap ' + roboto.variable}
+      onOpen={ () => {} }
     >
       { showOrders.map( (item, key) =>
         <OrderCard key={key} item={item} is_map={true} />
       )}
-    </Drawer>
+    </SwipeableDrawer>
   );
 }
 
@@ -131,11 +131,12 @@ function ModalDelOrders() {
   const [ del_orders, hideDelOrders ] = useOrdersStore( state => [ state.del_orders, state.hideDelOrders ] )
 
   return (
-    <Drawer
+    <SwipeableDrawer
       anchor={'bottom'}
-      open={ del_orders.length > 0 ? true : false }
+      open={ del_orders?.length > 0 ? true : false }
       onClose={ hideDelOrders }
       className={'modalOrderMap ' + roboto.variable}
+      onOpen={ () => {} }
     >
        <div className="lineModal" />
        
@@ -151,7 +152,7 @@ function ModalDelOrders() {
       </div>
       
       <Button className='btnGOOD' onClick={hideDelOrders}>Хорошо</Button>
-    </Drawer>
+    </SwipeableDrawer>
   );
 }
 

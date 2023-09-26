@@ -83,100 +83,100 @@ export default function SettingsPage(){
 
   return (
     <Meta title='Настройки'>
-    <Grid container spacing={3} className={"price " + roboto.variable}>
-      
-      <Snackbar
-        anchorOrigin={{ vertical, horizontal }}
-        open={open}
-        onClose={ () => closeModal() }
-        autoHideDuration={5000}
-      >
-        <Alert onClose={ () => closeModal() } severity="success" sx={{ width: '100%' }}>
-          Сохранено
-        </Alert>
-      </Snackbar>
+      <Grid container spacing={3} className={"price " + roboto.variable}>
+        
+        <Snackbar
+          anchorOrigin={{ vertical, horizontal }}
+          open={open}
+          onClose={ () => closeModal() }
+          autoHideDuration={5000}
+        >
+          <Alert onClose={ () => closeModal() } severity="success" sx={{ width: '100%' }}>
+            Сохранено
+          </Alert>
+        </Snackbar>
 
-      <Grid item xs={12} style={{ marginTop: 10 }}>
-        <Paper style={{ padding: 20 }} elevation={5}>
-          <FormControl component="fieldset">
-            <FormLabel component="legend">Формат данных на карте</FormLabel>
-            <RadioGroup
-              aria-label="gender"
-              name="radio-buttons-group"
-              value={groupTypeTime}
-              onChange={ (event, data) => { setGroupTypeTime(data) } }
-            >
-              <FormControlLabel value="norm" control={<Radio />} label="Обычный (об заказ - время оформления, пред - промежуток времени)" />
-              <FormControlLabel value="full" control={<Radio />} label="Полный (промежуток времени)" />
-              <FormControlLabel value="min" control={<Radio />} label="Сокращенный (только оставшееся время)" />
-            </RadioGroup>
-          </FormControl>
-        </Paper>
-      </Grid>
+        <Grid item xs={12} style={{ marginTop: 10 }}>
+          <Paper style={{ padding: 20 }} elevation={5}>
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Формат данных на карте</FormLabel>
+              <RadioGroup
+                aria-label="gender"
+                name="radio-buttons-group"
+                value={groupTypeTime}
+                onChange={ (event, data) => { setGroupTypeTime(data) } }
+              >
+                <FormControlLabel value="norm" control={<Radio />} label="Обычный (об заказ - время оформления, пред - промежуток времени)" />
+                <FormControlLabel value="full" control={<Radio />} label="Полный (промежуток времени)" />
+                <FormControlLabel value="min" control={<Radio />} label="Сокращенный (только оставшееся время)" />
+              </RadioGroup>
+            </FormControl>
+          </Paper>
+        </Grid>
 
-      <Grid item xs={12} style={{ marginTop: 10 }}>
-        <Paper style={{ padding: 20 }} elevation={5}>
-          <FormControl component="fieldset">
-            <FormLabel component="legend">Отмененные заказы</FormLabel>
-            <RadioGroup
-              aria-label="gender"
-              name="radio-buttons-group"
-              value={type_show_del}
-              onChange={ (event, data) => { setType_show_del( data ) } }
-            >
-              <FormControlLabel value="full" control={<Radio />} label="Показывать весь день" />
-              <FormControlLabel value="min" control={<Radio />} label="30 минут" />
-              <FormControlLabel value="max" control={<Radio />} label="2 часа" />
-            </RadioGroup>
-          </FormControl>
-        </Paper>
-      </Grid>
-      
-      <Grid item xs={12} style={{ marginTop: 10 }}>
-        <Paper style={{ padding: 20 }} elevation={5}>
-          <FormGroup>
-            <FormControlLabel control={<Checkbox checked={centered_map} onClick={ (event) => { setСentered_map( event.target.checked ) } } />} label="При взятии, отмене заказа, центрировать карту" />
-          </FormGroup>
-        </Paper>
-      </Grid>
-      
-      <Grid item xs={12} style={{ marginTop: 10 }}>
-        <Paper style={{ padding: 20 }} elevation={5}>
-          <FormControl component="fieldset">
-            <FormLabel component="legend">Частота обновления заказов</FormLabel>
-            <RadioGroup
-              aria-label="gender"
-              name="radio-buttons-group1"
-              value={update_interval}
-              onChange={ (event, data) => { setUpdate_interval( data ) } }
-            >
-              <FormControlLabel value={0} control={<Radio />} label={'Не обновлять'} />
-              <FormControlLabel value={10} control={<Radio />} label={'Каждые 10 секунд'} />
-              <FormControlLabel value={30} control={<Radio />} label={'Каждые 30 секунд'} />
-              <FormControlLabel value={60} control={<Radio />} label={'Каждые 60 секунд'} />
-              <FormControlLabel value={120} control={<Radio />} label={'Каждые 120 секунд'} />
-            </RadioGroup>
-          </FormControl>
-        </Paper>
-      </Grid>
+        <Grid item xs={12} style={{ marginTop: 10 }}>
+          <Paper style={{ padding: 20 }} elevation={5}>
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Отмененные заказы</FormLabel>
+              <RadioGroup
+                aria-label="gender"
+                name="radio-buttons-group"
+                value={type_show_del}
+                onChange={ (event, data) => { setType_show_del( data ) } }
+              >
+                <FormControlLabel value="full" control={<Radio />} label="Показывать весь день" />
+                <FormControlLabel value="min" control={<Radio />} label="30 минут" />
+                <FormControlLabel value="max" control={<Radio />} label="2 часа" />
+              </RadioGroup>
+            </FormControl>
+          </Paper>
+        </Grid>
+        
+        <Grid item xs={12} style={{ marginTop: 10 }}>
+          <Paper style={{ padding: 20 }} elevation={5}>
+            <FormGroup>
+              <FormControlLabel control={<Checkbox checked={centered_map} onClick={ (event) => { setСentered_map( event.target.checked ) } } />} label="При взятии, отмене заказа, центрировать карту" />
+            </FormGroup>
+          </Paper>
+        </Grid>
+        
+        <Grid item xs={12} style={{ marginTop: 10 }}>
+          <Paper style={{ padding: 20 }} elevation={5}>
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Частота обновления заказов</FormLabel>
+              <RadioGroup
+                aria-label="gender"
+                name="radio-buttons-group1"
+                value={update_interval}
+                onChange={ (event, data) => { setUpdate_interval( data ) } }
+              >
+                <FormControlLabel value={0} control={<Radio />} label={'Не обновлять'} />
+                <FormControlLabel value={10} control={<Radio />} label={'Каждые 10 секунд'} />
+                <FormControlLabel value={30} control={<Radio />} label={'Каждые 30 секунд'} />
+                <FormControlLabel value={60} control={<Radio />} label={'Каждые 60 секунд'} />
+                <FormControlLabel value={120} control={<Radio />} label={'Каждые 120 секунд'} />
+              </RadioGroup>
+            </FormControl>
+          </Paper>
+        </Grid>
 
-      <Grid item xs={12} style={{ marginTop: 10 }}>
-        <Paper style={{ padding: 20 }} elevation={5} >
-          <CirclePicker 
-            style={{ width: '100%' }}
-            color={ color }
-            onChangeComplete={ c => setColor(c.hex) }
-          />
-        </Paper>
-      </Grid>
+        <Grid item xs={12} style={{ marginTop: 10 }}>
+          <Paper style={{ padding: 20 }} elevation={5} >
+            <CirclePicker 
+              style={{ width: '100%' }}
+              color={ color }
+              onChangeComplete={ c => setColor(c.hex) }
+            />
+          </Paper>
+        </Grid>
 
-      <Grid item xs={12} style={{ marginTop: 10, marginBottom: 50 }}>
-        <Paper style={{ padding: 20 }} elevation={5} >
-          <Button onClick={ () => save() } color="primary" variant="contained" style={{ width: '100%' }}>Сохранить</Button>
-        </Paper>
-      </Grid>
+        <Grid item xs={12} style={{ marginTop: 10, marginBottom: 50 }}>
+          <Paper style={{ padding: 20 }} elevation={5} >
+            <Button onClick={ () => save() } color="primary" variant="contained" style={{ width: '100%' }}>Сохранить</Button>
+          </Paper>
+        </Grid>
 
-    </Grid>
+      </Grid>
     </Meta>
   )
 }

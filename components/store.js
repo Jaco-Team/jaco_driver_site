@@ -44,6 +44,10 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   // открытие закрытие модалки qr оплаты
   setShowPay: (active) => {
     set({showPay: active })
+
+    if( active === false ){
+      set({ payData: null })
+    }
   },
 
   // открытие/закрытие модалки с подтверждением завершения заказа
@@ -107,18 +111,24 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       token: get().token
     };
       
-    const json = await api('orders', data);
+    try{
+      const json = await api('orders', data);
 
-    set({
-      orders: json?.orders,
-      update_interval: json?.update_interval,
-      limit: json?.limit,
-      limit_count: json?.limit_count,
-      del_orders: json?.arr_del_list
-    })
-
-    if( is_map ){
-      get().renderMap(json?.home, json?.orders);
+      set({
+        orders: json?.orders,
+        update_interval: json?.update_interval,
+        limit: json?.limit,
+        limit_count: json?.limit_count,
+        del_orders: json?.arr_del_list
+      })
+  
+      console.log( 'is_map', is_map )
+  
+      if( is_map === true ){
+        get().renderMap(json?.home, json?.orders);
+      }
+    } catch(err){
+      console.log( err )
     }
   },
 
@@ -151,8 +161,6 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }, {
       enableHighAccuracy: true
     })
-
-    set({ is_load: false })
   },
 
   actionFinishOrder: (order_id, is_map = false) => {
@@ -169,7 +177,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
   actionFakeOrder: async () => {
     set({ is_load: true })
-    get().check_pos( get().actionOrder, {order_id: order_id, type: 1, is_map} );
+    get().check_pos( get().actionOrderFake, {order_id: order_id, type: 1, is_map} );
   },
   actionOrder: async({data: { order_id, type, is_map }, latitude, longitude}) => {
     //1 - get / 2 - close / 3 - finish
@@ -194,6 +202,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       }, 500 )
     }else{
       get().closeOrderMap();
+      get().setShowPay(false);
       get().getOrders(is_map);
 
       setTimeout( () => {
@@ -229,9 +238,11 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
 
   actionPayOrder: async(order_id, is_map) => {
-
     set({ is_load: true })
+    get().check_pos( get().acttionPay, {order_id, is_map} );    
+  },
 
+  acttionPay: async({data: { order_id, is_map }, latitude, longitude}) => {
     let data = {
       type: 'get_pay_qr',
       token: get().token,
@@ -249,6 +260,9 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         set({ is_load: false })
       }, 500 )
     }else{
+
+      res.pay.check_data = {data: { order_id, is_map }, latitude, longitude};
+      console.log( 'pay', res )
 
       setTimeout( () => {
         set({ is_load: false, showPay: true, payData: res.pay })
@@ -398,6 +412,22 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       isOpenOrderMap: false
     })
   },
+
+  getCheckStatusPay: async({data: { order_id, is_map }, latitude, longitude}) => {
+    let data = {
+      type: 'check_pay_order',
+      token: get().token,
+      order_id: order_id
+    };
+    
+    console.log( order_id, is_map, latitude, longitude )
+
+    const res = await api('orders', data);
+
+    if( res.st === true ){
+      get().actionOrder( { order_id, type: 3, is_map }, latitude, longitude );
+    }
+  },
 }), shallow)
 
 export const useHeaderStore = createWithEqualityFn((set, get) => ({
@@ -445,12 +475,27 @@ export const usePriceStore = createWithEqualityFn((set, get) => ({
 
 export const useGraphStore = createWithEqualityFn((set, get) => ({
   isOpenMenu: false,
+  isOpenModalErr: false,
+  showErrOrder: null,
+  showErrOrderCum: null,
   month_list: [],
   dates: [],
   users: [],
 
   err_orders: [],
   err_cam: [],
+
+  errText: '',
+  chooseDate: '',
+
+  showErrOrder: false, 
+  textErrOrder: '',
+
+  setTextErr: (text) => {
+    set({
+      errText: text
+    })
+  },
 
   getGraph: async (date, token) => {
     const data = {
@@ -468,6 +513,7 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
       err_orders: json.errs.orders,
       err_cam: json.errs.err_cam,
       isOpenMenu: false,
+      chooseDate: date
     })
   },
 
@@ -481,7 +527,68 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
       isOpenMenu: false
     })
   },
+  false_err_order: async(token, text, err_id, row_id) => {
+    let data = {
+      token: token,
+      text: text,
+      err_id: err_id,
+      row_id: row_id
+    };
+    
+    const res = await api('save_false_cash_orders', data);
+    
+    if( res['st'] == false ){
+      set({
+        showErrOrder: true, 
+        textErrOrder: res.text,
+      })
+    }else{
+      get().closeModalErr();
+      
+      get().getGraph(get().chooseDate, token);
+    }
+  },
+  false_err_cam: async(token, text, err_id) => {
+    let data = {
+      token: token,
+      text: text,
+      id: err_id
+    };
+    
+    const res = await api('save_false_cash_cum', data);
+    
+    if( res['st'] == false ){
+      set({
+        showErrOrder: true, 
+        textErrOrder: res.text,
+      })
+    }else{
+      get().closeModalErr();
+      
+      get().getGraph(get().chooseDate, token);
+    }
+  },
 
+  closeModalErr: () => {
+    set({
+      isOpenModalErr: false,
+      showErrOrder: null,
+      showErrOrderCum: null,
+      errText: ''
+    })
+  },
+  openModalErr: (type, err) => {
+    set({
+      isOpenModalErr: true,
+      [ type ]: err
+    })
+  },
+  closeErrOrder: () => {
+    set({
+      showErrOrder: false, 
+      textErrOrder: '',
+    })
+  },
 }), shallow)
 
 export const useLoginStore = createWithEqualityFn((set, get) => ({

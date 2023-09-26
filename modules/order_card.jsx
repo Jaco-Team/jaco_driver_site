@@ -33,15 +33,9 @@ const HtmlTooltip = styled(({ className, ...props }) => (
 export default function OrderCard({item, is_map = false}){
 
   const [ openTooltip, setOpenTooltip ] = useState(false);
-  const [ actionFinishOrder, actionCencelOrder, actionGetOrder, actionFakeOrder, actionPayOrder, setActiveConfirmFinish, is_load ] = useOrdersStore( state => [ state.actionFinishOrder, state.actionCencelOrder, state.actionGetOrder, state.actionFakeOrder, state.actionPayOrder, state.setActiveConfirmFinish, state.is_load ] )
+  const [ actionCencelOrder, actionGetOrder, actionFakeOrder, actionPayOrder, setActiveConfirmFinish ] = useOrdersStore( state => [ state.actionCencelOrder, state.actionGetOrder, state.actionFakeOrder, state.actionPayOrder, state.setActiveConfirmFinish ] )
 
   return(
-    <>
-
-    <Backdrop style={{ zIndex: 99 }} open={is_load}>
-      <CircularProgress color="inherit" />
-    </Backdrop>
-
     <div className={"OrderCard " + roboto.variable}>
 
       <div className="lineModal" />
@@ -201,7 +195,7 @@ export default function OrderCard({item, is_map = false}){
                 <Button  onClick={ () => actionPayOrder(item.id, is_map) } ><QrCodeScannerIcon /></Button>
               </Grid>
               :
-              <Button className='finish' onClick={ () => actionFinishOrder(item.id, is_map) }>Завершить</Button>
+              <Button className='finish' onClick={ () => setActiveConfirmFinish(true, item.id, is_map) }>Завершить</Button>
             }
 
             { parseInt(item.status_order) == 6 ? null :
@@ -216,6 +210,5 @@ export default function OrderCard({item, is_map = false}){
       }
       
     </div>
-    </>
   )
 }

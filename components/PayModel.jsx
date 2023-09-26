@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import Button from '@mui/material/Button';
-import Drawer from '@mui/material/Drawer';
+import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import { useOrdersStore } from '@/components/store.js';
 
 import Script from 'next/script';
 
 export default function PayModel() {
-  const [showPay, payData, setShowPay] = useOrdersStore((state) => [state.showPay, state.payData, state.setShowPay]);
+  const [showPay, payData, setShowPay, getCheckStatusPay] = useOrdersStore((state) => [state.showPay, state.payData, state.setShowPay, state.getCheckStatusPay]);
 
   const [is_load, setIsLoad] = useState(false);
 
@@ -15,6 +15,12 @@ export default function PayModel() {
       setTimeout(() => {
         setIsLoad(true);
       }, 300);
+
+      const interval = setInterval(() => {
+        getCheckStatusPay(payData.check_data);
+      }, 5000);
+       
+      return () => clearInterval(interval);
     }
   }, [payData]);
 
@@ -22,11 +28,12 @@ export default function PayModel() {
     <>
       {!is_load ? false : <Script src="./qr.nspk.ru_js_index-NF27QMF3.js" />}
 
-      <Drawer
+      <SwipeableDrawer
         anchor={'bottom'}
         open={showPay}
         onClose={() => setShowPay(false)}
         className="modalOrderPay"
+        onOpen={ () => {} }
       >
         <div className="lineModal" />
 
@@ -35,7 +42,7 @@ export default function PayModel() {
         <div id="app_url">{payData?.confirmation.confirmation_data}</div>
 
         <Button className="btnGOOD">Хорошо</Button>
-      </Drawer>
+      </SwipeableDrawer>
     </>
   );
 }
