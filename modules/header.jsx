@@ -196,7 +196,7 @@ export default function Header() {
 
   const session = useSession();
 
-  const [ activePageRU, setOpenMenu, getStat ] = useHeaderStore( state => [ state.activePageRU, state.setOpenMenu, state.getStat ] )
+  const [ activePageRU, setOpenMenu, getStat, checkMyPos ] = useHeaderStore( state => [ state.activePageRU, state.setOpenMenu, state.getStat, state.checkMyPos ] )
   const [ setNotifToken ] = useOrdersStore( state => [ state.setNotifToken ] )
 
   useEffect( () => {
@@ -231,6 +231,16 @@ export default function Header() {
       getStat(session.data?.user?.token);
     }
   }, [session]);
+
+  useEffect( () => {
+    checkMyPos();
+    
+    const interval = setInterval(() => {
+      checkMyPos();
+    }, 120 * 1000);
+      
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Box>

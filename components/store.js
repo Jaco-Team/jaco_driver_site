@@ -493,11 +493,41 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
   activePageRU: '',
 
   phones: null,
+  token: '',
 
   setActivePageRU: (activePageRU) => {
     set({
       activePageRU: activePageRU
     })
+  },
+
+  check_pos: async( func ) => {
+    await navigator.geolocation.getCurrentPosition(({ coords }) => {
+      const { latitude, longitude } = coords
+        
+      func( latitude, longitude )
+    }, ({ message }) => {
+      //get().openErrOrder('Не удалось определить местоположение. '+message);
+    }, {
+      enableHighAccuracy: true
+    })
+  },
+
+  checkMyPos: () => {
+    get().check_pos( get().saveMyPos );
+  },
+
+  saveMyPos: async(latitude, longitude) => {
+    if( get().token.length > 0 ){
+      const data = {
+        token: get().token,
+        type: 'save_my_pos',
+        latitude,
+        longitude
+      };
+        
+      const json = await api('settings', data);
+    }
   },
 
   setOpenMenu: () => {
@@ -511,16 +541,19 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
     })
   },
   getStat: async (token) => {
-    const data = {
-      token: token,
-      type: 'get_point_phone',
-    };
-      
-    const json = await api('settings', data);
+    if( get().phones === null ){
+      const data = {
+        token: token,
+        type: 'get_point_phone',
+      };
+        
+      const json = await api('settings', data);
 
-    set({
-      phones: json.phone
-    })
+      set({
+        phones: json.phone,
+        token
+      })
+    }
   },
 }), shallow)
 
