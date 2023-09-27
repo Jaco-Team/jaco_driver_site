@@ -63,8 +63,8 @@ export default function AuthPage(){
             priority={true}
           />
 
-          <MyTextInput label="Номер телефона" onChange={ e => setMyLogin(e.target.value) } />
-          <MyTextInput label="Пароль" type={'password'} onChange={ e => setMyPWD(e.target.value) } onKeyPress={ () => loginFN() } />
+          <MyTextInput label="Номер телефона" type={'text'} value={myLogin} onChange={ e => setMyLogin(e.target.value) } />
+          <MyTextInput label="Пароль" type={'password'} value={myPWD} onChange={ e => setMyPWD(e.target.value) } onKeyPress={ () => loginFN() } />
           
           <span>{loginErr}</span>
 

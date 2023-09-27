@@ -41,6 +41,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   order_finish_id: null,
   is_map: false,
 
+  isClick: false,
+
   // открытие закрытие модалки qr оплаты
   setShowPay: (active) => {
     set({showPay: active })
@@ -164,20 +166,64 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
 
   actionFinishOrder: (order_id, is_map = false) => {
+
+    if( get().isClick === false ){
+      set({ isClick: true })
+    }else{
+      return ;
+    }
+
     set({ is_load: true })
     get().check_pos( get().actionOrder, {order_id: order_id, type: 3, is_map} );
+
+    setTimeout( () => {
+      set({ isClick: false })
+    }, 300 )
   },
   actionCencelOrder: (order_id, is_map = false) => {
+    
+    if( get().isClick === false ){
+      set({ isClick: true })
+    }else{
+      return ;
+    }
+
     set({ is_load: true })
     get().check_pos( get().actionOrder, {order_id: order_id, type: 2, is_map} );
+
+    setTimeout( () => {
+      set({ isClick: false })
+    }, 300 )
   },
   actionGetOrder: (order_id, is_map = false) => {
+
+    if( get().isClick === false ){
+      set({ isClick: true })
+    }else{
+      return ;
+    }
+
     set({ is_load: true })
-    get().check_pos( get().actionOrderFake, {order_id: order_id, is_map} );
+    get().check_pos( get().actionOrder, {order_id: order_id, type: 1, is_map} );
+
+    setTimeout( () => {
+      set({ isClick: false })
+    }, 300 )
   },
-  actionFakeOrder: async () => {
+  actionFakeOrder: async (order_id, is_map = false) => {
+
+    if( get().isClick === false ){
+      set({ isClick: true })
+    }else{
+      return ;
+    }
+
     set({ is_load: true })
     get().check_pos( get().actionOrderFake, {order_id: order_id, type: 1, is_map} );
+
+    setTimeout( () => {
+      set({ isClick: false })
+    }, 300 )
   },
   actionOrder: async({data: { order_id, type, is_map }, latitude, longitude}) => {
     //1 - get / 2 - close / 3 - finish
@@ -238,8 +284,19 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
 
   actionPayOrder: async(order_id, is_map) => {
+
+    if( get().isClick === false ){
+      set({ isClick: true })
+    }else{
+      return ;
+    }
+
     set({ is_load: true })
     get().check_pos( get().acttionPay, {order_id, is_map} );    
+
+    setTimeout( () => {
+      set({ isClick: false })
+    }, 300 )
   },
 
   acttionPay: async({data: { order_id, is_map }, latitude, longitude}) => {
@@ -435,6 +492,8 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
 
   activePageRU: '',
 
+  phones: null,
+
   setActivePageRU: (activePageRU) => {
     set({
       activePageRU: activePageRU
@@ -451,15 +510,27 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
       isOpenMenu: false
     })
   },
+  getStat: async (token) => {
+    const data = {
+      token: token,
+      type: 'get_point_phone',
+    };
+      
+    const json = await api('settings', data);
 
+    set({
+      phones: json.phone
+    })
+  },
 }), shallow)
 
 export const usePriceStore = createWithEqualityFn((set, get) => ({
   statPrice: null,
   give_hist: [],
 
-  getStat: async (date) => {
+  getStat: async (date, token) => {
     const data = {
+      token: token,
       type: 'get_my_price',
       date: date,
     };
@@ -488,8 +559,10 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
   errText: '',
   chooseDate: '',
 
-  showErrOrder: false, 
+  isshowErrOrder: false, 
   textErrOrder: '',
+
+  isClick: false,
 
   setTextErr: (text) => {
     set({
@@ -528,6 +601,13 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
     })
   },
   false_err_order: async(token, text, err_id, row_id) => {
+
+    if( get().isClick === false ){
+      set({ isClick: true })
+    }else{
+      return ;
+    }
+
     let data = {
       token: token,
       text: text,
@@ -539,7 +619,7 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
     
     if( res['st'] == false ){
       set({
-        showErrOrder: true, 
+        isshowErrOrder: true, 
         textErrOrder: res.text,
       })
     }else{
@@ -547,8 +627,19 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
       
       get().getGraph(get().chooseDate, token);
     }
+
+    setTimeout( () => {
+      set({ isClick: false })
+    }, 300 )
   },
   false_err_cam: async(token, text, err_id) => {
+
+    if( get().isClick === false ){
+      set({ isClick: true })
+    }else{
+      return ;
+    }
+
     let data = {
       token: token,
       text: text,
@@ -559,7 +650,7 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
     
     if( res['st'] == false ){
       set({
-        showErrOrder: true, 
+        isshowErrOrder: true, 
         textErrOrder: res.text,
       })
     }else{
@@ -567,6 +658,10 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
       
       get().getGraph(get().chooseDate, token);
     }
+
+    setTimeout( () => {
+      set({ isClick: false })
+    }, 300 )
   },
 
   closeModalErr: () => {
@@ -574,6 +669,7 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
       isOpenModalErr: false,
       showErrOrder: null,
       showErrOrderCum: null,
+      isshowErrOrder: false,
       errText: ''
     })
   },
@@ -684,7 +780,15 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
 }), shallow)
 
 export const useSettingsStore = createWithEqualityFn((set, get) => ({
+  isClick: false,
+
   saveMySetting: async (token, groupTypeTime, type_show_del, update_interval, centered_map, color) => {
+
+    if( get().isClick === false ){
+      set({ isClick: true })
+    }else{
+      return ;
+    }
 
     const data = {
       type: 'saveMySetting',
@@ -697,6 +801,10 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
     };
       
     const json = await api('settings', data);
+
+    setTimeout( () => {
+      set({ isClick: false })
+    }, 300 )
   },
   getMySetting: async (token) => {
 

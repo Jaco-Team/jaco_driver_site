@@ -53,3 +53,18 @@
         padding: 8px!important
     }
 }
+
+.modalErr{
+    & .MuiDrawer-paper.MuiDrawer-paperAnchorBottom{
+        max-height: calc(100% - $MyScale400_mobile);
+        border-radius: $MyScale80_mobile $MyScale80_mobile 0 0;
+    }
+    & .lineModal {
+        width: $MyScale150_mobile;
+        min-height: $MyScale10_mobile;
+        border-radius: $MyScale5_mobile;
+        background: rgba(0, 0, 0, 0.2);
+        margin: 0 auto;
+        margin-bottom: $MyScale80_mobile;
+    }
+}

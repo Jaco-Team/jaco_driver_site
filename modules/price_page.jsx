@@ -17,17 +17,21 @@ import { usePriceStore } from '@/components/store.js';
 import MyDatepicker from '@/ui/MyDatepicker'
 import dayjs from 'dayjs';
 
+import { useSession } from 'next-auth/react';
+
 import Meta from '@/components/meta.js';
 
 import { roboto } from '@/ui/Font';
 
 export default function PricePage(){
 
+  const session = useSession();
+
   const [ date, setDate ] = useState( dayjs(new Date()) );
   const [ statPrice, give_hist, getStat ] = usePriceStore( state => [ state.statPrice, state.give_hist, state.getStat ] )
   
   useEffect( () => {
-    getStat(dayjs(date).format('YYYY-MM-DD'))
+    getStat(dayjs(date).format('YYYY-MM-DD'), session.data?.user?.token)
   }, [date] )
 
   return (

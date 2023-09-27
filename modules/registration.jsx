@@ -126,7 +126,7 @@ export default function RegistrationPage(){
 
           { activeStep == 0 ?
             <>
-              <MyTextInput label="Номер телефона" value={myLogin} onChange={ e => setMyLogin(e.target.value) } />
+              <MyTextInput label="Номер телефона" value={myLogin} type={'text'} onChange={ e => setMyLogin(e.target.value) } />
               <MyTextInput label="Новый пароль" value={myPWD} type={'password'} onChange={ e => setMyPWD(e.target.value) } onKeyPress={ () => next1() } />
 
               <span>{err1}</span>

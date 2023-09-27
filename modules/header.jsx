@@ -79,7 +79,7 @@ function DrawerList() {
 
 function DrawerHeader() {
 
-  const [ isOpenMenu, setOpenMenu, setCloseMenu ] = useHeaderStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu ] )
+  const [ isOpenMenu, setOpenMenu, setCloseMenu, phones ] = useHeaderStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.phones ] )
 
   return (
     <SwipeableDrawer
@@ -115,6 +115,29 @@ function DrawerHeader() {
             <Link href='/settings'>Настройки</Link>
           </ListItemButton>
         </ListItem>
+
+        { phones?.phone_upr.length == 0 ? false :
+          <ListItem disablePadding>
+            <ListItemButton>
+              <Link href={'tel:'+ phones?.phone_upr }>Директор</Link>
+            </ListItemButton>
+          </ListItem>
+        }
+        { phones?.phone_man.length == 0 ? false :
+          <ListItem disablePadding>
+            <ListItemButton>
+              <Link href={'tel:'+ phones?.phone_man }>Менеджер</Link>
+            </ListItemButton>
+          </ListItem>
+        }
+        { phones?.phone_center.length == 0 ? false :
+          <ListItem disablePadding>
+            <ListItemButton>
+              <Link href={'tel:'+ phones?.phone_center }>Контакт-центр</Link>
+            </ListItemButton>
+          </ListItem>
+        }
+
         <ListItem disablePadding onClick={setCloseMenu}>
           <ListItemButton onClick={ () => { signOut({callbackUrl: `/auth`}) } }>
             <ListItemText primary={'Выйти'} />
@@ -167,9 +190,13 @@ function LoadOrderSpiner() {
   );
 }
 
+import { useSession } from 'next-auth/react';
+
 export default function Header() {
 
-  const [ activePageRU, setOpenMenu ] = useHeaderStore( state => [ state.activePageRU, state.setOpenMenu ] )
+  const session = useSession();
+
+  const [ activePageRU, setOpenMenu, getStat ] = useHeaderStore( state => [ state.activePageRU, state.setOpenMenu, state.getStat ] )
   const [ setNotifToken ] = useOrdersStore( state => [ state.setNotifToken ] )
 
   useEffect( () => {
@@ -195,7 +222,15 @@ export default function Header() {
     }).catch((err) => {
       ///
     });
+
+    
   }, [] )
+
+  useEffect( () => {
+    if( session.data?.user?.token ){
+      getStat(session.data?.user?.token);
+    }
+  }, [session]);
 
   return (
     <Box>

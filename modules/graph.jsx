@@ -65,12 +65,16 @@ function ModalErr() {
   const [ isOpenModalErr, closeModalErr, showErrOrderCum, showErrOrder, false_err_order, false_err_cam, errText, setTextErr ] = useGraphStore( state => [ state.isOpenModalErr, state.closeModalErr, state.showErrOrderCum, state.showErrOrder, state.false_err_order, state.false_err_cam, state.errText, state.setTextErr ] )
 
   return (
-    <Dialog
+    <SwipeableDrawer
+      anchor={'bottom'}
       open={isOpenModalErr}
       onClose={ closeModalErr }
-      className={roboto.variable}
+      className={'modalErr ' + roboto.variable}
+      onOpen={ () => {} }
     >
       <DialogContent>
+        <div className="lineModal" />
+
         { !showErrOrder ? null :
           <>
             <Typography component="span" style={{ color: '#000', fontSize: 15 }}>Ошибка по заказу №{showErrOrder.order_id}</Typography>
@@ -214,18 +218,15 @@ function ModalErr() {
           </>
         }
       </DialogContent>
-      <DialogActions>
-        <Button onClick={ () => { this.setState({ showErrOrders: false, showErrOrder: null, showErrOrderCum: null }) } } color="primary">Закрыть</Button>
-      </DialogActions>
-    </Dialog>
+    </SwipeableDrawer>
   );
 }
 
 function AlertErr() {
-  const [ showErrOrder, textErrOrder, closeErrOrder ] = useGraphStore( state => [ state.showErrOrder, state.textErrOrder, state.closeErrOrder ] );
+  const [ isshowErrOrder, textErrOrder, closeErrOrder ] = useGraphStore( state => [ state.isshowErrOrder, state.textErrOrder, state.closeErrOrder ] );
 
   return (
-    <Dialog onClose={closeErrOrder} open={showErrOrder}>
+    <Dialog onClose={closeErrOrder} open={isshowErrOrder}>
       <DialogTitle>{textErrOrder}</DialogTitle>
       
       <DialogActions>
