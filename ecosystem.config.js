@@ -22,7 +22,7 @@ module.exports = {
         production : {
           user : 'root',
           host : '134.0.118.222',
-          ref  : 'main',
+          ref  : 'origin/main',
           repo : 'git@github.com:vito3315/jaco_driver_site.git',
           path : '/root/jaco_driver_site',
           'pre-deploy-local': '',
