@@ -26,7 +26,7 @@ module.exports = {
           repo : 'git@github.com:vito3315/jaco_driver_site.git',
           path : '/root/jaco_driver_site',
           'pre-deploy-local': '',
-          'post-deploy' : 'pm2 reload all',
+          'post-deploy' : 'npm run deploy:prod',
           'pre-setup': ''
         }
       }
