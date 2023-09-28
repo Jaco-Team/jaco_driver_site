@@ -69,7 +69,7 @@ export default function AuthPage(){
           <span>{loginErr}</span>
 
           <Button variant="contained" onClick={ () => loginFN() }>Войти</Button>
-          <a href='/registration'>Восстановить пароль</a>
+          <a href='/registration'>Восстановить пароль 111</a>
 
         </Grid>
         
