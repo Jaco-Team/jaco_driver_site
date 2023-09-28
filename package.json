@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-
     "deploy:local": "next build && pm2 startOrRestart ecosystem.config.js --env local",
     "deploy:dev": "next build && pm2 startOrRestart ecosystem.config.js --env development",
     "deploy:prod": "next build && pm2 startOrRestart ecosystem.config.js --env production"
@@ -18,8 +17,8 @@
     "@mui/icons-material": "^5.14.11",
     "@mui/material": "^5.14.11",
     "@mui/x-date-pickers": "^6.15.0",
-    "@sentry/nextjs": "^7.71.0",
-    "@sentry/react": "^7.71.0",
+    "@sentry/nextjs": "^7.72.0",
+    "@sentry/react": "^7.72.0",
     "dayjs": "^1.11.10",
     "firebase": "^10.4.0",
     "next": "13.5.3",
@@ -29,6 +28,7 @@
     "react-color": "^2.19.3",
     "react-dom": "18.2.0",
     "sass": "^1.68.0",
+    "sharp": "^0.32.6",
     "zustand": "^4.4.1"
   }
 }
