@@ -16,7 +16,7 @@ export default function MapPage(){
 
   useEffect(() => {
     const interval = setInterval(() => {
-      getOrders(true);
+      getOrders(true, false);
     }, parseInt(update_interval) * 1000);
      
     return () => clearInterval(interval);
@@ -32,7 +32,7 @@ export default function MapPage(){
         <Button className='noselect' style={{ flex: 1, color: type.id == 2 ? 'green' : '#fff', fontWeight: 'bold' }} onClick={ () => setType({ id: 2, text: 'Мои отмеченные' }, true) }>Мои</Button>
         <Button className='noselect' style={{ flex: 3, color: type.id == 5 ? 'green' : '#fff', fontWeight: 'bold' }} onClick={ () => setType({ id: 5, text: 'У других курьеров' }, true) }>У других</Button>
         
-        <Button className='noselect' style={{ flex: 1 }} onClick={ () => getOrders(true) }><CachedIcon style={{ color: '#fff' }} /></Button>
+        <Button className='noselect' style={{ flex: 1 }} onClick={ () => getOrders(true, true) }><CachedIcon style={{ color: '#fff' }} /></Button>
       </div>
       
       <div style={{ position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'row', justifyContent: 'space-around', width: '90%', left: '5%', bottom: 90 }}>

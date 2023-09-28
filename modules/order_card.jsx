@@ -33,7 +33,7 @@ const HtmlTooltip = styled(({ className, ...props }) => (
 export default function OrderCard({item, is_map = false}){
 
   const [ openTooltip, setOpenTooltip ] = useState(false);
-  const [ actionCencelOrder, actionGetOrder, actionFakeOrder, actionPayOrder, setActiveConfirmFinish ] = useOrdersStore( state => [ state.actionCencelOrder, state.actionGetOrder, state.actionFakeOrder, state.actionPayOrder, state.setActiveConfirmFinish ] )
+  const [ actionCencelOrder, actionGetOrder, actionFakeOrder, actionPayOrder, setActiveConfirmFinish, driver_pay ] = useOrdersStore( state => [ state.actionCencelOrder, state.actionGetOrder, state.actionFakeOrder, state.actionPayOrder, state.setActiveConfirmFinish, state.driver_pay ] )
 
   return(
     <div className={"OrderCard " + roboto.variable}>
@@ -189,10 +189,10 @@ export default function OrderCard({item, is_map = false}){
             </div>
             
             { parseInt(item.status_order) == 6 ? null :
-              parseInt(item.is_my) === 1 && parseInt(item.online_pay) === 0 ?
+              parseInt(item.is_my) === 1 && parseInt(item.online_pay) === 0 && parseInt(driver_pay) == 1 ?
               <Grid className='finish_group'>
-                <Button  onClick={() => setActiveConfirmFinish(true, item.id, is_map)}>Завершить</Button>
-                <Button  onClick={ () => actionPayOrder(item.id, is_map) } ><QrCodeScannerIcon /></Button>
+                <Button onClick={ () => setActiveConfirmFinish(true, item.id, is_map) }>Завершить</Button>
+                <Button onClick={ () => actionPayOrder(item.id, is_map) } ><QrCodeScannerIcon /></Button>
               </Grid>
               :
               <Button className='finish' onClick={ () => setActiveConfirmFinish(true, item.id, is_map) }>Завершить</Button>

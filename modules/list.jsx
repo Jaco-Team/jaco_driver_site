@@ -19,7 +19,7 @@ export default function ListPage(){
   
   useEffect(() => {
     const interval = setInterval(() => {
-      getOrders(false);
+      getOrders(false, false);
     }, parseInt(update_interval) * 1000);
      
     return () => clearInterval(interval);
@@ -31,7 +31,7 @@ export default function ListPage(){
         
         <Grid item xs={12}>
           <Button variant="text" onClick={setOpenMenu}>{type.text}</Button>
-          <Button variant="text" onClick={ () => getOrders(false) }><CachedIcon /></Button>
+          <Button variant="text" onClick={ () => getOrders(false, true) }><CachedIcon /></Button>
         </Grid>
 
         <Grid item xs={12} style={{ display: 'flex', justifyContent: limit_count.length > 0 ? 'space-between' : 'center', maxWidth: '70%' }}>

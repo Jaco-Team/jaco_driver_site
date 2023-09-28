@@ -43,6 +43,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
   isClick: false,
 
+  driver_pay: false,
+
   // открытие закрытие модалки qr оплаты
   setShowPay: (active) => {
     set({showPay: active })
@@ -102,9 +104,15 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     })
   },
 
-  getOrders: async (is_map = false) => {
+  getOrders: async (is_map = false, is_reload = false) => {
     if( get().token.length == 0 ){
       return ;
+    }
+
+    if( is_reload === true ){
+      set({
+        is_load: true
+      })
     }
 
     const data = {
@@ -121,14 +129,19 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         update_interval: json?.update_interval,
         limit: json?.limit,
         limit_count: json?.limit_count,
-        del_orders: json?.arr_del_list
+        del_orders: json?.arr_del_list,
+        driver_pay: json?.driver_pay
       })
-  
-      console.log( 'is_map', is_map )
   
       if( is_map === true ){
         get().renderMap(json?.home, json?.orders);
       }
+
+      setTimeout( () => {
+        set({
+          is_load: false
+        })
+      }, 300 )
     } catch(err){
       console.log( err )
     }
@@ -321,6 +334,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       res.pay.check_data = {data: { order_id, is_map }, latitude, longitude};
       console.log( 'pay', res )
 
+      get().openErrOrder('Заказ оплачен');
+
       setTimeout( () => {
         set({ is_load: false, showPay: true, payData: res.pay })
       }, 500 )
@@ -477,8 +492,6 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       order_id: order_id
     };
     
-    console.log( order_id, is_map, latitude, longitude )
-
     const res = await api('orders', data);
 
     if( res.st === true ){
@@ -494,6 +507,8 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
 
   phones: null,
   token: '',
+
+  check_pos_check: false,
 
   setActivePageRU: (activePageRU) => {
     set({
@@ -514,7 +529,22 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
   },
 
   checkMyPos: () => {
+
+    if( get().check_pos_check === false ){
+      set({
+        check_pos_check: true
+      })
+    }else{
+      return ;
+    }
+
     get().check_pos( get().saveMyPos );
+
+    setTimeout( () => {
+      set({
+        check_pos_check: false
+      })
+    }, 1000 )
   },
 
   saveMyPos: async(latitude, longitude) => {
