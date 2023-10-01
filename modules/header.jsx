@@ -202,31 +202,32 @@ export default function Header() {
   const [ setNotifToken ] = useOrdersStore( state => [ state.setNotifToken ] )
 
   useEffect( () => {
-    const firebaseConfig = {
-      apiKey: "AIzaSyAK8l7m2URB6kFbBzC5iv67W34cuEzPKYc",
-      authDomain: "macro-thinker-288611.firebaseapp.com",
-      databaseURL: "https://macro-thinker-288611.firebaseio.com",
-      projectId: "macro-thinker-288611",
-      storageBucket: "macro-thinker-288611.appspot.com",
-      messagingSenderId: "989415800368",
-      appId: "1:989415800368:web:35373fd752ab60aa3177f5",
-      measurementId: "G-YDT84TR2E2"
-    };
-  
-    const app = initializeApp(firebaseConfig);
+    if( session.data?.user?.token ){
+      const firebaseConfig = {
+        apiKey: "AIzaSyAK8l7m2URB6kFbBzC5iv67W34cuEzPKYc",
+        authDomain: "macro-thinker-288611.firebaseapp.com",
+        databaseURL: "https://macro-thinker-288611.firebaseio.com",
+        projectId: "macro-thinker-288611",
+        storageBucket: "macro-thinker-288611.appspot.com",
+        messagingSenderId: "989415800368",
+        appId: "1:989415800368:web:35373fd752ab60aa3177f5",
+        measurementId: "G-YDT84TR2E2"
+      };
     
-    const messaging = getMessaging();
-  
-    getToken(messaging, { vapidKey: 'BJmoVaG5ijS0CXc126Y47xmkjxv92stPrkQDfLql5hirvoWvAcy2N4xR1CPKVnCzUVai3ZqkzvVAjOyHGUWhogA' }).then((currentToken) => {
-      if (currentToken) {
-        setNotifToken(currentToken)
-      }
-    }).catch((err) => {
-      ///
-    });
-
+      const app = initializeApp(firebaseConfig);
+      
+      const messaging = getMessaging();
     
-  }, [] )
+      getToken(messaging, { vapidKey: 'BJmoVaG5ijS0CXc126Y47xmkjxv92stPrkQDfLql5hirvoWvAcy2N4xR1CPKVnCzUVai3ZqkzvVAjOyHGUWhogA' }).then((currentToken) => {
+        if (currentToken) {
+          setNotifToken(currentToken)
+        }
+      }).catch((err) => {
+        ///
+      });
+    }
+    
+  }, [session] )
 
   useEffect( () => {
     if( session.data?.user?.token ){
