@@ -31,8 +31,10 @@ export default function PricePage(){
   const [ statPrice, give_hist, getStat ] = usePriceStore( state => [ state.statPrice, state.give_hist, state.getStat ] )
   
   useEffect( () => {
-    getStat(dayjs(date).format('YYYY-MM-DD'), session.data?.user?.token)
-  }, [date] )
+    if( session?.status == 'authenticated' ){
+      getStat(dayjs(date).format('YYYY-MM-DD'), session.data?.user?.token);
+    }
+  }, [date, session] )
 
   return (
     <Meta title='Расчет'>
