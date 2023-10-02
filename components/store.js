@@ -238,7 +238,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       set({ isClick: false })
     }, 300 )
   },
-  actionOrder: async({data: { order_id, type, is_map }, latitude, longitude}) => {
+  actionOrder: async({data: { order_id, type, is_map }, latitude = '', longitude = ''}) => {
     //1 - get / 2 - close / 3 - finish
 
     let data = {
@@ -269,7 +269,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       }, 500 )
     }
   },
-  actionOrderFake: async({data: { order_id, is_map }, latitude, longitude}) => {
+  actionOrderFake: async({data: { order_id, is_map }, latitude = '', longitude = ''}) => {
     let data = {
       type: 'checkFakeOrder',
       token: get().token,
@@ -312,7 +312,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }, 300 )
   },
 
-  acttionPay: async({data: { order_id, is_map }, latitude, longitude}) => {
+  acttionPay: async({data: { order_id, is_map }, latitude = '', longitude = ''}) => {
     let data = {
       type: 'get_pay_qr',
       token: get().token,
@@ -355,7 +355,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     if( !get().map ){
       ymaps.ready(() => {
         get().map = new ymaps.Map('map_orders', {
-          center: [home.latitude, home.longitude],
+          center: [home?.latitude, home?.longitude],
           //center: [55.76, 37.64],
           zoom: 11
         }, {
@@ -376,7 +376,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           },
           geometry: {
             type: "Point",
-            coordinates: [home.latitude, home.longitude]
+            coordinates: [home?.latitude, home?.longitude]
           },
         })
 
@@ -395,7 +395,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
             },
             geometry: {
               type: "Point",
-              coordinates: [item.xy.latitude, item.xy.longitude]
+              coordinates: [item.xy?.latitude, item.xy?.longitude]
             },
           })
           
@@ -423,7 +423,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         },
         geometry: {
           type: "Point",
-          coordinates: [home.latitude, home.longitude]
+          coordinates: [home?.latitude, home?.longitude]
         },
       })
       
@@ -443,7 +443,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           },
           geometry: {
             type: "Point",
-            coordinates: [item.xy.latitude, item.xy.longitude]
+            coordinates: [item?.xy?.latitude, item?.xy?.longitude]
           },
         })
         
@@ -468,7 +468,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         let order = orders.find( (item) => parseInt(item.id) == parseInt(order_id) );
         
         if( order ){
-          let new_orders = orders.filter( (item) => item.xy.latitude == order.xy.latitude && item.xy.longitude == order.xy.longitude );
+          let new_orders = orders.filter( (item) => item?.xy?.latitude == order?.xy?.latitude && item?.xy?.longitude == order?.xy?.longitude );
 
           set({
             showOrders: new_orders,
@@ -485,7 +485,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     })
   },
 
-  getCheckStatusPay: async({data: { order_id, is_map }, latitude, longitude}) => {
+  getCheckStatusPay: async({data: { order_id, is_map }, latitude = '', longitude = ''}) => {
     let data = {
       type: 'check_pay_order',
       token: get().token,
@@ -547,7 +547,7 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
     }, 1000 )
   },
 
-  saveMyPos: async(latitude, longitude) => {
+  saveMyPos: async(latitude = '', longitude = '') => {
     if( get().token.length > 0 ){
       const data = {
         token: get().token,
