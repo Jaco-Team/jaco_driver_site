@@ -134,7 +134,9 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       })
   
       if( is_map === true ){
-        get().renderMap(json?.home, json?.orders);
+        setTimeout( () => {
+          get().renderMap(json?.home, json?.orders);
+        }, 300 )
       }
 
       setTimeout( () => {
