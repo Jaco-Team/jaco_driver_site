@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic'
 import { useSession } from 'next-auth/react';
@@ -17,6 +17,8 @@ export default function Map() {
   const [ setActivePageRU ] = useHeaderStore( state => [ state.setActivePageRU ] )
   const [ getOrders, setToken, clearMap ] = useOrdersStore( state => [ state.getOrders, state.setToken, state.clearMap ] )
 
+  const [ isLoad, setIsLoad ] = useState(false);
+
   useEffect( () => {
     setActivePageRU('Карта заказов');
     clearMap();
@@ -31,12 +33,19 @@ export default function Map() {
     if( session.status == 'unauthenticated' ){
       router.push('/auth', { scroll: false })
     }
+
+    if( session.status == 'authenticated' && isLoad === false ){
+      setIsLoad(true)
+    }
   }, [session] );
 
   return (
-    <>
-      <DynamicHeader />
-      <DynamicHomePage />
-    </>
+    !isLoad ? 
+      <></> 
+        :
+      <>
+        <DynamicHeader />
+        <DynamicHomePage />
+      </>
   )
 }

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic'
 import { useSession } from 'next-auth/react';
@@ -17,6 +17,8 @@ export default function List() {
   const [ setActivePageRU ] = useHeaderStore( state => [ state.setActivePageRU ] )
   const [ getOrders, setToken ] = useOrdersStore( state => [ state.getOrders, state.setToken ] )
   
+  const [ isLoad, setIsLoad ] = useState(false);
+
   useEffect( () => {
     setActivePageRU('Список заказов');
   }, [] )
@@ -30,12 +32,19 @@ export default function List() {
     if( session.status == 'unauthenticated' ){
       router.push('/auth', { scroll: false })
     }
+
+    if( session.status == 'authenticated' && isLoad === false ){
+      setIsLoad(true)
+    }
   }, [session] );
 
   return (
-    <>
-      <DynamicHeader />
-      <DynamicHomePage />
-    </>
+    !isLoad ? 
+      <></> 
+        :
+      <>
+        <DynamicHeader />
+        <DynamicHomePage />
+      </>
   )
 }

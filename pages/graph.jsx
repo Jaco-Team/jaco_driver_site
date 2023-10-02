@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic'
 
@@ -17,6 +17,8 @@ export default function Graph(props) {
 
   const [ setActivePageRU ] = useHeaderStore( state => [ state.setActivePageRU ] )
 
+  const [ isLoad, setIsLoad ] = useState(false);
+
   useEffect( () => {
     setActivePageRU('График работы');
   }, [] )
@@ -25,12 +27,19 @@ export default function Graph(props) {
     if( session.status == 'unauthenticated' ){
       router.push('/auth', { scroll: false })
     }
+
+    if( session.status == 'authenticated' && isLoad === false ){
+      setIsLoad(true)
+    }
   }, [session] );
 
   return (
-    <>
-      <DynamicHeader />
-      <DynamicHomePage />
-    </>
+    !isLoad ? 
+      <></> 
+        :
+      <>
+        <DynamicHeader />
+        <DynamicHomePage />
+      </>
   )
 }
