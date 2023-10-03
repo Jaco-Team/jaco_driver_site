@@ -6,8 +6,9 @@ const nextConfig = {
         return [
           {
             source: '/',
-            destination: 'https://jacodriver.ru/list_orders',
-            basePath: false,
+            //destination: 'https://jacodriver.ru/list_orders',
+            destination: '/list_orders',
+            //basePath: false,
             permanent: true,
           },
         ]

@@ -1,3 +1,5 @@
+
+
 import '../styles/globals.scss'
 
 import '../styles/price.scss'
@@ -38,18 +40,23 @@ export function reportWebVitals(metric) {
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
 
-  Sentry.init({
-    dsn: "https://0446c6db46dce5a0368f09bc573ad37d@o4505941569830912.ingest.sentry.io/4505946950008832",
-    integrations: [
+  if( typeof window !== "undefined" ){
+    console.log( 'load' )
+
+    Sentry.init({
+      dsn: "https://0446c6db46dce5a0368f09bc573ad37d@o4505941569830912.ingest.sentry.io/4505946950008832",
+      integrations: [
+        
+      ],
       
-      
-    ],
-    // Performance Monitoring
-    tracesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
-    // Session Replay
-    replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-    replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
-  });
+      // Performance Monitoring
+      tracesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
+      // Session Replay
+      replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
+      replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+    });
+  }
+  
 
   return (
     <ThemeProvider theme={theme}>

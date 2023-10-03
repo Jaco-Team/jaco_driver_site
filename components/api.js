@@ -15,6 +15,7 @@ export function api(module = '', data = {}){
     return json;
   })
   .catch((err) => {
+    return {};
     console.log(err);
   });
 }
