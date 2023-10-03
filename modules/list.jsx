@@ -34,9 +34,9 @@ export default function ListPage(){
           <Button variant="text" onClick={ () => getOrders(false, true) }><CachedIcon /></Button>
         </Grid>
 
-        <Grid item xs={12} style={{ display: 'flex', justifyContent: limit_count.length > 0 ? 'space-between' : 'center', maxWidth: '70%' }}>
+        <Grid item xs={12} style={{ display: 'flex', justifyContent: limit_count?.length > 0 ? 'space-between' : 'center', maxWidth: '70%' }}>
           <Typography style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }} component="span">{limit}</Typography>
-          { limit_count.length > 0 ? <Typography style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }} component="span">{limit_count}</Typography> : false }
+          { limit_count?.length > 0 ? <Typography style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }} component="span">{limit_count}</Typography> : false }
         </Grid>
 
       </Grid>

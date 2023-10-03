@@ -37,7 +37,7 @@ export default function MapPage(){
       
       <div style={{ position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'row', justifyContent: 'space-around', width: '90%', left: '5%', bottom: 90 }}>
         <Typography style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }} component="span">{limit}</Typography>
-        { limit_count.length > 0 ? <Typography style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }} component="span">{limit_count}</Typography> : false }
+        { limit_count?.length > 0 ? <Typography style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }} component="span">{limit_count}</Typography> : false }
       </div>
       
     </Meta>

@@ -163,12 +163,12 @@ function ModalDelOrders() {
       className={'modalOrderMap ' + roboto.variable}
       onOpen={ () => {} }
     >
-       <div className="lineModal" />
+      <div className="lineModal" />
        
       <Typography style={{ fontSize: 20, paddingTop: 10, paddingBottom: 10, color: '#000', textAlign: 'center', fontWeight: 'bold' }} component="h6">Удаленные заказы</Typography>
 
       <div className='modalOrderDelContent' style={{ height: 300, width: '100%', overflow: 'auto', padding: 20, paddingTop: 10 }}>
-        { del_orders.map( (item, key) =>
+        { del_orders?.map( (item, key) =>
           <div key={key} style={{ display: 'flex', flexDirection: 'column' }}>
             <Typography component="span">Удаленный заказ #{item.id}</Typography>
             <Typography component="span">Адрес: {item.addr}</Typography>
