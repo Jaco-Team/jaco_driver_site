@@ -124,19 +124,23 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     try{
       const json = await api('orders', data);
 
-      set({
-        orders: json?.orders,
-        update_interval: json?.update_interval,
-        limit: json?.limit,
-        limit_count: json?.limit_count,
-        del_orders: json?.arr_del_list,
-        driver_pay: json?.driver_pay
-      })
-  
-      if( is_map === true ){
-        setTimeout( () => {
-          get().renderMap(json?.home, json?.orders);
-        }, 300 )
+      if( json?.orders ){
+        set({
+          orders: json?.orders,
+          update_interval: json?.update_interval,
+          limit: json?.limit,
+          limit_count: json?.limit_count,
+          del_orders: json?.arr_del_list,
+          driver_pay: json?.driver_pay
+        })
+    
+        if( is_map === true ){
+          setTimeout( () => {
+            get().renderMap(json?.home, json?.orders);
+          }, 300 )
+        }
+      }else{
+        get().openErrOrder('Проблемы с интернетом или ошибка на сервере')
       }
 
       setTimeout( () => {
@@ -582,7 +586,7 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
       const json = await api('settings', data);
 
       set({
-        phones: json.phone,
+        phones: json?.phone,
         token
       })
     }

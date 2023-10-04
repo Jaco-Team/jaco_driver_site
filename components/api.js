@@ -10,7 +10,7 @@ export function api(module = '', data = {}){
       'Content-Type':'application/x-www-form-urlencoded'},
     body: queryString.stringify(data)
   })
-  .then((res) => res.json())
+  .then((res) => res.json() )
   .then((json) => {
     return json;
   })
