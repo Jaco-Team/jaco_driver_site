@@ -6,7 +6,7 @@ import { api } from './api.js';
 export const useOrdersStore = createWithEqualityFn((set, get) => ({
   orders: [],
   isOpenMenu: false,
-  update_interval: 1,
+  update_interval: 30,
   limit: '',
   limit_count: '',
   token: '',
@@ -44,6 +44,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   isClick: false,
 
   driver_pay: false,
+
+  is_check: false,
 
   // открытие закрытие модалки qr оплаты
   setShowPay: (active) => {
@@ -109,6 +111,14 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       return ;
     }
 
+    if( get().is_check === false ){
+      set({
+        is_check: true
+      })
+    }else{
+      return ;
+    }
+
     if( is_reload === true ){
       set({
         is_load: true
@@ -142,15 +152,16 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       }else{
         get().openErrOrder('Проблемы с интернетом или ошибка на сервере')
       }
-
-      setTimeout( () => {
-        set({
-          is_load: false
-        })
-      }, 300 )
     } catch(err){
       console.log( err )
     }
+
+    setTimeout( () => {
+      set({
+        is_load: false,
+        is_check: false
+      })
+    }, 300 )
   },
 
   setType: (type, is_map = false) => {
