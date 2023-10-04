@@ -7,8 +7,6 @@ import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 
 import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
 
 import Tooltip, { tooltipClasses } from '@mui/material/Tooltip';
 

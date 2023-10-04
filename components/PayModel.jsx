@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import Button from '@mui/material/Button';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import { useOrdersStore } from '@/components/store.js';
 
@@ -40,8 +39,6 @@ export default function PayModel() {
         <div id="payment-form" />
 
         <div id="app_url">{payData?.confirmation.confirmation_data}</div>
-
-        <Button className="btnGOOD">Хорошо</Button>
       </SwipeableDrawer>
     </>
   );

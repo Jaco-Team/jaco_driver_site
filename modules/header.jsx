@@ -29,8 +29,8 @@ import { useHeaderStore, useOrdersStore } from '@/components/store.js';
 import AlertOrder from '@/components/AlertOrder';
 import PayModel from '@/components/PayModel';
 
-//import { initializeApp } from "firebase/app";
-//import { getMessaging, getToken } from "firebase/messaging";
+import { initializeApp } from "firebase/app";
+import { getMessaging, getToken } from "firebase/messaging";
 
 import OrderCard from '@/modules/order_card';
 
@@ -202,7 +202,7 @@ export default function Header() {
   const [ setNotifToken ] = useOrdersStore( state => [ state.setNotifToken ] )
 
   useEffect( () => {
-    /*if( session.data?.user?.token ){
+    if( session.data?.user?.token ){
       const firebaseConfig = {
         apiKey: "AIzaSyAK8l7m2URB6kFbBzC5iv67W34cuEzPKYc",
         authDomain: "macro-thinker-288611.firebaseapp.com",
@@ -225,7 +225,7 @@ export default function Header() {
       }).catch((err) => {
         ///
       });
-    }*/
+    }
     
   }, [session] )
 
