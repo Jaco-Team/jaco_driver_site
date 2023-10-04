@@ -41,8 +41,6 @@ export function reportWebVitals(metric) {
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
 
   if( typeof window !== "undefined" ){
-    console.log( 'load' )
-
     Sentry.init({
       dsn: "https://0446c6db46dce5a0368f09bc573ad37d@o4505941569830912.ingest.sentry.io/4505946950008832",
       integrations: [
