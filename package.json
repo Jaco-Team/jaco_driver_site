@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "PORT=3225 next dev",
     "build": "next build",
-    "start": "PORT=3225 next start",
+    "start": "next start",
     "lint": "next lint",
     "deploy:local": "next build && pm2 startOrRestart ecosystem.config.js --env local",
     "deploy:dev": "next build && pm2 startOrRestart ecosystem.config.js --env development",
