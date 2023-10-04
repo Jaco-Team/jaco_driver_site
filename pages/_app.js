@@ -55,7 +55,6 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
     });
   }
   
-
   return (
     <ThemeProvider theme={theme}>
       <SessionProvider session={session}>

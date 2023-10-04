@@ -13,6 +13,7 @@ export default function MyDatepicker({label, onChange, value}) {
         label={label}
         defaultValue={value}
         onChange={onChange}
+        closeOnSelect={true}
       />
     </LocalizationProvider>
   );
