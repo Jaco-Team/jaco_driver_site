@@ -216,15 +216,19 @@ export default function Header() {
     
       const app = initializeApp(firebaseConfig);
       
-      const messaging = getMessaging();
-    
-      getToken(messaging, { vapidKey: 'BJmoVaG5ijS0CXc126Y47xmkjxv92stPrkQDfLql5hirvoWvAcy2N4xR1CPKVnCzUVai3ZqkzvVAjOyHGUWhogA' }).then((currentToken) => {
-        if (currentToken) {
-          setNotifToken(currentToken)
-        }
-      }).catch((err) => {
-        ///
-      });
+      try{
+        const messaging = getMessaging();
+      
+        getToken(messaging, { vapidKey: 'BJmoVaG5ijS0CXc126Y47xmkjxv92stPrkQDfLql5hirvoWvAcy2N4xR1CPKVnCzUVai3ZqkzvVAjOyHGUWhogA' }).then((currentToken) => {
+          if (currentToken) {
+            setNotifToken(currentToken)
+          }
+        }).catch((err) => {
+          ///
+        });
+      }catch(err){
+
+      }
     }
     
   }, [session] )
