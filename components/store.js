@@ -150,7 +150,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           }, 300 )
         }
       }else{
-        get().openErrOrder('Проблемы с интернетом или ошибка на сервере')
+        //get().openErrOrder('Проблемы с интернетом или ошибка на сервере')
       }
     } catch(err){
       console.log( err )
