@@ -201,7 +201,7 @@ export default function Header() {
   const [ activePageRU, setOpenMenu, getStat, checkMyPos ] = useHeaderStore( state => [ state.activePageRU, state.setOpenMenu, state.getStat, state.checkMyPos ] )
   const [ setNotifToken ] = useOrdersStore( state => [ state.setNotifToken ] )
 
-  useEffect( () => {
+  /*useEffect( () => {
     if( session.data?.user?.token ){
       const firebaseConfig = {
         apiKey: "AIzaSyAK8l7m2URB6kFbBzC5iv67W34cuEzPKYc",
@@ -231,7 +231,7 @@ export default function Header() {
       }
     }
     
-  }, [session] )
+  }, [session] )*/
 
   useEffect( () => {
     if( session.data?.user?.token ){
