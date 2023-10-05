@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation'
 import Image from 'next/image';
-import { useSession, signIn } from 'next-auth/react';
 
 import Grid from '@mui/material/Grid';
 
@@ -32,7 +31,6 @@ import { roboto } from '@/ui/Font';
 export default function RegistrationPage(){
 
   const router = useRouter();
-  const session = useSession();
 
   const [ activeStep, setActiveStep ] = useState(0);
 
@@ -83,7 +81,7 @@ export default function RegistrationPage(){
     let res = await sendCode(myLogin, myCode);
 
     if( res.st === true ){
-      signIn('credentials', { redirect: true, password: myPWD, login: myLogin, callbackUrl: `${host}/list_orders` })
+      router.push('/list_orders', { scroll: false })
     }else{
       setErr2(res.text)
     }
@@ -91,12 +89,6 @@ export default function RegistrationPage(){
     setTimeout( () => {
       setLoader(false);
     }, 300 )
-  }
-
-  if( session && session.status == 'authenticated' ){
-    if( session.data?.user?.token.length > 0 ){
-      router.push('/list_orders', { scroll: false })
-    }
   }
 
   return (

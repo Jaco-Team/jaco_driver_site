@@ -17,7 +17,7 @@ import { usePriceStore } from '@/components/store.js';
 import MyDatepicker from '@/ui/MyDatepicker'
 import dayjs from 'dayjs';
 
-import { useSession } from 'next-auth/react';
+import useSession from '@/components/sessionHook';
 
 import Meta from '@/components/meta.js';
 
@@ -31,10 +31,10 @@ export default function PricePage(){
   const [ statPrice, give_hist, getStat ] = usePriceStore( state => [ state.statPrice, state.give_hist, state.getStat ] )
   
   useEffect( () => {
-    if( session?.status == 'authenticated' ){
-      getStat(dayjs(date).format('YYYY-MM-DD'), session.data?.user?.token);
+    if( session?.isAuth === true ){
+      getStat(dayjs(date).format('YYYY-MM-DD'), session?.token);
     }
-  }, [date, session] )
+  }, [date] )
 
   return (
     <Meta title='Расчет'>

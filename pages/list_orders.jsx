@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import dynamic from 'next/dynamic'
-import { useSession } from 'next-auth/react';
+import useSession from '@/components/sessionHook';
 import { useRouter } from 'next/navigation'
 
 const DynamicHeader = dynamic(() => import('@/modules/header.jsx'))
@@ -17,34 +17,22 @@ export default function List() {
   const [ setActivePageRU ] = useHeaderStore( state => [ state.setActivePageRU ] )
   const [ getOrders, setToken ] = useOrdersStore( state => [ state.getOrders, state.setToken ] )
   
-  const [ isLoad, setIsLoad ] = useState(false);
-
   useEffect( () => {
     setActivePageRU('Список заказов');
-  }, [] )
 
-  useEffect(() => {
-    if( session.status == 'authenticated' ){
-      setToken(session.data?.user?.token);
-      getOrders();
-    }
-
-    if( session.status == 'unauthenticated' ){
+    if( session.isAuth === false ){
       router.push('/auth', { scroll: false })
     }
-
-    if( session.status == 'authenticated' && isLoad === false ){
-      setIsLoad(true)
+    if( session.isAuth === true ){
+      setToken(session?.token);
+      getOrders();
     }
-  }, [session] );
+  }, [] )
 
   return (
-    !isLoad ? 
-      <></> 
-        :
-      <>
-        <DynamicHeader />
-        <DynamicHomePage />
-      </>
+    <>
+      <DynamicHeader />
+      <DynamicHomePage />
+    </>
   )
 }

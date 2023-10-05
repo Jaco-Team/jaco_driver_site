@@ -15,7 +15,7 @@ import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
 
 import { useSettingsStore } from '@/components/store.js';
-import { useSession } from 'next-auth/react';
+import useSession from '@/components/sessionHook';
 
 import { CirclePicker } from 'react-color';
 
@@ -51,10 +51,9 @@ export default function SettingsPage(){
   const { vertical, horizontal, open } = state;
 
   useEffect( () => {
-
     const fetchData = async () => {
-      if( session.data?.user?.token ){
-        const res = await getMySetting(session.data?.user?.token);
+      if( session?.token ){
+        const res = await getMySetting(session?.token);
   
         setColor( res.color )
         setСentered_map( parseInt(res.action_centered_map) == 1 ? true : false )
@@ -69,10 +68,10 @@ export default function SettingsPage(){
     if( !is_load ){
       fetchData();    
     }
-  }, [session] )
+  }, [] )
 
   function save(){
-    saveMySetting(session.data?.user?.token, groupTypeTime, type_show_del, update_interval, centered_map, color);
+    saveMySetting(session?.token, groupTypeTime, type_show_del, update_interval, centered_map, color);
 
     setState({ ...state, open: true });
   }

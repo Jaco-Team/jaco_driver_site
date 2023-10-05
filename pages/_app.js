@@ -15,8 +15,6 @@ import '../styles/settings.scss'
 
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-import { SessionProvider } from "next-auth/react";
-
 import * as Sentry from "@sentry/react";
 
 const theme = createTheme({
@@ -57,9 +55,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   
   return (
     <ThemeProvider theme={theme}>
-      <SessionProvider session={session}>
-        <Component {...pageProps} />
-      </SessionProvider>
+      <Component {...pageProps} />
     </ThemeProvider>
   )
 }

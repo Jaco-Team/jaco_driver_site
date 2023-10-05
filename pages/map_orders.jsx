@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import dynamic from 'next/dynamic'
-import { useSession } from 'next-auth/react';
+
+import useSession from '@/components/sessionHook';
 import { useRouter } from 'next/navigation'
 
 const DynamicHeader = dynamic(() => import('@/modules/header.jsx'))
@@ -17,35 +18,27 @@ export default function Map() {
   const [ setActivePageRU ] = useHeaderStore( state => [ state.setActivePageRU ] )
   const [ getOrders, setToken, clearMap ] = useOrdersStore( state => [ state.getOrders, state.setToken, state.clearMap ] )
 
-  const [ isLoad, setIsLoad ] = useState(false);
+  useEffect( () => {
+    
+  }, [] )
 
   useEffect( () => {
     setActivePageRU('Карта заказов');
     clearMap();
-  }, [] )
-
-  useEffect(() => {
-    if( session.status == 'authenticated' ){
-      setToken(session.data?.user?.token);
-      getOrders(true);
-    }
-
-    if( session.status == 'unauthenticated' ){
+    
+    if( session.isAuth === false ){
       router.push('/auth', { scroll: false })
     }
-
-    if( session.status == 'authenticated' && isLoad === false ){
-      setIsLoad(true)
+    if( session.isAuth === true ){
+      setToken(session?.token);
+      getOrders();
     }
-  }, [session] );
+  }, [] )
 
   return (
-    !isLoad ? 
-      <></> 
-        :
-      <>
-        <DynamicHeader />
-        <DynamicHomePage />
-      </>
+    <>
+      <DynamicHeader />
+      <DynamicHomePage />
+    </>
   )
 }

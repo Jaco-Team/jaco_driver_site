@@ -26,7 +26,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 
 import { useGraphStore } from '@/components/store.js';
-import { useSession } from 'next-auth/react';
+import useSession from '@/components/sessionHook';
 
 import dayjs from 'dayjs';
 
@@ -48,7 +48,7 @@ function SwipeableTemporaryDrawer() {
     >
       <List className={'monthList ' + roboto.variable}>
         { month_list.map( (item, key) =>
-          <ListItem disablePadding key={key} className={ parseInt(item.is_active) == 1 ? 'active' : '' } onClick={ () => getGraph(item.day, session.data?.user?.token) }>
+          <ListItem disablePadding key={key} className={ parseInt(item.is_active) == 1 ? 'active' : '' } onClick={ () => getGraph(item.day, session?.token) }>
             <ListItemButton>
               <ListItemText primary={item.mounth} />
             </ListItemButton>
@@ -130,7 +130,7 @@ function ModalErr() {
                 />
                 
                 <Button
-                  onClick={ () => false_err_order(session.data?.user?.token, errText, showErrOrder.err_id, showErrOrder.row_id) }
+                  onClick={ () => false_err_order(session?.token, errText, showErrOrder.err_id, showErrOrder.row_id) }
                   style={{ color: '#fff', marginTop: 10, width: '100%', backgroundColor: '#c03' }}
                 >
                   Обжаловать
@@ -196,7 +196,7 @@ function ModalErr() {
                 />
                 
                 <Button
-                  onClick={ () => false_err_cam(session.data?.user?.token, errText, showErrOrderCum.id) }
+                  onClick={ () => false_err_cam(session?.token, errText, showErrOrderCum.id) }
                   style={{ color: '#fff', marginTop: 10, width: '100%', backgroundColor: '#c03' }}
                 >
                   Обжаловать
@@ -253,8 +253,8 @@ export default function GraphPage(){
 
   useEffect( () => {
     const fetchData = async () => {
-      if( session.data?.user?.token ){
-        const res = await getGraph(dayjs(new Date()).format('YYYY-MM'), session.data?.user?.token);
+      if( session?.token ){
+        const res = await getGraph(dayjs(new Date()).format('YYYY-MM'), session?.token);
   
         setIsLoad(true);
       }
@@ -263,7 +263,7 @@ export default function GraphPage(){
     if( !is_load ){
       fetchData();    
     }
-  }, [session] )
+  }, [] )
 
   return (
     <Meta title='График работы'>

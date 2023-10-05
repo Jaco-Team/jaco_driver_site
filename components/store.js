@@ -769,8 +769,11 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
 
 export const useLoginStore = createWithEqualityFn((set, get) => ({
   is_load: false,
+  is_loadToken: false,
 
   loginErr: '',
+
+  authData: { isAuth: 'load', token: '' },
 
   setLoginErr: (err) => {
     set({
@@ -793,6 +796,10 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
     };
       
     const json = await api('auth', data);
+
+    if( json.st === true ){
+      localStorage.setItem('token', json.token)
+    }
 
     set({ 
       is_load: false,
@@ -817,6 +824,10 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
     };
       
     const json = await api('auth', data);
+
+    if( json.st === true ){
+      localStorage.setItem('token', json.token)
+    }
 
     set({ is_load: false })
 
@@ -857,6 +868,38 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
     return json;
   },
 
+  check_token: async(token) => {
+
+    if( !get().is_loadToken ){
+      set({
+        is_loadToken: true
+      })
+    }else{
+      return { st: 'load' };
+    }
+    
+    if( get().authData.st == 'load' ){
+      const data = {
+        type: 'check_token',
+        token: token
+      };
+        
+      const json = await api('auth', data);
+
+      set({
+        authData: json,
+        is_loadToken: false
+      })
+
+      return json;
+    }else{
+      set({
+        is_loadToken: false
+      })
+
+      return get().authData;
+    }
+  },
 }), shallow)
 
 export const useSettingsStore = createWithEqualityFn((set, get) => ({

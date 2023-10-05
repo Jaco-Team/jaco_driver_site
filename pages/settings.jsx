@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import dynamic from 'next/dynamic'
-import { useSession } from 'next-auth/react';
+import useSession from '@/components/sessionHook';
 import { useRouter } from 'next/navigation'
 
 const DynamicHeader = dynamic(() => import('@/modules/header.jsx'))
@@ -16,29 +16,18 @@ export default function Settings(props) {
 
   const [ setActivePageRU ] = useHeaderStore( state => [ state.setActivePageRU ] )
 
-  const [ isLoad, setIsLoad ] = useState(false);
-
   useEffect( () => {
     setActivePageRU('Настройки');
-  }, [] )
-  
-  useEffect(() => {
-    if( session.status == 'unauthenticated' ){
+
+    if( session.isAuth === false ){
       router.push('/auth', { scroll: false })
     }
-
-    if( session.status == 'authenticated' && isLoad === false ){
-      setIsLoad(true)
-    }
-  }, [session] );
+  }, [] )
 
   return (
-    !isLoad ? 
-      <></> 
-        :
-      <>
-        <DynamicHeader />
-        <DynamicHomePage />
-      </>
+    <>
+      <DynamicHeader />
+      <DynamicHomePage />
+    </>
   )
 }

@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    swcMinify: true,
+    swcMinify: false,
     async redirects() {
         return [
           {
@@ -13,6 +13,9 @@ const nextConfig = {
           },
         ]
     },
+    eslint: { 
+      ignoreDuringBuilds: true, 
+    }, 
 }
 
 module.exports = nextConfig

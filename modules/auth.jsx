@@ -3,24 +3,23 @@ import { useState } from 'react';
 import Meta from '@/components/meta.js';
 
 import { useRouter } from 'next/navigation'
+
 import Image from 'next/image';
-import { useSession, signIn } from 'next-auth/react';
 
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 
-import { useLoginStore } from '@/components/store.js';
+import { useLoginStore } from '@/components/store';
+
 import MyTextInput from '@/ui/MyTextinput';
 import Logo from '@/public/Logo.png';
 
 import { roboto } from '@/ui/Font';
 
 export default function AuthPage(){
+  const router = useRouter();
 
   const [ loginErr, login ] = useLoginStore( state => [ state.loginErr, state.login ] )
-
-  const router = useRouter();
-  const session = useSession();
 
   const [ myLogin, setMyLogin ] = useState('');
   const [ myPWD, setMyPWD ] = useState('');
@@ -39,12 +38,6 @@ export default function AuthPage(){
     const res = await login(myLogin, myPWD);
 
     if( res.st === true ){
-      signIn('credentials', { redirect: true, password: myPWD, login: myLogin, callbackUrl: `${host}/list_orders` })
-    }
-  }
-
-  if( session && session.status == 'authenticated' ){
-    if( session.data?.user?.token.length > 0 ){
       router.push('/list_orders', { scroll: false })
     }
   }

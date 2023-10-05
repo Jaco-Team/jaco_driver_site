@@ -23,14 +23,15 @@ import Button from '@mui/material/Button';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { signOut } from 'next-auth/react';
+//import { signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation'
 import { useHeaderStore, useOrdersStore } from '@/components/store.js';
 
 import AlertOrder from '@/components/AlertOrder';
 import PayModel from '@/components/PayModel';
 
-import { initializeApp } from "firebase/app";
-import { getMessaging, getToken } from "firebase/messaging";
+//import { initializeApp } from "firebase/app";
+//import { getMessaging, getToken } from "firebase/messaging";
 
 import OrderCard from '@/modules/order_card';
 
@@ -82,6 +83,12 @@ function DrawerList() {
 function DrawerHeader() {
 
   const [ isOpenMenu, setOpenMenu, setCloseMenu, phones ] = useHeaderStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.phones ] )
+  const router = useRouter();
+
+  function logOut(){
+    localStorage.removeItem('token');
+    router.push('/auth', { scroll: false })
+  }
 
   return (
     <SwipeableDrawer
@@ -141,7 +148,7 @@ function DrawerHeader() {
         }
 
         <ListItem disablePadding onClick={setCloseMenu}>
-          <ListItemButton onClick={ () => { signOut({callbackUrl: `/auth`}) } }>
+          <ListItemButton onClick={ () => { logOut() } }>
             <ListItemText primary={'Выйти'} />
           </ListItemButton>
         </ListItem>
@@ -192,14 +199,14 @@ function LoadOrderSpiner() {
   );
 }
 
-import { useSession } from 'next-auth/react';
+import useSession from '@/components/sessionHook';
 
 export default function Header() {
 
   const session = useSession();
 
   const [ activePageRU, setOpenMenu, getStat, checkMyPos ] = useHeaderStore( state => [ state.activePageRU, state.setOpenMenu, state.getStat, state.checkMyPos ] )
-  const [ setNotifToken ] = useOrdersStore( state => [ state.setNotifToken ] )
+  //const [ setNotifToken ] = useOrdersStore( state => [ state.setNotifToken ] )
 
   /*useEffect( () => {
     if( session.data?.user?.token ){
@@ -234,10 +241,10 @@ export default function Header() {
   }, [session] )*/
 
   useEffect( () => {
-    if( session.data?.user?.token ){
-      getStat(session.data?.user?.token);
+    if( session?.isAuth === true ){
+      getStat(session?.token);
     }
-  }, [session]);
+  }, []);
 
   useEffect( () => {
     checkMyPos();
