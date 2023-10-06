@@ -25,13 +25,13 @@ export default function Map() {
   useEffect( () => {
     setActivePageRU('Карта заказов');
     clearMap();
-    
+
     if( session.isAuth === false ){
       router.push('/auth', { scroll: false })
     }
     if( session.isAuth === true ){
       setToken(session?.token);
-      getOrders();
+      getOrders(true);
     }
   }, [] )
 
