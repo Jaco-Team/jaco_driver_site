@@ -1,4 +1,5 @@
 import queryString from 'query-string';
+import axios from 'axios';
 
 export function api(module = '', data = {}){
   const urlApi = 'https://api.jacochef.ru/driver/public/index.php/';
@@ -10,14 +11,31 @@ export function api(module = '', data = {}){
       'Content-Type':'application/x-www-form-urlencoded'},
     body: queryString.stringify(data)
   })
+  
   .then((res) => res.json() )
   .then((json) => {
+    //console.log( 'result', json );
     return json;
   })
-  .catch((err) => {
-    return {
-      text: JSON.stringify(err)
-    };
-    console.log(err);
+  .catch((err, err2) => {
+
+    return axios.post(urlApi+module, queryString.stringify(data))
+    .then( (response) => {
+      console.log( 'response', response);
+
+      return {
+        text: response.data
+      };
+    })
+    .catch( (error) => {
+      console.error( 'error', error );
+      return {
+        text: error
+      };
+    });
+
+    //console.log('err', err, err2);
+    
+    
   });
 }
