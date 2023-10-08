@@ -15,7 +15,9 @@ export function api(module = '', data = {}){
     return json;
   })
   .catch((err) => {
-    return {};
+    return {
+      text: JSON.stringify(err)
+    };
     console.log(err);
   });
 }

@@ -150,7 +150,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           }, 300 )
         }
       }else{
-        //get().openErrOrder('Проблемы с интернетом или ошибка на сервере')
+        get().openErrOrder('Ошибка '+json.text)
       }
     } catch(err){
       console.log( err )
@@ -877,7 +877,7 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
     }else{
       return { st: 'load' };
     }
-    
+
     if( get().authData.st == 'load' ){
       const data = {
         type: 'check_token',
