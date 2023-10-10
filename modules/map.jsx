@@ -9,6 +9,8 @@ import Meta from '@/components/meta.js';
 
 import { useOrdersStore } from '@/components/store.js';
 
+import Modal_Finish from './modal_order_finish';
+
 export default function MapPage(){
 
   const [ getOrders, type, update_interval, limit, limit_count, setType ] = 
@@ -40,6 +42,7 @@ export default function MapPage(){
         { limit_count?.length > 0 ? <Typography style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }} component="span">{limit_count}</Typography> : false }
       </div>
       
+      <Modal_Finish />
     </Meta>
   )
 }

@@ -369,10 +369,13 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
 
   renderMap: (home, orders) => {
-    let objectManager = new ymaps.ObjectManager();
+    let objectManager = null;
         
     if( !get().map ){
       ymaps.ready(() => {
+
+        objectManager = new ymaps.ObjectManager()
+
         get().map = new ymaps.Map('map_orders', {
           center: [home?.latitude, home?.longitude],
           //center: [55.76, 37.64],
