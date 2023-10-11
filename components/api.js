@@ -19,7 +19,7 @@ export function api(module = '', data = {}){
   })
   .catch((err, err2) => {
 
-    return axios.post(urlApi+module, queryString.stringify(data))
+    /*return axios.post(urlApi+module, queryString.stringify(data))
     .then( (response) => {
       console.log( 'response', response);
 
@@ -32,7 +32,11 @@ export function api(module = '', data = {}){
       return {
         text: error
       };
-    });
+    });*/
+
+    return {
+      text: ''
+    };
 
     //console.log('err', err, err2);
     
