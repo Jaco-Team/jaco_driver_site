@@ -31,7 +31,7 @@ const HtmlTooltip = styled(({ className, ...props }) => (
 export default function OrderCard({item, is_map = false}){
 
   const [ openTooltip, setOpenTooltip ] = useState(false);
-  const [ actionCencelOrder, actionGetOrder, actionFakeOrder, actionPayOrder, setActiveConfirmFinish, driver_pay ] = useOrdersStore( state => [ state.actionCencelOrder, state.actionGetOrder, state.actionFakeOrder, state.actionPayOrder, state.setActiveConfirmFinish, state.driver_pay ] )
+  const [ actionGetOrder, actionPayOrder, setActiveConfirm, driver_pay ] = useOrdersStore( state => [state.actionGetOrder, state.actionPayOrder, state.setActiveConfirm, state.driver_pay ] )
 
   return(
     <div className={"OrderCard " + roboto.variable}>
@@ -181,7 +181,7 @@ export default function OrderCard({item, is_map = false}){
             
             <div>
               { parseInt(item.status_order) == 6 ? null :
-                <Button onClick={ () => actionCencelOrder(item.id, is_map) }>Отменить</Button>
+                <Button onClick={ () => setActiveConfirm(true, item.id, is_map, 'cancel') }>Отменить</Button>
               }
               <a href={"tel:"+item.number}>{item.number}</a>
             </div>
@@ -189,15 +189,15 @@ export default function OrderCard({item, is_map = false}){
             { parseInt(item.status_order) == 6 ? null :
               parseInt(item.is_my) === 1 && parseInt(item.online_pay) === 0 && parseInt(driver_pay) == 1 ?
               <Grid className='finish_group'>
-                <Button onClick={ () => setActiveConfirmFinish(true, item.id, is_map) }>Завершить</Button>
+                <Button onClick={ () => setActiveConfirm(true, item.id, is_map, 'finish') }>Завершить</Button>
                 <Button onClick={ () => actionPayOrder(item.id, is_map) } ><QrCodeScannerIcon /></Button>
               </Grid>
               :
-              <Button className='finish' onClick={ () => setActiveConfirmFinish(true, item.id, is_map) }>Завершить</Button>
+              <Button className='finish' onClick={ () => setActiveConfirm(true, item.id, is_map, 'finish') }>Завершить</Button>
             }
 
             { parseInt(item.status_order) == 6 ? null :
-              <Button className='client' onClick={ () => actionFakeOrder(item.id, is_map) }>Клиент не вышел на связь</Button>
+              <Button className='client' onClick={ () => setActiveConfirm(true, item.id, is_map, 'fake') }>Клиент не вышел на связь</Button>
             }
           </div>
             :

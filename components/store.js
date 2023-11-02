@@ -37,15 +37,18 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   showPay: false,
   payData: null,
 
-  modalFinish: false,
+  modalConfirm: false,
   order_finish_id: null,
   is_map: false,
+  order_finish_id: null,
 
   isClick: false,
 
   driver_pay: false,
 
   is_check: false,
+
+  location_driver: null,
 
   // открытие закрытие модалки qr оплаты
   setShowPay: (active) => {
@@ -57,8 +60,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
 
   // открытие/закрытие модалки с подтверждением завершения заказа
-  setActiveConfirmFinish: (active, id, is_map) => {
-    set({ modalFinish: active, order_finish_id: id ?? null, is_map: is_map ?? false })
+  setActiveConfirm: (active, order_finish_id, is_map, type_confirm) => {
+    set({ modalConfirm: active, order_finish_id, is_map, type_confirm })
   },
 
   hideDelOrders: async() => {
@@ -185,8 +188,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     })
   },
 
-  check_pos: async( func, data ) => {
-    await navigator.geolocation.getCurrentPosition(({ coords }) => {
+  check_pos: ( func, data ) => {
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
       const { latitude, longitude } = coords
         
       func( { latitude, longitude, data } )
@@ -209,6 +212,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     get().check_pos( get().actionOrder, {order_id: order_id, type: 3, is_map} );
 
     setTimeout( () => {
+      get().setActiveConfirm(false, null, false, null)
       set({ isClick: false })
     }, 300 )
   },
@@ -224,6 +228,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     get().check_pos( get().actionOrder, {order_id: order_id, type: 2, is_map} );
 
     setTimeout( () => {
+      get().setActiveConfirm(false, null, false, null)
       set({ isClick: false })
     }, 300 )
   },
@@ -254,6 +259,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     get().check_pos( get().actionOrderFake, {order_id: order_id, type: 1, is_map} );
 
     setTimeout( () => {
+      get().setActiveConfirm(false, null, false,null)
       set({ isClick: false })
     }, 300 )
   },
@@ -306,12 +312,19 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         set({ is_load: false })
       }, 500 )
     }else{
+
+      set({ location_driver: [latitude, longitude] })
+
       get().closeOrderMap();
       get().getOrders(is_map);
 
       setTimeout( () => {
         set({ is_load: false })
       }, 500 )
+
+      setTimeout(() => {
+        set({ location_driver: null })
+      }, 300000);
     }
   },
 
@@ -419,6 +432,26 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           })
           
         } )
+
+        // локация курьера на карте в случае если клиент не вышел на связь
+        if(get().location_driver) {
+  
+          json.features.push({
+            type: "Feature",
+            id: 0,
+            options: {
+              preset: 'islands#redStretchyIcon', 
+            },
+            properties: {
+              iconContent: 'Курьер здесь'
+            },
+            geometry: {
+              type: "Point",
+              coordinates: get().location_driver,
+            },
+          })
+  
+        }
         
         objectManager.add(json);
         get().map.geoObjects.add(objectManager);
@@ -467,6 +500,26 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         })
         
       } )
+
+      // локация курьера на карте в случае если клиент не вышел на связь
+      if(get().location_driver) {
+
+        json.features.push({
+          type: "Feature",
+          id: 0,
+          options: {
+            preset: 'islands#redStretchyIcon', 
+          },
+          properties: {
+            iconContent: 'Курьер здесь'
+          },
+          geometry: {
+            type: "Point",
+            coordinates: get().location_driver,
+          },
+        })
+
+      }
       
       get().map.geoObjects.removeAll()
       
@@ -497,6 +550,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       }
     });
   },
+
   closeOrderMap: () => {
     set({
       showOrders: [],
