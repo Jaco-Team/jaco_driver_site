@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "PORT=3225 next dev",
+    "dev": "PORT=3225 next dev --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -14,21 +14,21 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.14.12",
-    "@mui/material": "^5.14.12",
-    "@mui/x-date-pickers": "^6.16.1",
-    "@sentry/nextjs": "^7.73.0",
-    "@sentry/react": "^7.73.0",
-    "axios": "^1.5.1",
+    "@mui/icons-material": "^5.14.16",
+    "@mui/material": "^5.14.17",
+    "@mui/x-date-pickers": "^6.18.0",
+    "@sentry/nextjs": "^7.77.0",
+    "@sentry/react": "^7.77.0",
+    "axios": "^1.6.0",
     "dayjs": "^1.11.10",
-    "firebase": "^10.4.0",
-    "next": "13.5.4",
+    "firebase": "^10.5.2",
+    "next": "14.0.1",
     "query-string": "^8.1.0",
     "react": "18.2.0",
     "react-color": "^2.19.3",
     "react-dom": "18.2.0",
-    "sass": "^1.69.0",
+    "sass": "^1.69.5",
     "sharp": "^0.32.6",
-    "zustand": "^4.4.3"
+    "zustand": "^4.4.6"
   }
 }
