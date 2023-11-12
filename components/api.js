@@ -5,6 +5,25 @@ export function api(module = '', data = {}){
   const urlApi = 'https://api.jacochef.ru/driver/public/index.php/';
   //const urlApi = 'https://jacochef.ru/testv2/rest_api2/public/index.php/';
 
+  return axios.post(urlApi+module, queryString.stringify(data))
+    .then( (response) => {
+      
+      if( typeof response.data == 'string' ){
+        return {
+          st: false,
+          text: response.data
+        };
+      }
+
+      return response.data;
+    })
+    .catch( (error) => {
+      console.error( 'error', error );
+      return {
+        text: error
+      };
+    });
+
   return fetch(urlApi+module, {
     method: 'POST',
     headers: {
