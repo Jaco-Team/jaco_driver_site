@@ -1,3 +1,5 @@
+'use client'
+
 import { Html, Head, Main, NextScript } from 'next/document'
 
 import { roboto } from '@/ui/Font.js';
