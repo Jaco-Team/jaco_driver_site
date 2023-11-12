@@ -1,6 +1,4 @@
 export default function useSession() {
-  console.log( 'useSession load' )
-
   if( typeof window == 'undefined' ){
     return {isAuth: 'load', token: ''};
   }
