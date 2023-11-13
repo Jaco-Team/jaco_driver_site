@@ -8,6 +8,8 @@ export function api(module = '', data = {}){
   return axios.post(urlApi+module, queryString.stringify(data))
     .then( (response) => {
       
+      console.log('response', response)
+
       if( typeof response.data == 'string' ){
         return {
           st: false,
@@ -19,9 +21,14 @@ export function api(module = '', data = {}){
     })
     .catch( (error) => {
       console.error( 'error', error );
-      return {
-        text: error
-      };
+
+      if( error.code == "ERR_NETWORK" ){
+
+      }else{
+        return {
+          text: error
+        };
+      }
     });
 
   return fetch(urlApi+module, {
