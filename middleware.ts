@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
   const isLocalhost = request.headers.get("host")?.includes("localhost");
 
   if (!isHttps && !isLocalhost) {
-    const newUrl = new URL(`http://${headers.get("host")}/${headers.get("pathname")}` || "");
+    const newUrl = new URL(`http://${headers.get("host")}` || "");
     newUrl.protocol = "https:";
     return NextResponse.redirect(newUrl.href, 301);
   }
