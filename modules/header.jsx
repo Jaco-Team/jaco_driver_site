@@ -256,6 +256,12 @@ export default function Header() {
     return () => clearInterval(interval);
   }, []);
 
+  if( typeof window != 'undefined' ){
+    if (location.protocol !== 'https:') {
+      location.replace(`https:${location.href.substring(location.protocol.length)}`);
+    }
+  }
+
   return (
     <Box>
       <AppBar>
