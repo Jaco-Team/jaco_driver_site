@@ -382,10 +382,12 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
 
   renderMap: (home, orders) => {
-    let objectManager = new ymaps.ObjectManager();
+    let objectManager = null;
         
     if( !get().map ){
       ymaps.ready(() => {
+        objectManager = new ymaps.ObjectManager();
+
         get().map = new ymaps.Map('map_orders', {
           center: [home?.latitude, home?.longitude],
           //center: [55.76, 37.64],
@@ -456,10 +458,11 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         objectManager.add(json);
         get().map.geoObjects.add(objectManager);
         
-        
+        get().addEvent(objectManager, orders);
       });
     }else{
-      
+      objectManager = new ymaps.ObjectManager();
+
       let json = {
         "type": "FeatureCollection",
         "features": []
@@ -526,13 +529,13 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       objectManager.add(json);
       get().map.geoObjects.add(objectManager);
       
-      
+      get().addEvent(objectManager, orders);
     }
-    
+  },
+
+  addEvent: (objectManager, orders) => {
     objectManager.objects.events.add(['click'], (e) => {
       let order_id = e.get('objectId');
-
-      console.log( 'order_id', order_id )
 
       if( order_id == -1 || order_id == '-1' ){
         //this.setState({ is_open_home: true })
