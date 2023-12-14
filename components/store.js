@@ -748,13 +748,14 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
     }
 
     let data = {
+      type: 'save_false_cash_orders',
       token: token,
       text: text,
       err_id: err_id,
       row_id: row_id
     };
     
-    const res = await api('save_false_cash_orders', data);
+    const res = await api('graph', data);
     
     if( res['st'] == false ){
       set({
@@ -780,12 +781,13 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
     }
 
     let data = {
+      type: 'save_false_cash_cum',
       token: token,
       text: text,
       id: err_id
     };
     
-    const res = await api('save_false_cash_cum', data);
+    const res = await api('graph', data);
     
     if( res['st'] == false ){
       set({
