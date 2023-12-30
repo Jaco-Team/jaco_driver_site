@@ -19,7 +19,7 @@
     }
 
     & .btnGOOD {
-      @include font_custom(1rem, 400, #fff);
+      @include font_custom(1.2rem, 400, #fff);
       background-color: #3caa3c;
       height: $MyScale150_mobile;
       display: flex;
@@ -64,7 +64,7 @@
   }
 
   & .btnGOOD {
-    @include font_custom(1rem, 400, #fff);
+    @include font_custom(1.2rem, 400, #fff);
     background-color: #3caa3c;
 
     height: 50px;
@@ -153,19 +153,19 @@ div.text-base {
       border-width: 1px;
 
       &.Blue {
-        @include font_custom(1rem, 500, #fff);
+        @include font_custom(1.2rem, 500, #fff);
         background-color: #2c75ff;
       }
       &.Purpur {
-        @include font_custom(1rem, 500, #fff);
+        @include font_custom(1.2rem, 500, #fff);
         background-color: #53377a;
       }
       &.Red {
-        @include font_custom(1rem, 500, #fff);
+        @include font_custom(1.2rem, 500, #fff);
         background-color: #fc2847;
       }
       &.Green {
-        @include font_custom(1rem, 500, #fff);
+        @include font_custom(1.2rem, 500, #fff);
         background-color: #3caa3c;
       }
     }
@@ -175,32 +175,31 @@ div.text-base {
     flex-direction: column;
     width: 100%;
     padding-bottom: 15px;
-    & > .addr_1,
-    .addr_2 {
+    & > .addr_1, .addr_2 {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
       & > span:first-child {
-        @include font_custom(1rem, 800);
+        @include font_custom(1.2rem, 800);
         padding-right: 5px;
       }
       & > span:last-child {
-        @include font_custom(1rem, 400);
+        @include font_custom(1.2rem, 400);
         padding-right: 5px;
       }
     }
     & > .addr_2 {
       & > b {
-        @include font_custom(1rem, 800);
+        @include font_custom(1.2rem, 800);
         padding-right: 5px;
       }
       & > span {
-        @include font_custom(1rem, 400);
+        @include font_custom(1.2rem, 400);
         padding-right: 5px;
       }
     }
     & > .addr_3 {
-      @include font_custom(1rem, 800);
+      @include font_custom(1.2rem, 800);
     }
   }
   & .by_time {
@@ -210,11 +209,11 @@ div.text-base {
     padding-bottom: 5px;
     padding-top: 10px;
     & > span:first-child {
-      @include font_custom(1rem, 800);
+      @include font_custom(1.2rem, 800);
       padding-right: 5px;
     }
     & > span:last-child {
-      @include font_custom(1rem, 400);
+      @include font_custom(1.2rem, 400);
     }
   }
   & .by_time_1 {
@@ -222,11 +221,11 @@ div.text-base {
     flex-direction: row;
     flex-wrap: wrap;
     & > span:first-child {
-      @include font_custom(1rem, 800);
+      @include font_custom(1.2rem, 800);
       padding-right: 5px;
     }
     & > span:last-child {
-      @include font_custom(1rem, 400);
+      @include font_custom(1.2rem, 400);
     }
   }
   & .comment {
@@ -236,11 +235,11 @@ div.text-base {
     padding-bottom: 5px;
     width: 100%;
     & > span:first-child {
-      @include font_custom(1rem, 800);
+      @include font_custom(1.2rem, 800);
       padding-right: 5px;
     }
     & > span:last-child {
-      @include font_custom(1rem, 400);
+      @include font_custom(1.2rem, 400);
     }
   }
   & .block_price {
@@ -250,14 +249,14 @@ div.text-base {
     padding-bottom: 5px;
     width: 100%;
     & > span:first-child {
-      @include font_custom(1rem, 800);
+      @include font_custom(1.2rem, 800);
       padding-right: 5px;
     }
     & > span.is_paid:last-child {
-      @include font_custom(1rem, 800, #fc2847);
+      @include font_custom(1.2rem, 800, #fc2847);
     }
     & > span:not(.is_paid):last-child {
-      @include font_custom(1rem, 400);
+      @include font_custom(1.2rem, 400);
     }
   }
   & .action_get {
@@ -270,7 +269,7 @@ div.text-base {
     justify-content: flex-end;
     padding-top: 20px;
     & > a {
-      @include font_custom(1rem, 400);
+      @include font_custom(1.3rem, 400);
       background-color: #bababa;
       width: 100%;
       margin-bottom: 20px;
@@ -283,7 +282,7 @@ div.text-base {
       border-radius: 10px;
     }
     & > button {
-      @include font_custom(1rem, 400, #fff);
+      @include font_custom(1.3rem, 400, #fff);
       background-color: #3caa3c;
       width: 100%;
 
@@ -310,7 +309,7 @@ div.text-base {
       justify-content: center;
       width: 100%;
       & > button {
-        @include font_custom(1rem, 400, #fff);
+        @include font_custom(1.2rem, 400, #fff);
         background-color: #fc2847;
 
         height: 50px;
@@ -324,7 +323,7 @@ div.text-base {
         margin-right: 5px;
       }
       & > a {
-        @include font_custom(1rem, 400);
+        @include font_custom(1.2rem, 400);
         background-color: #bababa;
 
         height: 50px;
@@ -352,7 +351,7 @@ div.text-base {
         margin: 0;
         border-radius: 10px;
         background-color: #3caa3c;
-        @include font_custom(1rem, 400, #fff);
+        @include font_custom(1.2rem, 400, #fff);
       }
 
       & button:first-child {
@@ -368,7 +367,7 @@ div.text-base {
       width: 100%;
       margin-top: 20px;
 
-      @include font_custom(1rem, 400, #fff);
+      @include font_custom(1.2rem, 400, #fff);
       background-color: #3caa3c;
 
       height: 50px;
@@ -382,7 +381,7 @@ div.text-base {
       width: 100%;
       margin-top: 20px;
 
-      @include font_custom(1rem, 400);
+      @include font_custom(1.2rem, 400);
       background-color: #ffcc00;
 
       height: 50px;
@@ -406,7 +405,7 @@ div.text-base {
       width: 100%;
       text-align: center;
 
-      @include font_custom(1rem, 400);
+      @include font_custom(1.2rem, 400);
       background-color: #bababa;
 
       height: 50px;
@@ -421,7 +420,7 @@ div.text-base {
       text-align: center;
       margin-top: 20px;
 
-      @include font_custom(1rem, 400);
+      @include font_custom(1.2rem, 400);
       background-color: #bababa;
 
       height: 50px;

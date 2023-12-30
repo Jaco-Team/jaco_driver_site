@@ -19,10 +19,6 @@ export default function Map() {
   const [ getOrders, setToken, clearMap ] = useOrdersStore( state => [ state.getOrders, state.setToken, state.clearMap ] )
 
   useEffect( () => {
-    
-  }, [] )
-
-  useEffect( () => {
     setActivePageRU('Карта заказов');
     clearMap();
 
