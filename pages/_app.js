@@ -2,6 +2,7 @@
 
 import '../styles/globals.scss'
 
+import '../styles/initial.scss'
 import '../styles/price.scss'
 import '../styles/graph.scss'
 import '../styles/list.scss'

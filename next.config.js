@@ -4,12 +4,16 @@ const nextConfig = {
     async redirects() {
         return [
           {
-            source: '/',
-            destination: 'https://jacodriver.ru/list_orders',
-            //destination: '/list_orders',
+            source: '/:path((?!initial$).*)',
+            destination: 'https://jacodriver.ru/initial',
+            permanent: false,
+
+            // source: '/',
+            // destination: 'https://jacodriver.ru/list_orders',
+            // permanent: true,
+
             //basePath: false,
-            permanent: true,
-          },
+          }
         ]
     },
     eslint: { 

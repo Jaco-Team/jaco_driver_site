@@ -1,0 +1,23 @@
+@import "./settings";
+
+.initial {
+  background-color: $colorMain;
+  height: 100vh;
+
+  .container {
+    height: 70%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+
+    & span{
+      width: 80%;
+      color: #fff;
+      font-size: 30px;
+      font-style: normal;
+      font-weight: 700;
+      text-align: center;
+    }
+  }
+}
