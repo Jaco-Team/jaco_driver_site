@@ -1,24 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    reactStrictMode: true,
-    async redirects() {
-        return [
-          {
-            source: '/:path((?!initial$).*)',
-            destination: 'https://jacodriver.ru/initial',
-            permanent: false,
-
-            // source: '/',
-            // destination: 'https://jacodriver.ru/list_orders',
-            // permanent: true,
-
-            //basePath: false,
-          }
-        ]
-    },
-    eslint: { 
-      ignoreDuringBuilds: true, 
-    }, 
+  reactStrictMode: true,
+  
+  eslint: { 
+    ignoreDuringBuilds: true, 
+  }, 
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/list_orders',
+        permanent: false,
+      }
+    ]
+  },
 }
 
 module.exports = nextConfig

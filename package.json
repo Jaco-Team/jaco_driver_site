@@ -13,23 +13,23 @@
     "win": "next dev -p 3225"
   },
   "dependencies": {
-    "@emotion/react": "^11.11.1",
-    "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.15.0",
-    "@mui/material": "^5.15.0",
-    "@mui/x-date-pickers": "^6.18.4",
-    "@sentry/nextjs": "^7.87.0",
-    "@sentry/react": "^7.87.0",
-    "axios": "^1.6.2",
-    "dayjs": "^1.11.10",
-    "firebase": "^10.7.1",
-    "next": "13.5.4",
-    "query-string": "^8.1.0",
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/icons-material": "^5.16.7",
+    "@mui/material": "^5.16.7",
+    "@mui/x-date-pickers": "^6.20.2",
+    "@sentry/nextjs": "^8.35.0",
+    "@sentry/react": "^8.35.0",
+    "axios": "^1.7.7",
+    "dayjs": "^1.11.13",
+    "firebase": "^10.14.1",
+    "next": "14.2.16",
+    "query-string": "^8.2.0",
     "react": "18.2.0",
     "react-color": "^2.19.3",
     "react-dom": "18.2.0",
-    "sass": "^1.69.5",
-    "sharp": "^0.33.0",
-    "zustand": "^4.4.7"
+    "sass": "^1.80.3",
+    "sharp": "^0.33.5",
+    "zustand": "^4.5.5"
   }
 }

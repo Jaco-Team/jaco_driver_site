@@ -38,7 +38,6 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   payData: null,
 
   modalConfirm: false,
-  order_finish_id: null,
   is_map: false,
   order_finish_id: null,
 
@@ -200,6 +199,23 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     })
   },
 
+  check_pos_watch: (  ) => {
+    navigator.geolocation.watchPosition(({ coords }) => {
+      const { latitude, longitude } = coords
+      
+      console.log( 'watchPosition', latitude, longitude )
+
+      //func( { latitude, longitude, data } )
+      get().setLocationDriver(latitude, longitude)
+    }, ({ message }) => {
+      get().openErrOrder('Не удалось определить местоположение. '+message);
+    }, {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0,
+    })
+  },
+
   actionFinishOrder: (order_id, is_map = false) => {
 
     if( get().isClick === false ){
@@ -293,6 +309,10 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         set({ is_load: false })
       }, 500 )
     }
+  },
+  setLocationDriver: (latitude, longitude) => {
+    console.log( latitude, longitude )
+    set({ location_driver: [latitude, longitude] })
   },
   actionOrderFake: async({data: { order_id, is_map }, latitude = '', longitude = ''}) => {
     let data = {
@@ -445,7 +465,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
               preset: 'islands#redStretchyIcon', 
             },
             properties: {
-              iconContent: 'Курьер здесь'
+              //iconContent: 'Курьер здесь'
+              iconContent: 'Я'
             },
             geometry: {
               type: "Point",
@@ -514,7 +535,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
             preset: 'islands#redStretchyIcon', 
           },
           properties: {
-            iconContent: 'Курьер здесь'
+            //iconContent: 'Курьер здесь'
+            iconContent: 'Я'
           },
           geometry: {
             type: "Point",
@@ -585,6 +607,21 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
   token: '',
 
   check_pos_check: false,
+
+  avgTime: 0,
+
+  getMyAvgTime: async (token) => {
+    const data = {
+      token,
+      type: 'get_my_avg_time',
+    };
+
+    const json = await api('orders', data);
+
+    set({
+      avgTime: json?.text || 0,
+    });
+  },
 
   setActivePageRU: (activePageRU) => {
     set({

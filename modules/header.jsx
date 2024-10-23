@@ -82,7 +82,7 @@ function DrawerList() {
 
 function DrawerHeader() {
 
-  const [ isOpenMenu, setOpenMenu, setCloseMenu, phones ] = useHeaderStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.phones ] )
+  const [ isOpenMenu, setOpenMenu, setCloseMenu, phones, avgTime ] = useHeaderStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.phones, state.avgTime ] )
   const router = useRouter();
 
   function logOut(){
@@ -98,7 +98,11 @@ function DrawerHeader() {
       onOpen={setOpenMenu}
     >
       <List className={roboto.variable}>
-        
+        <ListItem disablePadding>
+          <ListItemButton>
+            <Link href="">{"Ср. время: "+avgTime}</Link>
+          </ListItemButton>
+        </ListItem>
         <ListItem disablePadding onClick={setCloseMenu}>
           <ListItemButton>
             <Link href='/list_orders'>Список заказов</Link>
@@ -205,8 +209,8 @@ export default function Header() {
 
   const session = useSession();
 
-  const [ activePageRU, setOpenMenu, getStat, checkMyPos ] = useHeaderStore( state => [ state.activePageRU, state.setOpenMenu, state.getStat, state.checkMyPos ] )
-  //const [ setNotifToken ] = useOrdersStore( state => [ state.setNotifToken ] )
+  const [ activePageRU, setOpenMenu, getStat, checkMyPos, getMyAvgTime ] = useHeaderStore( state => [ state.activePageRU, state.setOpenMenu, state.getStat, state.checkMyPos, state.getMyAvgTime ] )
+  const [ setNotifToken, check_pos_watch ] = useOrdersStore( state => [ state.setNotifToken, state.check_pos_watch ] )
 
   /*useEffect( () => {
     if( session.data?.user?.token ){
@@ -243,14 +247,18 @@ export default function Header() {
   useEffect( () => {
     if( session?.isAuth === true ){
       getStat(session?.token);
+
+      check_pos_watch();
     }
   }, []);
 
   useEffect( () => {
     checkMyPos();
+    getMyAvgTime(session?.token);
     
     const interval = setInterval(() => {
       checkMyPos();
+      getMyAvgTime(session?.token);
     }, 120 * 1000);
       
     return () => clearInterval(interval);
