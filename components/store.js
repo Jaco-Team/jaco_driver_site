@@ -208,7 +208,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       //func( { latitude, longitude, data } )
       get().setLocationDriver(latitude, longitude)
     }, ({ message }) => {
-      get().openErrOrder('Не удалось определить местоположение. '+message);
+      //get().openErrOrder('Не удалось определить местоположение. '+message);
     }, {
       enableHighAccuracy: true,
       timeout: 5000,
