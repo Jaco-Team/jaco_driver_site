@@ -248,7 +248,7 @@ export default function Header() {
     if( session?.isAuth === true ){
       getStat(session?.token);
 
-      check_pos_watch();
+      //check_pos_watch();
     }
   }, []);
 
