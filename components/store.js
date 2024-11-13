@@ -355,30 +355,30 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         // }
         
         }, ({message}) => {
-          get().openErrOrder(
-            'Не удалось определить местоположение. ' + message,
-          );
+          // get().openErrOrder(
+          //   'Не удалось определить местоположение. ' + message,
+          // );
 
-          setTimeout(() => {
-            set({is_load: false, type_location: 'none'});
-          }, 300);
+          // setTimeout(() => {
+          //   set({is_load: false, type_location: 'none'});
+          // }, 300);
         },
         {
           maximumAge: 10000, 
           timeout: 10000,
           enableHighAccuracy: true,
-          //distanceFilter: 30
+          distanceFilter: 30
         }
       );
 
       set({id_watch});
     
     } catch (err) {
-      get().openErrOrder('Произошла ошибка '+err);
+      // get().openErrOrder('Произошла ошибка '+err);
     
-      setTimeout(() => {
-        set({is_load: false, type_location: 'none'});
-      }, 300);
+      // setTimeout(() => {
+      //   set({is_load: false, type_location: 'none'});
+      // }, 300);
     }
     
   },
