@@ -13,7 +13,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableFooter from '@mui/material/TableFooter';
  
-import { usePriceStore } from '@/components/store.js';
+import { usePriceStore, useHeaderStore } from '@/components/store.js';
 import MyDatepicker from '@/ui/MyDatepicker'
 import dayjs from 'dayjs';
 
@@ -29,6 +29,7 @@ export default function PricePage(){
 
   const [ date, setDate ] = useState( dayjs(new Date()) );
   const [ statPrice, give_hist, getStat ] = usePriceStore( state => [ state.statPrice, state.give_hist, state.getStat ] )
+  const [ globalFontSize ] = useHeaderStore(state => [ state.globalFontSize ]);
   
   useEffect( () => {
     if( session?.isAuth === true ){
@@ -46,6 +47,7 @@ export default function PricePage(){
           label={'Дата'}
           value={date}
           onChange={setDate}
+          fontSize={globalFontSize}
         />
 
       </Grid>
@@ -54,26 +56,26 @@ export default function PricePage(){
         <List>
           <ListItem disablePadding>
             <ListItemButton>
-              <b>Cумма нала: </b>
-              <span>{new Intl.NumberFormat('ru-RU').format(statPrice?.sum_cash)} ₽</span>
+              <b style={{ fontSize: globalFontSize }}>Cумма нала: </b>
+              <span style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(statPrice?.sum_cash)} ₽</span>
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
             <ListItemButton>
-              <b>Cумма безнала: </b>
-              <span>{new Intl.NumberFormat('ru-RU').format(statPrice?.sum_bank)} ₽</span>
+              <b style={{ fontSize: globalFontSize }}>Cумма безнала: </b>
+              <span style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(statPrice?.sum_bank)} ₽</span>
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
             <ListItemButton>
-              <b>Заработал: </b>
-              <span>{new Intl.NumberFormat('ru-RU').format(statPrice?.my_price)} ₽</span>
+              <b style={{ fontSize: globalFontSize }}>Заработал: </b>
+              <span style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(statPrice?.my_price)} ₽</span>
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
             <ListItemButton>
-              <b>Сдача: </b>
-              <span>{new Intl.NumberFormat('ru-RU').format(statPrice?.sdacha)} ₽</span>
+              <b style={{ fontSize: globalFontSize }}>Сдача: </b>
+              <span style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(statPrice?.sdacha)} ₽</span>
             </ListItemButton>
           </ListItem>
 
@@ -81,8 +83,8 @@ export default function PricePage(){
 
           <ListItem disablePadding className='dopPadding'>
             <ListItemButton>
-              <b>Налички: </b>
-              <span>{new Intl.NumberFormat('ru-RU').format(statPrice?.my_cash)} ₽</span>
+              <b style={{ fontSize: globalFontSize }}>Налички: </b>
+              <span style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(statPrice?.my_cash)} ₽</span>
             </ListItemButton>
           </ListItem>
 
@@ -90,20 +92,20 @@ export default function PricePage(){
 
           <ListItem disablePadding>
             <ListItemButton>
-              <b>Количество по налу: </b>
-              <span>{new Intl.NumberFormat('ru-RU').format(statPrice?.count_cash)}</span>
+              <b style={{ fontSize: globalFontSize }}>Количество по налу: </b>
+              <span style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(statPrice?.count_cash)}</span>
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
             <ListItemButton>
-              <b>Количество по безналу: </b>
-              <span>{new Intl.NumberFormat('ru-RU').format(statPrice?.count_bank)}</span>
+              <b style={{ fontSize: globalFontSize }}>Количество по безналу: </b>
+              <span style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(statPrice?.count_bank)}</span>
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
             <ListItemButton>
-              <b>Завершенных заказов: </b>
-              <span>{new Intl.NumberFormat('ru-RU').format(statPrice?.count)}</span>
+              <b style={{ fontSize: globalFontSize }}>Завершенных заказов: </b>
+              <span style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(statPrice?.count)}</span>
             </ListItemButton>
           </ListItem>
           
@@ -118,27 +120,27 @@ export default function PricePage(){
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Время</TableCell>
-                <TableCell>Сданная сумма</TableCell>
+                <TableCell style={{ fontSize: globalFontSize }}>Время</TableCell>
+                <TableCell style={{ fontSize: globalFontSize }}>Сданная сумма</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               { give_hist.map( (rowData, index) =>
                 <TableRow hover key={index}>
-                  <TableCell>{rowData.time}</TableCell>
-                  <TableCell>{new Intl.NumberFormat('ru-RU').format(rowData.give)} ₽</TableCell>
+                  <TableCell style={{ fontSize: globalFontSize }}>{rowData.time}</TableCell>
+                  <TableCell style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(rowData.give)} ₽</TableCell>
                 </TableRow>
               ) }
             </TableBody>
             
             <TableFooter>
               <TableRow>
-                <TableCell>Всего сдал</TableCell>
-                <TableCell>{new Intl.NumberFormat('ru-RU').format(statPrice?.full_give)} ₽</TableCell>
+                <TableCell style={{ fontSize: globalFontSize }}>Всего сдал</TableCell>
+                <TableCell style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(statPrice?.full_give)} ₽</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell>Осталось сдать</TableCell>
-                <TableCell>{new Intl.NumberFormat('ru-RU').format(statPrice?.my_cash)} ₽</TableCell>
+                <TableCell style={{ fontSize: globalFontSize }}>Осталось сдать</TableCell>
+                <TableCell style={{ fontSize: globalFontSize }}>{new Intl.NumberFormat('ru-RU').format(statPrice?.my_cash)} ₽</TableCell>
               </TableRow>
             </TableFooter>
             

@@ -29,6 +29,7 @@
     & p,b,span, th, td{
         @include font30_400();
     }
+    
     & b{
         font-weight: 800!important;
         

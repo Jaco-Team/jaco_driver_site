@@ -25,7 +25,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 
-import { useGraphStore } from '@/components/store.js';
+import { useGraphStore, useHeaderStore } from '@/components/store.js';
 import useSession from '@/components/sessionHook';
 
 import dayjs from 'dayjs';
@@ -39,6 +39,8 @@ function SwipeableTemporaryDrawer() {
 
   const [ isOpenMenu, setOpenMenu, setCloseMenu, getGraph, month_list ] = useGraphStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.getGraph, state.month_list ] )
 
+  const [ globalFontSize ] = useHeaderStore(state => [ state.globalFontSize ]);
+
   return (
     <SwipeableDrawer
       anchor={'bottom'}
@@ -50,7 +52,13 @@ function SwipeableTemporaryDrawer() {
         { month_list.map( (item, key) =>
           <ListItem disablePadding key={key} className={ parseInt(item.is_active) == 1 ? 'active' : '' } onClick={ () => getGraph(item.day, session?.token) }>
             <ListItemButton>
-              <ListItemText primary={item.mounth} />
+              <ListItemText  primary={item.mounth} 
+                sx={{
+                  "& .MuiTypography-root": {
+                    fontSize: globalFontSize,
+                  },
+                }}
+              />
             </ListItemButton>
           </ListItem>
         ) }
@@ -63,6 +71,8 @@ function ModalErr() {
   const session = useSession();
 
   const [ isOpenModalErr, closeModalErr, showErrOrderCum, showErrOrder, false_err_order, false_err_cam, errText, setTextErr ] = useGraphStore( state => [ state.isOpenModalErr, state.closeModalErr, state.showErrOrderCum, state.showErrOrder, state.false_err_order, state.false_err_cam, state.errText, state.setTextErr ] )
+
+  const [ globalFontSize ] = useHeaderStore(state => [ state.globalFontSize ]);
 
   return (
     <SwipeableDrawer
@@ -77,36 +87,36 @@ function ModalErr() {
 
         { !showErrOrder ? null :
           <>
-            <Typography component="span" style={{ color: '#000', fontSize: 15 }}>Ошибка по заказу №{showErrOrder.order_id}</Typography>
+            <Typography component="span" style={{ color: '#000', fontSize: globalFontSize }}>Ошибка по заказу №{showErrOrder.order_id}</Typography>
           
             <div style={{ width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-              <Typography component="span" style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Дата заказа: </Typography>
-              <Typography component="span" style={{ fontSize: 15, color: '#000' }}> {showErrOrder.date_time_order}</Typography>  
+              <Typography component="span" style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Дата заказа: </Typography>
+              <Typography component="span" style={{ fontSize: globalFontSize, color: '#000' }}> {showErrOrder.date_time_order}</Typography>  
             </div>
             
             <div style={{ width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-              <Typography component="span" style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Ошибка заказа: </Typography>
-              <Typography component="span" style={{ fontSize: 15, color: '#000' }}> {showErrOrder.order_desc}</Typography>  
+              <Typography component="span" style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Ошибка заказа: </Typography>
+              <Typography component="span" style={{ fontSize: globalFontSize, color: '#000' }}> {showErrOrder.order_desc}</Typography>  
             </div>
             
             <div style={{ width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-              <Typography component="span" style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Позиция: </Typography>
-              <Typography component="span" style={{ fontSize: 15, color: '#000' }}> {showErrOrder.item_name}</Typography>  
+              <Typography component="span" style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Позиция: </Typography>
+              <Typography component="span" style={{ fontSize: globalFontSize, color: '#000' }}> {showErrOrder.item_name}</Typography>  
             </div>
             
             <div style={{ width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-              <Typography component="span" style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Ошибка: </Typography>
-              <Typography component="span" style={{ fontSize: 15, color: '#000' }}> {showErrOrder.pr_name}</Typography>  
+              <Typography component="span" style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Ошибка: </Typography>
+              <Typography component="span" style={{ fontSize: globalFontSize, color: '#000' }}> {showErrOrder.pr_name}</Typography>  
             </div>
             
             <div style={{ width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-              <Typography component="span" style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Сумма: </Typography>
-              <Typography component="span" style={{ fontSize: 15, color: '#000' }}> {showErrOrder.my_price}₽</Typography>  
+              <Typography component="span" style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Сумма: </Typography>
+              <Typography component="span" style={{ fontSize: globalFontSize, color: '#000' }}> {showErrOrder.my_price}₽</Typography>  
             </div>
             
             { showErrOrder.imgs.length == 0 ? null :
               <div style={{ width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-                <Typography component="span" style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Фото</Typography>
+                <Typography component="span" style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Фото</Typography>
               </div>
             }
             
@@ -122,7 +132,7 @@ function ModalErr() {
             { !showErrOrder.new_text_1 || showErrOrder.new_text_1.length == 0 ? 
               parseInt(showErrOrder.is_edit) == 0 ? null :
               <div style={{ display: 'flex', flexDirection: 'row', width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-                <Typography component="span" style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Причина обжалования:</Typography>
+                <Typography component="span" style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Причина обжалования:</Typography>
                 <TextareaAutosize
                   style={{ width: '100%', minHeight: 50 }}
                   value={errText}
@@ -138,15 +148,15 @@ function ModalErr() {
               </div>
                 :
               <div style={{ display: 'flex', flexDirection: 'row', width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-                <Typography component="span" style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Причина обжалования:</Typography>
-                <Typography component="span" style={{ fontSize: 15, color: '#000' }}>{showErrOrder.new_text_1}</Typography>  
+                <Typography component="span" style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Причина обжалования:</Typography>
+                <Typography component="span" style={{ fontSize: globalFontSize, color: '#000' }}>{showErrOrder.new_text_1}</Typography>  
               </div>
             }
             
             { !showErrOrder.new_text_2 || showErrOrder.new_text_2.length == 0 ? null :
               <div style={{ display: 'flex', flexDirection: 'row', width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-                <Typography component="span" style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Ответ обжалования:</Typography>
-                <Typography component="span" style={{ fontSize: 15, color: '#000' }}>{showErrOrder.new_text_2}</Typography>  
+                <Typography component="span" style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Ответ обжалования:</Typography>
+                <Typography component="span" style={{ fontSize: globalFontSize, color: '#000' }}>{showErrOrder.new_text_2}</Typography>  
               </div>
             }
           </>
@@ -154,26 +164,26 @@ function ModalErr() {
         
         { !showErrOrderCum ? null :
           <>
-            <Typography style={{ color: '#000', fontSize: 15 }}>Ошибка №{showErrOrderCum.id}</Typography>
+            <Typography style={{ color: '#000', fontSize: globalFontSize }}>Ошибка №{showErrOrderCum.id}</Typography>
           
             <div style={{ display: 'flex', flexDirection: 'row', width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-              <Typography style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Дата время ошибки: </Typography>
-              <Typography style={{ fontSize: 15, color: '#000' }}>{showErrOrderCum.date_time_fine}</Typography>  
+              <Typography style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Дата время ошибки: </Typography>
+              <Typography style={{ fontSize: globalFontSize, color: '#000' }}>{showErrOrderCum.date_time_fine}</Typography>  
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'row', width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-              <Typography style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Ошибка: </Typography>
-              <Typography style={{ fontSize: 15, color: '#000' }}>{showErrOrderCum.fine_name}</Typography>  
+              <Typography style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Ошибка: </Typography>
+              <Typography style={{ fontSize: globalFontSize, color: '#000' }}>{showErrOrderCum.fine_name}</Typography>  
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'row', width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-              <Typography style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Сумма: </Typography>
-              <Typography style={{ fontSize: 15, color: '#000' }}>{showErrOrderCum.price}</Typography>  
+              <Typography style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Сумма: </Typography>
+              <Typography style={{ fontSize: globalFontSize, color: '#000' }}>{showErrOrderCum.price}</Typography>  
             </div>
             
             { showErrOrderCum.imgs.length == 0 ? null :
               <div style={{ display: 'flex', flexDirection: 'row', width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-                <Typography style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Фото</Typography>
+                <Typography style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Фото</Typography>
               </div>
             }
             
@@ -188,7 +198,7 @@ function ModalErr() {
             { !showErrOrderCum.text_one || showErrOrderCum.text_one.length == 0 ? 
               parseInt(showErrOrderCum.is_edit) == 0 ? null :
               <div style={{ display: 'flex', flexDirection: 'row', width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-                <Typography style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Причина обжалования:</Typography>
+                <Typography style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Причина обжалования:</Typography>
                 <TextareaAutosize
                   style={{ width: '100%', minHeight: 50 }}
                   value={errText}
@@ -204,15 +214,15 @@ function ModalErr() {
               </div>
                 :
               <div style={{ display: 'flex', flexDirection: 'row', width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-                <Typography style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Причина обжалования:</Typography>
-                <Typography style={{ fontSize: 15, color: '#000' }}>{showErrOrderCum.text_one}</Typography>  
+                <Typography style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Причина обжалования:</Typography>
+                <Typography style={{ fontSize: globalFontSize, color: '#000' }}>{showErrOrderCum.text_one}</Typography>  
               </div>
             }
             
             { !showErrOrderCum.text_two || showErrOrder.text_two.length == 0 ? null :
               <div style={{ display: 'flex', flexDirection: 'row', width: 'auto', height: 'auto', flexWrap: 'wrap', flexShrink: 1, paddingTop: 20 }}>
-                <Typography style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Ответ обжалования:</Typography>
-                <Typography style={{ fontSize: 15, color: '#000' }}>{showErrOrderCum.text_two}</Typography>  
+                <Typography style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Ответ обжалования:</Typography>
+                <Typography style={{ fontSize: globalFontSize, color: '#000' }}>{showErrOrderCum.text_two}</Typography>  
               </div>
             }
           </>
@@ -225,12 +235,14 @@ function ModalErr() {
 function AlertErr() {
   const [ isshowErrOrder, textErrOrder, closeErrOrder ] = useGraphStore( state => [ state.isshowErrOrder, state.textErrOrder, state.closeErrOrder ] );
 
+  const [ globalFontSize ] = useHeaderStore(state => [ state.globalFontSize ]);
+
   return (
     <Dialog onClose={closeErrOrder} open={isshowErrOrder}>
-      <DialogTitle>{textErrOrder}</DialogTitle>
+      <DialogTitle style={{ fontSize:globalFontSize }}>{textErrOrder}</DialogTitle>
       
       <DialogActions>
-        <Button onClick={closeErrOrder} autoFocus>Хорошо</Button>
+        <Button onClick={closeErrOrder} autoFocus style={{ fontSize:globalFontSize }}>Хорошо</Button>
       </DialogActions>
     </Dialog>
   );
@@ -241,6 +253,8 @@ export default function GraphPage(){
 
   const [ month, setMonth ] = useState('');
   const [ setOpenMenu, getGraph, month_list, dates, users, err_orders, err_cam, openModalErr ] = useGraphStore( state => [ state.setOpenMenu, state.getGraph, state.month_list, state.dates, state.users, state.err_orders, state.err_cam, state.openModalErr ] )
+
+  const [ globalFontSize ] = useHeaderStore(state => [ state.globalFontSize ]);
 
   const [ is_load, setIsLoad ] = useState( false );
 
@@ -270,7 +284,7 @@ export default function GraphPage(){
       <Grid container spacing={3} className={"graph " + roboto.variable}>
       
         <Grid item xs={12}>
-          <Button variant="text" onClick={setOpenMenu}>{month}</Button>
+          <Button variant="text" style={{ fontSize: globalFontSize }} onClick={setOpenMenu}>{month}</Button>
         </Grid>
 
         <Grid item xs={12}>
@@ -284,7 +298,7 @@ export default function GraphPage(){
                     {dates.map((cellData, cellIndex) => 
                       <TableCell
                         key={cellIndex}
-                        style={ {width: 50, height: 30, textAlign: 'center', border: '1px solid #e5e5e5'} }
+                        style={ {width: 50, height: 30, textAlign: 'center', border: '1px solid #e5e5e5', fontSize: globalFontSize} }
                       >
                         {cellData.day}
                       </TableCell>
@@ -294,7 +308,7 @@ export default function GraphPage(){
                   
                   <TableRow>
                     <TableCell
-                      style={ {width: 200, height: 30, textAlign: 'center', border: '1px solid #e5e5e5'} }
+                      style={ {width: 200, height: 30, textAlign: 'center', border: '1px solid #e5e5e5', fontSize: globalFontSize} }
                     >
                       Сотрудник
                     </TableCell>
@@ -302,7 +316,7 @@ export default function GraphPage(){
                     {dates.map((cellData, cellIndex) => 
                       <TableCell
                         key={cellIndex}
-                        style={ {width: 50, height: 30, textAlign: 'center', border: '1px solid #e5e5e5'} }
+                        style={ {width: 50, height: 30, textAlign: 'center', border: '1px solid #e5e5e5', fontSize: globalFontSize} }
                       >
                         {cellData.dow}
                       </TableCell>
@@ -314,7 +328,7 @@ export default function GraphPage(){
                   { users.map( (rowData, index) =>
                     <TableRow hover key={index}>
                       { rowData.map( (cellData, cellIndex) =>
-                        <TableCell key={cellIndex} style={cellIndex == 0 ? {width: 200, height: 30} : {width: 50, height: 30, textAlign: 'center', border: '1px solid #e5e5e5'}}>
+                        <TableCell key={cellIndex} style={cellIndex == 0 ? {width: 200, height: 30} : {width: 50, height: 30, textAlign: 'center', border: '1px solid #e5e5e5', fontSize: globalFontSize}}>
                           {cellIndex == 0 ? cellData.user_name : cellData.min == '0' ? '' : cellData.hours}
                         </TableCell>
                       ) }
@@ -329,28 +343,28 @@ export default function GraphPage(){
           
         <Grid item xs={12}>
               
-          <Typography style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Ошибки по заказам</Typography>
+          <Typography style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Ошибки по заказам</Typography>
           
           <Paper>
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Заказ</TableCell>
-                    <TableCell>Дата заказа</TableCell>
-                    <TableCell>Ошибка</TableCell>
-                    <TableCell>Довоз</TableCell>
-                    <TableCell>Сумма</TableCell>
+                    <TableCell style={{ fontSize: globalFontSize }}>Заказ</TableCell>
+                    <TableCell style={{ fontSize: globalFontSize }}>Дата заказа</TableCell>
+                    <TableCell style={{ fontSize: globalFontSize }}>Ошибка</TableCell>
+                    <TableCell style={{ fontSize: globalFontSize }}>Довоз</TableCell>
+                    <TableCell style={{ fontSize: globalFontSize }}>Сумма</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   { err_orders.map( (rowData, index) =>
                     <TableRow hover key={index} onClick={ () => { openModalErr('showErrOrder', rowData) } }>
-                      <TableCell>{rowData.order_id}</TableCell>
-                      <TableCell>{rowData.date_time_order}</TableCell>
-                      <TableCell>{rowData.pr_name}</TableCell>
-                      <TableCell>{parseInt(rowData['new_order_id']) > 0 ? '+' : ' '}</TableCell>
-                      <TableCell>{rowData.my_price+' р.'}</TableCell>
+                      <TableCell style={{ fontSize: globalFontSize }}>{rowData.order_id}</TableCell>
+                      <TableCell style={{ fontSize: globalFontSize }}>{rowData.date_time_order}</TableCell>
+                      <TableCell style={{ fontSize: globalFontSize }}>{rowData.pr_name}</TableCell>
+                      <TableCell style={{ fontSize: globalFontSize }}>{parseInt(rowData['new_order_id']) > 0 ? '+' : ' '}</TableCell>
+                      <TableCell style={{ fontSize: globalFontSize }}>{rowData.my_price+' р.'}</TableCell>
                     </TableRow>
                   ) }
                 </TableBody>
@@ -362,26 +376,26 @@ export default function GraphPage(){
             
         <Grid item xs={12} style={{ paddingTop: 20 }}>
           
-          <Typography style={{ fontSize: 15, fontWeight: 'bold', color: '#000' }}>Ошибки по камерам</Typography>
+          <Typography style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}>Ошибки по камерам</Typography>
             
           <Paper>
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>#</TableCell>
-                    <TableCell>Дата время совершения ошибки</TableCell>
-                    <TableCell>Ошибка</TableCell>
-                    <TableCell>Сумма</TableCell>
+                    <TableCell style={{ fontSize: globalFontSize }}>#</TableCell>
+                    <TableCell style={{ fontSize: globalFontSize }}>Дата время совершения ошибки</TableCell>
+                    <TableCell style={{ fontSize: globalFontSize }}>Ошибка</TableCell>
+                    <TableCell style={{ fontSize: globalFontSize }}>Сумма</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   { err_cam.map( (rowData, index) =>
                     <TableRow hover key={index} onClick={ () => { openModalErr('showErrOrderCum', rowData) } }>
-                      <TableCell>{rowData.id}</TableCell>
-                      <TableCell>{rowData.date_time_fine}</TableCell>
-                      <TableCell>{rowData.fine_name}</TableCell>
-                      <TableCell>{rowData.price+' р.'}</TableCell>
+                      <TableCell style={{ fontSize: globalFontSize }}>{rowData.id}</TableCell>
+                      <TableCell style={{ fontSize: globalFontSize }}>{rowData.date_time_fine}</TableCell>
+                      <TableCell style={{ fontSize: globalFontSize }}>{rowData.fine_name}</TableCell>
+                      <TableCell style={{ fontSize: globalFontSize }}>{rowData.price+' р.'}</TableCell>
                     </TableRow>
                   ) }
                 </TableBody>

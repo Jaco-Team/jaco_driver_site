@@ -305,9 +305,10 @@ $MyScale1320_mobile: 112.82051282051vw;
 $MyScale1871_mobile: 159.91452991453vw;
 
 @mixin fonsNew($size: 1rem, $family: $Roboto, $color: $colorText) {
-  font-size: $size !important;
+  //font-size: $size !important;
+  font-size: $size;
   font-family: $family !important;
-  color: $color;
+  color: $colorText;
 }
 
 @mixin font_custom($size: 1rem, $weight: 300, $color: $colorText) {

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { useOrdersStore } from '@/components/store.js';
+import { useOrdersStore, useHeaderStore } from '@/components/store.js';
 
 import Grid from '@mui/material/Grid';
 import CachedIcon from '@mui/icons-material/Cached';
@@ -21,7 +21,7 @@ export default function ListPage() {
     setOpenMenu,
     update_interval,
     limit,
-    limit_count,
+    limit_count
   ] = useOrdersStore((state) => [
     state.orders,
     state.getOrders,
@@ -29,8 +29,10 @@ export default function ListPage() {
     state.setOpenMenu,
     state.update_interval,
     state.limit,
-    state.limit_count,
+    state.limit_count
   ]);
+
+  const [ globalFontSize ] = useHeaderStore(state => [ state.globalFontSize ]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -49,7 +51,7 @@ export default function ListPage() {
         style={{ display: 'flex', justifyContent: 'center' }}
       >
         <Grid item xs={12}>
-          <Button variant="text" onClick={setOpenMenu}>
+          <Button variant="text" onClick={setOpenMenu} style={{ fontSize: globalFontSize }}>
             {type.text}
           </Button>
           <Button variant="text" onClick={() => getOrders(false, true)}>
@@ -68,14 +70,14 @@ export default function ListPage() {
           }}
         >
           <Typography
-            style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}
+            style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}
             component="span"
           >
             {limit}
           </Typography>
           {limit_count?.length > 0 ? (
             <Typography
-              style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}
+              style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}
               component="span"
             >
               {limit_count}
@@ -89,7 +91,7 @@ export default function ListPage() {
       <Grid container spacing={3} className="list_orders">
         {orders.map((item, key) => (
           <Grid item xs={12} sm={3} key={key} style={{ paddingLeft: 0 }}>
-            <OrderCard key={key} item={item} is_map={false} />
+            <OrderCard key={key} item={item} is_map={false} globalFontSize={globalFontSize} />
           </Grid>
         ))}
       </Grid>

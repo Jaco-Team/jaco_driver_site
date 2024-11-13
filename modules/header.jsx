@@ -60,6 +60,8 @@ function DrawerList() {
 
   const [ isOpenMenu, setOpenMenu, setCloseMenu, types, setType ] = useOrdersStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.types, state.setType ] )
 
+  const [ globalFontSize ] = useHeaderStore(state => [ state.globalFontSize ]);
+
   return (
     <SwipeableDrawer
       anchor={'bottom'}
@@ -71,7 +73,14 @@ function DrawerList() {
         { types.map( (item, key) =>
           <ListItem disablePadding key={key} onClick={ () => setType(item) }>
             <ListItemButton>
-              <ListItemText primary={item.text} />
+              <ListItemText 
+                primary={item.text} 
+                sx={{
+                  "& .MuiTypography-root": {
+                    fontSize: globalFontSize,
+                  },
+                }}
+              />
             </ListItemButton>
           </ListItem>
         ) }
@@ -82,7 +91,7 @@ function DrawerList() {
 
 function DrawerHeader() {
 
-  const [ isOpenMenu, setOpenMenu, setCloseMenu, phones, avgTime ] = useHeaderStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.phones, state.avgTime ] )
+  const [ isOpenMenu, setOpenMenu, setCloseMenu, phones, avgTime, globalFontSize ] = useHeaderStore( state => [ state.isOpenMenu, state.setOpenMenu, state.setCloseMenu, state.phones, state.avgTime, state.globalFontSize ] )
   const router = useRouter();
 
   function logOut(){
@@ -100,60 +109,71 @@ function DrawerHeader() {
       <List className={roboto.variable}>
         <ListItem disablePadding>
           <ListItemButton>
-            <Link href="">{"Ср. время: "+avgTime}</Link>
+            <Link href="" style={{ fontSize: globalFontSize }} >{"Ср. время: "+avgTime}</Link>
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding onClick={setCloseMenu}>
           <ListItemButton>
-            <Link href='/list_orders'>Список заказов</Link>
+            <Link href='/list_orders' style={{ fontSize: globalFontSize }}>Список заказов</Link>
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding onClick={setCloseMenu}>
           <ListItemButton>
-            <Link href='/map_orders'>Карта заказов</Link>
+            <Link href='/map_orders' style={{ fontSize: globalFontSize }}>Карта заказов</Link>
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding onClick={setCloseMenu}>
           <ListItemButton>
-            <Link href='/price'>Расчет</Link>
+            <Link href='/price' style={{ fontSize: globalFontSize }}>Расчет</Link>
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding onClick={setCloseMenu}>
           <ListItemButton>
-            <Link href='/graph'>График работы</Link>
+            <Link href='/graph' style={{ fontSize: globalFontSize }}>График работы</Link>
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding onClick={setCloseMenu}>
           <ListItemButton>
-            <Link href='/settings'>Настройки</Link>
+            <Link href='/statistics' style={{ fontSize: globalFontSize }}>Статистика</Link>
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding onClick={setCloseMenu}>
+          <ListItemButton>
+            <Link href='/settings' style={{ fontSize: globalFontSize }}>Настройки</Link>
           </ListItemButton>
         </ListItem>
 
         { phones?.phone_upr.length == 0 ? false :
           <ListItem disablePadding>
             <ListItemButton>
-              <Link href={'tel:'+ phones?.phone_upr }>Директор</Link>
+              <Link href={'tel:'+ phones?.phone_upr } style={{ fontSize: globalFontSize }}>Директор</Link>
             </ListItemButton>
           </ListItem>
         }
         { phones?.phone_man.length == 0 ? false :
           <ListItem disablePadding>
             <ListItemButton>
-              <Link href={'tel:'+ phones?.phone_man }>Менеджер</Link>
+              <Link href={'tel:'+ phones?.phone_man } style={{ fontSize: globalFontSize }}>Менеджер</Link>
             </ListItemButton>
           </ListItem>
         }
         { phones?.phone_center.length == 0 ? false :
           <ListItem disablePadding>
             <ListItemButton>
-              <Link href={'tel:'+ phones?.phone_center }>Контакт-центр</Link>
+              <Link href={'tel:'+ phones?.phone_center } style={{ fontSize: globalFontSize }}>Контакт-центр</Link>
             </ListItemButton>
           </ListItem>
         }
 
         <ListItem disablePadding onClick={setCloseMenu}>
           <ListItemButton onClick={ () => { logOut() } }>
-            <ListItemText primary={'Выйти'} />
+            <ListItemText  primary={'Выйти'}  
+              sx={{
+                "& .MuiTypography-root": {
+                  fontSize: globalFontSize,
+                },
+              }}
+            />
           </ListItemButton>
         </ListItem>
         
@@ -165,6 +185,7 @@ function DrawerHeader() {
 function ModalDelOrders() {
 
   const [ del_orders, hideDelOrders ] = useOrdersStore( state => [ state.del_orders, state.hideDelOrders ] )
+  const [ globalFontSize ] = useHeaderStore(state => [ state.globalFontSize ]);
 
   return (
     <SwipeableDrawer
@@ -176,18 +197,18 @@ function ModalDelOrders() {
     >
       <div className="lineModal" />
        
-      <Typography style={{ fontSize: 20, paddingTop: 10, paddingBottom: 10, color: '#000', textAlign: 'center', fontWeight: 'bold' }} component="h6">Удаленные заказы</Typography>
+      <Typography style={{ fontSize: globalFontSize, paddingTop: 10, paddingBottom: 10, color: '#000', textAlign: 'center', fontWeight: 'bold' }} component="h6">Удаленные заказы</Typography>
 
       <div className='modalOrderDelContent' style={{ height: 300, width: '100%', overflow: 'auto', padding: 20, paddingTop: 10 }}>
         { del_orders?.map( (item, key) =>
           <div key={key} style={{ display: 'flex', flexDirection: 'column' }}>
-            <Typography component="span">Удаленный заказ #{item.id}</Typography>
-            <Typography component="span">Адрес: {item.addr}</Typography>
+            <Typography component="span" style={{ fontSize: globalFontSize }}>Удаленный заказ #{item.id}</Typography>
+            <Typography component="span" style={{ fontSize: globalFontSize }}>Адрес: {item.addr}</Typography>
           </div>
         )}
       </div>
       
-      <Button className='btnGOOD' onClick={hideDelOrders}>Хорошо</Button>
+      <Button className='btnGOOD' onClick={hideDelOrders} style={{ fontSize: globalFontSize }}>Хорошо</Button>
     </SwipeableDrawer>
   );
 }
@@ -209,8 +230,8 @@ export default function Header() {
 
   const session = useSession();
 
-  const [ activePageRU, setOpenMenu, getStat, checkMyPos, getMyAvgTime ] = useHeaderStore( state => [ state.activePageRU, state.setOpenMenu, state.getStat, state.checkMyPos, state.getMyAvgTime ] )
-  const [ setNotifToken, check_pos_watch ] = useOrdersStore( state => [ state.setNotifToken, state.check_pos_watch ] )
+  const [ activePageRU, setOpenMenu, getStat, checkMyPos, getMyAvgTime, getMyFontSize, globalFontSize ] = useHeaderStore( state => [ state.activePageRU, state.setOpenMenu, state.getStat, state.checkMyPos, state.getMyAvgTime, state.getMyFontSize, state.globalFontSize ] )
+  const [MyCurrentLocation] = useOrdersStore( state => [state.MyCurrentLocation] )
 
   /*useEffect( () => {
     if( session.data?.user?.token ){
@@ -248,6 +269,8 @@ export default function Header() {
     if( session?.isAuth === true ){
       getStat(session?.token);
 
+      MyCurrentLocation();
+
       //check_pos_watch();
     }
   }, []);
@@ -255,6 +278,8 @@ export default function Header() {
   useEffect( () => {
     checkMyPos();
     getMyAvgTime(session?.token);
+
+    getMyFontSize(session?.token);
     
     const interval = setInterval(() => {
       checkMyPos();
@@ -284,7 +309,7 @@ export default function Header() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>{activePageRU}</Typography>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} style={{ fontSize: globalFontSize }}>{activePageRU}</Typography>
         </Toolbar>
       </AppBar>
 

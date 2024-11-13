@@ -1,36 +1,307 @@
-@import "./settings";
+@import './settings';
 
-.map_orders{
-    width: 100vw!important;
-    margin: 56px 0 0!important;
-    height: calc(100vh - 56px);
+.map_orders {
+  width: 100vw !important;
+  margin: 56px 0 0 !important;
+  height: calc(100vh - 56px);
 }
 
-.map{ 
-    position: absolute;
-    margin-top: 64px!important;
-    margin: 0;
-    padding-left: 20px;
-    padding-right: 20px;
+.map {
+  position: absolute;
+  margin-top: 64px !important;
+  margin: 0;
+  padding-left: 20px;
+  padding-right: 20px;
+  width: 100%;
+  z-index: 3;
+
+  & .MuiGrid-item {
+    padding-left: 0;
+  }
+  & .MuiFormControl-root.MuiTextField-root {
     width: 100%;
-    z-index: 3;
+  }
 
-    & .MuiGrid-item{
-        padding-left: 0;
+  & > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    & > button {
+      @include font_custom(1rem, 500, $colorMain);
     }
-    & .MuiFormControl-root.MuiTextField-root{
-        width: 100%;
-    }
+  }
+  & > div:last-child {
+    text-align: center;
+    @include font_custom(1.2rem, 800);
+  }
+}
 
-    & > div:first-child{
-        display: flex;
-        justify-content: space-between;
-        & > button{
-            @include font_custom(1rem, 500, $colorMain);
-        }
+.map-img {
+  position: absolute;
+  left: -16px;
+  top: -18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition-duration: 1s;
+  width: fit-content;
+
+  .span_svg_home {
+    width: 28px;
+    height: 28px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
     }
-    & > div:last-child{
-        text-align: center;
-        @include font_custom(1.2rem, 800);
+  }
+
+  .span_svg_circle_0_5 {
+    width: 14px;
+    height: 14px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
     }
+  }
+
+  .span_svg_circle_0_6 {
+    width: 16px;
+    height: 16px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_circle_0_7 {
+    width: 18px;
+    height: 18px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_circle_0_8 {
+    width: 20px;
+    height: 20px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_circle_0_9 {
+    width: 22px;
+    height: 22px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_circle_1 {
+    width: 24px;
+    height: 24px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_circle_1_1 {
+    width: 26px;
+    height: 26px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_circle_1_2 {
+    width: 28px;
+    height: 28px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_circle_1_3 {
+    width: 30px;
+    height: 30px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_loc_0_5 {
+    width: 10px;
+    height: 10px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_loc_0_6 {
+    width: 12px;
+    height: 12px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_loc_0_7 {
+    width: 14px;
+    height: 14px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_loc_0_8 {
+    width: 16px;
+    height: 16px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_loc_0_9 {
+    width: 18px;
+    height: 18px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_loc_1 {
+    width: 20px;
+    height: 20px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_loc_1_1 {
+    width: 22px;
+    height: 22px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_loc_1_2 {
+    width: 24px;
+    height: 24px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_svg_loc_1_3 {
+    width: 26px;
+    height: 26px;
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
+
+  .span_text_transparent {
+    white-space: nowrap;
+    background-color: transparent;
+    margin-left: -5px;
+    border-radius: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+    color: #000;
+    font-size: 16px;
+  }
+
+  .span_text_white {
+    white-space: nowrap;
+    background-color: #fff;
+    margin-left: 5px;
+    border-radius: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    color: #000;
+    font-size: 16px;
+  }
+
+  .span_text_white_border {
+    white-space: nowrap;
+    background-color: #fff;
+    margin-left: 5px;
+    border-radius: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    color: #000;
+    font-size: 16px;
+    border: 1px solid #000;
+  }
+
+  .span_text_black {
+    white-space: nowrap;
+    background-color: #000;
+    margin-left: 5px;
+    border-radius: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    color: #fff;
+    font-size: 16px;
+    border: 1px solid #000;
+  }
+}
+
+.location_svg {
+  position: absolute;
+  z-index: 100;
+  top: 8%;
+  right: 1%;
+
+  & button {
+    width: 50px;
+    height: 50px;
+
+    & svg {
+      width: 100%;
+      height: 100%;
+      transition-duration: 1s;
+    }
+  }
 }

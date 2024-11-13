@@ -40,6 +40,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   modalConfirm: false,
   is_map: false,
   order_finish_id: null,
+  order_finish_is_delete: null,
 
   isClick: false,
 
@@ -48,6 +49,10 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   is_check: false,
 
   location_driver: null,
+  location_driver_time_text: '',
+  home: null,
+  type_location: 'none',
+  id_watch: null,
 
   // открытие закрытие модалки qr оплаты
   setShowPay: (active) => {
@@ -59,8 +64,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
 
   // открытие/закрытие модалки с подтверждением завершения заказа
-  setActiveConfirm: (active, order_finish_id, is_map, type_confirm) => {
-    set({ modalConfirm: active, order_finish_id, is_map, type_confirm })
+  setActiveConfirm: (active, order_finish_id, is_map, type_confirm, order_finish_is_delete) => {
+    set({ modalConfirm: active, order_finish_id, is_map, type_confirm, order_finish_is_delete })
   },
 
   hideDelOrders: async() => {
@@ -108,7 +113,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     })
   },
 
-  getOrders: async (is_map = false, is_reload = false) => {
+  getOrders: async (is_reload = false) => {
     if( get().token.length == 0 ){
       return ;
     }
@@ -136,6 +141,14 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     try{
       const json = await api('orders', data);
 
+      let zoomSize;
+
+      if(window.innerWidth < 601) {
+        zoomSize = 12;
+      } else {
+        zoomSize = 11.5;
+      }
+
       if( json?.orders ){
         set({
           orders: json?.orders,
@@ -145,12 +158,24 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           del_orders: json?.arr_del_list,
           driver_pay: json?.driver_pay
         })
-    
-        if( is_map === true ){
-          setTimeout( () => {
-            get().renderMap(json?.home, json?.orders);
-          }, 300 )
+
+        if( !get().home ){
+          set({
+            // home: json?.home,
+            home: {
+              center: [json?.home.latitude, json?.home.longitude],
+              zoom: zoomSize,
+              controls: []
+            },
+          });
         }
+    
+        // if( is_map === true ){
+          // setTimeout( () => {
+          //   get().renderMap(json?.home, json?.orders);
+          // }, 300 )
+        //}
+
       }else{
         console.log( 'json', json )
 
@@ -168,12 +193,220 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }, 300 )
   },
 
-  setType: (type, is_map = false) => {
+  set_type_location: () => {
+    const type_location = get().type_location;
+
+    if(type_location === 'none') {
+      get().showLocationDriver();
+      set({
+        type_location: 'location'
+      })
+    
+    }
+
+    if(type_location === 'location') {
+      get().MyCurrentLocation();
+
+      set({
+        type_location: 'watch'
+      })
+    }
+
+    if(type_location === 'watch') {
+      const id_watch = get().id_watch;
+
+      set({
+        type_location: 'none',
+        location_driver: null,
+        location_driver_time_text: '',
+      })
+
+      if(id_watch) {
+        navigator.geolocation.clearWatch(id_watch);
+
+        setTimeout(() => {
+          set({
+            id_watch: null,
+          })
+          
+        }, 300);
+      }
+
+    }
+
+  },
+
+  showLocationDriver: async() => {
+
+    try {
+      set({is_load: true});
+
+      navigator.geolocation.getCurrentPosition(({coords}) => {
+
+          // if(coords){
+            const {latitude, longitude} = coords;
+
+            let now = new Date();
+            let min = now.getMinutes();
+            
+            if( parseInt(min) < 10) {
+              min = '0' + min;
+            }
+
+            set({
+              location_driver: [latitude, longitude],
+              location_driver_time_text: now.getHours() + ':' + min
+            })
+
+            setTimeout(() => {
+              set({is_load: false});
+            }, 300);
+            
+            setTimeout(() => {
+              const type_location = get().type_location;
+
+              if(type_location === 'location') {
+                set({
+                  type_location: 'none',
+                  location_driver: null
+                })
+              } 
+              
+            }, 30000);
+
+          // } else {
+
+          //   get().openErrOrder(
+          //     'Не удалось определить местоположение. Возможно, данные были изменены.',
+          //   );
+
+          //   setTimeout(() => {
+          //     set({is_load: false, type_location: 'none' });
+          //   }, 300);
+          // }
+
+          }, ({message}) => {
+              get().openErrOrder(
+                'Не удалось определить местоположение. ' + message,
+              );
+
+              setTimeout(() => {
+                set({is_load: false, type_location: 'none' });
+              }, 300);
+            },
+          {
+            maximumAge: 3000, 
+            timeout: 5000,
+            enableHighAccuracy: true,
+            //distanceFilter: 30
+          }
+        );
+    
+    } catch (err) {
+    
+      get().openErrOrder('Произошла ошибка '+err);
+    
+      setTimeout(() => {
+        set({is_load: false, type_location: 'none'});
+      }, 300);
+    }
+    
+  },
+
+  MyCurrentLocation: async() => {
+
+    try {
+     const id_watch = navigator.geolocation.watchPosition(({coords}) => {
+
+        // if(coords){
+          const {latitude, longitude} = coords;
+
+          let now = new Date();
+          let min = now.getMinutes();
+
+          if( parseInt(min) < 10) {
+            min = '0' + min;
+          }
+
+          set({
+            location_driver: [latitude, longitude],
+            location_driver_time_text: now.getHours() + ':' + min
+          })
+
+          setTimeout(() => {
+            const type_location = get().type_location;
+
+            if(type_location === 'none') {
+              set({
+                type_location: 'watch',
+              })
+            } 
+          }, 100);
+        
+        // } else {
+
+        //   get().openErrOrder(
+        //     'Не удалось определить местоположение. Возможно, данные были изменены.',
+        //   );
+
+        //   setTimeout(() => {
+        //     set({is_load: false, type_location: 'none'});
+        //   }, 300);
+        // }
+        
+        }, ({message}) => {
+          get().openErrOrder(
+            'Не удалось определить местоположение. ' + message,
+          );
+
+          setTimeout(() => {
+            set({is_load: false, type_location: 'none'});
+          }, 300);
+        },
+        {
+          maximumAge: 10000, 
+          timeout: 10000,
+          enableHighAccuracy: true,
+          //distanceFilter: 30
+        }
+      );
+
+      set({id_watch});
+    
+    } catch (err) {
+      get().openErrOrder('Произошла ошибка '+err);
+    
+      setTimeout(() => {
+        set({is_load: false, type_location: 'none'});
+      }, 300);
+    }
+    
+  },
+
+  // открыть на странице Карты при клике на метку заказа всплывающее окно с карточкой товара
+  showOrdersMap: id => {
+    if (id === -1 || id === '-1') {
+      return;
+    }
+
+    const order = get().orders.find(item => parseInt(item.id) === parseInt(id));
+
+    if (order) {
+      const new_orders = get().orders.filter(item => item?.xy?.latitude === order?.xy?.latitude && item?.xy?.longitude === order?.xy?.longitude);
+
+      set({
+        showOrders: new_orders,
+        isOpenOrderMap: true,
+      });
+    }
+  },
+
+  setType: (type) => {
     set({
       type: type,
       isOpenMenu: false
     })
-    get().getOrders(is_map);
+    get().getOrders();
   },
 
   setCloseMenu: () => {
@@ -228,7 +461,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     get().check_pos( get().actionOrder, {order_id: order_id, type: 3, is_map} );
 
     setTimeout( () => {
-      get().setActiveConfirm(false, null, false, null)
+      get().setActiveConfirm(false, null, false, null, null)
       set({ isClick: false })
     }, 300 )
   },
@@ -244,7 +477,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     get().check_pos( get().actionOrder, {order_id: order_id, type: 2, is_map} );
 
     setTimeout( () => {
-      get().setActiveConfirm(false, null, false, null)
+      get().setActiveConfirm(false, null, false, null, null)
       set({ isClick: false })
     }, 300 )
   },
@@ -275,7 +508,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     get().check_pos( get().actionOrderFake, {order_id: order_id, type: 1, is_map} );
 
     setTimeout( () => {
-      get().setActiveConfirm(false, null, false,null)
+      get().setActiveConfirm(false, null, false, null, null)
       set({ isClick: false })
     }, 300 )
   },
@@ -303,7 +536,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }else{
       get().closeOrderMap();
       get().setShowPay(false);
-      get().getOrders(is_map);
+      get().getOrders();
 
       setTimeout( () => {
         set({ is_load: false })
@@ -311,7 +544,6 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }
   },
   setLocationDriver: (latitude, longitude) => {
-    console.log( latitude, longitude )
     set({ location_driver: [latitude, longitude] })
   },
   actionOrderFake: async({data: { order_id, is_map }, latitude = '', longitude = ''}) => {
@@ -333,10 +565,20 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       }, 500 )
     }else{
 
-      set({ location_driver: [latitude, longitude] })
+      let now = new Date();
+      let min = now.getMinutes();
+
+      if( parseInt(min) < 10) {
+        min = '0' + min;
+      }
+
+      set({ 
+        location_driver: [latitude, longitude],
+        location_driver_time_text: now.getHours() + ':' + min
+      })
 
       get().closeOrderMap();
-      get().getOrders(is_map);
+      get().getOrders();
 
       setTimeout( () => {
         set({ is_load: false })
@@ -609,6 +851,43 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
   check_pos_check: false,
 
   avgTime: 0,
+
+  globalFontSize: 16,
+  theme: 'white',
+  mapScale: '1',
+
+  setGlobalFontSize: (fontSize) => {
+    set({
+      globalFontSize: parseInt(fontSize)
+    });
+  },
+
+  setTheme: (theme) => {
+    set({
+      theme
+    });
+  },
+
+  setGlobalMapScale: (mapScale) => {
+    set({
+      mapScale
+    });
+  },
+
+  getMyFontSize: async (token) => {
+    const data = {
+      token,
+      type: 'get_my_font_size',
+    };
+
+    const json = await api('settings', data);
+
+    set({
+      globalFontSize: parseInt(json?.fontSize),
+      theme: json?.theme,
+      mapScale: parseFloat(json?.mapScale),
+    });
+  },
 
   getMyAvgTime: async (token) => {
     const data = {
@@ -1003,7 +1282,7 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
 export const useSettingsStore = createWithEqualityFn((set, get) => ({
   isClick: false,
 
-  saveMySetting: async (token, groupTypeTime, type_show_del, update_interval, centered_map, color) => {
+  saveMySetting: async (token, groupTypeTime, type_show_del, update_interval, centered_map, color, fontSize, theme, mapScale) => {
 
     if( get().isClick === false ){
       set({ isClick: true })
@@ -1018,7 +1297,10 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
       type_show_del: type_show_del,
       update_interval: update_interval,
       action_centered_map: centered_map ? 1 : 0,
-      color: color
+      color: color,
+      fontSize: parseInt(fontSize),
+      theme,
+      mapScale
     };
       
     const json = await api('settings', data);
@@ -1036,4 +1318,27 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
       
     return await api('settings', data);
   },
+}), shallow)
+
+export const useStatisticsStore = createWithEqualityFn((set, get) => ({
+
+  svod: [],
+ 
+  getStatistics: async (token, date_start, date_end) => {
+
+    const data = {
+      type: 'show_data',
+      token,
+      date_start,
+      date_end
+    };
+  
+    const json = await api('stat_time', data);
+
+    set({
+      svod: json?.avg_orders ?? []
+    })
+   
+  },
+
 }), shallow)
