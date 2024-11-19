@@ -308,7 +308,7 @@ $MyScale1871_mobile: 159.91452991453vw;
   //font-size: $size !important;
   font-size: $size;
   font-family: $family !important;
-  color: $colorText;
+  color: $color;
 }
 
 @mixin font_custom($size: 1rem, $weight: 300, $color: $colorText) {

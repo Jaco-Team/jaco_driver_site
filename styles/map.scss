@@ -242,8 +242,9 @@
     border-radius: 6px;
     padding-left: 10px;
     padding-right: 10px;
-    color: #000;
-    font-size: 16px;
+    //color: #000;
+    //font-size: 16px;
+    @include font_custom(1rem, 400, $colorText);
   }
 
   .span_text_white {
@@ -255,8 +256,7 @@
     padding-right: 10px;
     padding-top: 2px;
     padding-bottom: 2px;
-    color: #000;
-    font-size: 16px;
+    @include font_custom(1rem, 400, $colorText);
   }
 
   .span_text_white_border {
@@ -268,8 +268,7 @@
     padding-right: 10px;
     padding-top: 2px;
     padding-bottom: 2px;
-    color: #000;
-    font-size: 16px;
+    @include font_custom(1rem, 400, $colorText);
     border: 1px solid #000;
   }
 
@@ -282,9 +281,8 @@
     padding-right: 10px;
     padding-top: 2px;
     padding-bottom: 2px;
-    color: #fff;
-    font-size: 16px;
     border: 1px solid #000;
+    @include font_custom(1rem, 400, #fff);
   }
 }
 

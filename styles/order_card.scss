@@ -155,18 +155,22 @@ div.text-base {
       &.Blue {
         @include font_custom(1.2rem, 500, #fff);
         background-color: #2c75ff;
+        color: #fff;
       }
       &.Purpur {
         @include font_custom(1.2rem, 500, #fff);
         background-color: #53377a;
+        color: #fff;
       }
       &.Red {
         @include font_custom(1.2rem, 500, #fff);
         background-color: #fc2847;
+        color: #fff;
       }
       &.Green {
         @include font_custom(1.2rem, 500, #fff);
         background-color: #3caa3c;
+        color: #fff;
       }
     }
   }
