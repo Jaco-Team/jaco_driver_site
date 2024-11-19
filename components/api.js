@@ -18,6 +18,7 @@ export function api(module = '', data = {}){
     })
     .catch( (error) => {
       console.error( 'error', error );
+      console.error( 'error.code', error.code );
 
       if( error.code == "ERR_NETWORK" ){
 

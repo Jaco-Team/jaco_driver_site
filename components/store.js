@@ -179,7 +179,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       }else{
         console.log( 'json', json )
 
-        get().openErrOrder('Ошибка '+json.text )
+        get().openErrOrder('Ошибка '+json )
       }
     } catch(err){
       console.log( err )
@@ -286,17 +286,20 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           // }
 
           }, ({message}) => {
-              get().openErrOrder(
+              /*get().openErrOrder(
                 'Не удалось определить местоположение. ' + message,
-              );
+              );*/
 
               setTimeout(() => {
-                set({is_load: false, type_location: 'none' });
+                set({
+                  is_load: false, 
+                  //type_location: 'none' 
+                });
               }, 300);
             },
           {
-            maximumAge: 3000, 
-            timeout: 5000,
+            //maximumAge: 3000, 
+            //timeout: 5000,
             enableHighAccuracy: true,
             //distanceFilter: 30
           }
@@ -367,7 +370,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           maximumAge: 10000, 
           timeout: 10000,
           enableHighAccuracy: true,
-          distanceFilter: 30
+          distanceFilter: 15
         }
       );
 

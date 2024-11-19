@@ -23,7 +23,7 @@ const MapPoints = memo(function MapPoints({theme, globalFontSize, mapScale}){
   useEffect(() => {
     const interval = setInterval(() => {
       getOrders();
-    }, parseInt(update_interval) * 100);
+    }, parseInt(update_interval) * 1000);
 
     return () => clearInterval(interval);
   }, [update_interval]);
@@ -69,6 +69,8 @@ const MapPoint = memo(function MapPoint({theme, item, mapScale, showOrdersMap, g
     '</div>'
   )
 
+  const active_w = item?.point_text?.length * ( globalFontSize / 1.8 );
+
   return (
     <Placemark
       geometry={[item?.xy?.latitude, item?.xy?.longitude]}
@@ -77,7 +79,7 @@ const MapPoint = memo(function MapPoint({theme, item, mapScale, showOrdersMap, g
         iconLayout: !item.close_time_ ? circleLayout : locationLayout,
         iconShape: {
           type: 'Rectangle',
-          coordinates: [[-10, -10], [200, 10]]
+          coordinates: [[-10, -15], [active_w, 12]]
         }
       }} 
     />
@@ -189,18 +191,18 @@ export default function MapPage() {
             style={{ minHeight: '100vh' }}
           >
 
-          <MapPointHouse point={home?.center} getHome={getHome} />
+            <MapPointHouse point={home?.center} getHome={getHome} />
 
-          {!location_driver ? false :
-            <MapPointDriver 
-              theme={theme} 
-              mapScale={mapScale} 
-              location_driver={location_driver} 
-              globalFontSize={globalFontSize} 
-              location_driver_time_text={location_driver_time_text} />
-          }
+            {!location_driver ? false :
+              <MapPointDriver 
+                theme={theme} 
+                mapScale={mapScale} 
+                location_driver={location_driver} 
+                globalFontSize={globalFontSize} 
+                location_driver_time_text={location_driver_time_text} />
+            }
 
-          <MapPoints theme={theme} mapScale={mapScale} globalFontSize={globalFontSize} />
+            <MapPoints theme={theme} mapScale={mapScale} globalFontSize={globalFontSize} />
 
           </Map>
         </YMaps>
