@@ -1323,8 +1323,11 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
 export const useStatisticsStore = createWithEqualityFn((set, get) => ({
 
   svod: [],
+  is_load: false,
  
   getStatistics: async (token, date_start, date_end) => {
+
+    set({ is_load: true })
 
     const data = {
       type: 'show_data',
@@ -1338,6 +1341,10 @@ export const useStatisticsStore = createWithEqualityFn((set, get) => ({
     set({
       svod: json?.avg_orders ?? []
     })
+
+    setTimeout( () => {
+      set({ is_load: false })
+    }, 500 )
    
   },
 

@@ -77,7 +77,7 @@ const MapPoint = memo(function MapPoint({theme, item, mapScale, showOrdersMap, g
         iconLayout: !item.close_time_ ? circleLayout : locationLayout,
         iconShape: {
           type: 'Rectangle',
-          coordinates: [[-10, -10], [10, 10]]
+          coordinates: [[-10, -10], [200, 10]]
         }
       }} 
     />

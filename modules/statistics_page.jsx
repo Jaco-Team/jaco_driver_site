@@ -13,6 +13,9 @@ import Paper from '@mui/material/Paper';
 
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
+
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
  
 import {useStatisticsStore, useHeaderStore} from '@/components/store.js';
 import MyDatepicker from '@/ui/MyDatepicker';
@@ -39,7 +42,7 @@ export default function StatisticsPage(){
 
   const { vertical, horizontal, open } = state;
 
-  const [getStatistics, svod] = useStatisticsStore(state => [state.getStatistics, state.svod]);
+  const [getStatistics, svod, is_load] = useStatisticsStore(state => [state.getStatistics, state.svod, state.is_load]);
   const [globalFontSize, token] = useHeaderStore(state => [state.globalFontSize, state.token]);
 
   useEffect(() => {
@@ -73,6 +76,10 @@ export default function StatisticsPage(){
 
   return (
     <Meta title='Статистика'>
+      <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={is_load}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       <Grid container spacing={3} className={"price " + roboto.variable}>
 
         <Snackbar
@@ -112,14 +119,16 @@ export default function StatisticsPage(){
         </Grid>
 
         <Grid item xs={12} mb={10}>
-          <TableContainer component={Paper} sx={{
-            maxHeight: 600,
-            scrollbarWidth: "none",
-            "&::-webkit-scrollbar": {
-              display: "none"
-            } 
-            }} 
+          <TableContainer 
             id="tableGraph"
+            component={Paper} 
+            sx={{
+              maxHeight: 600,
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": {
+                display: "none"
+              } 
+            }} 
           >
             <Table stickyHeader aria-label="sticky table">
               <TableHead>
