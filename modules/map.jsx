@@ -1,6 +1,6 @@
 import { useEffect, useRef, memo } from 'react';
 
-import { YMaps, Map, Placemark } from '@pbe/react-yandex-maps';
+import { YMaps, Map, Placemark, TrafficControl } from '@pbe/react-yandex-maps';
 
 import Typography from '@mui/material/Typography';
 import CachedIcon from '@mui/icons-material/Cached';
@@ -15,6 +15,7 @@ import LocationOffIcon from '@mui/icons-material/LocationOff';
 import PinDropIcon from '@mui/icons-material/PinDrop';
 
 import { roboto } from '@/ui/Font';
+import { Ribeye } from 'next/font/google';
 
 const MapPoints = memo(function MapPoints({theme, globalFontSize, mapScale}){
 
@@ -74,7 +75,7 @@ const MapPoint = memo(function MapPoint({theme, item, mapScale, showOrdersMap, g
   if(typeof(item?.point_text) === 'string') {
     active_w = item?.point_text?.length * ( globalFontSize / 1.8 );
   } else {
-    active_w = 22 * globalFontSize;
+    active_w = 30;
   }
 
   return (
@@ -196,6 +197,7 @@ export default function MapPage() {
             height='100vh'
             style={{ minHeight: '100vh' }}
           >
+            <TrafficControl options={{ size: 'small', position: { top: 150, right: 20 } }} />
 
             <MapPointHouse point={home?.center} getHome={getHome} />
 
