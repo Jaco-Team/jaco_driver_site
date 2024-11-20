@@ -69,7 +69,13 @@ const MapPoint = memo(function MapPoint({theme, item, mapScale, showOrdersMap, g
     '</div>'
   )
 
-  const active_w = item?.point_text?.length * ( globalFontSize / 1.8 );
+  let active_w;
+
+  if(typeof(item?.point_text) === 'string') {
+    active_w = item?.point_text?.length * ( globalFontSize / 1.8 );
+  } else {
+    active_w = 22 * globalFontSize;
+  }
 
   return (
     <Placemark
