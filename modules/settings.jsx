@@ -166,19 +166,23 @@ export default function SettingsPage(){
               style={{ width: '100%', height: 'auto' }}
               src={'/map.png'}
             />
-            <div className='location' onClick={() => setGroupTypeTheme('transparent')}>
+            <div className='location' onClick={() => setGroupTypeTheme('classic')}>
+              <Location fill={groupTypeTheme === 'classic' ? 'red' : 'blue'}/>
+              <span className='span_text_classic'>Классический яндекс</span>
+            </div>
+            <div className='location' style={{ top: 125}} onClick={() => setGroupTypeTheme('transparent')}>
               <Location fill={groupTypeTheme === 'transparent' ? 'red' : 'blue'}/>
               <span className='span_text_transparent'>21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: '38%'}} onClick={() => setGroupTypeTheme('white')}>
+            <div className='location' style={{ top: 185}} onClick={() => setGroupTypeTheme('white')}>
               <Location fill={groupTypeTheme === 'white' ? 'red' : 'blue'} />
               <span className='span_text_white'>21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: '55%'}} onClick={() => setGroupTypeTheme('white_border')}>
+            <div className='location' style={{ top: 245}} onClick={() => setGroupTypeTheme('white_border')}>
               <Location fill={groupTypeTheme === 'white_border' ? 'red' : 'blue'} />
               <span className='span_text_white_border'>21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: '72%'}} onClick={() => setGroupTypeTheme('black')}>
+            <div className='location' style={{ top: 305}} onClick={() => setGroupTypeTheme('black')}>
               <Location fill={groupTypeTheme === 'black' ? 'red' : 'blue'} />
               <span className='span_text_black'>21:46 (53 мин.)</span>
             </div>

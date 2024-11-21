@@ -432,9 +432,11 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         
       func( { latitude, longitude, data } )
     }, ({ message }) => {
+      console.log( 'message', message )
       get().openErrOrder('Не удалось определить местоположение. '+message);
+      set({ is_load: false })
     }, {
-      enableHighAccuracy: true
+      enableHighAccuracy: true,
     })
   },
 
@@ -521,6 +523,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   actionOrder: async({data: { order_id, type, is_map }, latitude = '', longitude = ''}) => {
     //1 - get / 2 - close / 3 - finish
 
+    console.log(order_id, latitude, longitude)
+
     let data = {
       type: 'actionOrder',
       token: get().token,
@@ -540,6 +544,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         set({ is_load: false })
       }, 500 )
     }else{
+      console.log('true')
+
       get().closeOrderMap();
       get().setShowPay(false);
       get().getOrders();
