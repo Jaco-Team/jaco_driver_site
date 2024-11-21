@@ -150,6 +150,9 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       }
 
       if( json?.orders ){
+
+        console.log('orders', json?.orders)
+
         set({
           orders: json?.orders,
           update_interval: json?.update_interval,
@@ -423,8 +426,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     })
   },
 
-  check_pos: ( func, data ) => {
-    navigator.geolocation.getCurrentPosition(({ coords }) => {
+  check_pos: async( func, data ) => {
+    await navigator.geolocation.getCurrentPosition(({ coords }) => {
       const { latitude, longitude } = coords
         
       func( { latitude, longitude, data } )

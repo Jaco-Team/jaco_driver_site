@@ -70,20 +70,42 @@ const MapPoint = memo(function MapPoint({theme, item, mapScale, showOrdersMap, g
     '</div>'
   )
 
+  //console.log('item', item?.point_color, item?.color)
+
   let active_w;
 
   if(typeof(item?.point_text) === 'string') {
     active_w = item?.point_text?.length * ( globalFontSize / 1.8 );
   } else {
-    active_w = 30;
+    active_w = globalFontSize * 2.5;
   }
 
-  return (
+  /*return (
     <Placemark
       geometry={[item?.xy?.latitude, item?.xy?.longitude]}
       onClick={() => showOrdersMap(item.id)}
       options={{ 
         iconLayout: !item.close_time_ ? circleLayout : locationLayout,
+        iconShape: {
+          type: 'Rectangle',
+          coordinates: [[-10, -15], [active_w, 12]]
+        }
+      }} 
+    />
+  )*/
+
+  return (
+    <Placemark
+      geometry={[item?.xy?.latitude, item?.xy?.longitude]}
+      onClick={() => showOrdersMap(item.id)}
+      properties={{
+        iconCaption: item.point_text,
+        //iconCaption: parseInt(item.status_order) == 6 ? item.close_time_ : parseInt(item.is_pred) == 1 ? item.need_time : parseInt(item.is_my) == 1 ? item.time_start_mini : '',
+      }}
+      options={{ 
+        //iconLayout: !item.close_time_ ? circleLayout : locationLayout,
+        preset: parseInt(item?.status_order) == 6 ? 'islands#blueCircleDotIconWithCaption' : 'islands#circleDotIcon', 
+        iconColor: item.point_color ? item.point_color : item.color,
         iconShape: {
           type: 'Rectangle',
           coordinates: [[-10, -15], [active_w, 12]]
