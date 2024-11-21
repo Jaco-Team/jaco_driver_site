@@ -80,6 +80,36 @@
       border: 1px solid #000;
     }
   }
+
+  .location_ya {
+    display: flex;
+    position: absolute;
+    top: 20%;
+    left: 13%;
+
+    & svg {
+      width: 34px;
+      height: 34px;
+      position: absolute;
+      left: 0;
+    }
+
+    & span {
+      white-space: nowrap;
+      background-color: #fff;
+      text-align: center;
+      border-radius: 10px;
+      padding-left: 35px;
+      padding-right: 10px;
+      padding-top: 1px;
+      height: 21px;
+      color: #000;
+      font-size: 16px;
+      margin: 0;
+      margin-left: 5px;
+    }
+
+  }
 }
 
 .container_paper_picker {

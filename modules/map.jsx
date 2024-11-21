@@ -15,7 +15,6 @@ import LocationOffIcon from '@mui/icons-material/LocationOff';
 import PinDropIcon from '@mui/icons-material/PinDrop';
 
 import { roboto } from '@/ui/Font';
-import { Ribeye } from 'next/font/google';
 
 const MapPoints = memo(function MapPoints({theme, globalFontSize, mapScale}){
 

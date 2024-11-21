@@ -31,7 +31,7 @@ import MuiAlert from '@mui/material/Alert';
 import Meta from '@/components/meta.js';
 
 import { roboto } from '@/ui/Font';
-import { Location } from '@/ui/Icons';
+import { Location, PlacemarkIcon } from '@/ui/Icons';
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -164,25 +164,25 @@ export default function SettingsPage(){
             </div>
             <img
               style={{ width: '100%', height: 'auto' }}
-              src={'/map.png'}
+              src={'/map_2.png'}
             />
-            <div className='location' onClick={() => setGroupTypeTheme('classic')}>
-              <Location fill={groupTypeTheme === 'classic' ? 'red' : 'blue'}/>
-              <span className='span_text_classic'>Классический яндекс</span>
+            <div className='location_ya' style={{ top: 80}} onClick={() => setGroupTypeTheme('classic')}>
+              <PlacemarkIcon fill={groupTypeTheme === 'classic' ? 'red' : 'blue'}/>
+              <span>Классический яндекс</span>
             </div>
-            <div className='location' style={{ top: 125}} onClick={() => setGroupTypeTheme('transparent')}>
+            <div className='location' style={{ top: 140}} onClick={() => setGroupTypeTheme('transparent')}>
               <Location fill={groupTypeTheme === 'transparent' ? 'red' : 'blue'}/>
               <span className='span_text_transparent'>21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: 185}} onClick={() => setGroupTypeTheme('white')}>
+            <div className='location' style={{ top: 200}} onClick={() => setGroupTypeTheme('white')}>
               <Location fill={groupTypeTheme === 'white' ? 'red' : 'blue'} />
               <span className='span_text_white'>21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: 245}} onClick={() => setGroupTypeTheme('white_border')}>
+            <div className='location' style={{ top: 260}} onClick={() => setGroupTypeTheme('white_border')}>
               <Location fill={groupTypeTheme === 'white_border' ? 'red' : 'blue'} />
               <span className='span_text_white_border'>21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: 305}} onClick={() => setGroupTypeTheme('black')}>
+            <div className='location' style={{ top: 325}} onClick={() => setGroupTypeTheme('black')}>
               <Location fill={groupTypeTheme === 'black' ? 'red' : 'blue'} />
               <span className='span_text_black'>21:46 (53 мин.)</span>
             </div>
