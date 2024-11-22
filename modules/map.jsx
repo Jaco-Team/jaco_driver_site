@@ -196,6 +196,8 @@ export default function MapPage() {
     }
   }, [home])
 
+  console.log('type_location', type_location)
+
   return (
     <Meta title="Карта заказов">
 
@@ -226,12 +228,15 @@ export default function MapPage() {
             <MapPointHouse point={home?.center} getHome={getHome} />
 
             {!location_driver ? false :
-              <MapPointDriver 
-                theme={theme} 
-                mapScale={mapScale} 
-                location_driver={location_driver} 
-                globalFontSize={globalFontSize} 
-                location_driver_time_text={location_driver_time_text} />
+
+              type_location == 'none' ? false :
+                <MapPointDriver 
+                  theme={theme} 
+                  mapScale={mapScale} 
+                  location_driver={location_driver} 
+                  globalFontSize={globalFontSize} 
+                  location_driver_time_text={location_driver_time_text} />
+              
             }
 
             <MapPoints theme={theme} mapScale={mapScale} globalFontSize={globalFontSize} />
