@@ -265,7 +265,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
               set({is_load: false});
             }, 300);
             
-            /*setTimeout(() => {
+            setTimeout(() => {
               const type_location = get().type_location;
 
               if(type_location === 'location') {
@@ -275,7 +275,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
                 })
               } 
               
-            }, 30000);*/
+            }, 30000);
 
           // } else {
 
