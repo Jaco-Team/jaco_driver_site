@@ -244,7 +244,19 @@
     padding-right: 10px;
     //color: #000;
     //font-size: 16px;
-    @include font_custom(1rem, 400, $colorText);
+    @include font_custom(1rem, 400, #000);
+  }
+
+  .span_text_transparent_white {
+    white-space: nowrap;
+    background-color: transparent;
+    margin-left: -5px;
+    border-radius: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+    //color: #000;
+    //font-size: 16px;
+    @include font_custom(1rem, 400, #fff);
   }
 
   .span_text_white {

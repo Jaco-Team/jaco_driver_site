@@ -182,10 +182,11 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       }else{
         console.log( 'json', json )
 
-        get().openErrOrder('Ошибка '+json )
+        //get().openErrOrder('Ошибка '+json )
       }
     } catch(err){
       console.log( err )
+      get().openErrOrder('Ошибка '+err )
     }
 
     setTimeout( () => {

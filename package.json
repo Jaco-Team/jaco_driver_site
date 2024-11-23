@@ -13,14 +13,14 @@
     "win": "next dev -p 3225"
   },
   "dependencies": {
-    "@emotion/react": "^11.13.3",
-    "@emotion/styled": "^11.13.0",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
     "@mui/x-date-pickers": "^6.20.2",
     "@pbe/react-yandex-maps": "^1.2.5",
-    "@sentry/nextjs": "^8.38.0",
-    "@sentry/react": "^8.38.0",
+    "@sentry/nextjs": "^8.40.0",
+    "@sentry/react": "^8.40.0",
     "@uiw/color-convert": "^2.3.2",
     "@uiw/react-color-alpha": "^2.3.2",
     "@uiw/react-color-wheel": "^2.3.2",

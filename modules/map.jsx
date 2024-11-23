@@ -1,6 +1,6 @@
 import { useEffect, useRef, memo } from 'react';
 
-import { YMaps, Map, Placemark, TrafficControl } from '@pbe/react-yandex-maps';
+import { YMaps, Map, Placemark, TrafficControl, ZoomControl } from '@pbe/react-yandex-maps';
 
 import Typography from '@mui/material/Typography';
 import CachedIcon from '@mui/icons-material/Cached';
@@ -83,12 +83,17 @@ const MapPoint = memo(function MapPoint({theme, item, mapScale, showOrdersMap, g
     return (
       <Placemark
         geometry={[item?.xy?.latitude, item?.xy?.longitude]}
-        onClick={() => showOrdersMap(item.id)}
+        //onClick={() => showOrdersMap(item.id)}
+        instanceRef={ref => {
+          ref && ref.events.add("click",()=>{
+            showOrdersMap(item.id)
+          })
+        }}
         options={{ 
           iconLayout: !item.close_time_ ? circleLayout : locationLayout,
           iconShape: {
             type: 'Rectangle',
-            coordinates: [[-10, -15], [active_w, 12]]
+            coordinates: [[-10, -15], [active_w, 10]]
           }
         }} 
       />
@@ -97,17 +102,25 @@ const MapPoint = memo(function MapPoint({theme, item, mapScale, showOrdersMap, g
     return (
       <Placemark
         geometry={[item?.xy?.latitude, item?.xy?.longitude]}
-        onClick={() => showOrdersMap(item.id)}
+        
+        //onClick={() => showOrdersMap(item.id)}
         properties={{
           iconCaption: item.point_text,
         }}
+
+        instanceRef={ref => {
+          ref && ref.events.add("click",()=>{
+            showOrdersMap(item.id)
+          })
+        }}
+
         options={{ 
           preset: parseInt(item?.status_order) == 6 ? 'islands#blueDotIcon' : 'islands#circleDotIcon', 
           iconColor: item.point_color ? item.point_color : item.color,
           
           iconShape: {
             type: 'Rectangle',
-            coordinates: [[-10, -15], [active_w, 12]]
+            //coordinates: [[-10, -15], [active_w, 12]]
           }
         }} 
       />
@@ -196,8 +209,6 @@ export default function MapPage() {
     }
   }, [home])
 
-  console.log('type_location', type_location)
-
   return (
     <Meta title="Карта заказов">
 
@@ -224,6 +235,7 @@ export default function MapPage() {
             style={{ minHeight: '100vh' }}
           >
             <TrafficControl options={{ size: 'small', position: { top: 150, right: 20 } }} />
+            <ZoomControl options={{ size: 'large', position: { top: 200, right: 20 } }}  />
 
             <MapPointHouse point={home?.center} getHome={getHome} />
 

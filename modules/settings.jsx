@@ -174,15 +174,19 @@ export default function SettingsPage(){
               <Location fill={groupTypeTheme === 'transparent' ? 'red' : 'blue'}/>
               <span className='span_text_transparent'>21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: 200}} onClick={() => setGroupTypeTheme('white')}>
+            <div className='location' style={{ top: 200}} onClick={() => setGroupTypeTheme('transparent_white')}>
+              <Location fill={groupTypeTheme === 'transparent_white' ? 'red' : 'blue'}/>
+              <span className='span_text_transparent_white'>21:46 (53 мин.)</span>
+            </div>
+            <div className='location' style={{ top: 260}} onClick={() => setGroupTypeTheme('white')}>
               <Location fill={groupTypeTheme === 'white' ? 'red' : 'blue'} />
               <span className='span_text_white'>21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: 260}} onClick={() => setGroupTypeTheme('white_border')}>
+            <div className='location' style={{ top: 325}} onClick={() => setGroupTypeTheme('white_border')}>
               <Location fill={groupTypeTheme === 'white_border' ? 'red' : 'blue'} />
               <span className='span_text_white_border'>21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: 325}} onClick={() => setGroupTypeTheme('black')}>
+            <div className='location' style={{ top: 385}} onClick={() => setGroupTypeTheme('black')}>
               <Location fill={groupTypeTheme === 'black' ? 'red' : 'blue'} />
               <span className='span_text_black'>21:46 (53 мин.)</span>
             </div>
