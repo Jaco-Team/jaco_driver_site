@@ -257,6 +257,9 @@
     //color: #000;
     //font-size: 16px;
     @include font_custom(1rem, 400, #fff);
+    @media (prefers-color-scheme: dark) {
+      @include font_custom(1rem, 400, #000);
+    }
   }
 
   .span_text_white {

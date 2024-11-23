@@ -48,6 +48,9 @@
       padding-right: 10px;
       color: #fff;
       font-size: 16px;
+      @media (prefers-color-scheme: dark) {
+        color: #000;
+      }
     }
 
     .span_text_white {
