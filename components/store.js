@@ -54,6 +54,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   type_location: 'none',
   id_watch: null,
 
+  driver_need_gps: false,
+
   // открытие закрытие модалки qr оплаты
   setShowPay: (active) => {
     set({showPay: active })
@@ -159,7 +161,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           limit: json?.limit,
           limit_count: json?.limit_count,
           del_orders: json?.arr_del_list,
-          driver_pay: json?.driver_pay
+          driver_pay: json?.driver_pay,
+          driver_need_gps: parseInt(json?.driver_need_gps) == 0 ? false : true,
         })
 
         if( !get().home ){
@@ -322,6 +325,10 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
   MyCurrentLocation: async() => {
 
+    if( get().driver_need_gps === false ) {
+      return ;
+    }
+
     try {
      const id_watch = navigator.geolocation.watchPosition(({coords}) => {
 
@@ -428,6 +435,9 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
 
   check_pos: async( func, data ) => {
+
+    console.log( 'check_pos' )
+
     await navigator.geolocation.getCurrentPosition(({ coords }) => {
       const { latitude, longitude } = coords
         
@@ -467,7 +477,22 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }
 
     set({ is_load: true })
-    get().check_pos( get().actionOrder, {order_id: order_id, type: 3, is_map} );
+
+    if( get().driver_need_gps === true ){
+      get().check_pos( get().actionOrder, {order_id: order_id, type: 3, is_map} );
+    }else{
+
+      const data = {
+        order_id: order_id, 
+        type: 3, 
+        is_map
+      }
+
+      const latitude = '';
+      const longitude = '';
+
+      get().actionOrder( { latitude, longitude, data } )
+    }
 
     setTimeout( () => {
       get().setActiveConfirm(false, null, false, null, null)
@@ -483,7 +508,22 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }
 
     set({ is_load: true })
-    get().check_pos( get().actionOrder, {order_id: order_id, type: 2, is_map} );
+
+    if( get().driver_need_gps === true ){
+      get().check_pos( get().actionOrder, {order_id: order_id, type: 2, is_map} );
+    }else{
+      const data = {
+        order_id: order_id, 
+        type: 2, 
+        is_map
+      }
+
+      const latitude = '';
+      const longitude = '';
+
+      get().actionOrder( { latitude, longitude, data } )
+
+    }
 
     setTimeout( () => {
       get().setActiveConfirm(false, null, false, null, null)
@@ -499,7 +539,22 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }
 
     set({ is_load: true })
-    get().check_pos( get().actionOrder, {order_id: order_id, type: 1, is_map} );
+
+    if( get().driver_need_gps === true ){
+      get().check_pos( get().actionOrder, {order_id: order_id, type: 1, is_map} );
+    }else{
+      const data = {
+        order_id: order_id,
+        type: 1,
+        is_map
+      }
+
+      const latitude = '';
+      const longitude = '';
+
+      get().actionOrder({ latitude, longitude, data })
+
+    }
 
     setTimeout( () => {
       set({ isClick: false })
@@ -514,7 +569,22 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }
 
     set({ is_load: true })
-    get().check_pos( get().actionOrderFake, {order_id: order_id, type: 1, is_map} );
+
+    if( get().driver_need_gps === true ){
+      get().check_pos( get().actionOrderFake, {order_id: order_id, type: 1, is_map} );
+    }else{
+      const data = {
+        order_id: order_id,
+        type: 1,
+        is_map
+      }
+
+      const latitude = '';
+      const longitude = '';
+
+      get().actionOrderFake({ latitude, longitude, data })
+
+    }
 
     setTimeout( () => {
       get().setActiveConfirm(false, null, false, null, null)
@@ -934,6 +1004,12 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
   },
 
   checkMyPos: () => {
+
+    if( useOrdersStore.getState().driver_need_gps === false ){
+      return ;
+    }
+
+    console.log( 'checkMyPos' )
 
     if( get().check_pos_check === false ){
       set({
