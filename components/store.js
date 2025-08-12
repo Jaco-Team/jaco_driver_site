@@ -13,16 +13,23 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   notifToken: '',
 
   type: { id: 1, text: 'Активные' },
-      
+
   types: [
     { id: 1, text: 'Активные' }, //готовятся и готовы
     { id: 3, text: 'Предзаказы' }, //более часа
     { id: 2, text: 'Мои отмеченные' }, //мои
-    { id: 5, text: 'У других курьеров' }, 
+    { id: 5, text: 'У других курьеров' },
     { id: 6, text: 'Мои завершенные' }, //мои завершенеы
   ],
+  types_dop: [
+    {id: 1, text: 'В очереди'},
+    {id: 2, text: 'Готовится'},
+    {id: 3, text: 'Собран'},
+  ],
+  type_dop: ['1', '2', '3'],
+  is_showModalTypeDop: false,
 
-  showErrOrder: false, 
+  showErrOrder: false,
   textErrOrder: '',
 
   is_load: false,
@@ -45,6 +52,11 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   isClick: false,
 
   driver_pay: false,
+  typeToStatus: {
+    '1': 'В очереди',
+    '2': 'Готовится',
+    '3': 'Собран',
+  },
 
   is_check: false,
 
@@ -70,6 +82,19 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     set({ modalConfirm: active, order_finish_id, is_map, type_confirm, order_finish_is_delete })
   },
 
+  showModalTypeDop: ( is_show ) => {
+    set({is_showModalTypeDop: is_show});
+  },
+
+  setTypeDop: (type) => {
+    if (type.length === 0) {
+      type = ['1', '2', '3'];
+    }
+    set({type_dop: type});
+
+    get().getOrders(true);
+  },
+
   hideDelOrders: async() => {
     let idList = [];
 
@@ -82,7 +107,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       token: get().token,
       idList: JSON.stringify(idList)
     };
-    
+
     const res = await api('orders', data);
 
     set({
@@ -104,18 +129,22 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
   closeErrOrder: () => {
     set({
-      showErrOrder: false, 
+      showErrOrder: false,
       textErrOrder: '',
     })
   },
   openErrOrder: (text) => {
     set({
-      showErrOrder: true, 
+      showErrOrder: true,
       textErrOrder: text,
     })
   },
 
   getOrders: async (is_reload = false) => {
+    const type_dop = get().type_dop;
+    const types_dop = get().types_dop;
+    const type = get().type;
+
     if( get().token.length == 0 ){
       return ;
     }
@@ -139,7 +168,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       type_orders: get().type.id,
       token: get().token
     };
-      
+
     try{
       const json = await api('orders', data);
 
@@ -152,11 +181,13 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       }
 
       if( json?.orders ){
-
-        console.log('orders', json?.orders)
+        let orders = json?.orders;
+        if( type.id == 1 && type_dop.length !== types_dop.length ) {
+          orders = get().filterOrdersByTypes(orders, type_dop);
+        }
 
         set({
-          orders: json?.orders,
+          orders: orders,
           update_interval: json?.update_interval,
           limit: json?.limit,
           limit_count: json?.limit_count,
@@ -175,7 +206,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
             },
           });
         }
-    
+
         // if( is_map === true ){
           // setTimeout( () => {
           //   get().renderMap(json?.home, json?.orders);
@@ -200,6 +231,13 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }, 300 )
   },
 
+  filterOrdersByTypes: (orders, types)  => {
+    const typeToStatus = get().typeToStatus;
+
+    const statuses = types.map(type => typeToStatus[type]);
+    return orders.filter(order => statuses.includes(order.status));
+  },
+
   set_type_location: () => {
     const type_location = get().type_location;
 
@@ -208,7 +246,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       set({
         type_location: 'location'
       })
-    
+
     }
 
     if(type_location === 'location') {
@@ -235,7 +273,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           set({
             id_watch: null,
           })
-          
+
         }, 300);
       }
 
@@ -255,7 +293,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
             let now = new Date();
             let min = now.getMinutes();
-            
+
             if( parseInt(min) < 10) {
               min = '0' + min;
             }
@@ -268,7 +306,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
             setTimeout(() => {
               set({is_load: false});
             }, 300);
-            
+
             setTimeout(() => {
               const type_location = get().type_location;
 
@@ -277,8 +315,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
                   type_location: 'none',
                   location_driver: null
                 })
-              } 
-              
+              }
+
             }, 30000);
 
           // } else {
@@ -299,28 +337,28 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
               setTimeout(() => {
                 set({
-                  is_load: false, 
-                  //type_location: 'none' 
+                  is_load: false,
+                  //type_location: 'none'
                 });
               }, 300);
             },
           {
-            //maximumAge: 3000, 
+            //maximumAge: 3000,
             //timeout: 5000,
             enableHighAccuracy: true,
             //distanceFilter: 30
           }
         );
-    
+
     } catch (err) {
-    
+
       get().openErrOrder('Произошла ошибка '+err);
-    
+
       setTimeout(() => {
         set({is_load: false, type_location: 'none'});
       }, 300);
     }
-    
+
   },
 
   MyCurrentLocation: async() => {
@@ -354,9 +392,9 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
               set({
                 type_location: 'watch',
               })
-            } 
+            }
           }, 100);
-        
+
         // } else {
 
         //   get().openErrOrder(
@@ -367,7 +405,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         //     set({is_load: false, type_location: 'none'});
         //   }, 300);
         // }
-        
+
         }, ({message}) => {
           // get().openErrOrder(
           //   'Не удалось определить местоположение. ' + message,
@@ -378,7 +416,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           // }, 300);
         },
         {
-          maximumAge: 10000, 
+          maximumAge: 10000,
           timeout: 10000,
           enableHighAccuracy: true,
           distanceFilter: 15
@@ -386,15 +424,15 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       );
 
       set({id_watch});
-    
+
     } catch (err) {
       // get().openErrOrder('Произошла ошибка '+err);
-    
+
       // setTimeout(() => {
       //   set({is_load: false, type_location: 'none'});
       // }, 300);
     }
-    
+
   },
 
   // открыть на странице Карты при клике на метку заказа всплывающее окно с карточкой товара
@@ -440,7 +478,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
     await navigator.geolocation.getCurrentPosition(({ coords }) => {
       const { latitude, longitude } = coords
-        
+
       func( { latitude, longitude, data } )
     }, ({ message }) => {
       console.log( 'message', message )
@@ -454,7 +492,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   check_pos_watch: (  ) => {
     navigator.geolocation.watchPosition(({ coords }) => {
       const { latitude, longitude } = coords
-      
+
       console.log( 'watchPosition', latitude, longitude )
 
       //func( { latitude, longitude, data } )
@@ -483,8 +521,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }else{
 
       const data = {
-        order_id: order_id, 
-        type: 3, 
+        order_id: order_id,
+        type: 3,
         is_map
       }
 
@@ -500,7 +538,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }, 300 )
   },
   actionCencelOrder: (order_id, is_map = false) => {
-    
+
     if( get().isClick === false ){
       set({ isClick: true })
     }else{
@@ -513,8 +551,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       get().check_pos( get().actionOrder, {order_id: order_id, type: 2, is_map} );
     }else{
       const data = {
-        order_id: order_id, 
-        type: 2, 
+        order_id: order_id,
+        type: 2,
         is_map
       }
 
@@ -605,9 +643,9 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       latitude: latitude,
       longitude: longitude
     };
-    
+
     const res = await api('orders', data);
-    
+
     if( res['st'] == false ){
       get().openErrOrder(res['text']);
 
@@ -637,9 +675,9 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       latitude: latitude,
       longitude: longitude
     };
-    
+
     const res = await api('orders', data);
-    
+
     if( res['st'] == false ){
       get().openErrOrder(res['text']);
 
@@ -655,7 +693,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         min = '0' + min;
       }
 
-      set({ 
+      set({
         location_driver: [latitude, longitude],
         location_driver_time_text: now.getHours() + ':' + min
       })
@@ -682,7 +720,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }
 
     set({ is_load: true })
-    get().check_pos( get().acttionPay, {order_id, is_map} );    
+    get().check_pos( get().acttionPay, {order_id, is_map} );
 
     setTimeout( () => {
       set({ isClick: false })
@@ -695,9 +733,9 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       token: get().token,
       order_id: order_id,
     };
-    
+
     const res = await api('orders', data);
-    
+
     console.log( 'pay', res )
 
     if( res['st'] == false ){
@@ -728,7 +766,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
   renderMap: (home, orders) => {
     let objectManager = null;
-        
+
     if( !get().map ){
       ymaps.ready(() => {
         objectManager = new ymaps.ObjectManager();
@@ -740,17 +778,17 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         }, {
           searchControlProvider: 'yandex#search'
         })
-        
+
         let json = {
           "type": "FeatureCollection",
           "features": []
         };
-                
+
         json.features.push({
           type: "Feature",
           id: -1,
           options: {
-            preset: 'islands#blackDotIcon', 
+            preset: 'islands#blackDotIcon',
             iconColor: 'black'
           },
           geometry: {
@@ -760,12 +798,12 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         })
 
         orders.map( function(item){
-        
+
           json.features.push({
             type: "Feature",
             id: item.id,
             options: {
-              preset: parseInt(item.status_order) == 6 ? 'islands#blueCircleDotIconWithCaption' : 'islands#circleDotIcon', 
+              preset: parseInt(item.status_order) == 6 ? 'islands#blueCircleDotIconWithCaption' : 'islands#circleDotIcon',
               iconColor: item.point_color ? item.point_color : item.color
             },
             properties: {
@@ -777,17 +815,17 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
               coordinates: [item.xy?.latitude, item.xy?.longitude]
             },
           })
-          
+
         } )
 
         // локация курьера на карте в случае если клиент не вышел на связь
         if(get().location_driver) {
-  
+
           json.features.push({
             type: "Feature",
             id: 0,
             options: {
-              preset: 'islands#redStretchyIcon', 
+              preset: 'islands#redStretchyIcon',
             },
             properties: {
               //iconContent: 'Курьер здесь'
@@ -798,12 +836,12 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
               coordinates: get().location_driver,
             },
           })
-  
+
         }
-        
+
         objectManager.add(json);
         get().map.geoObjects.add(objectManager);
-        
+
         get().addEvent(objectManager, orders);
       });
     }else{
@@ -813,13 +851,13 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         "type": "FeatureCollection",
         "features": []
       };
-              
+
       //дом
       json.features.push({
         type: "Feature",
         id: -1,
         options: {
-          preset: 'islands#blackDotIcon', 
+          preset: 'islands#blackDotIcon',
           iconColor: 'black'
         },
         geometry: {
@@ -827,15 +865,15 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           coordinates: [home?.latitude, home?.longitude]
         },
       })
-      
-      
+
+
       orders.map( function(item){
-        
+
         json.features.push({
           type: "Feature",
           id: item.id,
           options: {
-            preset: parseInt(item.status_order) == 6 ? 'islands#blueCircleDotIconWithCaption' : 'islands#circleDotIcon', 
+            preset: parseInt(item.status_order) == 6 ? 'islands#blueCircleDotIconWithCaption' : 'islands#circleDotIcon',
             iconColor: item.point_color ? item.point_color : item.color
           },
           properties: {
@@ -847,7 +885,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
             coordinates: [item?.xy?.latitude, item?.xy?.longitude]
           },
         })
-        
+
       } )
 
       // локация курьера на карте в случае если клиент не вышел на связь
@@ -857,7 +895,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           type: "Feature",
           id: 0,
           options: {
-            preset: 'islands#redStretchyIcon', 
+            preset: 'islands#redStretchyIcon',
           },
           properties: {
             //iconContent: 'Курьер здесь'
@@ -870,12 +908,12 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         })
 
       }
-      
+
       get().map.geoObjects.removeAll()
-      
+
       objectManager.add(json);
       get().map.geoObjects.add(objectManager);
-      
+
       get().addEvent(objectManager, orders);
     }
   },
@@ -888,7 +926,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         //this.setState({ is_open_home: true })
       }else{
         let order = orders.find( (item) => parseInt(item.id) == parseInt(order_id) );
-        
+
         if( order ){
           let new_orders = orders.filter( (item) => item?.xy?.latitude == order?.xy?.latitude && item?.xy?.longitude == order?.xy?.longitude );
 
@@ -914,7 +952,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       token: get().token,
       order_id: order_id
     };
-    
+
     const res = await api('orders', data);
 
     if( res.st === true ){
@@ -930,10 +968,13 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
 
   phones: null,
   token: '',
+  is_scaleMap: false,
 
   check_pos_check: false,
 
   avgTime: 0,
+  is_need_avg_time: false,
+  night_map: false,
 
   globalFontSize: 16,
   theme: 'white',
@@ -991,10 +1032,26 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
     })
   },
 
+  getSettings: async (token) => {
+    const data = {
+      token,
+      type: 'getMySetting',
+    };
+
+    const res = await api('settings', data);
+
+    set({
+      is_need_avg_time: res.driver_avg_time === '1' ? true : false,
+      is_need_page_stat: res.driver_page_stat_time === '1' ? true : false,
+      night_map: res.night_map === '1' ? true : false,
+      is_scaleMap: res.is_scaleMap === '1' ? true : false,
+    });
+  },
+
   check_pos: async( func ) => {
     await navigator.geolocation.getCurrentPosition(({ coords }) => {
       const { latitude, longitude } = coords
-        
+
       func( latitude, longitude )
     }, ({ message }) => {
       //get().openErrOrder('Не удалось определить местоположение. '+message);
@@ -1036,7 +1093,7 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
         latitude,
         longitude
       };
-        
+
       const json = await api('settings', data);
     }
   },
@@ -1057,9 +1114,8 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
         token: token,
         type: 'get_point_phone',
       };
-        
-      const json = await api('settings', data);
 
+      const json = await api('settings', data);
       set({
         phones: json?.phone,
         token
@@ -1078,7 +1134,7 @@ export const usePriceStore = createWithEqualityFn((set, get) => ({
       type: 'get_my_price',
       date: date,
     };
-      
+
     const json = await api('price', data);
 
     set({
@@ -1103,7 +1159,7 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
   errText: '',
   chooseDate: '',
 
-  isshowErrOrder: false, 
+  isshowErrOrder: false,
   textErrOrder: '',
 
   isClick: false,
@@ -1120,7 +1176,7 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
       date: date,
       token: token
     };
-      
+
     const json = await api('graph', data);
 
     set({
@@ -1159,17 +1215,17 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
       err_id: err_id,
       row_id: row_id
     };
-    
+
     const res = await api('graph', data);
-    
+
     if( res['st'] == false ){
       set({
-        isshowErrOrder: true, 
+        isshowErrOrder: true,
         textErrOrder: res.text,
       })
     }else{
       get().closeModalErr();
-      
+
       get().getGraph(get().chooseDate, token);
     }
 
@@ -1191,17 +1247,17 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
       text: text,
       id: err_id
     };
-    
+
     const res = await api('graph', data);
-    
+
     if( res['st'] == false ){
       set({
-        isshowErrOrder: true, 
+        isshowErrOrder: true,
         textErrOrder: res.text,
       })
     }else{
       get().closeModalErr();
-      
+
       get().getGraph(get().chooseDate, token);
     }
 
@@ -1227,7 +1283,7 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
   },
   closeErrOrder: () => {
     set({
-      showErrOrder: false, 
+      showErrOrder: false,
       textErrOrder: '',
     })
   },
@@ -1260,14 +1316,14 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
       login: login,
       pwd: pwd
     };
-      
+
     const json = await api('auth', data);
 
     if( json.st === true ){
       localStorage.setItem('token', json.token)
     }
 
-    set({ 
+    set({
       is_load: false,
       loginErr: json.text
     })
@@ -1288,7 +1344,7 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
       login: login,
       pwd: pwd
     };
-      
+
     const json = await api('auth', data);
 
     if( json.st === true ){
@@ -1313,7 +1369,7 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
       login: login,
       code: code
     };
-      
+
     const json = await api('auth', data);
 
     set({ is_load: false })
@@ -1328,7 +1384,7 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
       token: login,
       value: value
     };
-      
+
     const json = await api('auth', data);
 
     return json;
@@ -1349,7 +1405,7 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
         type: 'check_token',
         token: token
       };
-        
+
       const json = await api('auth', data);
 
       set({
@@ -1371,7 +1427,7 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
 export const useSettingsStore = createWithEqualityFn((set, get) => ({
   isClick: false,
 
-  saveMySetting: async (token, groupTypeTime, type_show_del, update_interval, centered_map, color, fontSize, theme, mapScale) => {
+  saveMySetting: async (token, groupTypeTime, type_show_del, update_interval, centered_map, color, fontSize, theme, mapScale, night_map, is_scaleMap) => {
 
     if( get().isClick === false ){
       set({ isClick: true })
@@ -1386,12 +1442,14 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
       type_show_del: type_show_del,
       update_interval: update_interval,
       action_centered_map: centered_map ? 1 : 0,
+      night_map: night_map ? 1 : 0,
+      is_scaleMap: is_scaleMap ? 1 : 0,
       color: color,
       fontSize: parseInt(fontSize),
       theme,
       mapScale
     };
-      
+
     const json = await api('settings', data);
 
     setTimeout( () => {
@@ -1404,7 +1462,7 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
       type: 'getMySetting',
       token: token
     };
-      
+
     return await api('settings', data);
   },
 }), shallow)
@@ -1413,7 +1471,7 @@ export const useStatisticsStore = createWithEqualityFn((set, get) => ({
 
   svod: [],
   is_load: false,
- 
+
   getStatistics: async (token, date_start, date_end) => {
 
     set({ is_load: true })
@@ -1424,7 +1482,7 @@ export const useStatisticsStore = createWithEqualityFn((set, get) => ({
       date_start,
       date_end
     };
-  
+
     const json = await api('stat_time', data);
 
     set({
@@ -1434,7 +1492,7 @@ export const useStatisticsStore = createWithEqualityFn((set, get) => ({
     setTimeout( () => {
       set({ is_load: false })
     }, 500 )
-   
+
   },
 
 }), shallow)

@@ -12,6 +12,8 @@ import Meta from '@/components/meta.js';
 import Modal_Confirm from './modal_confirm';
 
 import { roboto } from '@/ui/Font';
+import {ModalFilterOrders} from "@/components/ModalFilterOrders";
+import {FilterAlt} from "@mui/icons-material";
 
 export default function ListPage() {
   const [
@@ -21,7 +23,8 @@ export default function ListPage() {
     setOpenMenu,
     update_interval,
     limit,
-    limit_count
+    limit_count,
+    showModalTypeDop,
   ] = useOrdersStore((state) => [
     state.orders,
     state.getOrders,
@@ -29,7 +32,8 @@ export default function ListPage() {
     state.setOpenMenu,
     state.update_interval,
     state.limit,
-    state.limit_count
+    state.limit_count,
+    state.showModalTypeDop,
   ]);
 
   const [ globalFontSize ] = useHeaderStore(state => [ state.globalFontSize ]);
@@ -50,12 +54,10 @@ export default function ListPage() {
         className={'list ' + roboto.variable}
         style={{ display: 'flex', justifyContent: 'center' }}
       >
+        <ModalFilterOrders />
         <Grid item xs={12}>
           <Button variant="text" onClick={setOpenMenu} style={{ fontSize: globalFontSize }}>
             {type.text}
-          </Button>
-          <Button variant="text" onClick={() => getOrders(false, true)}>
-            <CachedIcon />
           </Button>
         </Grid>
 

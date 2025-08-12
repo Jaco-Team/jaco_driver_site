@@ -43,12 +43,14 @@ export default function SettingsPage(){
   const [ saveMySetting, getMySetting ] = useSettingsStore( state => [ state.saveMySetting, state.getMySetting ] )
 
   const [ globalFontSize, setGlobalFontSize, setTheme, setGlobalMapScale] = useHeaderStore(state => [state.globalFontSize, state.setGlobalFontSize, state.setTheme, state.setGlobalMapScale]);
-  
+
   const [ is_load, setIsLoad ] = useState( false );
   const [ groupTypeTime, setGroupTypeTime ] = useState( 'norm' );
   const [ type_show_del, setType_show_del ] = useState( 'min' );
   const [ update_interval, setUpdate_interval ] = useState( 30 );
   const [ centered_map, setСentered_map ] = useState( false );
+  const [ night_map, setNight_map ] = useState( false );
+  const [ is_scaleMap, setIs_scaleMap ] = useState( false );
 
   const [ color, setColor ] = useState("#000000");
   const [hsva, setHsva] = useState({ h: 214, s: 43, v: 90, a: 1 });
@@ -77,6 +79,8 @@ export default function SettingsPage(){
         }
 
         setСentered_map( parseInt(res.action_centered_map) == 1 ? true : false )
+        setNight_map( parseInt(res.night_map) == 1 ? true : false )
+        setIs_scaleMap( parseInt(res.is_scaleMap) == 1 ? true : false )
         setUpdate_interval( res.update_interval )
         setType_show_del( res.type_show_del )
         setGroupTypeTime( res.type_data_map )
@@ -88,23 +92,25 @@ export default function SettingsPage(){
         setIsLoad(true);
       }
     }
-  
+
     if( !is_load ){
-      fetchData();    
+      fetchData();
     }
   }, [] )
 
   function save(){
     saveMySetting(
-      session?.token, 
-      groupTypeTime, 
-      type_show_del, 
-      update_interval, 
-      centered_map, 
+      session?.token,
+      groupTypeTime,
+      type_show_del,
+      update_interval,
+      centered_map,
       color,
       fontSize,
       groupTypeTheme,
-      mapScale
+      mapScale,
+      night_map,
+      is_scaleMap
     );
 
     setGlobalFontSize(fontSize);
@@ -121,7 +127,7 @@ export default function SettingsPage(){
   return (
     <Meta title='Настройки'>
       <Grid container spacing={3} className={"price " + roboto.variable}>
-        
+
         <Snackbar
           anchorOrigin={{ vertical, horizontal }}
           open={open}
@@ -203,7 +209,7 @@ export default function SettingsPage(){
                 value={type_show_del}
                 onChange={ (event, data) => { setType_show_del( data ) } }
               >
-                <FormControlLabel value="full" control={<Radio />} label="Показывать весь день" 
+                <FormControlLabel value="full" control={<Radio />} label="Показывать весь день"
                   sx={{
                     "& .MuiFormControlLabel-label": {
                       fontSize: globalFontSize
@@ -215,7 +221,7 @@ export default function SettingsPage(){
                     }
                   }}
                 />
-                <FormControlLabel value="min" control={<Radio />} label="30 минут" 
+                <FormControlLabel value="min" control={<Radio />} label="30 минут"
                   sx={{
                     "& .MuiFormControlLabel-label": {
                       fontSize: globalFontSize
@@ -227,7 +233,7 @@ export default function SettingsPage(){
                     }
                   }}
                 />
-                <FormControlLabel value="max" control={<Radio />} label="2 часа" 
+                <FormControlLabel value="max" control={<Radio />} label="2 часа"
                   sx={{
                     "& .MuiFormControlLabel-label": {
                       fontSize: globalFontSize
@@ -243,14 +249,14 @@ export default function SettingsPage(){
             </FormControl>
           </Paper>
         </Grid>
-        
+
         <Grid item xs={12} style={{ marginTop: 10 }}>
           <Paper style={{ padding: 20 }} elevation={5}>
             <FormGroup>
-              <FormControlLabel 
-                control={<Checkbox checked={centered_map} 
-                onClick={ (event) => { setСentered_map( event.target.checked ) } } />} 
-                label="При взятии, отмене заказа, центрировать карту" 
+              <FormControlLabel
+                control={<Checkbox checked={centered_map}
+                onClick={ (event) => { setСentered_map( event.target.checked ) } } />}
+                label="При взятии, отмене заказа, центрировать карту"
                 sx={{
                   "& .MuiFormControlLabel-label": {
                     fontSize: globalFontSize
@@ -266,7 +272,50 @@ export default function SettingsPage(){
           </Paper>
         </Grid>
 
-        <Grid item xs={12} style={{ marginTop: 10 }}>
+        <Grid item xs={12} style={{marginTop: 10}}>
+          <Paper style={{padding: 20}} elevation={5}>
+            <div style={{paddingBottom: '10px'}}>
+              <span style={{fontSize: globalFontSize}}>Карта</span>
+            </div>
+            <FormGroup>
+              <FormControlLabel
+                control={<Checkbox checked={night_map} onClick={(event) => {setNight_map(event.target.checked)}}/>}
+                label="Темная тема"
+                sx={{
+                  "& .MuiFormControlLabel-label": {
+                    fontSize: globalFontSize
+                  },
+                  "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
+                    "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
+                      color: '#CC0033'
+                    }
+                  }
+                }}
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox checked={is_scaleMap}
+                  onClick={(event) => {
+                     setIs_scaleMap(event.target.checked)
+                  }}
+                  />}
+                label="Ползунок масштабирования карты"
+                sx={{
+                  "& .MuiFormControlLabel-label": {
+                    fontSize: globalFontSize
+                  },
+                  "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
+                    "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
+                      color: '#CC0033'
+                    }
+                  }
+                }}
+              />
+            </FormGroup>
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} style={{marginTop: 10}}>
           <Paper className='container_paper' elevation={5}>
             <div style={{ paddingBottom: '10px' }}>
               <span style={{ fontSize: globalFontSize }}>Размер шрифта ({fontSize})</span>
@@ -306,7 +355,7 @@ export default function SettingsPage(){
             />
           </Paper>
         </Grid>
-        
+
         <Grid item xs={12} style={{ marginTop: 10 }}>
           <Paper style={{ padding: 20 }} elevation={5}>
             <FormControl component="fieldset">
@@ -317,7 +366,7 @@ export default function SettingsPage(){
                 value={update_interval}
                 onChange={ (event, data) => { setUpdate_interval( data ) } }
               >
-                <FormControlLabel value={0} control={<Radio />} label={'Не обновлять'} 
+                <FormControlLabel value={0} control={<Radio />} label={'Не обновлять'}
                   sx={{
                     "& .MuiFormControlLabel-label": {
                       fontSize: globalFontSize
@@ -329,7 +378,7 @@ export default function SettingsPage(){
                     }
                   }}
                 />
-                <FormControlLabel value={10} control={<Radio />} label={'Каждые 10 секунд'} 
+                <FormControlLabel value={10} control={<Radio />} label={'Каждые 10 секунд'}
                   sx={{
                     "& .MuiFormControlLabel-label": {
                       fontSize: globalFontSize
@@ -341,7 +390,7 @@ export default function SettingsPage(){
                     }
                   }}
                 />
-                <FormControlLabel value={30} control={<Radio />} label={'Каждые 30 секунд'} 
+                <FormControlLabel value={30} control={<Radio />} label={'Каждые 30 секунд'}
                   sx={{
                     "& .MuiFormControlLabel-label": {
                       fontSize: globalFontSize
@@ -353,7 +402,7 @@ export default function SettingsPage(){
                     }
                   }}
                 />
-                <FormControlLabel value={60} control={<Radio />} label={'Каждые 60 секунд'} 
+                <FormControlLabel value={60} control={<Radio />} label={'Каждые 60 секунд'}
                   sx={{
                     "& .MuiFormControlLabel-label": {
                       fontSize: globalFontSize
@@ -365,7 +414,7 @@ export default function SettingsPage(){
                     }
                   }}
                 />
-                <FormControlLabel value={120} control={<Radio />} label={'Каждые 120 секунд'} 
+                <FormControlLabel value={120} control={<Radio />} label={'Каждые 120 секунд'}
                   sx={{
                     "& .MuiFormControlLabel-label": {
                       fontSize: globalFontSize
@@ -387,9 +436,9 @@ export default function SettingsPage(){
             <div style={{ paddingBottom: 30, alignSelf: 'flex-start' }}>
               <span style={{fontSize: globalFontSize }}>Цвет на карте</span>
             </div>
-            <Wheel 
-              color={color} 
-              onChange={c => {setHsva(c.hsva); setColor(c.hex);}} 
+            <Wheel
+              color={color}
+              onChange={c => {setHsva(c.hsva); setColor(c.hex);}}
               style={{ marginBottom: 40 }}
             />
             <Alpha
@@ -399,7 +448,7 @@ export default function SettingsPage(){
               style={{ marginBottom: 40 }}
             />
             <div className='container_picker'>
-              <CirclePicker 
+              <CirclePicker
                 width='100%'
                 color={ color }
                 onChangeComplete={ c => {setHsva(hexToHsva(c.hex)); setColor(c.hex);}}
