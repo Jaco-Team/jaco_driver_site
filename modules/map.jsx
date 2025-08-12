@@ -5,6 +5,7 @@ import {YMaps, Map, Placemark, TrafficControl, ZoomControl} from '@pbe/react-yan
 import Typography from '@mui/material/Typography';
 import CachedIcon from '@mui/icons-material/Cached';
 import Button from '@mui/material/Button';
+import PinDropIcon from '@mui/icons-material/PinDrop';
 
 import Meta from '@/components/meta.js';
 import {useOrdersStore, useHeaderStore} from '@/components/store.js';
