@@ -276,23 +276,23 @@ export default function MapPage() {
 				width: '90%',
 				left: '5%',
 				bottom: 50,
-				backgroundColor: night_map == 1 ? "#f0f8ff" : "#000",
+				backgroundColor: "#000",
 				opacity: 0.7,
 				borderRadius: 60
 			}}>
 				<Button className="noselect" style={{
 					flex: 3,
-					color: type.id == 1 ? 'green' : night_map == 1 ? "#000" : "#fff",
+					color: type.id == 1 ? 'green' : "#fff",
 					fontWeight: 'bold'
 				}} onClick={() => setType({id: 1, text: 'Активные'})}>Активные</Button>
 				<Button className="noselect" style={{
 					flex: 1,
-					color: type.id == 2 ? 'green' : night_map == 1 ? "#000" : "#fff",
+					color: type.id == 2 ? 'green' : "#fff",
 					fontWeight: 'bold'
 				}} onClick={() => setType({id: 2, text: 'Мои отмеченные'})}>Мои</Button>
 				<Button className="noselect" style={{
 					flex: 3,
-					color: type.id == 5 ? 'green' : night_map == 1 ? "#000" : "#fff",
+					color: type.id == 5 ? 'green' : "#fff",
 					fontWeight: 'bold'
 				}} onClick={() => setType({id: 5, text: 'У других курьеров'})}>У других</Button>
 			</div>
