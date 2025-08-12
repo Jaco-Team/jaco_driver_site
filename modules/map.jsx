@@ -132,13 +132,13 @@ const MapPoint = memo(function MapPoint({theme, item, mapScale, showOrdersMap, g
 })
 
 const MapPointHouse = memo(function MapPointHouse({point, getHome}) {
-
+	const [night_map] = useHeaderStore(state => [state.night_map]);
 	// домик в деревне
 	let homeLayout = ymaps.templateLayoutFactory.createClass(
 		`<span class="map-img ${roboto.variable}">` +
 		'<span class="span_svg_home">' +
 		'<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="none" viewBox="0 0 24 24">' +
-		'<path fill="#000" stroke="#000" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.5 20v-9H3l9-6 9 6h-3.5v9h-3v-3.5A1.5 1.5 0 0 0 13 15h-2a1.5 1.5 0 0 0-1.5 1.5V20z" />' +
+		'<path fill={night_map == 1 ? "#f0f8ff" : "#000"} stroke={night_map == 1 ? "#f0f8ff" : "#000"} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.5 20v-9H3l9-6 9 6h-3.5v9h-3v-3.5A1.5 1.5 0 0 0 13 15h-2a1.5 1.5 0 0 0-1.5 1.5V20z" />' +
 		'</svg>' +
 		'</span>' +
 		'</span>'
@@ -222,12 +222,12 @@ export default function MapPage() {
 			<div className='location_svg'>
 				<Button onClick={() => set_type_location()}>
 					{type_location === 'location' ?
-						<LocationOnIcon style={{color: '#000'}}/>
+						<LocationOnIcon style={{color: night_map == 1 ? "#f0f8ff" : "#000"}}/>
 						:
 						type_location === 'watch' ?
-							<PinDropIcon style={{color: '#000'}}/>
+							<PinDropIcon style={{color: night_map == 1 ? "#f0f8ff" : "#000"}}/>
 							:
-							<LocationOffIcon style={{color: '#000'}}/>
+							<LocationOffIcon style={{color: night_map == 1 ? "#f0f8ff" : "#000"}}/>
 					}
 				</Button>
 			</div>
@@ -276,23 +276,23 @@ export default function MapPage() {
 				width: '90%',
 				left: '5%',
 				bottom: 50,
-				backgroundColor: '#000',
+				backgroundColor: night_map == 1 ? "#f0f8ff" : "#000",
 				opacity: 0.7,
 				borderRadius: 60
 			}}>
 				<Button className="noselect" style={{
 					flex: 3,
-					color: type.id == 1 ? 'green' : '#fff',
+					color: type.id == 1 ? 'green' : night_map == 1 ? "#000" : "#fff",
 					fontWeight: 'bold'
 				}} onClick={() => setType({id: 1, text: 'Активные'})}>Активные</Button>
 				<Button className="noselect" style={{
 					flex: 1,
-					color: type.id == 2 ? 'green' : '#fff',
+					color: type.id == 2 ? 'green' : night_map == 1 ? "#000" : "#fff",
 					fontWeight: 'bold'
 				}} onClick={() => setType({id: 2, text: 'Мои отмеченные'})}>Мои</Button>
 				<Button className="noselect" style={{
 					flex: 3,
-					color: type.id == 5 ? 'green' : '#fff',
+					color: type.id == 5 ? 'green' : night_map == 1 ? "#000" : "#fff",
 					fontWeight: 'bold'
 				}} onClick={() => setType({id: 5, text: 'У других курьеров'})}>У других</Button>
 			</div>
@@ -310,12 +310,12 @@ export default function MapPage() {
 				<Typography style={{
 					fontSize: globalFontSize,
 					fontWeight: 'bold',
-					color: '#000'
+					color: night_map == 1 ? "#f0f8ff" : "#000"
 				}} component="span">{limit}</Typography>
 				{limit_count?.length > 0 ? <Typography style={{
 					fontSize: globalFontSize,
 					fontWeight: 'bold',
-					color: '#000'
+					color: night_map == 1 ? "#f0f8ff" : "#000"
 				}} component="span">{limit_count}</Typography> : false}
 			</div>
 

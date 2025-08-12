@@ -1,13 +1,42 @@
-import * as PropTypes from "prop-types";
-import {Divider} from "@mui/material";
+import {Divider, useMediaQuery} from "@mui/material";
 import InfoIcon from '@mui/icons-material/Info';
-import {Icon} from '@mui/material';
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import {useState, useEffect} from "react";
 
-export function TextDescription({text, value, title, FormatPrice, bottom_devider = true, globalFontSize, type}) {
+export function TextDescription({
+																	text,
+																	value,
+																	title,
+																	FormatPrice,
+																	bottom_devider = true,
+																	globalFontSize,
+																	type
+																}) {
+	const [open, setOpen] = useState(false);
+	const [isClient, setIsClient] = useState(false);
+	const isMobile = useMediaQuery('(pointer: coarse)');
+
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
+
+	const handleTooltipOpen = () => {
+		if (isMobile) {
+			setOpen(true);
+		}
+	};
+
+	const handleTooltipClose = () => {
+		if (isMobile) {
+			setOpen(false);
+		}
+	};
+
+	if (!isClient) return null;
+
 	return (
 		<>
 			<Box
@@ -39,10 +68,29 @@ export function TextDescription({text, value, title, FormatPrice, bottom_devider
 						<Tooltip
 							title={title}
 							arrow
-							placement="right"
+							placement={isMobile ? 'top' : 'right'}
+							open={isMobile ? open : undefined}
+							onOpen={handleTooltipOpen}
+							onClose={handleTooltipClose}
+							disableHoverListener={isMobile}
+							disableFocusListener={isMobile}
+							disableTouchListener={!isMobile}
+							PopperProps={{
+								disablePortal: true,
+								modifiers: [
+									{
+										name: 'preventOverflow',
+										options: {
+											altBoundary: true,
+											padding: 8,
+										},
+									},
+								],
+							}}
 						>
 							<IconButton
 								size="small"
+								onClick={() => isMobile && setOpen(!open)}
 								sx={{
 									width: `${globalFontSize * 1.2}px`,
 									height: `${globalFontSize * 1.2}px`,
@@ -85,6 +133,5 @@ export function TextDescription({text, value, title, FormatPrice, bottom_devider
 
 			{bottom_devider && <Divider/>}
 		</>
-	)
-
+	);
 }

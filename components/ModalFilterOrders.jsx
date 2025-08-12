@@ -28,6 +28,18 @@ const StyledBottomSheet = styled(BottomSheet)(({ theme }) => ({
     maxHeight: '80vh',
     overflowY: 'auto',
   },
+  '& .MuiBox-root': {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: theme.palette.background.paper,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: theme.spacing(2),
+    maxHeight: '80vh',
+    overflowY: 'auto',
+  },
 }));
 
 export const ModalFilterOrders = () => {
@@ -107,8 +119,6 @@ export const ModalFilterOrders = () => {
             />
           ))}
         </FormGroup>
-
-        <Box sx={{ height: '80px' }} />
       </Box>
     </StyledBottomSheet>
   );
