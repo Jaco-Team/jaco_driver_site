@@ -31,15 +31,26 @@ export default function PricePage() {
 
 	const [startDate, setStartDate] = useState(dayjs(new Date()));
 	const [endDate, setEndDate] = useState(dayjs(new Date()));
-	const [statPrice, give_hist, getStat] = usePriceStore(state => [state.statPrice, state.give_hist, state.getStat])
+	const [nowDate, setNowDate] = useState(dayjs(new Date()));
+	const [statPrice, give_hist, getStat, getStatBetween] = usePriceStore(state => [state.statPrice, state.give_hist, state.getStat, state.getStatBetween]);
 	const [globalFontSize] = useHeaderStore(state => [state.globalFontSize]);
 	const FormatPrice = (price) => new Intl.NumberFormat('ru-RU').format(price);
 
+	// useEffect(() => {
+	// 	if (session?.isAuth === true) {
+	// 		getStat(dayjs(startDate).format('YYYY-MM-DD'), session?.token);
+	// 	}
+	// }, [])
+
 	useEffect(() => {
 		if (session?.isAuth === true) {
-			getStat(dayjs(startDate).format('YYYY-MM-DD'), session?.token);
+			getStatBetween(
+				dayjs(startDate).format('YYYY-MM-DD'), 
+				dayjs(endDate).format('YYYY-MM-DD'), 
+				session?.token
+			);
 		}
-	}, [startDate])
+	}, [startDate, endDate])
 
 	return (
 		<Meta title='Расчет'>
@@ -51,6 +62,8 @@ export default function PricePage() {
 						value={startDate}
 						onChange={setStartDate}
 						fontSize={globalFontSize}
+						maxDate={nowDate}
+						minDate={nowDate ? nowDate.add(-93, 'day') : undefined}
 					/>
 				</Grid>
 
@@ -58,8 +71,8 @@ export default function PricePage() {
 					<MyDatepicker
 						label={'Дата до'}
 						value={endDate}
-						maxDate={startDate ? startDate.add(31, 'day') : undefined}
-						minDate={startDate}
+						maxDate={nowDate}
+						minDate={nowDate ? nowDate.add(-93, 'day') : undefined}
 						onChange={setEndDate}
 						fontSize={globalFontSize}
 					/>

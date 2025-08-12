@@ -1142,6 +1142,22 @@ export const usePriceStore = createWithEqualityFn((set, get) => ({
       give_hist: json.give_hist
     })
   },
+
+  getStatBetween: async (dateStart, dateEnd, token) => {
+    const data = {
+      token: token,
+      type: 'get_my_price_between',
+      dateStart,
+      dateEnd,
+    };
+
+    const json = await api('price', data);
+
+    set({
+      statPrice: json.stat,
+      give_hist: json.give_hist
+    })
+  },
 }), shallow)
 
 export const useGraphStore = createWithEqualityFn((set, get) => ({
