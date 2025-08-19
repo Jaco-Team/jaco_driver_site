@@ -1,9 +1,9 @@
 import {useState, useEffect} from 'react';
 
 import Grid from '@mui/material/Grid';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
+// import List from '@mui/material/List';
+// import ListItem from '@mui/material/ListItem';
+// import ListItemButton from '@mui/material/ListItemButton';
 
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -22,7 +22,7 @@ import useSession from '@/components/sessionHook';
 import Meta from '@/components/meta.js';
 
 import {roboto} from '@/ui/Font';
-import Box from "@mui/material/Box";
+//import Box from "@mui/material/Box";
 import {TextDescription} from "@/components/TextDescription";
 
 export default function PricePage() {
