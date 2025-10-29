@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
- 
+
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -12,163 +12,291 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
 import Snackbar from '@mui/material/Snackbar';
-import MuiAlert from '@mui/material/Alert';
-
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
- 
-import {useStatisticsStore, useHeaderStore} from '@/components/store.js';
+import Box from '@mui/material/Box';
+
+import { useStatisticsStore, useHeaderStore } from '@/components/store.js';
 import MyDatepicker from '@/ui/MyDatepicker';
 import dayjs from 'dayjs';
 
 import Meta from '@/components/meta.js';
-
 import { roboto } from '@/ui/Font';
 
-const Alert = React.forwardRef(function Alert(props, ref) {
-  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-});
+const MAX_SPAN_DAYS = 93;
+const fmt = (d) => dayjs(d).format('YYYY-MM-DD');
+const minDay = (a, b) => (dayjs(a).isBefore(b) ? dayjs(a) : dayjs(b));
+const maxDay = (a, b) => (dayjs(a).isAfter(b) ? dayjs(a) : dayjs(b));
 
-export default function StatisticsPage(){
+function normalizeRangeWithReasons(start, end) {
+  const today = dayjs().startOf('day');
+  const minDate = today.subtract(MAX_SPAN_DAYS, 'day');
 
-  const [date_start, setDateStart] = useState(dayjs(new Date()));
-  const [date_end, setDateEnd] = useState(dayjs(new Date()));
+  let s = dayjs(start).startOf('day');
+  let e = dayjs(end).startOf('day');
+  const reasons = [];
 
-  const [state, setState] = useState({
+  if (s.isAfter(today)) {
+    s = today;
+    reasons.push('afterToday');
+  }
+  if (s.isBefore(minDate)) {
+    s = minDate;
+    reasons.push('beforeMin');
+  }
+  if (e.isAfter(today)) {
+    e = today;
+    reasons.push('spanTrimmedByToday');
+  }
+  if (e.isBefore(minDate)) {
+    e = minDate;
+    reasons.push('spanTrimmedByMin');
+  }
+
+  // порядок
+  if (e.isBefore(s)) {
+    e = s;
+    reasons.push('endBeforeStart');
+  }
+
+  // длина
+  const span = e.diff(s, 'day');
+  if (span > MAX_SPAN_DAYS) {
+    e = s.add(MAX_SPAN_DAYS, 'day');
+    reasons.push('spanTooLong');
+    if (e.isAfter(today)) {
+      e = today;
+      s = e.subtract(MAX_SPAN_DAYS, 'day');
+      if (e.isSame(today)) reasons.push('spanTrimmedByToday');
+      if (s.isSame(minDate)) reasons.push('spanTrimmedByMin');
+    }
+  }
+
+  return { s, e, reasons, minDate };
+}
+
+function reasonsToMessage(reasons, s, e, minDate) {
+  if (!reasons.length) return null;
+  const lines = [];
+  if (reasons.includes('afterToday')) lines.push('Дата “от” не может быть позже сегодняшней.');
+  if (reasons.includes('beforeMin')) lines.push(`Дата “от” не может быть раньше ${fmt(minDate)}.`);
+  if (reasons.includes('endBeforeStart')) lines.push('Дата “до” не может быть раньше “от”.');
+  if (reasons.includes('spanTooLong')) lines.push(`Диапазон не может превышать ${MAX_SPAN_DAYS} дней.`);
+  if (reasons.includes('spanTrimmedByToday')) lines.push('Дата “до” ограничена сегодняшним днём.');
+  if (reasons.includes('spanTrimmedByMin')) lines.push(`Дата “от” ограничена ${fmt(minDate)}.`);
+  lines.push(`Выбран период: ${fmt(s)} — ${fmt(e)}`);
+  return lines.join('\n');
+}
+
+export default function StatisticsPage() {
+  //const [date_start, setDateStart] = useState(dayjs().startOf('day'));
+  const [date_start, setDateStart] = useState(dayjs().startOf('day').subtract(6, 'day'));
+  const [date_end, setDateEnd] = useState(dayjs().startOf('day'));
+
+  const [snackbar, setSnackbar] = useState({
     open: false,
     vertical: 'top',
     horizontal: 'center',
+    message: '',
   });
+  const { vertical, horizontal, open, message } = snackbar;
 
-  const { vertical, horizontal, open } = state;
+  const [getStatistics, svod, is_load] = useStatisticsStore((state) => [
+    state.getStatistics,
+    state.svod,
+    state.is_load,
+  ]);
+  const [globalFontSize, token] = useHeaderStore((state) => [state.globalFontSize, state.token]);
 
-  const [getStatistics, svod, is_load] = useStatisticsStore(state => [state.getStatistics, state.svod, state.is_load]);
-  const [globalFontSize, token] = useHeaderStore(state => [state.globalFontSize, state.token]);
+  const showSnackbar = (text) => setSnackbar((s) => ({ ...s, open: true, message: text }));
+  const closeSnackbar = () => setSnackbar((s) => ({ ...s, open: false }));
 
+  const today = dayjs().startOf('day');
+  const globalMin = today.subtract(MAX_SPAN_DAYS, 'day');
+
+  const startMaxAllowed = minDay(today, date_end || today);
+  const startMinAllowed = maxDay(globalMin, (date_end || today).subtract(MAX_SPAN_DAYS, 'day'));
+
+  const endMinAllowed = maxDay(globalMin, date_start || globalMin);
+  const endMaxAllowed = minDay(today, (date_start || today).add(MAX_SPAN_DAYS, 'day'));
+
+  const shouldDisableStart = (d) => {
+    const dd = dayjs(d).startOf('day');
+    return dd.isBefore(startMinAllowed, 'day') || dd.isAfter(startMaxAllowed, 'day');
+  };
+  const shouldDisableEnd = (d) => {
+    const dd = dayjs(d).startOf('day');
+    return dd.isBefore(endMinAllowed, 'day') || dd.isAfter(endMaxAllowed, 'day');
+  };
+
+  // ===== Первичная загрузка =====
   useEffect(() => {
-    const dateStart = date_start ? dayjs(date_start).format('YYYY-MM-DD') : '';
-    const dateEnd = date_end ? dayjs(date_end).format('YYYY-MM-DD') : '';
-
-    if(token && token.length > 0) {
-      getStatistics(token, dateStart, dateEnd);
-    }
+    if (!token) return;
+    const { s, e, reasons, minDate } = normalizeRangeWithReasons(date_start, date_end);
+    const msg = reasonsToMessage(reasons, s, e, minDate);
+    if (msg) showSnackbar(msg);
+    setDateStart(s);
+    setDateEnd(e);
+    getStatistics(token, fmt(s), fmt(e));
   }, [token]);
 
-  const closeModal = () => {
-    setState({ ...state, open: false });
-  }
+  // ===== Обработчики выбора дат =====
+  const handleStartChange = (val) => {
+    const picked = dayjs(val).startOf('day');
+    const { s, e, reasons, minDate } = normalizeRangeWithReasons(picked, date_end || picked);
+    setDateStart(s);
+    setDateEnd(e);
+    const msg = reasonsToMessage(reasons, s, e, minDate);
+    if (msg) showSnackbar(msg);
+  };
+
+  const handleEndChange = (val) => {
+    const picked = dayjs(val).startOf('day');
+    const { s, e, reasons, minDate } = normalizeRangeWithReasons(date_start || picked, picked);
+    setDateStart(s);
+    setDateEnd(e);
+    const msg = reasonsToMessage(reasons, s, e, minDate);
+    if (msg) showSnackbar(msg);
+  };
 
   const getStat = () => {
-
-    const dateStart = date_start ? dayjs(date_start).format('YYYY-MM-DD') : '';
-    const dateEnd = date_end ? dayjs(date_end).format('YYYY-MM-DD') : '';
-
-    if(dateStart == '' || dateEnd == '' ){
-      setState({ ...state, open: true });
+    if (!date_start || !date_end) {
+      showSnackbar('Необходимо указать обе даты');
       return;
     }
-
-    if(token && token.length > 0) {
-      getStatistics(token, dateStart, dateEnd);
-    }
-
-  }
+    const { s, e, reasons, minDate } = normalizeRangeWithReasons(date_start, date_end);
+    const msg = reasonsToMessage(reasons, s, e, minDate);
+    if (msg) showSnackbar(msg);
+    setDateStart(s);
+    setDateEnd(e);
+    if (token) getStatistics(token, fmt(s), fmt(e));
+  };
 
   return (
-    <Meta title='Статистика'>
+    <Meta title="Статистика">
       <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={is_load}>
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      <Grid container spacing={3} className={"price " + roboto.variable}>
-
-        <Snackbar
-          anchorOrigin={{ vertical, horizontal }}
-          open={open}
-          onClose={ () => closeModal() }
-          autoHideDuration={5000}
+      <Snackbar
+        anchorOrigin={{ vertical, horizontal }}
+        open={open}
+        onClose={closeSnackbar}
+        autoHideDuration={5000}
+        key={message}
+      >
+        <Box
+          role="alert"
+          sx={{
+            bgcolor: 'success.main',
+            color: '#fff',
+            px: 2,
+            py: 1.5,
+            borderRadius: 1,
+            boxShadow: 3,
+            fontSize: globalFontSize,
+            maxWidth: 720,
+          }}
         >
-          <Alert onClose={() => closeModal()} severity="error" sx={{ width: '100%', fontSize: globalFontSize }}>
-            Необходимо укаазть обе даты
-          </Alert>
-        </Snackbar>
+          <span style={{ whiteSpace: 'pre-line' }}>{message}</span>
+        </Box>
+      </Snackbar>
 
-        <Grid item xs={12} >
-
+      <Grid container spacing={3} className={'price ' + roboto.variable}>
+        <Grid item xs={12}>
           <MyDatepicker
-            label={'Дата от'}
+            label="Дата от"
             value={date_start}
-            onChange={setDateStart}
+            onChange={handleStartChange}
             fontSize={globalFontSize}
+            minDate={startMinAllowed}
+            maxDate={startMaxAllowed}
+            shouldDisableDate={shouldDisableStart}
+            disableFuture
+            slotProps={{ textField: { inputProps: { readOnly: true } } }}
           />
-
         </Grid>
-        <Grid item xs={12} >
 
+        <Grid item xs={12}>
           <MyDatepicker
-            label={'Дата до'}
+            label="Дата до"
             value={date_end}
-            onChange={setDateEnd}
+            onChange={handleEndChange}
             fontSize={globalFontSize}
+            minDate={endMinAllowed}
+            maxDate={endMaxAllowed}
+            shouldDisableDate={shouldDisableEnd}
+            disableFuture
+            slotProps={{ textField: { inputProps: { readOnly: true } } }}
           />
-
         </Grid>
 
-        <Grid item xs={12} >
-          <Button variant="contained" onClick={getStat} style={{ fontSize: globalFontSize }}>Показать</Button>
+        <Grid item xs={12}>
+          <Button variant="contained" onClick={getStat} style={{ fontSize: globalFontSize }}>
+            Показать
+          </Button>
         </Grid>
 
         <Grid item xs={12} mb={10}>
-          <TableContainer 
+          <TableContainer
             id="tableGraph"
-            component={Paper} 
+            component={Paper}
             sx={{
               maxHeight: 600,
-              scrollbarWidth: "none",
-              "&::-webkit-scrollbar": {
-                display: "none"
-              } 
-            }} 
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': { display: 'none' },
+            }}
           >
             <Table stickyHeader aria-label="sticky table">
               <TableHead>
-                <TableRow 
+                <TableRow
                   sx={{
-                    "& .MuiTableCell-root": {
+                    '& .MuiTableCell-root': {
                       fontSize: globalFontSize,
                       fontWeight: 'bold',
-                      minWidth: '200px'
-                    }
+                      minWidth: '200px',
+                    },
                   }}
                 >
-                  <TableCell >Курьер</TableCell>
-                  <TableCell >Среднее время ( в радиусе )</TableCell>
-                  <TableCell >Количество</TableCell>
-                  <TableCell >Во время</TableCell>
-                  <TableCell >С опозданием</TableCell>
-                  <TableCell >Вовремя и в радиусе</TableCell>
-                  <TableCell >В радиусе</TableCell>
-                  <TableCell >Не вовремя и не в радиусе</TableCell>
+                  <TableCell>Курьер</TableCell>
+                  <TableCell>Среднее время ( в радиусе )</TableCell>
+                  <TableCell>Количество</TableCell>
+                  <TableCell>Во время</TableCell>
+                  <TableCell>С опозданием</TableCell>
+                  <TableCell>Вовремя и в радиусе</TableCell>
+                  <TableCell>В радиусе</TableCell>
+                  <TableCell>Не вовремя и не в радиусе</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {svod.map((row, key) => (
-                  <TableRow key={key}
+                  <TableRow
+                    key={key}
                     sx={{
-                      "& .MuiTableCell-root": {
+                      '& .MuiTableCell-root': {
                         fontSize: globalFontSize,
-                        minWidth: '200px'
-                      }
+                        minWidth: '200px',
+                      },
                     }}
                   >
                     <TableCell>{row.name}</TableCell>
-                    <TableCell >{row.time2}</TableCell>
-                    <TableCell >{row.other_stat.all_count}</TableCell>
-                    <TableCell >{row.other_stat.norm} ({row.other_stat.norm_percent}%)</TableCell>
-                    <TableCell >{row.other_stat.fake} ({row.other_stat.fake_percent}%)</TableCell>
-                    <TableCell >{row.other_stat.time_dist_true} ({row.other_stat.time_dist_true_percent}%)</TableCell>
-                    <TableCell >{row.other_stat.true_dist} ({row.other_stat.true_dist_percent}%)</TableCell>
-                    <TableCell >{row.other_stat.time_dist_false} ({row.other_stat.time_dist_false_percent}%)</TableCell>
+                    <TableCell>{row.time2}</TableCell>
+                    <TableCell>{row.other_stat.all_count}</TableCell>
+                    <TableCell>
+                      {row.other_stat.norm} ({row.other_stat.norm_percent}%)
+                    </TableCell>
+                    <TableCell>
+                      {row.other_stat.fake} ({row.other_stat.fake_percent}%)
+                    </TableCell>
+                    <TableCell>
+                      {row.other_stat.time_dist_true} ({row.other_stat.time_dist_true_percent}%)
+                    </TableCell>
+                    <TableCell>
+                      {row.other_stat.true_dist} ({row.other_stat.true_dist_percent}%)
+                    </TableCell>
+                    <TableCell>
+                      {row.other_stat.time_dist_false} ({row.other_stat.time_dist_false_percent}%)
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -177,5 +305,5 @@ export default function StatisticsPage(){
         </Grid>
       </Grid>
     </Meta>
-  )
+  );
 }
