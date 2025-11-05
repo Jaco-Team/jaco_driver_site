@@ -34,6 +34,8 @@ import Meta from '@/components/meta.js';
 
 import { roboto } from '@/ui/Font';
 
+import { log } from '@/components/analytics';
+
 function SwipeableTemporaryDrawer() {
   const session = useSession();
 
@@ -45,12 +47,20 @@ function SwipeableTemporaryDrawer() {
     <SwipeableDrawer
       anchor={'bottom'}
       open={isOpenMenu}
-      onClose={setCloseMenu}
-      onOpen={setOpenMenu}
+      onClose={() => { log('graph_month_picker_close', 'Закрытие выбора месяца (График работы)'); setCloseMenu(); }}
+      onOpen={() =>  { log('graph_month_picker_open',  'Открытие выбора месяца (График работы)');  setOpenMenu();  }}
     >
       <List className={'monthList ' + roboto.variable}>
         { month_list.map( (item, key) =>
-          <ListItem disablePadding key={key} className={ parseInt(item.is_active) == 1 ? 'active' : '' } onClick={ () => getGraph(item.day, session?.token) }>
+          <ListItem 
+            disablePadding 
+            key={key} 
+            className={ parseInt(item.is_active) == 1 ? 'active' : '' } 
+            onClick={() => {
+              log('graph_month_selected', 'Выбор месяца (График работы)');
+              getGraph(item.day, session?.token);
+            }}
+          >
             <ListItemButton>
               <ListItemText  primary={item.mounth} 
                 sx={{
@@ -78,7 +88,11 @@ function ModalErr() {
     <SwipeableDrawer
       anchor={'bottom'}
       open={isOpenModalErr}
-      onClose={ closeModalErr }
+      onClose={() => {
+        if (showErrOrder) log('graph_errorder_modal_close', 'Закрытие модалки ошибки по заказу');
+        if (showErrOrderCum) log('graph_errcam_modal_close',  'Закрытие модалки ошибки по камерам');
+        closeModalErr();
+      }}
       className={'modalErr ' + roboto.variable}
       onOpen={ () => {} }
     >
@@ -359,7 +373,14 @@ export default function GraphPage(){
                 </TableHead>
                 <TableBody>
                   { err_orders.map( (rowData, index) =>
-                    <TableRow hover key={index} onClick={ () => { openModalErr('showErrOrder', rowData) } }>
+                    <TableRow 
+                      hover 
+                      key={index} 
+                      onClick={() => {
+                        log('graph_errorder_modal_open', 'Открытие модалки ошибки по заказу');
+                        openModalErr('showErrOrder', rowData);
+                      }}
+                    >
                       <TableCell style={{ fontSize: globalFontSize }}>{rowData.order_id}</TableCell>
                       <TableCell style={{ fontSize: globalFontSize }}>{rowData.date_time_order}</TableCell>
                       <TableCell style={{ fontSize: globalFontSize }}>{rowData.pr_name}</TableCell>
@@ -391,7 +412,14 @@ export default function GraphPage(){
                 </TableHead>
                 <TableBody>
                   { err_cam.map( (rowData, index) =>
-                    <TableRow hover key={index} onClick={ () => { openModalErr('showErrOrderCum', rowData) } }>
+                    <TableRow 
+                      hover 
+                      key={index} 
+                      onClick={() => {
+                        log('graph_errcam_modal_open', 'Открытие модалки ошибки по камерам');
+                        openModalErr('showErrOrderCum', rowData);
+                      }}
+                    >
                       <TableCell style={{ fontSize: globalFontSize }}>{rowData.id}</TableCell>
                       <TableCell style={{ fontSize: globalFontSize }}>{rowData.date_time_fine}</TableCell>
                       <TableCell style={{ fontSize: globalFontSize }}>{rowData.fine_name}</TableCell>

@@ -37,6 +37,8 @@ import OrderCard from '@/modules/order_card';
 
 import {roboto} from '@/ui/Font';
 
+import { log, logTel } from '@/components/analytics';
+
 function DrawerMap() {
 
 	const [isOpenOrderMap, closeOrderMap, showOrders] = useOrdersStore(state => [state.isOpenOrderMap, state.closeOrderMap, state.showOrders])
@@ -96,8 +98,17 @@ function DrawerHeader() {
 	const router = useRouter();
 
 	function logOut() {
-		localStorage.removeItem('token');
-		router.push('/auth', {scroll: false})
+			localStorage.removeItem('token');
+
+			let pushed = false;
+			const go = () => {
+					if (pushed) return;
+					pushed = true;
+					router.push('/auth', { scroll: false });
+			};
+
+			log('logout', 'Выход из аккаунта', null, { callback: go });
+			setTimeout(go, 200); // фолбэк, если колбэк не пришёл
 	}
 
 	return (
@@ -153,21 +164,39 @@ function DrawerHeader() {
 				{phones?.phone_upr.length == 0 ? false :
 					<ListItem disablePadding>
 						<ListItemButton>
-							<Link href={'tel:' + phones?.phone_upr} style={{fontSize: globalFontSize}}>Директор</Link>
+							<Link 
+								href={'tel:' + phones?.phone_upr} 
+								style={{fontSize: globalFontSize}}
+								onClick={(e) => logTel('call_director', phones?.phone_upr, 'Звонок директору', e)}
+							>
+								Директор
+							</Link>
 						</ListItemButton>
 					</ListItem>
 				}
 				{phones?.phone_man.length == 0 ? false :
 					<ListItem disablePadding>
 						<ListItemButton>
-							<Link href={'tel:' + phones?.phone_man} style={{fontSize: globalFontSize}}>Менеджер</Link>
+							<Link 
+								href={'tel:' + phones?.phone_man} 
+								onClick={(e) => logTel('call_manager', phones?.phone_man, 'Звонок менеджеру', e)}
+								style={{fontSize: globalFontSize}}
+							>
+								Менеджер
+							</Link>
 						</ListItemButton>
 					</ListItem>
 				}
 				{phones?.phone_center.length == 0 ? false :
 					<ListItem disablePadding>
 						<ListItemButton>
-							<Link href={'tel:' + phones?.phone_center} style={{fontSize: globalFontSize}}>Контакт-центр</Link>
+							<Link 
+								href={'tel:' + phones?.phone_center} 
+								onClick={(e) => logTel('call_contact_center', phones?.phone_center, 'Звонок в Контакт-центр', e)}
+								style={{fontSize: globalFontSize}}
+							>
+								Контакт-центр
+							</Link>
 						</ListItemButton>
 					</ListItem>
 				}

@@ -16,6 +16,8 @@ import Logo from '@/public/Logo.png';
 
 import { roboto } from '@/ui/Font';
 
+import { log } from '@/components/analytics';
+
 export default function AuthPage(){
   const router = useRouter();
 
@@ -38,7 +40,10 @@ export default function AuthPage(){
     const res = await login(myLogin, myPWD);
 
     if( res.st === true ){
+      log('auth_login', 'Успешная авторизация');
       router.push('/list_orders', { scroll: false })
+    } else {
+      log('auth_login_fail', 'Ошибка авторизации');
     }
   }
 
@@ -62,7 +67,18 @@ export default function AuthPage(){
           <span>{loginErr}</span>
 
           <Button variant="contained" onClick={ () => loginFN() }>Войти</Button>
-          <a href='/registration'>Восстановить пароль</a>
+          <a 
+            href='/registration'
+            onClick={(e) => {
+              e.preventDefault();
+              let done = false;
+              const go = () => { if (done) return; done = true; router.push('/registration', { scroll: false }); };
+              log('auth_go_to_resetpwd', 'Восстановление пароля', null, { callback: go });
+              setTimeout(go, 200);
+            }}
+          >
+            Восстановить пароль
+          </a>
 
         </Grid>
         

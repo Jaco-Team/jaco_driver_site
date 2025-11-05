@@ -23,6 +23,8 @@ import dayjs from 'dayjs';
 import Meta from '@/components/meta.js';
 import { roboto } from '@/ui/Font';
 
+import { log } from '@/components/analytics';
+
 const MAX_SPAN_DAYS = 93;
 const fmt = (d) => dayjs(d).format('YYYY-MM-DD');
 const minDay = (a, b) => (dayjs(a).isBefore(b) ? dayjs(a) : dayjs(b));
@@ -144,6 +146,10 @@ export default function StatisticsPage() {
   const handleStartChange = (val) => {
     const picked = dayjs(val).startOf('day');
     const { s, e, reasons, minDate } = normalizeRangeWithReasons(picked, date_end || picked);
+
+    log('statistics_calendar_start_close', 'Закрытие календаря (Статистика времени): Дата от');
+    log('statistics_date_selected', 'Выбор даты (Статистика времени)');
+
     setDateStart(s);
     setDateEnd(e);
     const msg = reasonsToMessage(reasons, s, e, minDate);
@@ -153,6 +159,10 @@ export default function StatisticsPage() {
   const handleEndChange = (val) => {
     const picked = dayjs(val).startOf('day');
     const { s, e, reasons, minDate } = normalizeRangeWithReasons(date_start || picked, picked);
+
+    log('statistics_calendar_end_close', 'Закрытие календаря (Статистика времени): Дата до');
+    log('statistics_date_selected', 'Выбор даты (Статистика времени)');
+
     setDateStart(s);
     setDateEnd(e);
     const msg = reasonsToMessage(reasons, s, e, minDate);
@@ -164,6 +174,9 @@ export default function StatisticsPage() {
       showSnackbar('Необходимо указать обе даты');
       return;
     }
+
+    log('statistics_show_click', 'Показать статистику времени');
+
     const { s, e, reasons, minDate } = normalizeRangeWithReasons(date_start, date_end);
     const msg = reasonsToMessage(reasons, s, e, minDate);
     if (msg) showSnackbar(msg);
@@ -171,6 +184,9 @@ export default function StatisticsPage() {
     setDateEnd(e);
     if (token) getStatistics(token, fmt(s), fmt(e));
   };
+
+  const onStartOpen = () => log('statistics_calendar_start_open', 'Открытие календаря (Статистика времени): Дата от');
+  const onEndOpen = () => log('statistics_calendar_end_open', 'Открытие календаря (Статистика времени): Дата до');
 
   return (
     <Meta title="Статистика">
@@ -214,6 +230,7 @@ export default function StatisticsPage() {
             shouldDisableDate={shouldDisableStart}
             disableFuture
             slotProps={{ textField: { inputProps: { readOnly: true } } }}
+            onOpen={onStartOpen}
           />
         </Grid>
 
@@ -228,6 +245,7 @@ export default function StatisticsPage() {
             shouldDisableDate={shouldDisableEnd}
             disableFuture
             slotProps={{ textField: { inputProps: { readOnly: true } } }}
+            onOpen={onEndOpen}
           />
         </Grid>
 

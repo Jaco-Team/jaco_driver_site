@@ -16,7 +16,9 @@ import LocationOffIcon from '@mui/icons-material/LocationOff';
 
 import {roboto} from '@/ui/Font';
 import {ModalFilterOrders} from "@/components/ModalFilterOrders";
-import {FilterAlt} from "@mui/icons-material";
+//import {FilterAlt} from "@mui/icons-material";
+
+import { log } from '@/components/analytics';
 
 const MapPoints = memo(function MapPoints({theme, globalFontSize, mapScale}) {
 
@@ -209,7 +211,10 @@ export default function MapPage() {
 
 	const [getOrders, type, limit, limit_count, setType, home, location_driver, type_location, set_type_location, location_driver_time_text, showModalTypeDop] = useOrdersStore((state) => [state.getOrders, state.type, state.limit, state.limit_count, state.setType, state.home, state.location_driver, state.type_location, state.set_type_location, state.location_driver_time_text, state.showModalTypeDop]);
 
-	const getHome = () => ref?.current?.setCenter(home?.center);
+	const getHome = () => {
+		log('map_home_center', 'Центрирование карты на домашнюю точку');
+		ref?.current?.setCenter(home?.center);
+	}
 
 	useEffect(() => {
 		if (ref.current && home?.center) {

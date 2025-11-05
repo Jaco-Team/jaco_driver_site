@@ -12,6 +12,8 @@ import BottomSheet from '@mui/material/Modal';
 import { styled } from '@mui/material/styles';
 import {useModalFilterOrdersLogic} from "@/components/useModalOrderLogic";
 
+import { log } from '@/components/analytics';
+
 const StyledBottomSheet = styled(BottomSheet)(({ theme }) => ({
   '& .MuiBackdrop-root': {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -56,6 +58,9 @@ export const ModalFilterOrders = () => {
 
   const handleCheckboxChange = (event) => {
     const value = event.target.value;
+
+    log('order_select', 'Выбор типа заказа');
+    
     setTypeDop(
       event.target.checked
         ? [...type_dop, value]

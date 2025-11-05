@@ -28,6 +28,8 @@ import Logo from '@/public/Logo.png';
 
 import { roboto } from '@/ui/Font';
 
+import { log } from '@/components/analytics';
+
 export default function RegistrationPage(){
 
   const router = useRouter();
@@ -61,8 +63,10 @@ export default function RegistrationPage(){
     let res = await sendSMS(myLogin, myPWD);
 
     if( res.st === true ){
+      log('auth_send_sms', 'Отправка СМС-кода');
       setActiveStep(1);
     }else{
+      log('auth_send_sms_fail', 'Ошибка отправки СМС-кода');
       setErr1(res.text)
     }
 

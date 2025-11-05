@@ -3,6 +3,8 @@ import { shallow } from 'zustand/shallow';
 
 import { api } from './api.js';
 
+import { log } from '@/components/analytics';
+
 export const useOrdersStore = createWithEqualityFn((set, get) => ({
   orders: [],
   isOpenMenu: false,
@@ -79,10 +81,23 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
   // открытие/закрытие модалки с подтверждением завершения заказа
   setActiveConfirm: (active, order_finish_id, is_map, type_confirm, order_finish_is_delete) => {
+    
+    if (active) {
+      log('confirm_modal_open', 'Открытие модалки подтверждения заказа');
+    } else {
+      log('confirm_modal_close', 'Закрытие модалки подтверждения заказа');
+    }
+
     set({ modalConfirm: active, order_finish_id, is_map, type_confirm, order_finish_is_delete })
   },
 
   showModalTypeDop: ( is_show ) => {
+
+    log(
+      is_show ? 'orders_type_dop_modal_open' : 'orders_type_dop_modal_close',
+      is_show ? 'Открытие модалки доп. типов заказов' : 'Закрытие модалки доп. типов заказов'
+    );
+
     set({is_showModalTypeDop: is_show});
   },
 
@@ -196,6 +211,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
           driver_need_gps: parseInt(json?.driver_need_gps) == 0 ? false : true,
         })
 
+        log('orders_fetch_success', 'Получение списка заказов');
+
         if( !get().home ){
           set({
             // home: json?.home,
@@ -216,10 +233,13 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       }else{
         console.log( 'json', json )
 
+        log('orders_fetch_fail', 'Ошибка при получении списка заказов');
+
         //get().openErrOrder('Ошибка '+json )
       }
     } catch(err){
       console.log( err )
+      log('orders_fetch_fail', 'Ошибка при получении списка заказов');
       get().openErrOrder('Ошибка '+err )
     }
 
@@ -285,6 +305,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
     try {
       set({is_load: true});
+
+      log('driver_location', 'Показать текущее местоположение водителя на карте');
 
       navigator.geolocation.getCurrentPosition(({coords}) => {
 
@@ -446,6 +468,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     if (order) {
       const new_orders = get().orders.filter(item => item?.xy?.latitude === order?.xy?.latitude && item?.xy?.longitude === order?.xy?.longitude);
 
+      log('order_map_open', 'Открытие заказа на карте');
+
       set({
         showOrders: new_orders,
         isOpenOrderMap: true,
@@ -514,6 +538,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       return ;
     }
 
+    log('confirm_finish', 'Заказ завершен');
+
     set({ is_load: true })
 
     if( get().driver_need_gps === true ){
@@ -544,6 +570,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }else{
       return ;
     }
+
+    log('confirm_cancel', 'Заказ отменен');
 
     set({ is_load: true })
 
@@ -576,6 +604,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
       return ;
     }
 
+    log('confirm_approve', 'Взятие заказа');
+
     set({ is_load: true })
 
     if( get().driver_need_gps === true ){
@@ -605,6 +635,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     }else{
       return ;
     }
+
+     log('confirm_fake', 'Клиент не вышел на связь');
 
     set({ is_load: true })
 
@@ -930,6 +962,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         if( order ){
           let new_orders = orders.filter( (item) => item?.xy?.latitude == order?.xy?.latitude && item?.xy?.longitude == order?.xy?.longitude );
 
+          log('order_map_open', 'Открытие заказа на карте');
+
           set({
             showOrders: new_orders,
             isOpenOrderMap: true
@@ -940,6 +974,8 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   },
 
   closeOrderMap: () => {
+    log('order_map_close', 'Закрытие заказа на карте');
+
     set({
       showOrders: [],
       isOpenOrderMap: false
@@ -1235,13 +1271,15 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
     const res = await api('graph', data);
 
     if( res['st'] == false ){
+      log('graph_err_order_answer_fail', 'Обжалование ошибки по заказу: ошибка отправки');
       set({
         isshowErrOrder: true,
         textErrOrder: res.text,
       })
     }else{
-      get().closeModalErr();
+      log('graph_err_order_answer_success', 'Обжалование ошибки по заказу: отправлено');
 
+      get().closeModalErr();
       get().getGraph(get().chooseDate, token);
     }
 
@@ -1267,13 +1305,15 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
     const res = await api('graph', data);
 
     if( res['st'] == false ){
+      log('graph_err_cam_answer_fail', 'Обжалование ошибки по камере: ошибка отправки');
       set({
         isshowErrOrder: true,
         textErrOrder: res.text,
       })
     }else{
-      get().closeModalErr();
+      log('graph_err_cam_answer_success', 'Обжалование ошибки по камере: отправлено');
 
+      get().closeModalErr();
       get().getGraph(get().chooseDate, token);
     }
 
@@ -1466,12 +1506,19 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
       mapScale
     };
 
-    const json = await api('settings', data);
+    try {
+      await api('settings', data);
+      log('settings_save_success', 'Успешное сохранение настроек'); 
+    } catch (e) {
+      log('settings_save_fail', 'Ошибка сохранения настроек');
+    } finally {
+      setTimeout(() => {
+        set({ isClick: false })
+      }, 300);
+    }
 
-    setTimeout( () => {
-      set({ isClick: false })
-    }, 300 )
   },
+
   getMySetting: async (token) => {
 
     const data = {

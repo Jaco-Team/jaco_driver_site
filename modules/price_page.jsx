@@ -25,6 +25,8 @@ import {roboto} from '@/ui/Font';
 //import Box from "@mui/material/Box";
 import {TextDescription} from "@/components/TextDescription";
 
+import { log } from '@/components/analytics';
+
 export default function PricePage() {
 
 	const session = useSession();
@@ -52,6 +54,11 @@ export default function PricePage() {
 		}
 	}, [startDate, endDate])
 
+	const onStartOpen = () => log('price_start_calendar_open', 'Открытие календаря (Расчет): Дата от');
+	const onStartClose = () => log('price_start_calendar_close', 'Закрытие календаря (Расчет): Дата от');
+	const onEndOpen = () => log('price_end_calendar_open', 'Открытие календаря (Расчет): Дата до');
+	const onEndClose = () => log('price_end_calendar_close', 'Закрытие календаря (Расчет): Дата до');
+
 	return (
 		<Meta title='Расчет'>
 			<Grid container spacing={3} className={"price " + roboto.variable}>
@@ -64,6 +71,8 @@ export default function PricePage() {
 						fontSize={globalFontSize}
 						maxDate={nowDate}
 						minDate={nowDate ? nowDate.add(-93, 'day') : undefined}
+					 onOpen={onStartOpen}
+						onClose={onStartClose}
 					/>
 				</Grid>
 
@@ -75,6 +84,8 @@ export default function PricePage() {
 						minDate={nowDate ? nowDate.add(-93, 'day') : undefined}
 						onChange={setEndDate}
 						fontSize={globalFontSize}
+						onOpen={onEndOpen}
+						onClose={onEndClose}
 					/>
 				</Grid>
 
