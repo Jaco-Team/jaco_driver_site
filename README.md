@@ -1,34 +1,175 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Jaco Driver Site
 
-## Getting Started
+Веб-приложение для водителей и операционного персонала Jaco. Основные сценарии:
 
-First, run the development server:
+- авторизация и восстановление доступа
+- просмотр списка заказов
+- работа с картой заказов
+- расчёт и статистика
+- график смен
+- настройки интерфейса и отображения
+
+Проект ориентирован в первую очередь на мобильное использование: быстрый доступ, крупные зоны нажатия, минимум лишнего текста и визуального шума.
+
+## Технологии
+
+- Next.js 16, pages router
+- React 19
+- MUI 7
+- Zustand
+- SCSS
+- Axios
+- Yandex Metrika
+- Sentry
+
+## Быстрый старт
+
+Установка зависимостей:
+
+```bash
+npm install
+```
+
+Запуск локальной разработки:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Приложение поднимается на:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```text
+http://localhost:3225
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Основные команды
 
-## Learn More
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+```
 
-To learn more about Next.js, take a look at the following resources:
+Дополнительно:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run deploy:local
+npm run deploy:dev
+npm run deploy:prod
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## Структура проекта
 
-## Deploy on Vercel
+```text
+pages/        маршруты и page-обёртки
+modules/      основные экраны и крупные UI-блоки
+components/   store, API, аналитика, общие компоненты
+styles/       глобальные и экранные SCSS-стили
+ui/           палитра, шрифты и UI-токены
+public/       статические файлы и иконки
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Ключевые файлы:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- [pages/_app.js](./pages/_app.js) — подключение темы, глобальных стилей, аналитики и Sentry
+- [components/store.js](./components/store.js) — Zustand stores и API-экшены
+- [components/api.js](./components/api.js) — базовый API-клиент
+- [components/analytics.js](./components/analytics.js) — события Метрики и page hit-логика
+- [ui/palette.js](./ui/palette.js) — актуальная JS-палитра
+- [styles/settings.scss](./styles/settings.scss) — SCSS-токены и переменные
+
+## Маршруты
+
+- `/auth` — авторизация
+- `/registration` — восстановление пароля
+- `/initial` — стартовый экран
+- `/list_orders` — список заказов
+- `/map_orders` — карта заказов
+- `/price` — расчёт
+- `/graph` — график работы
+- `/statistics` — статистика
+- `/settings` — настройки
+
+## API
+
+Запросы идут через `components/api.js` на backend:
+
+```text
+https://api.jacochef.ru/driver/public/index.php/
+```
+
+Формат запросов в проекте сейчас построен на `axios.post(...)` + `query-string.stringify(data)`.
+
+Важно:
+
+- ответы backend не всегда нормализованы
+- флаги часто приходят строками `"0"` / `"1"`
+- часть полей может быть пустой строкой вместо `null`
+- при работе с данными нужно закладывать fallback-логику
+
+## Дизайн и UI
+
+Текущая базовая палитра проекта:
+
+- основной брендовый цвет: `#CC0033`
+- вторичная палитра: `Graphite Steel`
+
+Принципы интерфейса:
+
+- mobile-first
+- чистые светлые карточки
+- красный используется как брендовый и CTA-акцент
+- сине-графитовые оттенки используются для навигации, вторичных состояний и спокойных акцентов
+- минимум лишних подсказок и длинных объяснений
+
+Подробные проектные правила вынесены в:
+
+- [AGENTS.md](./AGENTS.md)
+
+Именно этот файл стоит считать главным источником договорённостей по:
+
+- дизайну
+- архитектуре
+- работе с данными
+- таблицам и мобильному UX
+- аналитике
+- правилам внесения изменений
+
+## Проверка изменений
+
+Минимум после правок:
+
+```bash
+npm run lint
+```
+
+После изменений, связанных с:
+
+- auth
+- роутингом
+- `next.config.js`
+- темой
+- сборкой
+
+нужно дополнительно запускать:
+
+```bash
+npm run build
+```
+
+## Что важно помнить при доработках
+
+- не плодить новую логику в `pages`, если её можно вынести в `modules`
+- не дублировать API-вызовы по компонентам, если их можно держать в Zustand store
+- не добавлять случайные цвета мимо `ui/palette.js` и `styles/settings.scss`
+- не расширять таблицы на мобильном без необходимости
+- не ломать текущие сценарии логирования событий в Метрику
+
+## Статус документации
+
+Этот `README.md` описывает проект на уровне входа в репозиторий.
+
+Если нужна более строгая памятка для дальнейшей работы модели или разработчиков, используйте:
+
+- [AGENTS.md](./AGENTS.md)

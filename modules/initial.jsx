@@ -4,7 +4,6 @@ import Image from 'next/image';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 
-import Logo from '@/public/Logo.png';
 import { IconGoogle, IconAppStore } from '@/ui/Icons';
 
 export default function InitialPage() {
@@ -13,7 +12,7 @@ export default function InitialPage() {
       <Grid className="container">
         <Image
           alt={'Лого'}
-          src={Logo}
+          src='/Logo.png'
           width={150}
           height={150}
           priority={true}

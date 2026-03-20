@@ -4,20 +4,31 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import 'dayjs/locale/ru';
 
-export default function MyDatepicker({label, onChange, value, fontSize, maxDate, minDate, onOpen, onClose}) {
+export default function MyDatepicker({
+  label,
+  onChange,
+  value,
+  fontSize,
+  maxDate,
+  minDate,
+  onOpen,
+  onClose,
+  ...props
+}) {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
       <DatePicker
         format="YYYY-MM-DD"
         label={label}
-        defaultValue={value}
+        value={value}
         onChange={onChange}
         closeOnSelect={true}
         maxDate={maxDate ? maxDate : undefined}
         minDate={minDate ? minDate : undefined}
         onOpen={onOpen} 
         onClose={onClose}
+        {...props}
         sx={{
           "& .MuiInputLabel-root": {
             fontSize,

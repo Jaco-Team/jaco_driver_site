@@ -1010,6 +1010,7 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
 
   avgTime: 0,
   is_need_avg_time: false,
+  is_need_page_stat: false,
   night_map: false,
 
   globalFontSize: 16,
@@ -1075,12 +1076,13 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
     };
 
     const res = await api('settings', data);
+    const isEnabled = (value) => `${value ?? '0'}` === '1';
 
     set({
-      is_need_avg_time: res.driver_avg_time === '1' ? true : false,
-      is_need_page_stat: res.driver_page_stat_time === '1' ? true : false,
-      night_map: res.night_map === '1' ? true : false,
-      is_scaleMap: res.is_scaleMap === '1' ? true : false,
+      is_need_avg_time: isEnabled(res?.driver_avg_time),
+      is_need_page_stat: isEnabled(res?.driver_page_stat_time),
+      night_map: isEnabled(res?.night_map),
+      is_scaleMap: isEnabled(res?.is_scaleMap),
     });
   },
 
@@ -1204,6 +1206,8 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
   month_list: [],
   dates: [],
   users: [],
+  current_user_id: '',
+  current_user_name: '',
 
   err_orders: [],
   err_cam: [],
@@ -1235,6 +1239,8 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
       month_list: json.mounth,
       dates: json.all_dates,
       users: json.users,
+      current_user_id: json?.user_id ?? '',
+      current_user_name: json?.user_name ?? '',
       err_orders: json.errs.orders,
       err_cam: json.errs.err_cam,
       isOpenMenu: false,
@@ -1404,7 +1410,7 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
     const json = await api('auth', data);
 
     if( json.st === true ){
-      localStorage.setItem('token', json.token)
+      // localStorage.setItem('token', json.token)
     }
 
     set({ is_load: false })
@@ -1533,6 +1539,7 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
 export const useStatisticsStore = createWithEqualityFn((set, get) => ({
 
   svod: [],
+  current_user_id: '',
   is_load: false,
 
   getStatistics: async (token, date_start, date_end) => {
@@ -1549,7 +1556,8 @@ export const useStatisticsStore = createWithEqualityFn((set, get) => ({
     const json = await api('stat_time', data);
 
     set({
-      svod: json?.avg_orders ?? []
+      svod: json?.avg_orders ?? [],
+      current_user_id: json?.user_id ?? ''
     })
 
     setTimeout( () => {

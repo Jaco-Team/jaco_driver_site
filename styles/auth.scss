@@ -1,44 +1,439 @@
-@import "./settings";
+@use "./settings" as *;
 
-.auth{ 
+.auth {
+    position: relative;
     margin: 0;
-    padding-left: 20px;
-    padding-right: 20px;
+    padding: 28px 20px;
     width: 100%;
-    z-index: 3;
-
-    height: 100vh;
+    min-height: 100svh;
     justify-content: center;
-    align-items: center;
+    align-items: stretch;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at top left, rgba(49, 92, 122, 0.14), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(31, 61, 86, 0.08), transparent 34%),
+        linear-gradient(180deg, #f4f7fa 0%, #ffffff 46%, #f7f9fb 100%);
 
-    & .MuiGrid-item{
-        padding-left: 0;
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        border-radius: 999px;
+        pointer-events: none;
+        filter: blur(16px);
     }
-    & > div:first-child{
+
+    &::before {
+        top: 70px;
+        left: -80px;
+        width: 220px;
+        height: 220px;
+        background: rgba(49, 92, 122, 0.08);
+    }
+
+    &::after {
+        right: -90px;
+        bottom: 80px;
+        width: 260px;
+        height: 260px;
+        background: rgba(34, 28, 30, 0.05);
+    }
+
+    & > .MuiGrid-root {
         display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding-top: 0;
-        margin-top: -200px;
-        & > *{
-            margin-top: 20px;
+    }
+}
+
+.auth__hero,
+.auth__panel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 32px;
+    border: 1px solid rgba(37, 18, 22, 0.08);
+    overflow: hidden;
+}
+
+.auth__hero {
+    display: flex;
+    flex-direction: column;
+    padding: 34px;
+    color: #fff;
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.08), transparent 46%),
+        linear-gradient(135deg, $colorMain 0%, $colorMainDark 52%, $colorMainDeep 100%);
+    box-shadow: 0 24px 60px rgba(22, 42, 61, 0.24);
+
+    &::after {
+        content: "";
+        position: absolute;
+        right: -10%;
+        bottom: -16%;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 70%);
+        pointer-events: none;
+    }
+}
+
+.auth__heroBadge {
+    align-self: flex-start;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    @include font_custom(0.82rem, 700, #fff);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.auth__heroTitle {
+    margin: 26px 0 14px;
+    @include font_custom(clamp(2.25rem, 5vw, 3.5rem), 800, #fff);
+    line-height: 1.02;
+}
+
+.auth__heroText {
+    margin: 0;
+    max-width: 520px;
+    @include font_custom(1.06rem, 400, rgba(255, 255, 255, 0.88));
+    line-height: 1.65;
+}
+
+.auth__heroStats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 28px;
+}
+
+.auth__heroStats--single {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.auth__heroStat {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px 20px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(12px);
+
+    strong {
+        @include font_custom(clamp(1.15rem, 3vw, 1.5rem), 800, #fff);
+        line-height: 1.2;
+    }
+}
+
+.auth__heroStat--wide strong {
+    font-size: clamp(1.05rem, 2.4vw, 1.32rem);
+}
+
+.auth__heroStatLabel {
+    @include font_custom(0.82rem, 700, rgba(255, 255, 255, 0.72));
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.auth__heroList {
+    display: grid;
+    gap: 12px;
+    margin-top: 26px;
+}
+
+.auth__heroListItem {
+    position: relative;
+    padding: 16px 18px 16px 44px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    @include font_custom(1rem, 500, #fff);
+    line-height: 1.55;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 22px;
+        left: 19px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.15);
+    }
+}
+
+.auth__panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 32px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 24px 60px rgba(24, 17, 20, 0.08);
+}
+
+.auth__panel--solo {
+    max-width: 560px;
+    margin: 0 auto;
+    min-height: calc(100svh - 56px);
+}
+
+.auth__logoBadge {
+    width: 96px;
+    height: 96px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 24px;
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(242, 246, 250, 0.96) 0%, #ffffff 100%);
+    border: 1px solid rgba(37, 18, 22, 0.08);
+    box-shadow: 0 18px 38px rgba(24, 17, 20, 0.08);
+}
+
+.auth__eyebrow {
+    @include font_custom(0.84rem, 700, rgba(54, 69, 81, 0.7));
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.auth__panelTitle {
+    margin: 12px 0 10px;
+    @include font_custom(clamp(2rem, 4vw, 2.7rem), 800, #1f1015);
+    line-height: 1.05;
+}
+
+.auth__panelText {
+    margin: 0 0 22px;
+    @include font_custom(1rem, 400, rgba(53, 38, 43, 0.72));
+    line-height: 1.65;
+}
+
+.auth__fieldGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    .MuiTextField-root {
+        width: 100%;
+    }
+
+    .MuiInputLabel-root {
+        @include font_custom(0.98rem, 500, rgba(64, 79, 92, 0.72));
+    }
+
+    .MuiOutlinedInput-root {
+        min-height: 58px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.98);
+        overflow: hidden;
+        box-shadow: 0 10px 24px rgba(24, 17, 20, 0.05);
+        transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+
+        &:hover {
+            box-shadow: 0 14px 28px rgba(24, 17, 20, 0.08);
         }
 
-        & > button{
-            width: 100%;
-        }
-        & > a{
-            align-self: flex-start;
-            @include font_custom(1rem, 400, $colorMain);
-            cursor: pointer;
-            line-height: 30px;
-        }
-        & > span{
-            @include font_custom(1rem, 800, $colorMain);
-            line-height: 30px;
+        &.Mui-focused {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 36px rgba(31, 61, 86, 0.12);
         }
     }
-    
-    
+
+    .MuiOutlinedInput-notchedOutline {
+        border-color: rgba(37, 18, 22, 0.09);
+    }
+
+    .MuiOutlinedInput-input {
+        border-radius: 18px;
+    }
+
+    .MuiOutlinedInput-input:-webkit-autofill,
+    .MuiOutlinedInput-input:-webkit-autofill:hover,
+    .MuiOutlinedInput-input:-webkit-autofill:focus,
+    .MuiOutlinedInput-input:-webkit-autofill:active {
+        -webkit-text-fill-color: #1f1015;
+        box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.98) inset;
+        -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.98) inset;
+        border-radius: 18px;
+        transition: background-color 9999s ease-out 0s;
+    }
+}
+
+.auth__stepper {
+    margin: 4px 0 22px;
+    width: 100%;
+    padding: 0 !important;
+
+    .MuiStepLabel-label {
+        @include font_custom(0.92rem, 600, rgba(83, 59, 66, 0.58));
+        margin-top: 10px !important;
+    }
+
+    .MuiStepLabel-label.Mui-active,
+    .MuiStepLabel-label.Mui-completed {
+        color: $colorMainDark;
+    }
+
+    .MuiStepIcon-root.Mui-active,
+    .MuiStepIcon-root.Mui-completed {
+        color: $colorMain;
+    }
+}
+
+.auth__error,
+.auth__hint {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    line-height: 1.55;
+}
+
+.auth__error {
+    background: $colorErrorSoft;
+    border: 1px solid $colorErrorBorder;
+    @include font_custom(0.96rem, 600, $colorError);
+}
+
+.auth__hint {
+    background: rgba(24, 17, 20, 0.04);
+    border: 1px solid rgba(24, 17, 20, 0.05);
+    @include font_custom(0.95rem, 500, rgba(53, 38, 43, 0.66));
+}
+
+.auth__primaryButton.MuiButton-root {
+    min-height: 56px;
+    margin-top: 18px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, $colorMain 0%, $colorMainDark 100%);
+    box-shadow: 0 18px 34px rgba(166, 0, 42, 0.22);
+    @include font_custom(1rem, 700, #fff);
+    letter-spacing: 0.01em;
+    text-transform: none;
+
+    &:hover {
+        background: linear-gradient(135deg, #b0002c 0%, $colorMainDeep 100%);
+        box-shadow: 0 20px 36px rgba(166, 0, 42, 0.28);
+    }
+}
+
+.auth__linkRow {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.auth__linkCaption {
+    @include font_custom(0.95rem, 500, rgba(53, 38, 43, 0.58));
+}
+
+.auth__link {
+    align-self: flex-start;
+    @include font_custom(1rem, 700, $colorMain);
+    line-height: 1.4;
+    text-decoration: none;
+    position: relative;
+
+    &::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 100%;
+        height: 2px;
+        background: currentColor;
+        transform-origin: left center;
+        transform: scaleX(0.34);
+        opacity: 0.55;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    &:hover::after {
+        transform: scaleX(1);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 1199px) {
+    .auth {
+        padding: 20px 16px 28px;
+    }
+
+    .auth__hero,
+    .auth__panel {
+        border-radius: 28px;
+    }
+
+    .auth__panel--solo {
+        min-height: calc(100svh - 48px);
+    }
+}
+
+@media (max-width: 899px) {
+    .auth {
+        min-height: 100svh;
+        padding: 16px 14px 24px;
+        align-items: flex-start;
+    }
+
+    .auth__hero,
+    .auth__panel {
+        border-radius: 24px;
+    }
+
+    .auth__hero,
+    .auth__panel {
+        padding: 24px 20px;
+    }
+
+    .auth__heroTitle {
+        margin-top: 20px;
+    }
+
+    .auth__heroStats {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .auth__logoBadge {
+        width: 82px;
+        height: 82px;
+        margin-bottom: 18px;
+    }
+
+    .auth__panelText {
+        margin-bottom: 18px;
+    }
+
+    .auth__panel--solo {
+        min-height: calc(100svh - 40px);
+    }
+}
+
+@media (max-width: 599px) {
+    .auth__heroTitle {
+        font-size: 2rem;
+    }
+
+    .auth__heroText,
+    .auth__panelText {
+        font-size: 0.95rem;
+    }
+
+    .auth__heroListItem {
+        padding: 14px 16px 14px 40px;
+        font-size: 0.94rem;
+    }
+
+    .auth__heroListItem::before {
+        top: 20px;
+        left: 18px;
+    }
+
+    .auth__primaryButton.MuiButton-root {
+        min-height: 52px;
+    }
 }

@@ -1,200 +1,309 @@
-import {useState, useEffect} from 'react';
+import { useEffect, useState } from 'react';
 
 import Grid from '@mui/material/Grid';
-// import List from '@mui/material/List';
-// import ListItem from '@mui/material/ListItem';
-// import ListItemButton from '@mui/material/ListItemButton';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Button from '@mui/material/Button';
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableFooter from '@mui/material/TableFooter';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
-import {usePriceStore, useHeaderStore} from '@/components/store.js';
-import MyDatepicker from '@/ui/MyDatepicker'
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+
+import { usePriceStore, useHeaderStore } from '@/components/store.js';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ru';
 
 import useSession from '@/components/sessionHook';
 
 import Meta from '@/components/meta.js';
 
-import {roboto} from '@/ui/Font';
-//import Box from "@mui/material/Box";
-import {TextDescription} from "@/components/TextDescription";
+import { roboto } from '@/ui/Font';
 
 import { log } from '@/components/analytics';
 
+function MetricRow({ label, value, description, emphasize = false, hideDivider = false, globalFontSize }) {
+  return (
+    <div className={`price__metricRow${hideDivider ? ' price__metricRow--last' : ''}`}>
+      <div className={`price__metricLabel${emphasize ? ' price__metricLabel--emphasis' : ''}`}>
+        <span style={{ fontSize: globalFontSize }}>{label}</span>
+
+        {description ? (
+          <Tooltip title={description} arrow placement="top">
+            <IconButton
+              size="small"
+              className="price__metricInfo"
+              aria-label={`Подсказка: ${label}`}
+            >
+              <InfoOutlinedIcon fontSize="inherit" />
+            </IconButton>
+          </Tooltip>
+        ) : null}
+      </div>
+
+      <span className={`price__metricValue${emphasize ? ' price__metricValue--emphasis' : ''}`} style={{ fontSize: globalFontSize }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function DateLauncher({ label, value, onClick, globalFontSize }) {
+  return (
+    <button type="button" className="price__dateLauncher" onClick={onClick}>
+      <span className="price__dateLauncherLabel" style={{ fontSize: globalFontSize }}>
+        {label}
+      </span>
+      <span className="price__dateLauncherValue" style={{ fontSize: globalFontSize }}>
+        {value}
+      </span>
+    </button>
+  );
+}
+
 export default function PricePage() {
+  const session = useSession();
 
-	const session = useSession();
+  const [startDate, setStartDate] = useState(dayjs().startOf('day'));
+  const [endDate, setEndDate] = useState(dayjs().startOf('day'));
+  const [activePicker, setActivePicker] = useState(null);
+  const [draftDate, setDraftDate] = useState(dayjs().startOf('day'));
 
-	const [startDate, setStartDate] = useState(dayjs(new Date()));
-	const [endDate, setEndDate] = useState(dayjs(new Date()));
-	const [nowDate, setNowDate] = useState(dayjs(new Date()));
-	const [statPrice, give_hist, getStat, getStatBetween] = usePriceStore(state => [state.statPrice, state.give_hist, state.getStat, state.getStatBetween]);
-	const [globalFontSize] = useHeaderStore(state => [state.globalFontSize]);
-	const FormatPrice = (price) => new Intl.NumberFormat('ru-RU').format(price);
+  const [statPrice, give_hist, getStatBetween] = usePriceStore((state) => [
+    state.statPrice,
+    state.give_hist,
+    state.getStatBetween,
+  ]);
+  const [globalFontSize] = useHeaderStore((state) => [state.globalFontSize]);
 
-	// useEffect(() => {
-	// 	if (session?.isAuth === true) {
-	// 		getStat(dayjs(startDate).format('YYYY-MM-DD'), session?.token);
-	// 	}
-	// }, [])
+  const formatPrice = (price) => new Intl.NumberFormat('ru-RU').format(price ?? 0);
+  const formatDate = (date) => dayjs(date).locale('ru').format('D MMMM YYYY');
 
-	useEffect(() => {
-		if (session?.isAuth === true) {
-			getStatBetween(
-				dayjs(startDate).format('YYYY-MM-DD'), 
-				dayjs(endDate).format('YYYY-MM-DD'), 
-				session?.token
-			);
-		}
-	}, [startDate, endDate])
+  const maxSelectableDate = dayjs().startOf('day');
+  const minSelectableDate = maxSelectableDate.subtract(93, 'day');
 
-	const onStartOpen = () => log('price_start_calendar_open', 'Открытие календаря (Расчет): Дата от');
-	const onStartClose = () => log('price_start_calendar_close', 'Закрытие календаря (Расчет): Дата от');
-	const onEndOpen = () => log('price_end_calendar_open', 'Открытие календаря (Расчет): Дата до');
-	const onEndClose = () => log('price_end_calendar_close', 'Закрытие календаря (Расчет): Дата до');
+  useEffect(() => {
+    if (session?.isAuth === true) {
+      getStatBetween(
+        dayjs(startDate).format('YYYY-MM-DD'),
+        dayjs(endDate).format('YYYY-MM-DD'),
+        session?.token
+      );
+    }
+  }, [endDate, getStatBetween, session?.isAuth, session?.token, startDate]);
 
-	return (
-		<Meta title='Расчет'>
-			<Grid container spacing={3} className={"price " + roboto.variable}>
+  const openPicker = (type) => {
+    setDraftDate(type === 'start' ? startDate : endDate);
+    setActivePicker(type);
 
-				<Grid item xs={12}>
-					<MyDatepicker
-						label={'Дата от'}
-						value={startDate}
-						onChange={setStartDate}
-						fontSize={globalFontSize}
-						maxDate={nowDate}
-						minDate={nowDate ? nowDate.add(-93, 'day') : undefined}
-					 onOpen={onStartOpen}
-						onClose={onStartClose}
-					/>
-				</Grid>
+    if (type === 'start') {
+      log('price_start_calendar_open', 'Открытие календаря (Расчет): Дата от');
+    } else {
+      log('price_end_calendar_open', 'Открытие календаря (Расчет): Дата до');
+    }
+  };
 
-				<Grid item xs={12}>
-					<MyDatepicker
-						label={'Дата до'}
-						value={endDate}
-						maxDate={nowDate}
-						minDate={nowDate ? nowDate.add(-93, 'day') : undefined}
-						onChange={setEndDate}
-						fontSize={globalFontSize}
-						onOpen={onEndOpen}
-						onClose={onEndClose}
-					/>
-				</Grid>
+  const closePicker = () => {
+    if (activePicker === 'start') {
+      log('price_start_calendar_close', 'Закрытие календаря (Расчет): Дата от');
+    }
 
-				<Grid item xs={12} style={{textAlign: 'center'}}>
-					<h1 style={{margin: 0, fontSize: 48, textAlign: 'center'}}>{new Intl.NumberFormat('ru-RU').format(statPrice?.my_price)} ₽</h1>
-					<TextDescription
-						text='Сумма налички'
-						value={statPrice?.sum_cash ?? 0}
-						type='price'
-						FormatPrice={FormatPrice}
-						title='Сумма заказов за наличку за выбранную дату, включая стоимость доставки'
-						globalFontSize={globalFontSize}
-					/>
-					<TextDescription
-						text='Сумма безнала'
-						value={statPrice?.sum_bank ?? 0}
-						type='price'
-						FormatPrice={FormatPrice}
-						title='Сумма заказов по безналичному расчету за выбранную дату, включая стоимость доставки'
-						globalFontSize={globalFontSize}
-					/>
-					<TextDescription
-						text='Заработал'
-						value={statPrice?.my_price ?? 0}
-						type='price'
-						FormatPrice={FormatPrice}
-						title='Сумма стоимости доставки для курьера за выбранную дату + доплаты за этот же день'
-						globalFontSize={globalFontSize}
-					/>
-					<TextDescription
-						text='Сдача'
-						value={statPrice?.sdacha ?? 0}
-						type='price'
-						FormatPrice={FormatPrice}
-						title='Из графы Сумма налички вычитаем графу Заработал'
-						globalFontSize={globalFontSize}
-					/>
+    if (activePicker === 'end') {
+      log('price_end_calendar_close', 'Закрытие календаря (Расчет): Дата до');
+    }
 
-					<TextDescription
-						text='Налички'
-						value={statPrice?.my_cash ?? 0}
-						type='price'
-						FormatPrice={FormatPrice}
-						title='Разница между графой К сдаче и графой Сдал - за все время на точке'
-						globalFontSize={globalFontSize}
-					/>
+    setActivePicker(null);
+  };
 
-					<TextDescription
-						text='Количество по наличке'
-						value={statPrice?.count_cash ?? 0}
-						type='count'
-						FormatPrice={FormatPrice}
-						globalFontSize={globalFontSize}
-					/>
+  const applyDraftDate = () => {
+    if (!draftDate || !activePicker) {
+      closePicker();
+      return;
+    }
 
-					<TextDescription
-						text='Количество по безналу'
-						value={statPrice?.count_bank ?? 0}
-						type='count'
-						FormatPrice={FormatPrice}
-						globalFontSize={globalFontSize}
-					/>
+    const normalizedDate = dayjs(draftDate).startOf('day');
 
-					<TextDescription
-						text='Завершенных заказов'
-						value={statPrice?.count ?? 0}
-						type='count'
-						FormatPrice={FormatPrice}
-						bottom_devider={false}
-						globalFontSize={globalFontSize}
-					/>
-				</Grid>
+    if (activePicker === 'start') {
+      setStartDate(normalizedDate);
+    } else {
+      setEndDate(normalizedDate);
+    }
 
-				<Grid item xs={12}>
+    closePicker();
+  };
 
-					<TableContainer>
-						<Table>
-							<TableHead>
-								<TableRow>
-									<TableCell style={{fontSize: globalFontSize}}>Время</TableCell>
-									<TableCell style={{fontSize: globalFontSize}}>Сданная сумма</TableCell>
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{give_hist.map((rowData, index) =>
-									<TableRow hover key={index}>
-										<TableCell style={{fontSize: globalFontSize}}>{rowData.time}</TableCell>
-										<TableCell style={{fontSize: globalFontSize}}>{new Intl.NumberFormat('ru-RU').format(rowData.give)} ₽</TableCell>
-									</TableRow>
-								)}
-							</TableBody>
+  const summaryRows = [
+    {
+      label: 'Сумма налички',
+      value: `${formatPrice(statPrice?.sum_cash)} ₽`,
+      description: 'Сумма заказов за наличку за выбранную дату, включая стоимость доставки',
+    },
+    {
+      label: 'Сумма безнала',
+      value: `${formatPrice(statPrice?.sum_bank)} ₽`,
+      description: 'Сумма заказов по безналичному расчету за выбранную дату, включая стоимость доставки',
+    },
+    {
+      label: 'Заработал',
+      value: `${formatPrice(statPrice?.my_price)} ₽`,
+      description: 'Сумма стоимости доставки для курьера за выбранную дату плюс доплаты за этот же день',
+      emphasize: true,
+    },
+    {
+      label: 'Сдача',
+      value: `${formatPrice(statPrice?.sdacha)} ₽`,
+      description: 'Из графы Сумма налички вычитается графа Заработал',
+      emphasize: true,
+    },
+    {
+      label: 'Налички',
+      value: `${formatPrice(statPrice?.my_cash)} ₽`,
+      description: 'Разница между графой К сдаче и графой Сдал за все время на точке',
+      emphasize: true,
+    },
+    {
+      label: 'Количество по наличке',
+      value: `${statPrice?.count_cash ?? 0}`,
+      emphasize: true,
+    },
+    {
+      label: 'Количество по безналу',
+      value: `${statPrice?.count_bank ?? 0}`,
+      emphasize: true,
+    },
+    {
+      label: 'Завершенных заказов',
+      value: `${statPrice?.count ?? 0}`,
+      emphasize: true,
+      hideDivider: true,
+    },
+  ];
 
-							<TableFooter>
-								<TableRow>
-									<TableCell style={{fontSize: globalFontSize}}>Всего сдал</TableCell>
-									<TableCell style={{fontSize: globalFontSize}}>{new Intl.NumberFormat('ru-RU').format(statPrice?.full_give)} ₽</TableCell>
-								</TableRow>
-								<TableRow>
-									<TableCell style={{fontSize: globalFontSize}}>Осталось сдать</TableCell>
-									<TableCell style={{fontSize: globalFontSize}}>{new Intl.NumberFormat('ru-RU').format(statPrice?.my_cash)} ₽</TableCell>
-								</TableRow>
-							</TableFooter>
+  const settlementRows = [
+    ...give_hist.map((row) => ({
+      label: row.time,
+      value: `${formatPrice(row.give)} ₽`,
+    })),
+    {
+      label: 'Всего сдал',
+      value: `${formatPrice(statPrice?.full_give)} ₽`,
+      emphasize: true,
+    },
+    {
+      label: 'Осталось сдать',
+      value: `${formatPrice(statPrice?.my_cash)} ₽`,
+      emphasize: true,
+      hideDivider: true,
+    },
+  ];
 
-						</Table>
-					</TableContainer>
+  return (
+    <Meta title="Расчет">
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
+        <Grid container spacing={2} className={`price priceScreen ${roboto.variable}`}>
+          <Grid size={12}>
+            <div className="price__content">
+              <section className="price__hero price__hero--minimal">
+                <div className="price__heroTop">
+                  <div className="price__heroMain">
+                    <h1 className="price__heroTitle">Расчет</h1>
+                  </div>
+                </div>
 
-				</Grid>
+                <div className="price__heroActions">
+                  <DateLauncher
+                    label="Дата от"
+                    value={formatDate(startDate)}
+                    globalFontSize={globalFontSize}
+                    onClick={() => openPicker('start')}
+                  />
 
-			</Grid>
-		</Meta>
-	)
+                  <DateLauncher
+                    label="Дата до"
+                    value={formatDate(endDate)}
+                    globalFontSize={globalFontSize}
+                    onClick={() => openPicker('end')}
+                  />
+                </div>
+              </section>
+            </div>
+          </Grid>
+
+          <Grid size={12}>
+            <div className="price__content">
+              <section className="price__card price__card--plain">
+                <div className="price__total" style={{ fontSize: Math.max(globalFontSize * 2.6, 48) }}>
+                  {formatPrice(statPrice?.my_price)} ₽
+                </div>
+
+                <div className="price__metrics">
+                  {summaryRows.map((row) => (
+                    <MetricRow
+                      key={row.label}
+                      label={row.label}
+                      value={row.value}
+                      description={row.description}
+                      emphasize={row.emphasize}
+                      hideDivider={row.hideDivider}
+                      globalFontSize={globalFontSize}
+                    />
+                  ))}
+                </div>
+              </section>
+            </div>
+          </Grid>
+
+          <Grid size={12}>
+            <div className="price__content">
+              <section className="price__card price__card--compact price__card--plain">
+                <div className="price__metrics">
+                  {settlementRows.map((row, index) => (
+                    <MetricRow
+                      key={`${row.label}-${index}`}
+                      label={row.label}
+                      value={row.value}
+                      emphasize={row.emphasize}
+                      hideDivider={row.hideDivider || index === settlementRows.length - 1}
+                      globalFontSize={globalFontSize}
+                    />
+                  ))}
+                </div>
+              </section>
+            </div>
+          </Grid>
+        </Grid>
+
+        <Dialog
+          open={Boolean(activePicker)}
+          onClose={closePicker}
+          fullWidth
+          maxWidth="xs"
+          className="price__pickerDialog"
+        >
+          <DialogTitle>
+            {activePicker === 'start' ? 'Дата от' : 'Дата до'}
+          </DialogTitle>
+
+          <DialogContent>
+            <DateCalendar
+              value={draftDate}
+              onChange={(value) => value && setDraftDate(value)}
+              minDate={minSelectableDate}
+              maxDate={maxSelectableDate}
+            />
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={closePicker}>Отмена</Button>
+            <Button variant="contained" onClick={applyDraftDate}>Готово</Button>
+          </DialogActions>
+        </Dialog>
+      </LocalizationProvider>
+    </Meta>
+  );
 }

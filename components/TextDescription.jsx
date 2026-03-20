@@ -1,10 +1,10 @@
-import {Divider, useMediaQuery} from "@mui/material";
+import {Divider, NoSsr, useMediaQuery} from "@mui/material";
 import InfoIcon from '@mui/icons-material/Info';
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import {useState, useEffect} from "react";
+import {useState} from "react";
 
 export function TextDescription({
 																	text,
@@ -16,12 +16,7 @@ export function TextDescription({
 																	type
 																}) {
 	const [open, setOpen] = useState(false);
-	const [isClient, setIsClient] = useState(false);
-	const isMobile = useMediaQuery('(pointer: coarse)');
-
-	useEffect(() => {
-		setIsClient(true);
-	}, []);
+	const isMobile = useMediaQuery('(pointer: coarse)', { noSsr: true });
 
 	const handleTooltipOpen = () => {
 		if (isMobile) {
@@ -35,10 +30,8 @@ export function TextDescription({
 		}
 	};
 
-	if (!isClient) return null;
-
 	return (
-		<>
+		<NoSsr>
 			<Box
 				sx={{
 					display: 'flex',
@@ -132,6 +125,6 @@ export function TextDescription({
 			</Box>
 
 			{bottom_devider && <Divider/>}
-		</>
+		</NoSsr>
 	);
 }

@@ -1,4 +1,4 @@
-@import "./settings";
+@use "./settings" as *;
 
 .list_orders{
     margin: 0!important;

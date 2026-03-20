@@ -1,4 +1,4 @@
-@import "./settings";
+@use "./settings" as *;
 
 .initial {
   background-color: $colorMain;

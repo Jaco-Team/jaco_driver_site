@@ -55,15 +55,14 @@ export default function ListPage() {
         style={{ display: 'flex', justifyContent: 'center' }}
       >
         <ModalFilterOrders />
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Button variant="text" onClick={setOpenMenu} style={{ fontSize: globalFontSize }}>
             {type.text}
           </Button>
         </Grid>
 
         <Grid
-          item
-          xs={12}
+          size={12}
           style={{
             display: 'flex',
             justifyContent:
@@ -92,7 +91,7 @@ export default function ListPage() {
 
       <Grid container spacing={3} className="list_orders">
         {orders.map((item, key) => (
-          <Grid item xs={12} sm={3} key={key} style={{ paddingLeft: 0 }}>
+          <Grid size={{ xs: 12, sm: 3 }} key={key} style={{ paddingLeft: 0 }}>
             <OrderCard key={key} item={item} is_map={false} globalFontSize={globalFontSize} />
           </Grid>
         ))}

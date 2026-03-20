@@ -1,4 +1,4 @@
-@import './settings';
+@use "./settings" as *;
 
 .container_paper {
   padding: 20px;

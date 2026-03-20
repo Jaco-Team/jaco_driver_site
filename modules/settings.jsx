@@ -139,7 +139,7 @@ export default function SettingsPage(){
           </Alert>
         </Snackbar>
 
-        <Grid item xs={12} style={{ marginTop: 10 }}>
+        <Grid size={12} style={{ marginTop: 10 }}>
           <Paper className='container_paper' elevation={5}>
             <div style={{ paddingBottom: 10 }}>
               <span style={{fontSize: globalFontSize }}>Формат данных на карте</span>
@@ -163,7 +163,7 @@ export default function SettingsPage(){
           </Paper>
         </Grid>
 
-        <Grid item xs={12} style={{ marginTop: 10 }}>
+        <Grid size={12} style={{ marginTop: 10 }}>
           <Paper className='container_paper' elevation={5}>
             <div style={{ paddingBottom: 10 }}>
               <span style={{fontSize: globalFontSize }}>Оформление</span>
@@ -199,7 +199,7 @@ export default function SettingsPage(){
           </Paper>
         </Grid>
 
-        <Grid item xs={12} style={{ marginTop: 10 }}>
+        <Grid size={12} style={{ marginTop: 10 }}>
           <Paper style={{ padding: 20 }} elevation={5}>
             <FormControl component="fieldset">
               <FormLabel component="legend" style={{fontSize: globalFontSize, color: 'rgba(0, 0, 0, 0.8)' }}>Отмененные заказы</FormLabel>
@@ -250,7 +250,7 @@ export default function SettingsPage(){
           </Paper>
         </Grid>
 
-        <Grid item xs={12} style={{ marginTop: 10 }}>
+        <Grid size={12} style={{ marginTop: 10 }}>
           <Paper style={{ padding: 20 }} elevation={5}>
             <FormGroup>
               <FormControlLabel
@@ -272,7 +272,7 @@ export default function SettingsPage(){
           </Paper>
         </Grid>
 
-        <Grid item xs={12} style={{marginTop: 10}}>
+        <Grid size={12} style={{marginTop: 10}}>
           <Paper style={{padding: 20}} elevation={5}>
             <div style={{paddingBottom: '10px'}}>
               <span style={{fontSize: globalFontSize}}>Карта</span>
@@ -315,7 +315,7 @@ export default function SettingsPage(){
           </Paper>
         </Grid>
 
-        <Grid item xs={12} style={{marginTop: 10}}>
+        <Grid size={12} style={{marginTop: 10}}>
           <Paper className='container_paper' elevation={5}>
             <div style={{ paddingBottom: '10px' }}>
               <span style={{ fontSize: globalFontSize }}>Размер шрифта ({fontSize})</span>
@@ -338,7 +338,7 @@ export default function SettingsPage(){
           </Paper>
         </Grid>
 
-        <Grid item xs={12} style={{ marginTop: 10 }}>
+        <Grid size={12} style={{ marginTop: 10 }}>
           <Paper className='container_paper' elevation={5}>
             <div style={{ paddingBottom: '10px' }}>
               <span style={{ fontSize: globalFontSize }}>Масштабирование иконок на карте ({mapScale})</span>
@@ -356,7 +356,7 @@ export default function SettingsPage(){
           </Paper>
         </Grid>
 
-        <Grid item xs={12} style={{ marginTop: 10 }}>
+        <Grid size={12} style={{ marginTop: 10 }}>
           <Paper style={{ padding: 20 }} elevation={5}>
             <FormControl component="fieldset">
               <FormLabel component="legend" style={{fontSize: globalFontSize, color: 'rgba(0, 0, 0, 0.8)' }}>Частота обновления заказов</FormLabel>
@@ -431,7 +431,7 @@ export default function SettingsPage(){
           </Paper>
         </Grid>
 
-        <Grid item xs={12} style={{ marginTop: 10 }}>
+        <Grid size={12} style={{ marginTop: 10 }}>
           <Paper className='container_paper_picker' elevation={5} >
             <div style={{ paddingBottom: 30, alignSelf: 'flex-start' }}>
               <span style={{fontSize: globalFontSize }}>Цвет на карте</span>
@@ -457,7 +457,7 @@ export default function SettingsPage(){
           </Paper>
         </Grid>
 
-        <Grid item xs={12} style={{ marginTop: 10, marginBottom: 50 }}>
+        <Grid size={12} style={{ marginTop: 10, marginBottom: 50 }}>
           <Paper style={{ padding: 20 }} elevation={5} >
             <Button onClick={ () => save() } color="primary" variant="contained" style={{ width: '100%', fontSize: globalFontSize }}>Сохранить</Button>
           </Paper>

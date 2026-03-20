@@ -1,0 +1,113 @@
+<svg width="1600" height="1280" viewBox="0 0 1600 1280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="1280" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6F7F8"/>
+      <stop offset="1" stop-color="#EAEFF3"/>
+    </linearGradient>
+    <filter id="shadow" x="-40" y="-40" width="1680" height="1360" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#1C2731" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1280" rx="0" fill="url(#bg)"/>
+
+  <text x="100" y="108" font-family="Inter, Arial, sans-serif" font-size="46" font-weight="800" fill="#1F2B36">
+    Palette Options For Jaco Driver
+  </text>
+  <text x="100" y="152" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="500" fill="#5D6A75">
+    Light UI, calmer accents, less red. Five directions to compare before we update the site.
+  </text>
+
+  <g filter="url(#shadow)">
+    <rect x="80" y="210" width="680" height="230" rx="28" fill="#FFFFFF"/>
+    <text x="120" y="264" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="800" fill="#1F2B36">1. Steel Blue</text>
+    <text x="120" y="300" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#66727D">Calm, universal, confident</text>
+    <rect x="120" y="332" width="92" height="52" rx="16" fill="#4F6D86"/>
+    <rect x="226" y="332" width="92" height="52" rx="16" fill="#355066"/>
+    <rect x="332" y="332" width="92" height="52" rx="16" fill="#DCE7EF"/>
+    <rect x="438" y="332" width="92" height="52" rx="16" fill="#F6F9FB" stroke="#D8E1E8"/>
+    <rect x="544" y="332" width="92" height="52" rx="16" fill="#1F2B36"/>
+    <text x="120" y="408" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#4F6D86">#4F6D86</text>
+    <text x="226" y="408" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#355066">#355066</text>
+    <text x="332" y="408" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#6E7B86">#DCE7EF</text>
+    <text x="438" y="408" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#6E7B86">#F6F9FB</text>
+    <text x="544" y="408" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2B36">#1F2B36</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="840" y="210" width="680" height="230" rx="28" fill="#FFFFFF"/>
+    <text x="880" y="264" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="800" fill="#202A33">2. Slate Blue</text>
+    <text x="880" y="300" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#66727D">A bit more serious and premium</text>
+    <rect x="880" y="332" width="92" height="52" rx="16" fill="#44627C"/>
+    <rect x="986" y="332" width="92" height="52" rx="16" fill="#2D455A"/>
+    <rect x="1092" y="332" width="92" height="52" rx="16" fill="#D7E2EA"/>
+    <rect x="1198" y="332" width="92" height="52" rx="16" fill="#F4F7FA" stroke="#D8E1E8"/>
+    <rect x="1304" y="332" width="92" height="52" rx="16" fill="#202A33"/>
+    <text x="880" y="408" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#44627C">#44627C</text>
+    <text x="986" y="408" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#2D455A">#2D455A</text>
+    <text x="1092" y="408" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#6E7B86">#D7E2EA</text>
+    <text x="1198" y="408" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#6E7B86">#F4F7FA</text>
+    <text x="1304" y="408" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#202A33">#202A33</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="80" y="490" width="680" height="230" rx="28" fill="#FFFFFF"/>
+    <text x="120" y="544" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="800" fill="#1F2C2B">3. Teal Graphite</text>
+    <text x="120" y="580" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#66727D">Fresh, modern, more alive</text>
+    <rect x="120" y="612" width="92" height="52" rx="16" fill="#3F706C"/>
+    <rect x="226" y="612" width="92" height="52" rx="16" fill="#2B4F4C"/>
+    <rect x="332" y="612" width="92" height="52" rx="16" fill="#DCEDEA"/>
+    <rect x="438" y="612" width="92" height="52" rx="16" fill="#F5FAF8" stroke="#D8E1E8"/>
+    <rect x="544" y="612" width="92" height="52" rx="16" fill="#1F2C2B"/>
+    <text x="120" y="688" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#3F706C">#3F706C</text>
+    <text x="226" y="688" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#2B4F4C">#2B4F4C</text>
+    <text x="332" y="688" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#6E7B86">#DCEDEA</text>
+    <text x="438" y="688" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#6E7B86">#F5FAF8</text>
+    <text x="544" y="688" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2C2B">#1F2C2B</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="840" y="490" width="680" height="230" rx="28" fill="#FFFFFF"/>
+    <text x="880" y="544" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="800" fill="#2A3138">4. Sand Navy</text>
+    <text x="880" y="580" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#66727D">Warmer base, softer contrast</text>
+    <rect x="880" y="612" width="92" height="52" rx="16" fill="#5A7288"/>
+    <rect x="986" y="612" width="92" height="52" rx="16" fill="#3B5063"/>
+    <rect x="1092" y="612" width="92" height="52" rx="16" fill="#E4E9EE"/>
+    <rect x="1198" y="612" width="92" height="52" rx="16" fill="#F8F6F1" stroke="#D8E1E8"/>
+    <rect x="1304" y="612" width="92" height="52" rx="16" fill="#2A3138"/>
+    <text x="880" y="688" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#5A7288">#5A7288</text>
+    <text x="986" y="688" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#3B5063">#3B5063</text>
+    <text x="1092" y="688" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#6E7B86">#E4E9EE</text>
+    <text x="1198" y="688" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#6E7B86">#F8F6F1</text>
+    <text x="1304" y="688" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#2A3138">#2A3138</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="80" y="770" width="1440" height="230" rx="28" fill="#FFFFFF"/>
+    <text x="120" y="824" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="800" fill="#262C28">5. Graphite Olive</text>
+    <text x="120" y="860" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#66727D">Quiet, unusual, mature</text>
+    <rect x="120" y="892" width="92" height="52" rx="16" fill="#667464"/>
+    <rect x="226" y="892" width="92" height="52" rx="16" fill="#4A5648"/>
+    <rect x="332" y="892" width="92" height="52" rx="16" fill="#E3E9E1"/>
+    <rect x="438" y="892" width="92" height="52" rx="16" fill="#F7F8F5" stroke="#D8E1E8"/>
+    <rect x="544" y="892" width="92" height="52" rx="16" fill="#262C28"/>
+    <text x="120" y="968" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#667464">#667464</text>
+    <text x="226" y="968" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#4A5648">#4A5648</text>
+    <text x="332" y="968" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#6E7B86">#E3E9E1</text>
+    <text x="438" y="968" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#6E7B86">#F7F8F5</text>
+    <text x="544" y="968" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#262C28">#262C28</text>
+  </g>
+
+  <text x="100" y="1090" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="#1F2B36">
+    Recommended shortlist
+  </text>
+  <text x="100" y="1132" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="500" fill="#55626D">
+    Steel Blue - safest
+  </text>
+  <text x="390" y="1132" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="500" fill="#55626D">
+    Teal Graphite - freshest
+  </text>
+  <text x="760" y="1132" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="500" fill="#55626D">
+    Sand Navy - softest
+  </text>
+</svg>
