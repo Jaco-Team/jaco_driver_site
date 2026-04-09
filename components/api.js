@@ -2,8 +2,8 @@ import queryString from 'query-string';
 import axios from 'axios';
 
 export function api(module = '', data = {}){ 
-  console.log('my');
-  const urlApi = 'https://api.jacochef.ru/driver/public/index.php/'; 
+  console.log('api2');
+  const urlApi = 'https://api2.jacochef.ru/driver/public/index.php/'; 
 
   return axios.post(urlApi+module, queryString.stringify(data))
     .then( (response) => {
