@@ -20,14 +20,19 @@ export default function List() {
   useEffect( () => {
     setActivePageRU('Список заказов');
 
+    if( session.isAuth === 'load' ){
+      return;
+    }
+
     if( session.isAuth === false ){
       router.push('/auth', { scroll: false })
+      return;
     }
     if( session.isAuth === true ){
-      setToken(session?.token);
+      setToken(session?.token ?? '');
       getOrders();
     }
-  }, [] )
+  }, [getOrders, router, session.isAuth, session?.token, setActivePageRU, setToken] )
 
   return (
     <>

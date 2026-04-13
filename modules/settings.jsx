@@ -12,6 +12,8 @@ import FormLabel from '@mui/material/FormLabel';
 import Slider from '@mui/material/Slider';
 
 import Button from '@mui/material/Button';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
@@ -40,7 +42,7 @@ const Alert = React.forwardRef(function Alert(props, ref) {
 export default function SettingsPage(){
 
   const session = useSession();
-  const [ saveMySetting, getMySetting ] = useSettingsStore( state => [ state.saveMySetting, state.getMySetting ] )
+  const [ saveMySetting, getMySetting, isSaving ] = useSettingsStore( state => [ state.saveMySetting, state.getMySetting, state.isClick ] )
 
   const [ globalFontSize, setGlobalFontSize, setTheme, setGlobalMapScale] = useHeaderStore(state => [state.globalFontSize, state.setGlobalFontSize, state.setTheme, state.setGlobalMapScale]);
 
@@ -63,43 +65,47 @@ export default function SettingsPage(){
     open: false,
     vertical: 'top',
     horizontal: 'center',
+    severity: 'success',
+    message: '',
   });
 
-  const { vertical, horizontal, open } = state;
+  const { vertical, horizontal, open, severity, message } = state;
 
   useEffect( () => {
     const fetchData = async () => {
-      if( session?.token ){
-        const res = await getMySetting(session?.token);
-        if( res?.color && res?.color?.length > 0 ){
-          const color = res.color === "#000000" ? { h: 214, s: 43, v: 90, a: 1 } : res.color;
-          const color_2 = hexToHsva(color);
-          setColor(color);
-          setHsva(color_2);
-        }
-
-        setСentered_map( parseInt(res.action_centered_map) == 1 ? true : false )
-        setNight_map( parseInt(res.night_map) == 1 ? true : false )
-        setIs_scaleMap( parseInt(res.is_scaleMap) == 1 ? true : false )
-        setUpdate_interval( res.update_interval )
-        setType_show_del( res.type_show_del )
-        setGroupTypeTime( res.type_data_map )
-
-        setGroupTypeTheme(res.theme)
-        setFontSize(parseInt(res.fontSize));
-        setMapScale(parseInt(res.mapScale));
-
-        setIsLoad(true);
+      if (session?.isAuth !== true) {
+        return;
       }
+
+      const res = await getMySetting(session?.token ?? '');
+      if( res?.color && res?.color?.length > 0 ){
+        const color = res.color === "#000000" ? { h: 214, s: 43, v: 90, a: 1 } : res.color;
+        const color_2 = hexToHsva(color);
+        setColor(color);
+        setHsva(color_2);
+      }
+
+      setСentered_map( parseInt(res.action_centered_map) == 1 ? true : false )
+      setNight_map( parseInt(res.night_map) == 1 ? true : false )
+      setIs_scaleMap( parseInt(res.is_scaleMap) == 1 ? true : false )
+      setUpdate_interval( parseInt(res.update_interval ?? 30) )
+      setType_show_del( res.type_show_del ?? 'min' )
+      setGroupTypeTime( res.type_data_map ?? 'norm' )
+
+      setGroupTypeTheme(res.theme ?? 'white')
+      setFontSize(parseInt(res.fontSize ?? 16));
+      setMapScale(parseFloat(res.mapScale ?? 1));
+
+      setIsLoad(true);
     }
 
     if( !is_load ){
-      fetchData();
+      void fetchData();
     }
-  }, [] )
+  }, [getMySetting, is_load, session?.isAuth, session?.token] )
 
-  function save(){
-    saveMySetting(
+  async function save(){
+    const result = await saveMySetting(
       session?.token,
       groupTypeTime,
       type_show_del,
@@ -113,11 +119,26 @@ export default function SettingsPage(){
       is_scaleMap
     );
 
-    setGlobalFontSize(fontSize);
-    setTheme(groupTypeTheme);
-    setGlobalMapScale(mapScale);
+    if (result?.st) {
+      setGlobalFontSize(fontSize);
+      setTheme(groupTypeTheme);
+      setGlobalMapScale(mapScale);
 
-    setState({ ...state, open: true });
+      setState(prev => ({
+        ...prev,
+        open: true,
+        severity: 'success',
+        message: 'Сохранено',
+      }));
+      return;
+    }
+
+    setState(prev => ({
+      ...prev,
+      open: true,
+      severity: 'error',
+      message: result?.text || 'Не удалось сохранить настройки',
+    }));
   }
 
   function closeModal(){
@@ -126,6 +147,10 @@ export default function SettingsPage(){
 
   return (
     <Meta title='Настройки'>
+      <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isSaving}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       <Grid container spacing={3} className={"price " + roboto.variable}>
 
         <Snackbar
@@ -134,8 +159,8 @@ export default function SettingsPage(){
           onClose={ () => closeModal() }
           autoHideDuration={5000}
         >
-          <Alert onClose={ () => closeModal() } severity="success" sx={{ width: '100%', fontSize: globalFontSize }}>
-            Сохранено
+          <Alert onClose={ () => closeModal() } severity={severity} sx={{ width: '100%', fontSize: globalFontSize }}>
+            {message}
           </Alert>
         </Snackbar>
 
@@ -459,7 +484,9 @@ export default function SettingsPage(){
 
         <Grid size={12} style={{ marginTop: 10, marginBottom: 50 }}>
           <Paper style={{ padding: 20 }} elevation={5} >
-            <Button onClick={ () => save() } color="primary" variant="contained" style={{ width: '100%', fontSize: globalFontSize }}>Сохранить</Button>
+            <Button disabled={isSaving} onClick={ () => save() } color="primary" variant="contained" style={{ width: '100%', fontSize: globalFontSize }}>
+              {isSaving ? 'Сохраняем...' : 'Сохранить'}
+            </Button>
           </Paper>
         </Grid>
 

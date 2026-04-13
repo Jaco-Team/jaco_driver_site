@@ -27,6 +27,7 @@ const PAGE_TITLES = {
   '/statistics': 'Статистика',
   '/settings': 'Настройки',
   '/auth': 'Авторизация',
+  '/auth/callback': 'SSO авторизация',
   '/registration':'Восстановление пароля',
   '/initial': 'Стартовая',
 };

@@ -19,6 +19,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 
 import { useStatisticsStore, useHeaderStore } from '@/components/store.js';
+import useSession from '@/components/sessionHook';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 
@@ -192,6 +193,8 @@ function CourierCard({ row, globalFontSize, title, icon, description }) {
 }
 
 export default function StatisticsPage() {
+  const session = useSession();
+
   const [initialStartDate] = useState(() => dayjs().startOf('day').subtract(6, 'day'));
   const [initialEndDate] = useState(() => dayjs().startOf('day'));
 
@@ -214,7 +217,7 @@ export default function StatisticsPage() {
     state.current_user_id,
     state.is_load,
   ]);
-  const [globalFontSize, token] = useHeaderStore((state) => [state.globalFontSize, state.token]);
+  const [globalFontSize] = useHeaderStore((state) => [state.globalFontSize]);
 
   const isSummaryRow = (row) => !row?.driver_id && !row?.user_id && !row?.name;
   const getRowUserId = (row) => `${row?.driver_id ?? row?.user_id ?? ''}`;
@@ -243,10 +246,12 @@ export default function StatisticsPage() {
   const closeSnackbar = () => setSnackbar((prev) => ({ ...prev, open: false }));
 
   useEffect(() => {
-    if (!token) return;
+    if (session?.isAuth !== true) {
+      return;
+    }
 
-    getStatistics(token, fmt(initialStartDate), fmt(initialEndDate));
-  }, [getStatistics, initialEndDate, initialStartDate, token]);
+    getStatistics(session?.token ?? '', fmt(initialStartDate), fmt(initialEndDate));
+  }, [getStatistics, initialEndDate, initialStartDate, session?.isAuth, session?.token]);
 
   const openPicker = (type) => {
     setDraftDate(type === 'start' ? dateStart : dateEnd);
@@ -299,8 +304,8 @@ export default function StatisticsPage() {
       showSnackbar(normalizedMessage);
     }
 
-    if (token) {
-      getStatistics(token, fmt(normalizedRange.s), fmt(normalizedRange.e));
+    if (session?.isAuth === true) {
+      getStatistics(session?.token ?? '', fmt(normalizedRange.s), fmt(normalizedRange.e));
     }
 
     closePicker();
@@ -329,8 +334,8 @@ export default function StatisticsPage() {
       showSnackbar(normalizedMessage);
     }
 
-    if (token) {
-      getStatistics(token, fmt(normalizedRange.s), fmt(normalizedRange.e));
+    if (session?.isAuth === true) {
+      getStatistics(session?.token ?? '', fmt(normalizedRange.s), fmt(normalizedRange.e));
     }
   };
 

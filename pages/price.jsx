@@ -19,10 +19,14 @@ export default function Price() {
   useEffect( () => {
     setActivePageRU('Расчет');
 
+    if( session.isAuth === 'load' ){
+      return;
+    }
+
     if( session.isAuth === false ){
       router.push('/auth', { scroll: false })
     }
-  }, [] )
+  }, [router, session.isAuth, setActivePageRU] )
 
   return (
     <>

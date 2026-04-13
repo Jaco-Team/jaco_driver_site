@@ -19,10 +19,14 @@ export default function Settings(props) {
   useEffect( () => {
     setActivePageRU('Настройки');
 
+    if( session.isAuth === 'load' ){
+      return;
+    }
+
     if( session.isAuth === false ){
       router.push('/auth', { scroll: false })
     }
-  }, [] )
+  }, [router, session.isAuth, setActivePageRU] )
 
   return (
     <>

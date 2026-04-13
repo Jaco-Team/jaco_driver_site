@@ -178,7 +178,7 @@ function SwipeableTemporaryDrawer() {
               className={parseInt(item.is_active, 10) === 1 ? 'active' : ''}
               onClick={() => {
                 log('graph_month_selected', 'Выбор месяца (График работы)');
-                getGraph(item.day, session?.token);
+                getGraph(item.day, session?.token ?? '');
               }}
             >
               <ListItemButton>
@@ -338,7 +338,7 @@ function ModalErr() {
                   />
 
                   <Button
-                    onClick={() => false_err_order(session?.token, errText, showErrOrder.err_id, showErrOrder.row_id)}
+                    onClick={() => false_err_order(session?.token ?? '', errText, showErrOrder.err_id, showErrOrder.row_id)}
                     style={{ color: '#fff', marginTop: 10, width: '100%', backgroundColor: appPalette.brand }}
                   >
                     Обжаловать
@@ -490,7 +490,7 @@ function ModalErr() {
                   />
 
                   <Button
-                    onClick={() => false_err_cam(session?.token, errText, showErrOrderCum.id)}
+                    onClick={() => false_err_cam(session?.token ?? '', errText, showErrOrderCum.id)}
                     style={{ color: '#fff', marginTop: 10, width: '100%', backgroundColor: appPalette.brand }}
                   >
                     Обжаловать
@@ -587,16 +587,16 @@ export default function GraphPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (session?.token) {
-        await getGraph(dayjs().format('YYYY-MM'), session?.token);
+      if (session?.isAuth === true) {
+        await getGraph(dayjs().format('YYYY-MM'), session?.token ?? '');
         setIsLoad(true);
       }
     };
 
     if (!is_load) {
-      fetchData();
+      void fetchData();
     }
-  }, [getGraph, is_load, session?.token]);
+  }, [getGraph, is_load, session?.isAuth, session?.token]);
 
   const scheduleTableMinWidth = Math.max(760, 220 + dates.length * 64);
 

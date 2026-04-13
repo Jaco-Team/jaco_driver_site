@@ -192,7 +192,12 @@ function DrawerHeader() {
 	].filter(Boolean);
 
 	function logOut() {
-		localStorage.removeItem('token');
+		void logoutWeb().catch((error) => {
+			console.error('logout_request_failed', error);
+		});
+		markSessionUnauthorized();
+		useOrdersStore.setState({ token: '' });
+		useHeaderStore.setState({ token: '', phones: null });
 
 		let pushed = false;
 		const go = () => {
@@ -609,12 +614,14 @@ function LoadOrderSpiner() {
 	);
 }
 
-import useSession from '@/components/sessionHook';
+import useSession, { markSessionUnauthorized } from '@/components/sessionHook';
+import { logoutWeb } from '@/components/api';
 import CachedIcon from "@mui/icons-material/Cached";
 import {FilterAlt} from "@mui/icons-material";
 
 const routeTitles = {
 	'/auth': 'Авторизация',
+	'/auth/callback': 'SSO авторизация',
 	'/registration': 'Восстановление пароля',
 	'/list_orders': 'Список заказов',
 	'/map_orders': 'Карта заказов',
@@ -664,29 +671,31 @@ export default function Header() {
 	}, [session] )*/
 
 	useEffect(() => {
-		if (session?.isAuth === true) {
-			getStat(session?.token);
-			getSettings(session?.token);
-
-			MyCurrentLocation();
-
-			//check_pos_watch();
+		if (session?.isAuth !== true) {
+			return;
 		}
-	}, []);
+
+		getStat(session?.token ?? '');
+		getSettings(session?.token ?? '');
+		MyCurrentLocation();
+	}, [MyCurrentLocation, getSettings, getStat, session?.isAuth, session?.token]);
 
 	useEffect(() => {
-		checkMyPos();
-		getMyAvgTime(session?.token);
+		if (session?.isAuth !== true) {
+			return;
+		}
 
-		getMyFontSize(session?.token);
+		checkMyPos();
+		getMyAvgTime(session?.token ?? '');
+		getMyFontSize(session?.token ?? '');
 
 		const interval = setInterval(() => {
 			checkMyPos();
-			getMyAvgTime(session?.token);
+			getMyAvgTime(session?.token ?? '');
 		}, 120 * 1000);
 
 		return () => clearInterval(interval);
-	}, []);
+	}, [checkMyPos, getMyAvgTime, getMyFontSize, session?.isAuth, session?.token]);
 
 	if (typeof window != 'undefined') {
 		if (location.protocol !== 'https:' && location.hostname != 'localhost') {

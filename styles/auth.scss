@@ -320,6 +320,23 @@
     }
 }
 
+.auth__secondaryButton.MuiButton-root {
+    min-height: 52px;
+    margin-top: 12px;
+    border-radius: 18px;
+    border-color: rgba(31, 61, 86, 0.28);
+    color: #1f3d56;
+    @include font_custom(0.98rem, 700, #1f3d56);
+    letter-spacing: 0.01em;
+    text-transform: none;
+    background: rgba(245, 249, 253, 0.9);
+
+    &:hover {
+        border-color: rgba(31, 61, 86, 0.42);
+        background: rgba(231, 238, 246, 0.95);
+    }
+}
+
 .auth__linkRow {
     display: flex;
     flex-direction: column;

@@ -1,9 +1,146 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 
-import { api } from './api.js';
+import { api, http, fetchMe, getApiErrorInfo, getAuthErrorMessage, loginWeb } from './api.js';
+import { markSessionAuthenticated, markSessionUnauthorized } from './sessionHook.js';
 
 import { log } from '@/components/analytics';
+
+function unwrapSettingsPayload(payload) {
+  if (payload && typeof payload === 'object' && payload.settings && typeof payload.settings === 'object') {
+    return payload.settings;
+  }
+
+  if (payload && typeof payload === 'object') {
+    return payload;
+  }
+
+  return {};
+}
+
+function normalizeBoolLike(value) {
+  if (value === true || value === 1 || value === '1') {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+const TYPE_SHOW_DEL_TO_INT = {
+  min: 30,
+  max: 120,
+  full: 1440,
+};
+
+const TYPE_SHOW_DEL_FROM_INT = {
+  30: 'min',
+  120: 'max',
+  1440: 'full',
+};
+
+function normalizeModeString(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  let normalized = `${value}`.trim();
+  if (!normalized) {
+    return '';
+  }
+
+  try {
+    const parsed = JSON.parse(normalized);
+    if (Array.isArray(parsed)) {
+      normalized = `${parsed[0] ?? ''}`.trim();
+    } else if (typeof parsed === 'string' || typeof parsed === 'number') {
+      normalized = `${parsed}`.trim();
+    }
+  } catch {
+    // keep original normalized value
+  }
+
+  while (
+    normalized.length >= 2 &&
+    (
+      (normalized.startsWith('"') && normalized.endsWith('"')) ||
+      (normalized.startsWith("'") && normalized.endsWith("'"))
+    )
+  ) {
+    normalized = normalized.slice(1, -1).trim();
+  }
+
+  return normalized;
+}
+
+function normalizeTypeDataMapForApi(value) {
+  if (Array.isArray(value)) {
+    const firstValue = normalizeModeString(value[0]);
+    return firstValue || 'norm';
+  }
+
+  const normalized = normalizeModeString(value);
+  return normalized || 'norm';
+}
+
+function normalizeTypeDataMapForUi(value) {
+  if (Array.isArray(value)) {
+    return normalizeModeString(value[0]) || 'norm';
+  }
+
+  const normalized = normalizeModeString(value);
+  return normalized || 'norm';
+}
+
+function normalizeTypeShowDelForApi(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.trunc(value);
+  }
+
+  const normalized = `${value ?? ''}`.trim().toLowerCase();
+  if (/^-?\d+$/.test(normalized)) {
+    return parseInt(normalized, 10);
+  }
+
+  return TYPE_SHOW_DEL_TO_INT[normalized] ?? TYPE_SHOW_DEL_TO_INT.min;
+}
+
+function normalizeTypeShowDelForUi(value) {
+  const normalized = `${value ?? ''}`.trim().toLowerCase();
+
+  if (normalized in TYPE_SHOW_DEL_TO_INT) {
+    return normalized;
+  }
+
+  if (/^-?\d+$/.test(normalized)) {
+    return TYPE_SHOW_DEL_FROM_INT[parseInt(normalized, 10)] ?? 'min';
+  }
+
+  return 'min';
+}
+
+function getFirstValidationError(errors) {
+  if (!errors || typeof errors !== 'object') {
+    return '';
+  }
+
+  for (const value of Object.values(errors)) {
+    if (Array.isArray(value) && value.length > 0 && value[0]) {
+      return `${value[0]}`;
+    }
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value;
+    }
+  }
+
+  return '';
+}
 
 export const useOrdersStore = createWithEqualityFn((set, get) => ({
   orders: [],
@@ -132,7 +269,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
   setToken: (token) => {
     set({
-      token: token
+      token: `${token ?? ''}`
     })
   },
 
@@ -159,10 +296,6 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
     const type_dop = get().type_dop;
     const types_dop = get().types_dop;
     const type = get().type;
-
-    if( get().token.length == 0 ){
-      return ;
-    }
 
     if( get().is_check === false ){
       set({
@@ -1070,19 +1203,16 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
   },
 
   getSettings: async (token) => {
-    const data = {
-      token,
-      type: 'getMySetting',
-    };
-
-    const res = await api('settings', data);
-    const isEnabled = (value) => `${value ?? '0'}` === '1';
+    const { data } = await http.get('/api/v1/settings/get');
+    const settings = unwrapSettingsPayload(data);
+    const currentState = get();
+    const hasField = (field) => settings[field] !== undefined && settings[field] !== null && settings[field] !== '';
 
     set({
-      is_need_avg_time: isEnabled(res?.driver_avg_time),
-      is_need_page_stat: isEnabled(res?.driver_page_stat_time),
-      night_map: isEnabled(res?.night_map),
-      is_scaleMap: isEnabled(res?.is_scaleMap),
+      is_need_avg_time: hasField('driver_avg_time') ? normalizeBoolLike(settings.driver_avg_time) : currentState.is_need_avg_time,
+      is_need_page_stat: hasField('driver_page_stat_time') ? normalizeBoolLike(settings.driver_page_stat_time) : currentState.is_need_page_stat,
+      night_map: hasField('night_map') ? normalizeBoolLike(settings.night_map) : currentState.night_map,
+      is_scaleMap: hasField('is_scaleMap') ? normalizeBoolLike(settings.is_scaleMap) : currentState.is_scaleMap,
     });
   },
 
@@ -1124,16 +1254,14 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
   },
 
   saveMyPos: async(latitude = '', longitude = '') => {
-    if( get().token.length > 0 ){
-      const data = {
-        token: get().token,
-        type: 'save_my_pos',
-        latitude,
-        longitude
-      };
+    const data = {
+      token: get().token,
+      type: 'save_my_pos',
+      latitude,
+      longitude
+    };
 
-      const json = await api('settings', data);
-    }
+    await api('settings', data);
   },
 
   setOpenMenu: () => {
@@ -1149,13 +1277,15 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
   getStat: async (token) => {
     if( get().phones === null ){
       const data = {
-        token: token,
-        type: 'get_point_phone',
+        point_id: 1
       };
 
-      const json = await api('settings', data);
+      const json = await http.post('api/v1/settings/get_point_phones', data);
+
+      console.log(json?.data?.phone)
+
       set({
-        phones: json?.phone,
+        phones: json?.data?.phone,
         token
       })
     }
@@ -1357,7 +1487,7 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
 
   loginErr: '',
 
-  authData: { isAuth: 'load', token: '' },
+  authData: { isAuth: 'load', token: '', user: null },
 
   setLoginErr: (err) => {
     set({
@@ -1366,31 +1496,53 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
   },
 
   login: async (login, pwd) => {
-
-    if( !get().is_load ){
-      set({ is_load: true })
-    }else{
+    if( get().is_load ){
       return ;
     }
 
-    const data = {
-      type: 'login',
-      login: login,
-      pwd: pwd
-    };
+    set({ is_load: true });
 
-    const json = await api('auth', data);
+    try {
+      await loginWeb(login, pwd, true);
+      const me = await fetchMe();
+      const token = `${me?.token ?? ''}`;
+      const json = {
+        st: true,
+        isAuth: true,
+        token,
+        user: me,
+        text: '',
+      };
 
-    if( json.st === true ){
-      localStorage.setItem('token', json.token)
+      set({
+        is_load: false,
+        loginErr: '',
+        authData: json,
+      });
+      markSessionAuthenticated(me);
+
+      return json;
+    } catch (error) {
+      const errorInfo = getApiErrorInfo(error);
+      const errorText = getAuthErrorMessage(error);
+      const json = {
+        st: false,
+        isAuth: false,
+        token: '',
+        user: null,
+        text: errorText,
+        status: errorInfo.status,
+      };
+
+      set({
+        is_load: false,
+        loginErr: errorText,
+        authData: json,
+      });
+      markSessionUnauthorized();
+
+      return json;
     }
-
-    set({
-      is_load: false,
-      loginErr: json.text
-    })
-
-    return json;
   },
 
   sendSMS: async(login, pwd) => {
@@ -1452,36 +1604,55 @@ export const useLoginStore = createWithEqualityFn((set, get) => ({
     return json;
   },
 
-  check_token: async(token) => {
-
-    if( !get().is_loadToken ){
-      set({
-        is_loadToken: true
-      })
-    }else{
+  check_token: async() => {
+    if( get().is_loadToken ){
       return { st: 'load' };
     }
 
-    if( get().authData.st == 'load' ){
-      const data = {
-        type: 'check_token',
-        token: token
-      };
+    set({
+      is_loadToken: true
+    });
 
-      const json = await api('auth', data);
+    try {
+      const me = await fetchMe();
+      const json = {
+        st: true,
+        isAuth: true,
+        token: `${me?.token ?? ''}`,
+        user: me,
+        text: '',
+      };
 
       set({
         authData: json,
-        is_loadToken: false
-      })
+      });
+      markSessionAuthenticated(me);
 
       return json;
-    }else{
+    } catch (error) {
+      const errorInfo = getApiErrorInfo(error);
+      const status = errorInfo.status;
+      const isUnauthorized = status === 401 || status === 403;
+      const errorText = isUnauthorized ? 'Не авторизован' : getAuthErrorMessage(error, 'Не удалось проверить сессию.');
+      const json = {
+        st: false,
+        isAuth: false,
+        token: '',
+        user: null,
+        text: errorText,
+        status,
+      };
+
+      set({
+        authData: json,
+      });
+      markSessionUnauthorized();
+
+      return json;
+    } finally {
       set({
         is_loadToken: false
-      })
-
-      return get().authData;
+      });
     }
   },
 }), shallow)
@@ -1494,29 +1665,46 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
     if( get().isClick === false ){
       set({ isClick: true })
     }else{
-      return ;
+      return {
+        st: false,
+        text: 'Подождите, выполняется сохранение.',
+      };
     }
 
     const data = {
-      type: 'saveMySetting',
-      token: token,
-      type_data_map: groupTypeTime,
-      type_show_del: type_show_del,
-      update_interval: update_interval,
+      type_data_map: normalizeTypeDataMapForApi(groupTypeTime),
+      type_show_del: normalizeTypeShowDelForApi(type_show_del),
+      update_interval: parseInt(update_interval),
       action_centered_map: centered_map ? 1 : 0,
       night_map: night_map ? 1 : 0,
       is_scaleMap: is_scaleMap ? 1 : 0,
       color: color,
       fontSize: parseInt(fontSize),
       theme,
-      mapScale
+      mapScale: parseFloat(mapScale)
     };
 
     try {
-      await api('settings', data);
+      const response = await http.post('/api/v1/settings/save', data);
       log('settings_save_success', 'Успешное сохранение настроек'); 
+      return {
+        st: true,
+        text: response?.data?.message || 'Сохранено',
+        data: response?.data,
+      };
     } catch (e) {
+      const errorInfo = getApiErrorInfo(e);
+      const validationMessage = getFirstValidationError(errorInfo?.data?.errors);
+      const errorText = validationMessage || errorInfo.message || 'Ошибка сохранения настроек';
+
       log('settings_save_fail', 'Ошибка сохранения настроек');
+      return {
+        st: false,
+        text: errorText,
+        status: errorInfo.status,
+        errors: errorInfo?.data?.errors,
+        data: errorInfo?.data,
+      };
     } finally {
       setTimeout(() => {
         set({ isClick: false })
@@ -1527,12 +1715,18 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
 
   getMySetting: async (token) => {
 
-    const data = {
-      type: 'getMySetting',
-      token: token
-    };
+    // const data = {
+    //   type: 'getMySetting'
+    // };
 
-    return await api('settings', data);
+    const { data } = await http.get('/api/v1/settings/get');
+    const settings = unwrapSettingsPayload(data);
+
+    return {
+      ...settings,
+      type_data_map: normalizeTypeDataMapForUi(settings?.type_data_map),
+      type_show_del: normalizeTypeShowDelForUi(settings?.type_show_del),
+    };
   },
 }), shallow)
 

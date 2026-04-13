@@ -18,10 +18,14 @@ export default function Auth() {
   useEffect( () => {
     setActivePageRU('Авторизация');
 
+    if( session.isAuth === 'load' ){
+      return;
+    }
+
     if( session.isAuth === true ){
       router.push('/list_orders', { scroll: false })
     }
-  }, [] )
+  }, [router, session.isAuth, setActivePageRU] )
 
   return (
     <>

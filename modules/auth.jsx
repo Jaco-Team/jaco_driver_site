@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Meta from '@/components/meta.js';
 
@@ -11,6 +11,7 @@ import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 
 import { useLoginStore } from '@/components/store';
+import { redirectToSsoLogin } from '@/components/api';
 
 import MyTextInput from '@/ui/MyTextinput';
 
@@ -21,10 +22,23 @@ import { log } from '@/components/analytics';
 export default function AuthPage(){
   const router = useRouter();
 
-  const [ loginErr, login ] = useLoginStore( state => [ state.loginErr, state.login ] )
+  const [ loginErr, login, setLoginErr ] = useLoginStore( state => [ state.loginErr, state.login, state.setLoginErr ] )
 
   const [ myLogin, setMyLogin ] = useState('');
   const [ myPWD, setMyPWD ] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get('error');
+
+    if (error === 'sso_failed') {
+      setLoginErr('Не удалось войти через SSO. Попробуйте еще раз.');
+    }
+  }, [setLoginErr]);
 
   async function loginFN(){
     if( myLogin.length == 0 || myPWD.length == 0 ){
@@ -39,6 +53,11 @@ export default function AuthPage(){
     } else {
       log('auth_login_fail', 'Ошибка авторизации');
     }
+  }
+
+  function loginWithSso() {
+    log('auth_sso_click', 'Переход к SSO авторизации');
+    redirectToSsoLogin();
   }
 
   return (
@@ -75,6 +94,10 @@ export default function AuthPage(){
 
             <Button variant="contained" fullWidth className="auth__primaryButton" onClick={ () => loginFN() }>
               Войти
+            </Button>
+
+            <Button variant="outlined" fullWidth className="auth__secondaryButton" onClick={loginWithSso}>
+              Продолжить через SSO
             </Button>
 
             <div className="auth__linkRow">

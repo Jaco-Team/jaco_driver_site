@@ -19,10 +19,14 @@ export default function Statistics() {
   useEffect(() => {
     setActivePageRU('Статистика');
 
+    if(session.isAuth === 'load'){
+      return;
+    }
+
     if(session.isAuth === false){
       router.push('/auth', { scroll: false })
     }
-  }, [])
+  }, [router, session.isAuth, setActivePageRU])
 
   return (
     <>

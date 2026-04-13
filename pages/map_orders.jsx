@@ -22,14 +22,19 @@ export default function Map() {
     setActivePageRU('Карта заказов');
     clearMap();
 
+    if( session.isAuth === 'load' ){
+      return;
+    }
+
     if( session.isAuth === false ){
       router.push('/auth', { scroll: false })
+      return;
     }
     if( session.isAuth === true ){
-      setToken(session?.token);
+      setToken(session?.token ?? '');
       getOrders(true);
     }
-  }, [] )
+  }, [clearMap, getOrders, router, session.isAuth, session?.token, setActivePageRU, setToken] )
 
   return (
     <>
