@@ -4,7 +4,6 @@ import { shallow } from 'zustand/shallow';
 import {
   ApiResponse,
   fetchGraph,
-  fetchGraphPoints,
   submitGraphCameraAppeal as submitGraphCameraAppealRequest,
   submitGraphOrderAppeal as submitGraphOrderAppealRequest,
 } from '@/shared/api/client';
@@ -13,23 +12,16 @@ import {
   normalizeGraphOrderError,
   normalizeGraphResponse,
 } from '@/entities/graph/model/graph.utils';
-import {
-  GraphCameraError,
-  GraphErrorModal,
-  GraphOrderError,
-  GraphPointItem,
-} from '@/entities/graph/model/types';
+import { GraphCameraError, GraphErrorModal, GraphOrderError } from '@/entities/graph/model/types';
 import { log } from '@/components/analytics';
 
 interface GraphStoreState {
-  isPointDrawerOpen: boolean;
   isMonthDrawerOpen: boolean;
   errorModal: GraphErrorModal;
   alertText: string;
   isAlertOpen: boolean;
   appealText: string;
   isSubmittingAppeal: boolean;
-  pointList: GraphPointItem[];
   selectedPointId: string;
   monthList: ReturnType<typeof normalizeGraphResponse>['monthList'];
   dates: ReturnType<typeof normalizeGraphResponse>['dates'];
@@ -42,9 +34,7 @@ interface GraphStoreState {
 }
 
 interface GraphStoreActions {
-  setPointDrawerOpen: (open: boolean) => void;
   setMonthDrawerOpen: (open: boolean) => void;
-  loadPoints: () => Promise<GraphPointItem[]>;
   setSelectedPointId: (value: string) => void;
   setAppealText: (value: string) => void;
   closeAlert: () => void;
@@ -59,7 +49,6 @@ interface GraphStoreActions {
 type GraphStore = GraphStoreState & GraphStoreActions;
 
 const initialGraphState = {
-  pointList: [],
   selectedPointId: '',
   monthList: [],
   dates: [],
@@ -80,7 +69,6 @@ function closeModalState(): Pick<GraphStoreState, 'errorModal' | 'appealText'> {
 
 export const useGraphStore = createWithEqualityFn<GraphStore>(
   (set, get) => ({
-    isPointDrawerOpen: false,
     isMonthDrawerOpen: false,
     errorModal: null,
     alertText: '',
@@ -89,28 +77,8 @@ export const useGraphStore = createWithEqualityFn<GraphStore>(
     isSubmittingAppeal: false,
     ...initialGraphState,
 
-    setPointDrawerOpen: (open) => {
-      set({ isPointDrawerOpen: open });
-    },
-
     setMonthDrawerOpen: (open) => {
       set({ isMonthDrawerOpen: open });
-    },
-
-    loadPoints: async () => {
-      const points = await fetchGraphPoints();
-      const normalizedPoints = points
-        .map((item) => ({
-          id: item.id ?? '',
-          city_id: item.city_id ?? '',
-          base: item.base ?? '',
-          name: `${item.name ?? ''}`.trim(),
-        }))
-        .filter((item) => item.id !== '' && item.name.length > 0);
-
-      set({ pointList: normalizedPoints });
-
-      return normalizedPoints;
     },
 
     setSelectedPointId: (value) => {

@@ -13,7 +13,7 @@ const DynamicHeader = dynamic(() => import('@/modules/header.jsx'));
 export default function GraphPage() {
   const router = useRouter();
   const session = useSession();
-  const [setActivePageRU] = useHeaderStore((state) => [state.setActivePageRU]);
+  const setActivePageRU = useHeaderStore((state) => state.setActivePageRU);
 
   useEffect(() => {
     setActivePageRU('График работы');

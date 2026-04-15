@@ -10,8 +10,8 @@ import {
   GraphStateSnapshot,
 } from '@/entities/graph/model/types';
 
-function toRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+function toRecord(value: unknown): Record<string, any> {
+  return value && typeof value === 'object' ? (value as Record<string, any>) : {};
 }
 
 function toStringValue(value: unknown): string {
