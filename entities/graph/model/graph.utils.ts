@@ -99,7 +99,7 @@ export function normalizeGraphMonthItem(value: unknown): GraphMonthItem {
   return {
     ...record,
     day: toStringValue(record.day),
-    mounth: toStringValue(record.mounth),
+    month: toStringValue(record.month),
     is_active: toStringValue(record.is_active),
   };
 }
@@ -175,8 +175,8 @@ export function normalizeGraphResponse(payload: unknown, chooseDate: string): Gr
   const errs = toRecord(record.errs);
 
   return {
-    monthList: Array.isArray(record.mounth)
-      ? record.mounth.map((item) => normalizeGraphMonthItem(item))
+    monthList: Array.isArray(record.month)
+      ? record.month.map((item) => normalizeGraphMonthItem(item))
       : [],
     dates: Array.isArray(record.all_dates)
       ? record.all_dates.map((item) => normalizeGraphDateCell(item))
@@ -197,5 +197,5 @@ export function normalizeGraphResponse(payload: unknown, chooseDate: string): Gr
 }
 
 export function getActiveMonthLabel(monthList: GraphMonthItem[]): string {
-  return monthList.find((item) => parseInt(String(item.is_active), 10) === 1)?.mounth ?? '';
+  return monthList.find((item) => parseInt(String(item.is_active), 10) === 1)?.month ?? '';
 }

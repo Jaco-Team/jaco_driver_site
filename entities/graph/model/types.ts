@@ -1,6 +1,6 @@
 export interface GraphMonthItem {
   day: string;
-  mounth: string;
+  month: string;
   is_active: number | string;
   [key: string]: unknown;
 }
