@@ -10,7 +10,7 @@ interface HeaderState {
   token: string;
   is_scaleMap: boolean;
   check_pos_check: boolean;
-  avgTime: string;
+  avgTime: string | number;
   is_need_avg_time: boolean;
   is_need_page_stat: boolean;
   night_map: boolean;
