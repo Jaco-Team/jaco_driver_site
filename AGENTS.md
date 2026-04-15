@@ -157,8 +157,7 @@
 
 ## Verification Rules
 
-- After UI or styling changes: run `npm run lint`.
-- After auth, routing, theme, config, or build-sensitive changes: run `npm run build` too.
+- Do not run frontend tests, lint, build, or similar verification commands unless the user explicitly asks for them.
 - There are existing lint warnings in the repo. Do not silently add new ones.
 - For visual tasks, prefer checking the real browser state before calling the work done.
 

@@ -1,9 +1,16 @@
-
 export type TypeDataMap = 'norm' | 'full' | 'min';
 export type TypeShowDel = 'full' | 'min' | 'max';
-export type ThemeType = 'classic' | 'transparent' | 'transparent_white' | 'white' | 'white_border' | 'black';
+export type ThemeType =
+  | 'classic'
+  | 'transparent'
+  | 'transparent_white'
+  | 'white'
+  | 'white_border'
+  | 'black';
 
 export interface SettingsData {
+  point_id?: number | string;
+  city_id?: number | string;
   type_data_map?: TypeDataMap;
   type_show_del?: number | string;
   update_interval?: number;

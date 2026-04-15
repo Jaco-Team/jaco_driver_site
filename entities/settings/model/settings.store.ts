@@ -1,11 +1,19 @@
-
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import { http, getApiErrorInfo, log } from '@/shared/api/client';
-import { SettingsData, TypeDataMap, TypeShowDel, ThemeType, SaveSettingsPayload } from '@/shared/types/settings';
+import {
+  SettingsData,
+  TypeDataMap,
+  TypeShowDel,
+  ThemeType,
+  SaveSettingsPayload,
+} from '@/shared/types/settings';
 
 interface SettingsState {
   isClick: boolean;
+  settings: SettingsResponse | null;
+  pointId: string;
+  cityId: string;
 }
 
 interface SettingsActions {
@@ -56,9 +64,7 @@ function normalizeModeString(value: unknown): string {
     } else if (typeof parsed === 'string' || typeof parsed === 'number') {
       normalized = `${parsed}`.trim();
     }
-  } catch {
-
-  }
+  } catch {}
 
   while (
     normalized.length >= 2 &&
@@ -114,7 +120,12 @@ function normalizeTypeShowDelForUi(value: unknown): TypeShowDel {
 }
 
 function unwrapSettingsPayload(payload: any): SettingsData {
-  if (payload && typeof payload === 'object' && payload.settings && typeof payload.settings === 'object') {
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    payload.settings &&
+    typeof payload.settings === 'object'
+  ) {
     return payload.settings;
   }
   if (payload && typeof payload === 'object') {
@@ -136,9 +147,20 @@ function getFirstValidationError(errors?: Record<string, string | string[]>): st
   return '';
 }
 
+function normalizeIdString(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  return `${value}`.trim();
+}
+
 export const useSettingsStore = createWithEqualityFn<SettingsStore>(
   (set, get) => ({
     isClick: false,
+    settings: null,
+    pointId: '',
+    cityId: '',
 
     saveMySetting: async (
       token: string | undefined,
@@ -173,7 +195,10 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       };
 
       try {
-        const response = await http.post<{ data?: any; message?: string }>('/api/v1/settings/save', data);
+        const response = await http.post<{ data?: any; message?: string }>(
+          '/api/v1/settings/save',
+          data
+        );
         log('settings_save_success', 'Успешное сохранение настроек');
         return {
           st: true,
@@ -202,12 +227,19 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
     getMySetting: async (token: string) => {
       const { data } = await http.get<{ data: SettingsData }>('/api/v1/settings/get');
       const settings = unwrapSettingsPayload(data);
-
-      return {
+      const normalizedSettings = {
         ...settings,
         type_data_map: normalizeTypeDataMapForUi(settings?.type_data_map),
         type_show_del: normalizeTypeShowDelForUi(settings?.type_show_del),
       };
+
+      set({
+        settings: normalizedSettings,
+        pointId: normalizeIdString(settings?.point_id),
+        cityId: normalizeIdString(settings?.city_id),
+      });
+
+      return normalizedSettings;
     },
   }),
   shallow
