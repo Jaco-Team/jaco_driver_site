@@ -16,14 +16,13 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { log, hit, screenOpen } from '@/components/analytics'
 
-//pm2 delete test-app-new && rm -rf test-app-new && git clone https://github.com/vito3315/test-app-new.git && cd test-app-new
-//npm install && npm run build && pm2 start npm --name "test-app-new" -- start
-
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import * as Sentry from "@sentry/react";
 import { appPalette } from '@/ui/palette';
 import YandexMetrika from "@/components/YandexMetrika";
+import {useLoginStore} from "@/components/store";
+import {refreshSession} from "@/components/sessionHook";
 
 const theme = createTheme({
   palette: {
@@ -72,8 +71,8 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
 
   useEffect(() => {
     const send = (url) => {
-      hit(url);           // pageview с title
-      screenOpen(url);    // событие "Открытие страницы …"
+      hit(url);
+      screenOpen(url);
     };
 
     // первый вход
@@ -83,6 +82,18 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
     router.events.on('routeChangeComplete', send);
     return () => router.events.off('routeChangeComplete', send);
   }, [router.events]);
+
+  const checkToken = useLoginStore(state => state.check_token);
+  const authData = useLoginStore(state => state.authData);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      await refreshSession();
+      await checkToken();
+    };
+
+    initAuth();
+  }, [checkToken]);
 
   return (
     <ThemeProvider theme={theme}>

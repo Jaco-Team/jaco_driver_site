@@ -1,4 +1,4 @@
-
+// features/auth/model/login.store.ts
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import {
@@ -8,12 +8,10 @@ import {
   getApiErrorInfo,
   getAuthErrorMessage,
   loginWeb,
-  markSessionAuthenticated,
-  markSessionUnauthorized,
   log
 } from '@/shared/api/client';
 
-// Импортируем старый стор
+import { markSessionAuthenticated, markSessionUnauthorized, refreshSession } from '@/components/sessionHook';
 import { useLoginStore as oldLoginStore } from '@/components/store';
 
 interface AuthData {
@@ -68,7 +66,6 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
 
     setLoginErr: (err: string) => {
       set({ loginErr: err });
-      // Также обновляем старый стор
       try {
         oldLoginStore.setState({ loginErr: err });
       } catch (e) {}
@@ -83,15 +80,18 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
         return { st: false, text: 'Уже выполняется вход' };
       }
 
+      console.log('🔐 Начинаем процесс авторизации для:', login);
       set({ is_load: true });
 
-      // Обновляем старый стор о начале загрузки
       try {
         oldLoginStore.setState({ is_load: true });
       } catch (e) {}
 
       try {
+        // Выполняем loginWeb - он устанавливает cookie
         await loginWeb(login, pwd, true);
+
+        // После успешного логина, получаем данные пользователя
         const me = await fetchMe();
         const token = `${me?.token ?? ''}`;
         const json = {
@@ -112,15 +112,14 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
         // Обновляем старый стор
         updateOldStore(json);
 
+        // Обновляем sessionHook
         markSessionAuthenticated(me);
 
-        // Сохраняем в localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('auth_data', JSON.stringify(json));
-        }
-
+        console.log('✅ Авторизация успешна, данные сохранены в сторах');
         return json;
+
       } catch (error) {
+        console.error('❌ Ошибка при авторизации:', error);
         const errorInfo = getApiErrorInfo(error);
         const errorText = getAuthErrorMessage(error);
         const json = {
@@ -132,16 +131,13 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
           status: errorInfo.status,
         };
 
-        // Обновляем новый стор
         set({
           is_load: false,
           loginErr: errorText,
           authData: json,
         });
 
-        // Обновляем старый стор
         updateOldStore(json);
-
         markSessionUnauthorized();
 
         return json;
@@ -216,16 +212,15 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
       }
 
       set({ is_loadToken: true });
-      try {
-        oldLoginStore.setState({ is_loadToken: true });
-      } catch (e) {}
 
       try {
+        // Просто проверяем, есть ли активная сессия на сервере
         const me = await fetchMe();
+        const token = `${me?.token ?? ''}`;
         const json = {
           st: true,
           isAuth: true,
-          token: `${me?.token ?? ''}`,
+          token,
           user: me,
           text: '',
         };
@@ -256,9 +251,6 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
         return json;
       } finally {
         set({ is_loadToken: false });
-        try {
-          oldLoginStore.setState({ is_loadToken: false });
-        } catch (e) {}
       }
     },
   }),

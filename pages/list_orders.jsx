@@ -16,10 +16,10 @@ export default function List() {
 
   const [ setActivePageRU ] = useHeaderStore( state => [ state.setActivePageRU ] )
   const [ getOrders, setToken ] = useOrdersStore( state => [ state.getOrders, state.setToken ] )
-  
+
   useEffect( () => {
     setActivePageRU('Список заказов');
-
+    console.log(session);
     if( session.isAuth === 'load' ){
       return;
     }

@@ -57,7 +57,7 @@ function normalizeModeString(value: unknown): string {
       normalized = `${parsed}`.trim();
     }
   } catch {
-    // keep original normalized value
+
   }
 
   while (
@@ -200,7 +200,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
     },
 
     getMySetting: async (token: string) => {
-      const { data } = await http.get<{ data: SettingsData }>('/v1/settings/get');
+      const { data } = await http.get<{ data: SettingsData }>('/api/v1/settings/get');
       const settings = unwrapSettingsPayload(data);
 
       return {

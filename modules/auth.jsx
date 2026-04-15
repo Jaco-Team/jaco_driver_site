@@ -10,19 +10,19 @@ import Image from 'next/image';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 
-import { useLoginStore } from '@/components/store';
-import { redirectToSsoLogin } from '@/components/api';
+import { useLoginStore } from '@/features/auth/model/login.store';
+import { redirectToSsoLogin } from '@/shared/api/client';
 
 import MyTextInput from '@/ui/MyTextinput';
 
 import { roboto } from '@/ui/Font';
 
-import { log } from '@/components/analytics';
+import { log } from '@/shared/api/client';
 
 export default function AuthPage(){
   const router = useRouter();
 
-  const [ loginErr, login, setLoginErr ] = useLoginStore( state => [ state.loginErr, state.login, state.setLoginErr ] )
+  const [ loginErr, login, setLoginErr ] = useLoginStore(state => [state.loginErr, state.login, state.setLoginErr]);
 
   const [ myLogin, setMyLogin ] = useState('');
   const [ myPWD, setMyPWD ] = useState('');
@@ -41,15 +41,15 @@ export default function AuthPage(){
   }, [setLoginErr]);
 
   async function loginFN(){
-    if( myLogin.length == 0 || myPWD.length == 0 ){
-      return ;
+    if(myLogin.length === 0 || myPWD.length === 0) {
+      return;
     }
 
     const res = await login(myLogin, myPWD);
 
-    if( res.st === true ){
+    if(res.st === true) {
       log('auth_login', 'Успешная авторизация');
-      router.push('/list_orders', { scroll: false })
+      router.push('/list_orders', { scroll: false });
     } else {
       log('auth_login_fail', 'Ошибка авторизации');
     }
@@ -82,8 +82,19 @@ export default function AuthPage(){
             </p>
 
             <div className="auth__fieldGroup">
-              <MyTextInput label="Номер телефона" type={'text'} value={myLogin} onChange={ e => setMyLogin(e.target.value) } />
-              <MyTextInput label="Пароль" type={'password'} value={myPWD} onChange={ e => setMyPWD(e.target.value) } onKeyPress={ () => loginFN() } />
+              <MyTextInput
+                label="Номер телефона"
+                type={'text'}
+                value={myLogin}
+                onChange={e => setMyLogin(e.target.value)}
+              />
+              <MyTextInput
+                label="Пароль"
+                type={'password'}
+                value={myPWD}
+                onChange={e => setMyPWD(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && loginFN()}
+              />
             </div>
 
             {loginErr ? (
@@ -92,7 +103,7 @@ export default function AuthPage(){
               <div className="auth__hint">Используйте номер телефона, указанный в вашем рабочем аккаунте.</div>
             )}
 
-            <Button variant="contained" fullWidth className="auth__primaryButton" onClick={ () => loginFN() }>
+            <Button variant="contained" fullWidth className="auth__primaryButton" onClick={() => loginFN()}>
               Войти
             </Button>
 
@@ -102,14 +113,18 @@ export default function AuthPage(){
 
             <div className="auth__linkRow">
               <span className="auth__linkCaption">Не получается войти?</span>
-              <Link 
+              <Link
                 className="auth__link"
                 href='/registration'
                 onClick={(e) => {
                   e.preventDefault();
                   let done = false;
-                  const go = () => { if (done) return; done = true; router.push('/registration', { scroll: false }); };
-                  log('auth_go_to_resetpwd', 'Восстановление пароля', null, { callback: go });
+                  const go = () => {
+                    if (done) return;
+                    done = true;
+                    router.push('/registration', { scroll: false });
+                  };
+                  log('auth_go_to_resetpwd', 'Восстановление пароля', undefined);
                   setTimeout(go, 200);
                 }}
               >
@@ -120,5 +135,5 @@ export default function AuthPage(){
         </Grid>
       </Grid>
     </Meta>
-  )
+  );
 }
