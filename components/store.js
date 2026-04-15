@@ -2,7 +2,7 @@ import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 
 import { api, http, fetchMe, getApiErrorInfo, getAuthErrorMessage, loginWeb } from './api.js';
-import { markSessionAuthenticated, markSessionUnauthorized } from './sessionHook.js';
+import { markSessionAuthenticated, markSessionUnauthorized } from './sessionHook.ts';
 
 import { log } from '@/components/analytics';
 
@@ -218,7 +218,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
 
   // открытие/закрытие модалки с подтверждением завершения заказа
   setActiveConfirm: (active, order_finish_id, is_map, type_confirm, order_finish_is_delete) => {
-    
+
     if (active) {
       log('confirm_modal_open', 'Открытие модалки подтверждения заказа');
     } else {
@@ -1686,7 +1686,7 @@ export const useSettingsStore = createWithEqualityFn((set, get) => ({
 
     try {
       const response = await http.post('/api/v1/settings/save', data);
-      log('settings_save_success', 'Успешное сохранение настроек'); 
+      log('settings_save_success', 'Успешное сохранение настроек');
       return {
         st: true,
         text: response?.data?.message || 'Сохранено',

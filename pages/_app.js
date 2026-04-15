@@ -14,7 +14,6 @@ import '../styles/setting_style.scss'
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import YandexMetrika from '@/components/YandexMetrika'
 import { log, hit, screenOpen } from '@/components/analytics'
 
 //pm2 delete test-app-new && rm -rf test-app-new && git clone https://github.com/vito3315/test-app-new.git && cd test-app-new
@@ -24,6 +23,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import * as Sentry from "@sentry/react";
 import { appPalette } from '@/ui/palette';
+import YandexMetrika from "@/components/YandexMetrika";
 
 const theme = createTheme({
   palette: {
@@ -49,7 +49,7 @@ export function reportWebVitals(metric) {
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   const router = useRouter();
-  
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -69,7 +69,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
       delete window.Analytics;
     };
   }, []);
-  
+
   useEffect(() => {
     const send = (url) => {
       hit(url);           // pageview с title
@@ -83,7 +83,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
     router.events.on('routeChangeComplete', send);
     return () => router.events.off('routeChangeComplete', send);
   }, [router.events]);
-  
+
   return (
     <ThemeProvider theme={theme}>
       <YandexMetrika yid={104768072} />
