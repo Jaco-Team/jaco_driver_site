@@ -6,7 +6,7 @@ import Grid from '@mui/material/Grid';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import Meta from '@/components/meta.js';
-import { fetchMe, getApiErrorInfo } from '@/components/api';
+import { fetchMe, getApiErrorInfo } from '@/shared/api/client';
 import { log } from '@/components/analytics';
 import { markSessionAuthenticated, markSessionUnauthorized } from '@/components/sessionHook';
 

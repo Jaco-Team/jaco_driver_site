@@ -142,6 +142,48 @@ function getFirstValidationError(errors) {
   return '';
 }
 
+function normalizeOrderRow(order) {
+  if (!order || typeof order !== 'object') {
+    return {
+      drink_list: [],
+      pd: '',
+      et: '',
+      kv: '',
+      comment: '',
+    };
+  }
+
+  return {
+    ...order,
+    drink_list: Array.isArray(order.drink_list) ? order.drink_list : [],
+    pd: order.pd ?? '',
+    et: order.et ?? '',
+    kv: order.kv ?? '',
+    comment: order.comment ?? '',
+  };
+}
+
+function normalizeGraphErrorRow(err) {
+  if (!err || typeof err !== 'object') {
+    return {
+      imgs: [],
+      new_text_1: '',
+      new_text_2: '',
+      text_one: '',
+      text_two: '',
+    };
+  }
+
+  return {
+    ...err,
+    imgs: Array.isArray(err.imgs) ? err.imgs : [],
+    new_text_1: err.new_text_1 ?? '',
+    new_text_2: err.new_text_2 ?? '',
+    text_one: err.text_one ?? '',
+    text_two: err.text_two ?? '',
+  };
+}
+
 export const useOrdersStore = createWithEqualityFn((set, get) => ({
   orders: [],
   isOpenMenu: false,
@@ -250,7 +292,7 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
   hideDelOrders: async() => {
     let idList = [];
 
-    get().del_orders.map( (item, key) => {
+    get().del_orders.forEach( (item, key) => {
       idList.push(item.id)
     } )
 
@@ -328,25 +370,25 @@ export const useOrdersStore = createWithEqualityFn((set, get) => ({
         zoomSize = 11.5;
       }
 
-      if( json?.orders ){
-        let orders = json?.orders;
+      if( Array.isArray(json?.orders) ){
+        let orders = json.orders.map(normalizeOrderRow);
         if( type.id == 1 && type_dop.length !== types_dop.length ) {
           orders = get().filterOrdersByTypes(orders, type_dop);
         }
 
         set({
           orders: orders,
-          update_interval: json?.update_interval,
-          limit: json?.limit,
-          limit_count: json?.limit_count,
-          del_orders: json?.arr_del_list,
+          update_interval: json?.update_interval ?? 30,
+          limit: json?.limit ?? '',
+          limit_count: json?.limit_count ?? '',
+          del_orders: Array.isArray(json?.arr_del_list) ? json.arr_del_list.map(normalizeOrderRow) : [],
           driver_pay: json?.driver_pay,
           driver_need_gps: parseInt(json?.driver_need_gps) == 0 ? false : true,
         })
 
         log('orders_fetch_success', 'Получение списка заказов');
 
-        if( !get().home ){
+        if( !get().home && json?.home?.latitude !== undefined && json?.home?.longitude !== undefined ){
           set({
             // home: json?.home,
             home: {
@@ -1175,11 +1217,12 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
     };
 
     const json = await api('settings', data);
+    const settings = json?.data ?? json;
 
     set({
-      globalFontSize: parseInt(json?.fontSize),
-      theme: json?.theme,
-      mapScale: parseFloat(json?.mapScale),
+      globalFontSize: parseInt(settings?.fontSize ?? 16),
+      theme: settings?.theme ?? 'white',
+      mapScale: parseFloat(settings?.mapScale ?? 1),
     });
   },
 
@@ -1192,7 +1235,7 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
     const json = await api('orders', data);
 
     set({
-      avgTime: json?.text || 0,
+      avgTime: Number(json?.text ?? 0),
     });
   },
 
@@ -1282,10 +1325,8 @@ export const useHeaderStore = createWithEqualityFn((set, get) => ({
 
       const json = await http.post('api/v1/settings/get_point_phones', data);
 
-      console.log(json?.data?.phone)
-
       set({
-        phones: json?.data?.phone,
+        phones: json?.data?.data?.phone ?? null,
         token
       })
     }
@@ -1306,8 +1347,8 @@ export const usePriceStore = createWithEqualityFn((set, get) => ({
     const json = await api('price', data);
 
     set({
-      statPrice: json.stat,
-      give_hist: json.give_hist
+      statPrice: json?.stat ?? null,
+      give_hist: Array.isArray(json?.give_hist) ? json.give_hist : []
     })
   },
 
@@ -1322,8 +1363,8 @@ export const usePriceStore = createWithEqualityFn((set, get) => ({
     const json = await api('price', data);
 
     set({
-      statPrice: json.stat,
-      give_hist: json.give_hist
+      statPrice: json?.stat ?? null,
+      give_hist: Array.isArray(json?.give_hist) ? json.give_hist : []
     })
   },
 }), shallow)
@@ -1364,15 +1405,16 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
     };
 
     const json = await api('graph', data);
+    const errs = json?.errs ?? {};
 
     set({
-      month_list: json.mounth,
-      dates: json.all_dates,
-      users: json.users,
+      month_list: Array.isArray(json?.mounth) ? json.mounth : [],
+      dates: Array.isArray(json?.all_dates) ? json.all_dates : [],
+      users: Array.isArray(json?.users) ? json.users : [],
       current_user_id: json?.user_id ?? '',
       current_user_name: json?.user_name ?? '',
-      err_orders: json.errs.orders,
-      err_cam: json.errs.err_cam,
+      err_orders: Array.isArray(errs.orders) ? errs.orders : [],
+      err_cam: Array.isArray(errs.err_cam) ? errs.err_cam : [],
       isOpenMenu: false,
       chooseDate: date
     })
@@ -1470,7 +1512,7 @@ export const useGraphStore = createWithEqualityFn((set, get) => ({
   openModalErr: (type, err) => {
     set({
       isOpenModalErr: true,
-      [ type ]: err
+      [ type ]: normalizeGraphErrorRow(err)
     })
   },
   closeErrOrder: () => {
@@ -1750,7 +1792,7 @@ export const useStatisticsStore = createWithEqualityFn((set, get) => ({
     const json = await api('stat_time', data);
 
     set({
-      svod: json?.avg_orders ?? [],
+      svod: Array.isArray(json?.avg_orders) ? json.avg_orders : [],
       current_user_id: json?.user_id ?? ''
     })
 

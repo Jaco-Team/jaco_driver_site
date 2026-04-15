@@ -123,7 +123,7 @@ function unwrapSettingsPayload(payload: any): SettingsData {
   return {};
 }
 
-function getFirstValidationError(errors?: Record<string, string[]>): string {
+function getFirstValidationError(errors?: Record<string, string | string[]>): string {
   if (!errors || typeof errors !== 'object') return '';
   for (const value of Object.values(errors)) {
     if (Array.isArray(value) && value.length > 0 && value[0]) {
@@ -188,7 +188,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         return {
           st: false,
           text: errorText,
-          status: errorInfo.status,
+          status: errorInfo.status ?? undefined,
           errors: errorInfo?.data?.errors,
           data: errorInfo?.data,
         };

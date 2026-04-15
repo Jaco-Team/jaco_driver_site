@@ -6,7 +6,7 @@ import Meta from "@/components/meta";
 
 const DynamicHeader = dynamic(() => import('@/modules/header.jsx'))
 
-export default function Settings(props) {
+export default function Settings() {
   return (
     <Meta title="Настройки">
       <DynamicHeader />

@@ -149,7 +149,7 @@ function getValidationMessage(data: any): string {
 export function getApiErrorInfo(error: unknown): ErrorInfo {
   const axiosError = error as AxiosError;
   const status = axiosError?.response?.status ?? null;
-  const data = axiosError?.response?.data ?? null;
+  const data = (axiosError?.response?.data as any) ?? null;
   const validationMessage = getValidationMessage(data);
 
   let message = 'Не удалось выполнить запрос.';

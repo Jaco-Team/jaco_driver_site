@@ -128,7 +128,7 @@ export function getSessionData(): SessionData {
   return sessionData;
 }
 
-export default function useSession(): { isAuth: boolean; user: any; token: string } {
+export default function useSession(): { isAuth: boolean | 'load'; user: any; token: string } {
   const [session, setSession] = useState<SessionData>(sessionData);
 
   useEffect(() => {
@@ -153,7 +153,7 @@ export default function useSession(): { isAuth: boolean; user: any; token: strin
   }, [session.isAuth]);
 
   return {
-    isAuth: session.isAuth === true,
+    isAuth: session.isAuth,
     token: session.token,
     user: session.user,
   };

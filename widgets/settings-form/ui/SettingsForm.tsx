@@ -13,7 +13,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
-import { CirclePicker, ColorResult } from 'react-color';
+import { CirclePicker } from 'react-color';
 import Wheel from '@uiw/react-color-wheel';
 import Alpha from '@uiw/react-color-alpha';
 import { hsvaToHex, hexToHsva, HsvaColor } from '@uiw/color-convert';
@@ -406,8 +406,11 @@ export const SettingsForm: React.FC = () => {
               hsva={hsva}
               width="90%"
               onChange={newAlpha => {
-                setHsva(newAlpha);
-                setColor(hsvaToHex(newAlpha));
+                setHsva(prev => {
+                  const nextHsva = { ...prev, ...newAlpha };
+                  setColor(hsvaToHex(nextHsva));
+                  return nextHsva;
+                });
               }}
               style={{ marginBottom: 40 }}
             />
@@ -415,7 +418,7 @@ export const SettingsForm: React.FC = () => {
               <CirclePicker
                 width="100%"
                 color={color}
-                onChangeComplete={(c: ColorResult) => {
+                onChangeComplete={(c: { hex: string }) => {
                   setHsva(hexToHsva(c.hex));
                   setColor(c.hex);
                 }}

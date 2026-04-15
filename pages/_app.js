@@ -21,7 +21,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import * as Sentry from "@sentry/react";
 import { appPalette } from '@/ui/palette';
 import YandexMetrika from "@/components/YandexMetrika";
-import {useLoginStore} from "@/components/store";
+import {useLoginStore} from "@/features/auth/model/login.store";
 import {refreshSession} from "@/components/sessionHook";
 
 const theme = createTheme({
@@ -84,8 +84,6 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   }, [router.events]);
 
   const checkToken = useLoginStore(state => state.check_token);
-  const authData = useLoginStore(state => state.authData);
-
   useEffect(() => {
     const initAuth = async () => {
       await refreshSession();

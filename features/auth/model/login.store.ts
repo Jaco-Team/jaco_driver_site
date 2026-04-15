@@ -3,7 +3,6 @@ import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import {
   api,
-  http,
   fetchMe,
   getApiErrorInfo,
   getAuthErrorMessage,
@@ -11,7 +10,7 @@ import {
   log
 } from '@/shared/api/client';
 
-import { markSessionAuthenticated, markSessionUnauthorized, refreshSession } from '@/components/sessionHook';
+import { markSessionAuthenticated, markSessionUnauthorized } from '@/components/sessionHook';
 import { useLoginStore as oldLoginStore } from '@/components/store';
 
 interface AuthData {

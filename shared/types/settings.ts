@@ -10,6 +10,8 @@ export interface SettingsData {
   action_centered_map?: number | string;
   night_map?: number | string;
   is_scaleMap?: number | string;
+  driver_avg_time?: number | string | boolean;
+  driver_page_stat_time?: number | string | boolean;
   color?: string;
   fontSize?: number;
   theme?: ThemeType;

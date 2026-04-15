@@ -4,6 +4,16 @@ import { shallow } from 'zustand/shallow';
 import { api, http, log } from '@/shared/api/client';
 import { SettingsData } from '@/shared/types/settings';
 
+interface LegacyFontSettingsResponse {
+  fontSize?: number | string;
+  theme?: string;
+  mapScale?: number | string;
+}
+
+interface LegacyAvgTimeResponse {
+  text?: number | string;
+}
+
 interface HeaderState {
   isOpenMenu: boolean;
   activePageRU: string;
@@ -30,7 +40,7 @@ interface HeaderActions {
   getSettings: (token: string) => Promise<void>;
   check_pos: (func: (lat: number, lng: number) => void) => Promise<void>;
   checkMyPos: () => void;
-  saveMyPos: (latitude?: string, longitude?: string) => Promise<void>;
+  saveMyPos: (latitude?: number | string, longitude?: number | string) => Promise<void>;
   setOpenMenu: () => void;
   setCloseMenu: () => void;
   getStat: (token: string) => Promise<void>;
@@ -91,18 +101,20 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
 
     getMyFontSize: async (token: string) => {
       const data = { token, type: 'get_my_font_size' };
-      const json = await api<any>('settings', data);
+      const json = await api('settings', data);
+      const settings = (json?.data ?? json) as LegacyFontSettingsResponse;
       set({
-        globalFontSize: parseInt(json?.fontSize),
-        theme: json?.theme,
-        mapScale: parseFloat(json?.mapScale),
+        globalFontSize: parseInt(String(settings?.fontSize ?? 16), 10),
+        theme: `${settings?.theme ?? 'white'}`,
+        mapScale: `${parseFloat(String(settings?.mapScale ?? 1))}`,
       });
     },
 
     getMyAvgTime: async (token: string) => {
       const data = { token, type: 'get_my_avg_time' };
-      const json = await api<any>('orders', data);
-      set({ avgTime: json?.text || 0 });
+      const json = await api('orders', data);
+      const avgTime = (json?.data ?? json) as LegacyAvgTimeResponse;
+      set({ avgTime: Number(avgTime?.text ?? 0) });
     },
 
     setActivePageRU: (activePageRU: string) => {
@@ -155,7 +167,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
       }, 1000);
     },
 
-    saveMyPos: async (latitude: string = '', longitude: string = '') => {
+    saveMyPos: async (latitude: number | string = '', longitude: number | string = '') => {
       const data = { token: get().token, type: 'save_my_pos', latitude, longitude };
       await api('settings', data);
     },
@@ -172,7 +184,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
       if (get().phones === null) {
         const data = { point_id: 1 };
         const json = await http.post<{ data: { phone: string } }>('api/v1/settings/get_point_phones', data);
-        set({ phones: json?.data?.phone, token });
+        set({ phones: json?.data?.data?.phone ?? null, token });
       }
     },
   }),
