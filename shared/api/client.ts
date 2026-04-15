@@ -145,7 +145,7 @@ export interface GraphApiPayload {
   date?: string;
   all_dates?: unknown[];
   users?: unknown[];
-  mounth?: unknown[];
+  month?: unknown[];
   errs?: {
     orders?: unknown[];
     err_cam?: unknown[];

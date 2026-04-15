@@ -30,7 +30,7 @@ export function GraphMonthPickerDrawer({
       onClose={onClose}
       onSelect={onSelectMonth}
       getKey={(item, index) => item.day || index}
-      getLabel={(item) => item.mounth}
+      getLabel={(item) => item.month}
       getItemClassName={(item) => (parseInt(String(item.is_active), 10) === 1 ? 'active' : '')}
     />
   );
