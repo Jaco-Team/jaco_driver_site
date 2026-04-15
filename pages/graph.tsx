@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import Meta from '@/components/meta';
 import useSession from '@/components/sessionHook';
-import { useHeaderStore } from '@/components/store';
+import { useHeaderStore } from '@/features/header/model/header.store';
 import GraphScreen from '@/widgets/graph-screen/ui/GraphScreen';
 
 const DynamicHeader = dynamic(() => import('@/modules/header.jsx'));

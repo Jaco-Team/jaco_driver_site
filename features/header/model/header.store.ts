@@ -1,18 +1,7 @@
-
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
-import { api, http, log } from '@/shared/api/client';
+import { http, log } from '@/shared/api/client';
 import { SettingsData } from '@/shared/types/settings';
-
-interface LegacyFontSettingsResponse {
-  fontSize?: number | string;
-  theme?: string;
-  mapScale?: number | string;
-}
-
-interface LegacyAvgTimeResponse {
-  text?: number | string;
-}
 
 interface HeaderState {
   isOpenMenu: boolean;
@@ -21,7 +10,7 @@ interface HeaderState {
   token: string;
   is_scaleMap: boolean;
   check_pos_check: boolean;
-  avgTime: number;
+  avgTime: string;
   is_need_avg_time: boolean;
   is_need_page_stat: boolean;
   night_map: boolean;
@@ -49,7 +38,12 @@ interface HeaderActions {
 type HeaderStore = HeaderState & HeaderActions;
 
 function unwrapSettingsPayload(payload: any): SettingsData {
-  if (payload && typeof payload === 'object' && payload.settings && typeof payload.settings === 'object') {
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    payload.settings &&
+    typeof payload.settings === 'object'
+  ) {
     return payload.settings;
   }
   if (payload && typeof payload === 'object') {
@@ -100,21 +94,12 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     getMyFontSize: async (token: string) => {
-      const data = { token, type: 'get_my_font_size' };
-      const json = await api('settings', data);
-      const settings = (json?.data ?? json) as LegacyFontSettingsResponse;
-      set({
-        globalFontSize: parseInt(String(settings?.fontSize ?? 16), 10),
-        theme: `${settings?.theme ?? 'white'}`,
-        mapScale: `${parseFloat(String(settings?.mapScale ?? 1))}`,
-      });
+      await get().getSettings(token);
     },
 
     getMyAvgTime: async (token: string) => {
-      const data = { token, type: 'get_my_avg_time' };
-      const json = await api('orders', data);
-      const avgTime = (json?.data ?? json) as LegacyAvgTimeResponse;
-      set({ avgTime: Number(avgTime?.text ?? 0) });
+      const { data } = await http.get<{ text?: string | number }>('/api/v1/settings/avg-time');
+      set({ avgTime: `${data?.text ?? '00:00:00'}` });
     },
 
     setActivePageRU: (activePageRU: string) => {
@@ -135,8 +120,19 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
         is_need_page_stat: hasField('driver_page_stat_time')
           ? normalizeBoolLike((settings as any).driver_page_stat_time)
           : currentState.is_need_page_stat,
-        night_map: hasField('night_map') ? normalizeBoolLike(settings.night_map) : currentState.night_map,
-        is_scaleMap: hasField('is_scaleMap') ? normalizeBoolLike(settings.is_scaleMap) : currentState.is_scaleMap,
+        night_map: hasField('night_map')
+          ? normalizeBoolLike(settings.night_map)
+          : currentState.night_map,
+        is_scaleMap: hasField('is_scaleMap')
+          ? normalizeBoolLike(settings.is_scaleMap)
+          : currentState.is_scaleMap,
+        globalFontSize: hasField('fontSize')
+          ? parseInt(String(settings.fontSize ?? 16), 10)
+          : currentState.globalFontSize,
+        theme: hasField('theme') ? `${settings.theme ?? 'white'}` : currentState.theme,
+        mapScale: hasField('mapScale')
+          ? `${parseFloat(String(settings.mapScale ?? 1))}`
+          : currentState.mapScale,
       });
     },
 
@@ -168,8 +164,10 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     saveMyPos: async (latitude: number | string = '', longitude: number | string = '') => {
-      const data = { token: get().token, type: 'save_my_pos', latitude, longitude };
-      await api('settings', data);
+      await http.post('/api/v1/settings/save-position', {
+        latitude,
+        longitude,
+      });
     },
 
     setOpenMenu: () => {
@@ -183,7 +181,10 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     getStat: async (token: string) => {
       if (get().phones === null) {
         const data = { point_id: 1 };
-        const json = await http.post<{ data: { phone: string } }>('api/v1/settings/get_point_phones', data);
+        const json = await http.post<{ data: { phone: string } }>(
+          'api/v1/settings/get_point_phones',
+          data
+        );
         set({ phones: json?.data?.data?.phone ?? null, token });
       }
     },
