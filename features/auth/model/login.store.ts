@@ -7,7 +7,7 @@ import {
   getApiErrorInfo,
   getAuthErrorMessage,
   loginWeb,
-  log
+  log,
 } from '@/shared/api/client';
 
 import { markSessionAuthenticated, markSessionUnauthorized } from '@/components/sessionHook';
@@ -116,9 +116,7 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
 
         console.log('✅ Авторизация успешна, данные сохранены в сторах');
         return json;
-
       } catch (error) {
-        console.error('❌ Ошибка при авторизации:', error);
         const errorInfo = getApiErrorInfo(error);
         const errorText = getAuthErrorMessage(error);
         const json = {
@@ -233,7 +231,9 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
         const errorInfo = getApiErrorInfo(error);
         const status = errorInfo.status;
         const isUnauthorized = status === 401 || status === 403;
-        const errorText = isUnauthorized ? 'Не авторизован' : getAuthErrorMessage(error, 'Не удалось проверить сессию.');
+        const errorText = isUnauthorized
+          ? 'Не авторизован'
+          : getAuthErrorMessage(error, 'Не удалось проверить сессию.');
         const json = {
           st: false,
           isAuth: false,

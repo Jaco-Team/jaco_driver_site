@@ -1,4 +1,3 @@
-
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import queryString from 'query-string';
 
@@ -16,12 +15,22 @@ function joinUrl(base: string, path: string = ''): string {
 }
 
 const HTTP_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL) || DEFAULT_HTTP_BASE_URL;
-const LEGACY_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_LEGACY_API_URL) || DEFAULT_LEGACY_BASE_URL;
+const LEGACY_BASE_URL =
+  normalizeBaseUrl(process.env.NEXT_PUBLIC_LEGACY_API_URL) || DEFAULT_LEGACY_BASE_URL;
 
 const BASE_HEADERS = {
   'X-Requested-With': 'XMLHttpRequest',
   Accept: 'application/json',
 };
+
+function isAuthEndpoint(url: string | undefined): boolean {
+  return typeof url === 'string' && url.includes('/api/v1/auth/');
+}
+
+function isExpectedAuthFailure(error: AxiosError): boolean {
+  const status = error.response?.status;
+  return isAuthEndpoint(error.config?.url) && (status === 401 || status === 422);
+}
 
 export const http: AxiosInstance = axios.create({
   baseURL: HTTP_BASE_URL,
@@ -78,7 +87,11 @@ http.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    console.error(`❌ API Error: ${error.config?.url}`, error.message);
+    if (isExpectedAuthFailure(error)) {
+      console.warn(`⚠️ API Auth Response: ${error.config?.url}`, error.response?.status);
+    } else {
+      console.error(`❌ API Error: ${error.config?.url}`, error.message);
+    }
 
     // Если получили 419 (CSRF mismatch), пробуем обновить CSRF и повторить запрос
     if (error.response?.status === 419 && error.config) {
@@ -172,7 +185,10 @@ export function getApiErrorInfo(error: unknown): ErrorInfo {
   };
 }
 
-export function getAuthErrorMessage(error: unknown, fallbackMessage: string = 'Не удалось выполнить вход.'): string {
+export function getAuthErrorMessage(
+  error: unknown,
+  fallbackMessage: string = 'Не удалось выполнить вход.'
+): string {
   const info = getApiErrorInfo(error);
 
   if (info.isNetwork) {
@@ -198,17 +214,25 @@ export function getAuthErrorMessage(error: unknown, fallbackMessage: string = '�
   return info.message || fallbackMessage;
 }
 
-export const loginWeb = async (login: string, password: string, remember: boolean = true): Promise<User> => {
+export const loginWeb = async (
+  login: string,
+  password: string,
+  remember: boolean = true
+): Promise<User> => {
   await ensureCsrfCookie();
   const { data } = await http.post<User>('/api/v1/auth/session/login', {
-    login,
+    login: login.trim(),
     password,
     remember,
   });
   return data;
 };
 
-export async function loginToken(login: string, password: string, deviceName: string = 'web-device'): Promise<User> {
+export async function loginToken(
+  login: string,
+  password: string,
+  deviceName: string = 'web-device'
+): Promise<User> {
   const { data } = await http.post<User>('/api/v1/auth/token/login', {
     email: login,
     login,
