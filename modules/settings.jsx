@@ -34,6 +34,8 @@ import Meta from '@/components/meta.js';
 
 import { roboto } from '@/ui/Font';
 import { Location, PlacemarkIcon } from '@/ui/Icons';
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -53,7 +55,8 @@ export default function SettingsPage(){
   const [ centered_map, setСentered_map ] = useState( false );
   const [ night_map, setNight_map ] = useState( false );
   const [ is_scaleMap, setIs_scaleMap ] = useState( false );
-
+  const [point, setPoint] = useState({});
+  const [points, setPoints] = useState([]);
   const [ color, setColor ] = useState("#000000");
   const [hsva, setHsva] = useState({ h: 214, s: 43, v: 90, a: 1 });
 
@@ -85,6 +88,7 @@ export default function SettingsPage(){
         setHsva(color_2);
       }
 
+      setPoints(res.points);
       setСentered_map( parseInt(res.action_centered_map) == 1 ? true : false )
       setNight_map( parseInt(res.night_map) == 1 ? true : false )
       setIs_scaleMap( parseInt(res.is_scaleMap) == 1 ? true : false )
@@ -163,6 +167,42 @@ export default function SettingsPage(){
             {message}
           </Alert>
         </Snackbar>
+
+        <Grid size={12} style={{ marginTop: 10 }}>
+          <Paper className='container_paper' elevation={5}>
+            <div style={{ paddingBottom: 10 }}>
+              <span style={{fontSize: globalFontSize }}>Точка</span>
+              <Autocomplete
+                multiple={false}
+                options={points}
+                getOptionLabel={(option) => option.name || option}
+                value={point}
+                onChange={(event, newValue) => {
+                  setPoint(newValue);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    placeholder="Выберите точку"
+                    size="small"
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        fontSize: globalFontSize,
+                      }
+                    }}
+                  />
+                )}
+                sx={{
+                  width: '100%',
+                  '& .MuiAutocomplete-inputRoot': {
+                    fontSize: globalFontSize,
+                  }
+                }}
+              />
+            </div>
+          </Paper>
+        </Grid>
 
         <Grid size={12} style={{ marginTop: 10 }}>
           <Paper className='container_paper' elevation={5}>

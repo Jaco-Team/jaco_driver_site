@@ -9,11 +9,20 @@ import {
   SaveSettingsPayload,
 } from '@/shared/types/settings';
 
+interface PointsState {
+  base: string,
+  name: string,
+  id: number,
+  city_id: number
+}
+
 interface SettingsState {
   isClick: boolean;
   settings: SettingsResponse | null;
   pointId: string;
+  points: PointsState[];
   cityId: string;
+  point_id: number;
 }
 
 interface SettingsActions {
@@ -28,9 +37,11 @@ interface SettingsActions {
     theme: string,
     mapScale: number,
     night_map: boolean,
-    is_scaleMap: boolean
+    is_scaleMap: boolean,
+    point_id: number
   ) => Promise<{ st: boolean; text?: string; data?: any; status?: number; errors?: any }>;
   getMySetting: (token: string) => Promise<SettingsResponse>;
+  setPointId: (id: number) => void;
 }
 
 type SettingsStore = SettingsState & SettingsActions;
@@ -38,6 +49,7 @@ type SettingsStore = SettingsState & SettingsActions;
 export interface SettingsResponse extends SettingsData {
   type_data_map?: TypeDataMap;
   type_show_del?: TypeShowDel;
+  points?: PointsState[];
 }
 
 const TYPE_SHOW_DEL_TO_INT: Record<TypeShowDel, number> = {
@@ -161,6 +173,8 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
     settings: null,
     pointId: '',
     cityId: '',
+    points: [],
+    point_id: null,
 
     saveMySetting: async (
       token: string | undefined,
@@ -173,7 +187,8 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       theme: string,
       mapScale: number,
       night_map: boolean,
-      is_scaleMap: boolean
+      is_scaleMap: boolean,
+      point_id: number,
     ) => {
       if (get().isClick === false) {
         set({ isClick: true });
@@ -191,11 +206,12 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         color: color,
         fontSize: parseInt(String(fontSize)),
         theme,
+        point_id,
         mapScale: parseFloat(String(mapScale)),
       };
 
       try {
-        const response = await http.post<{ data?: any; message?: string }>(
+        const response = await http.post<{ data?: SaveSettingsPayload; message?: string }>(
           '/api/v1/settings/save',
           data
         );
@@ -224,6 +240,10 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       }
     },
 
+    setPointId: (id: number) => {
+      set({ pointId: parseInt(String(id)) });
+    },
+
     getMySetting: async (token: string) => {
       const { data } = await http.get<{ data: SettingsData }>('/api/v1/settings/get');
       const settings = unwrapSettingsPayload(data);
@@ -235,7 +255,8 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
 
       set({
         settings: normalizedSettings,
-        pointId: normalizeIdString(settings?.point_id),
+        pointId: data.pointId,
+        points: data.points,
         cityId: normalizeIdString(settings?.city_id),
       });
 

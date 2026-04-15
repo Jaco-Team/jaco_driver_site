@@ -23,6 +23,9 @@ import { useSettingsStore, SettingsResponse } from '@/entities/settings/model/se
 import { useHeaderStore } from '@/features/header/model/header.store';
 import useSession from '@/components/sessionHook';
 import { TypeDataMap, TypeShowDel, ThemeType } from '@/shared/types/settings';
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
+import {Location, PlacemarkIcon} from "@/ui/Icons";
 
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -38,10 +41,13 @@ interface SnackbarState {
 
 export const SettingsForm: React.FC = () => {
   const session = useSession();
-  const [saveMySetting, getMySetting, isSaving] = useSettingsStore(state => [
+  const [saveMySetting, getMySetting, isSaving, pointId, points, setPointId] = useSettingsStore(state => [
     state.saveMySetting,
     state.getMySetting,
     state.isClick,
+    state.pointId,
+    state.points,
+    state.setPointId,
   ]);
   const [globalFontSize, setGlobalFontSize, setTheme, setGlobalMapScale] = useHeaderStore(state => [
     state.globalFontSize,
@@ -113,7 +119,8 @@ export const SettingsForm: React.FC = () => {
       groupTypeTheme,
       mapScale,
       night_map,
-      is_scaleMap
+      is_scaleMap,
+      pointId
     );
 
     if (result?.st) {
@@ -159,65 +166,118 @@ export const SettingsForm: React.FC = () => {
           </Alert>
         </Snackbar>
 
+        <Grid size={12} style={{ marginTop: 10 }}>
+          <Paper className='container_paper' elevation={5}>
+            <div style={{ paddingBottom: 10 }}>
+              <span style={{fontSize: globalFontSize }}>Точка</span>
+              <Autocomplete
+                multiple={false}
+                options={points}
+                getOptionLabel={(option) => {
+                  if (typeof option === 'object' && option !== null) {
+                    return option.name || String(option.id);
+                  }
+                  const found = points.find(p => String(p.id) === String(option));
+                  return found?.name || String(option);
+                }}
+                isOptionEqualToValue={(option, value) => {
+                  if (!value) return false;
+                  const optionId = typeof option === 'object' ? option.id : option;
+                  const valueId = typeof value === 'object' ? value.id : value;
+                  return String(optionId) === String(valueId);
+                }}
+                value={points.find(p => String(p.id) === String(pointId)) || null}
+                onChange={(event, newValue) => {
+                  if (newValue && typeof newValue === 'object' && 'id' in newValue) {
+                    setPointId(newValue.id);
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    placeholder="Выберите точку"
+                    size="small"
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        fontSize: globalFontSize,
+                      }
+                    }}
+                  />
+                )}
+                sx={{
+                  width: '100%',
+                  '& .MuiAutocomplete-inputRoot': {
+                    fontSize: globalFontSize,
+                  }
+                }}
+              />
+            </div>
+          </Paper>
+        </Grid>
+
         {/* Формат данных на карте */}
         <Grid size={12} style={{ marginTop: 10 }}>
           <Paper className="container_paper" elevation={5}>
             <div style={{ paddingBottom: 10 }}>
               <span style={{ fontSize: globalFontSize }}>Формат данных на карте</span>
             </div>
-            <img style={{ width: '100%', height: 'auto' }} src="/map.png" alt="Пример карты" />
-            <div className="location" onClick={() => setGroupTypeTime('norm')}>
-              <div style={{ color: groupTypeTime === 'norm' ? 'red' : 'blue' }}>📍</div>
-              <span className="span_text_white_border">21:46 (53 мин.)</span>
+            <div style={{ width: '100%', height: '400px', backgroundColor: 'rgba(252,232,131,0.5)' }} alt="Пример карты" />
+            <div className='location' onClick={() => setGroupTypeTime('norm')}>
+              <Location fill={groupTypeTime === 'norm' ? 'red' : 'blue'}/>
+              <span className='span_text_white_border'>21:46 (53 мин.)</span>
             </div>
-            <div className="location" style={{ top: '40%' }} onClick={() => setGroupTypeTime('full')}>
-              <div style={{ color: groupTypeTime === 'full' ? 'red' : 'blue' }}>📍</div>
-              <span className="span_text_white_border">21:46 - 22:16 (53 мин.)</span>
+            <div className='location' style={{top: '40%'}} onClick={() => setGroupTypeTime('full')}>
+              <Location fill={groupTypeTime === 'full' ? 'red' : 'blue'}/>
+              <span className='span_text_white_border'>21:46 - 22:16 (53 мин.)</span>
             </div>
-            <div className="location" style={{ top: '60%' }} onClick={() => setGroupTypeTime('min')}>
-              <div style={{ color: groupTypeTime === 'min' ? 'red' : 'blue' }}>📍</div>
-              <span className="span_text_white_border">53 мин.</span>
+            <div className='location' style={{top: '60%'}} onClick={() => setGroupTypeTime('min')}>
+              <Location fill={groupTypeTime === 'min' ? 'red' : 'blue'}/>
+              <span className='span_text_white_border'>53 мин.</span>
             </div>
           </Paper>
         </Grid>
 
         {/* Оформление */}
-        <Grid size={12} style={{ marginTop: 10 }}>
+        <Grid size={12} style={{marginTop: 10}}>
           <Paper className="container_paper" elevation={5}>
-            <div style={{ paddingBottom: 10 }}>
+            <div style={{paddingBottom: 10}}>
               <span style={{ fontSize: globalFontSize }}>Оформление</span>
             </div>
-            <img style={{ width: '100%', height: 'auto' }} src="/map_2.png" alt="Пример оформления" />
-            <div className="location_ya" style={{ top: 80 }} onClick={() => setGroupTypeTheme('classic')}>
-              <div style={{ color: groupTypeTheme === 'classic' ? 'red' : 'blue' }}>📍</div>
+            <div style={{width: '100%', height: '400px', backgroundColor: 'rgba(252,232,131,0.5)'}} alt="Пример карты"/>
+            <div className="location_ya" style={{top: 80}} onClick={() => setGroupTypeTheme('classic')}>
               <span>Классический яндекс</span>
             </div>
-            <div className="location" style={{ top: 140 }} onClick={() => setGroupTypeTheme('transparent')}>
-              <div style={{ color: groupTypeTheme === 'transparent' ? 'red' : 'blue' }}>📍</div>
-              <span className="span_text_transparent">21:46 (53 мин.)</span>
+            <div className='location_ya' style={{top: 80}} onClick={() => setGroupTypeTheme('classic')}>
+              <PlacemarkIcon fill={groupTypeTheme === 'classic' ? 'red' : 'blue'}/>
+              <span>Классический яндекс</span>
             </div>
-            <div className="location" style={{ top: 200 }} onClick={() => setGroupTypeTheme('transparent_white')}>
-              <div style={{ color: groupTypeTheme === 'transparent_white' ? 'red' : 'blue' }}>📍</div>
-              <span className="span_text_transparent_white">21:46 (53 мин.)</span>
+            <div className='location' style={{top: 140}} onClick={() => setGroupTypeTheme('transparent')}>
+              <Location fill={groupTypeTheme === 'transparent' ? 'red' : 'blue'}/>
+              <span className='span_text_transparent'>21:46 (53 мин.)</span>
             </div>
-            <div className="location" style={{ top: 260 }} onClick={() => setGroupTypeTheme('white')}>
-              <div style={{ color: groupTypeTheme === 'white' ? 'red' : 'blue' }}>📍</div>
-              <span className="span_text_white">21:46 (53 мин.)</span>
+            <div className='location' style={{top: 200}} onClick={() => setGroupTypeTheme('transparent_white')}>
+              <Location fill={groupTypeTheme === 'transparent_white' ? 'red' : 'blue'}/>
+              <span className='span_text_transparent_white'>21:46 (53 мин.)</span>
             </div>
-            <div className="location" style={{ top: 325 }} onClick={() => setGroupTypeTheme('white_border')}>
-              <div style={{ color: groupTypeTheme === 'white_border' ? 'red' : 'blue' }}>📍</div>
-              <span className="span_text_white_border">21:46 (53 мин.)</span>
+            <div className='location' style={{top: 260}} onClick={() => setGroupTypeTheme('white')}>
+              <Location fill={groupTypeTheme === 'white' ? 'red' : 'blue'}/>
+              <span className='span_text_white'>21:46 (53 мин.)</span>
             </div>
-            <div className="location" style={{ top: 385 }} onClick={() => setGroupTypeTheme('black')}>
-              <div style={{ color: groupTypeTheme === 'black' ? 'red' : 'blue' }}>📍</div>
-              <span className="span_text_black">21:46 (53 мин.)</span>
+            <div className='location' style={{top: 325}} onClick={() => setGroupTypeTheme('white_border')}>
+              <Location fill={groupTypeTheme === 'white_border' ? 'red' : 'blue'}/>
+              <span className='span_text_white_border'>21:46 (53 мин.)</span>
+            </div>
+            <div className='location' style={{top: 385}} onClick={() => setGroupTypeTheme('black')}>
+              <Location fill={groupTypeTheme === 'black' ? 'red' : 'blue'}/>
+              <span className='span_text_black'>21:46 (53 мин.)</span>
             </div>
           </Paper>
         </Grid>
 
         {/* Отмененные заказы */}
-        <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper style={{ padding: 20 }} elevation={5}>
+        <Grid size={12} style={{marginTop: 10}}>
+          <Paper style={{padding: 20}} elevation={5}>
             <FormControl component="fieldset">
               <FormLabel component="legend" style={{ fontSize: globalFontSize, color: 'rgba(0, 0, 0, 0.8)' }}>
                 Отмененные заказы

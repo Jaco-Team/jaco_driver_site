@@ -17,6 +17,7 @@ interface HeaderState {
   globalFontSize: number;
   theme: string;
   mapScale: string;
+  point: any | null;
 }
 
 interface HeaderActions {
