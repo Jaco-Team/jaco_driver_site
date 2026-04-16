@@ -12,6 +12,7 @@ import {
   normalizeGraphOrderError,
   normalizeGraphResponse,
 } from '@/entities/graph/model/graph.utils';
+import { useSettingsStore } from '@/entities/settings/model/settings.store';
 import { GraphCameraError, GraphErrorModal, GraphOrderError } from '@/entities/graph/model/types';
 import { log } from '@/components/analytics';
 
@@ -67,6 +68,28 @@ function closeModalState(): Pick<GraphStoreState, 'errorModal' | 'appealText'> {
   };
 }
 
+function resolveGraphPointId(explicitPointId: string | undefined, selectedPointId: string): string {
+  if (explicitPointId !== undefined) {
+    return explicitPointId;
+  }
+
+  if (selectedPointId !== '') {
+    return selectedPointId;
+  }
+
+  const settingsPointId = useSettingsStore.getState().point_id;
+
+  if (
+    settingsPointId === null ||
+    settingsPointId === undefined ||
+    `${settingsPointId}`.trim() === ''
+  ) {
+    return '';
+  }
+
+  return `${settingsPointId}`.trim();
+}
+
 export const useGraphStore = createWithEqualityFn<GraphStore>(
   (set, get) => ({
     isMonthDrawerOpen: false,
@@ -118,7 +141,7 @@ export const useGraphStore = createWithEqualityFn<GraphStore>(
     },
 
     loadGraph: async (date, pointId) => {
-      const nextPointId = pointId ?? get().selectedPointId;
+      const nextPointId = resolveGraphPointId(pointId, get().selectedPointId);
       const response = await fetchGraph(date, nextPointId || undefined);
 
       set({
