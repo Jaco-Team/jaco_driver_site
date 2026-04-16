@@ -10,19 +10,19 @@ import {
 } from '@/shared/types/settings';
 
 interface PointsState {
-  base: string,
-  name: string,
-  id: number,
-  city_id: number
+  base: string;
+  name: string;
+  id: number;
+  city_id: number;
 }
 
 interface SettingsState {
   isClick: boolean;
   settings: SettingsResponse | null;
-  pointId: string;
+  pointId: string | number;
   points: PointsState[];
   cityId: string;
-  point_id: number;
+  point_id: number | null;
 }
 
 interface SettingsActions {
@@ -38,7 +38,7 @@ interface SettingsActions {
     mapScale: number,
     night_map: boolean,
     is_scaleMap: boolean,
-    point_id: number
+    point_id: number | null
   ) => Promise<{ st: boolean; text?: string; data?: any; status?: number; errors?: any }>;
   getMySetting: (token: string) => Promise<SettingsResponse>;
   setPointId: (id: number) => void;
@@ -188,7 +188,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       mapScale: number,
       night_map: boolean,
       is_scaleMap: boolean,
-      point_id: number,
+      point_id: number | null
     ) => {
       if (get().isClick === false) {
         set({ isClick: true });
