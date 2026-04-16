@@ -1,5 +1,5 @@
 import { http } from '@/shared/api/client';
-import { SettingsData } from '@/entities/settings/model/types';
+import { DriverSettingsPayload } from '@/entities/settings/model/types';
 
 export interface PointPhonesPayload {
   phone_upr?: string | null;
@@ -7,15 +7,11 @@ export interface PointPhonesPayload {
   phone_center?: string | null;
 }
 
-export async function fetchDriverSettings(): Promise<SettingsData> {
-  const { data } = await http.get<{ settings?: SettingsData }>('/api/v1/settings/get');
-
-  if (data?.settings && typeof data.settings === 'object') {
-    return data.settings;
-  }
+export async function fetchDriverSettings(): Promise<DriverSettingsPayload> {
+  const { data } = await http.get<DriverSettingsPayload>('/api/v1/settings/get');
 
   if (data && typeof data === 'object') {
-    return data as SettingsData;
+    return data;
   }
 
   return {};
