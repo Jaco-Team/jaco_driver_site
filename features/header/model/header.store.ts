@@ -1,7 +1,7 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import { http, log } from '@/shared/api/client';
-import { SettingsData } from '@/shared/types/settings';
+import { SettingsData } from '@/entities/settings/model/types';
 
 interface HeaderState {
   isOpenMenu: boolean;

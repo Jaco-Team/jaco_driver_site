@@ -1,506 +1,207 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import FormLabel from '@mui/material/FormLabel';
-import Slider from '@mui/material/Slider';
-import Button from '@mui/material/Button';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-import FormGroup from '@mui/material/FormGroup';
-import Checkbox from '@mui/material/Checkbox';
-import { CirclePicker } from 'react-color';
-import Wheel from '@uiw/react-color-wheel';
-import Alpha from '@uiw/react-color-alpha';
-import { hsvaToHex, hexToHsva, HsvaColor } from '@uiw/color-convert';
-import Snackbar from '@mui/material/Snackbar';
-import MuiAlert, { AlertProps } from '@mui/material/Alert';
-import { useSettingsStore, SettingsResponse } from '@/entities/settings/model/settings.store';
-import { useHeaderStore } from '@/features/header/model/header.store';
-import useSession from '@/components/sessionHook';
-import { TypeDataMap, TypeShowDel, ThemeType } from '@/shared/types/settings';
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-import {Location, PlacemarkIcon} from "@/ui/Icons";
+import { Location, PlacemarkIcon } from '@/ui/Icons';
 
-const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(props, ref) {
-  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-});
-
-interface SnackbarState {
-  open: boolean;
-  vertical: 'top' | 'bottom';
-  horizontal: 'left' | 'center' | 'right';
-  severity: 'success' | 'error' | 'info' | 'warning';
-  message: string;
-}
+import { useSettingsForm } from '../model/useSettingsForm';
+import { SnackbarNotification } from '@/widgets/settings-form/ui/components/SnackbarNotification/SnackbarNotification';
+import {
+  SettingsSection,
+  SettingsSectionWithPreview,
+} from '@/widgets/settings-form/ui/components/SettingsSection/SettingsSection';
+import { AutocompleteField } from '@/shared/ui/AutocompleteField/AutocompleteField';
+import { RadioGroupField } from '@/widgets/settings-form/ui/components/RadioGroupField/RadioGroupField';
+import { CheckboxField } from '@/widgets/settings-form/ui/components/CheckboxField/CheckboxField';
+import { FontSizeSlider } from '@/widgets/settings-form/ui/components/FontSizeSlider/FontSizeSlider';
+import { MapScaleSlider } from '@/widgets/settings-form/ui/components/MapScaleSlider/MapScaleSlider';
+import { ColorPicker } from '@/widgets/settings-form/ui/components/ColorPicker/ColorPicker';
+import { SaveButton } from '@/widgets/settings-form/ui/components/SaveButton/SaveButton';
 
 export const SettingsForm: React.FC = () => {
-  const session = useSession();
-  const [saveMySetting, getMySetting, isSaving, pointId, points, setPointId] = useSettingsStore(state => [
-    state.saveMySetting,
-    state.getMySetting,
-    state.isClick,
-    state.pointId,
-    state.points,
-    state.setPointId,
-  ]);
-  const [globalFontSize, setGlobalFontSize, setTheme, setGlobalMapScale] = useHeaderStore(state => [
-    state.globalFontSize,
-    state.setGlobalFontSize,
-    state.setTheme,
-    state.setGlobalMapScale,
-  ]);
+  const {
+    isSaving,
+    pointId,
+    points,
+    globalFontSize,
+    groupTypeTime,
+    typeShowDel,
+    updateInterval,
+    centeredMap,
+    nightMap,
+    isScaleMap,
+    color,
+    groupTypeTheme,
+    fontSize,
+    mapScale,
+    snackbarState,
+    setPointId,
+    setGroupTypeTime,
+    setTypeShowDel,
+    setUpdateInterval,
+    setCenteredMap,
+    setNightMap,
+    setIsScaleMap,
+    setColor,
+    setGroupTypeTheme,
+    setFontSize,
+    setMapScale,
+    handleSave,
+    closeSnackbar,
+  } = useSettingsForm();
 
-  const [is_load, setIsLoad] = useState<boolean>(false);
-  const [groupTypeTime, setGroupTypeTime] = useState<TypeDataMap>('norm');
-  const [type_show_del, setType_show_del] = useState<TypeShowDel>('min');
-  const [update_interval, setUpdate_interval] = useState<number>(30);
-  const [centered_map, setСentered_map] = useState<boolean>(false);
-  const [night_map, setNight_map] = useState<boolean>(false);
-  const [is_scaleMap, setIs_scaleMap] = useState<boolean>(false);
-  const [color, setColor] = useState<string>('#000000');
-  const [hsva, setHsva] = useState<HsvaColor>({ h: 214, s: 43, v: 90, a: 1 });
-  const [groupTypeTheme, setGroupTypeTheme] = useState<ThemeType>('white');
-  const [fontSize, setFontSize] = useState<number>(10);
-  const [mapScale, setMapScale] = useState<number>(1);
-  const [state, setState] = useState<SnackbarState>({
-    open: false,
-    vertical: 'top',
-    horizontal: 'center',
-    severity: 'success',
-    message: '',
-  });
+  const cancelOrdersOptions = [
+    { value: 'full', label: 'Показывать весь день' },
+    { value: 'min', label: '30 минут' },
+    { value: 'max', label: '2 часа' },
+  ];
 
-  const { vertical, horizontal, open, severity, message } = state;
+  const updateIntervalOptions = [
+    { value: 0, label: 'Не обновлять' },
+    { value: 10, label: 'Каждые 10 секунд' },
+    { value: 30, label: 'Каждые 30 секунд' },
+    { value: 60, label: 'Каждые 60 секунд' },
+    { value: 120, label: 'Каждые 120 секунд' },
+  ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (session?.isAuth !== true) return;
+  const mapOptions = [
+    { label: 'Темная тема', value: nightMap, onChange: setNightMap },
+    { label: 'Ползунок масштабирования карты', value: isScaleMap, onChange: setIsScaleMap },
+  ];
 
-      const res = (await getMySetting(session?.token ?? '')) as SettingsResponse;
-      if (res?.color && res?.color?.length > 0) {
-        const colorValue = res.color === '#000000' ? { h: 214, s: 43, v: 90, a: 1 } : res.color;
-        const color_2 = hexToHsva(colorValue as string);
-        setColor(colorValue as string);
-        setHsva(color_2);
-      }
-
-      setСentered_map(parseInt(String(res.action_centered_map)) === 1);
-      setNight_map(parseInt(String(res.night_map)) === 1);
-      setIs_scaleMap(parseInt(String(res.is_scaleMap)) === 1);
-      setUpdate_interval(parseInt(String(res.update_interval ?? 30)));
-      setType_show_del((res.type_show_del as TypeShowDel) ?? 'min');
-      setGroupTypeTime((res.type_data_map as TypeDataMap) ?? 'norm');
-      setGroupTypeTheme((res.theme as ThemeType) ?? 'white');
-      setFontSize(parseInt(String(res.fontSize ?? 16)));
-      setMapScale(parseFloat(String(res.mapScale ?? 1)));
-      setIsLoad(true);
-    };
-
-    if (!is_load) {
-      void fetchData();
-    }
-  }, [getMySetting, is_load, session?.isAuth, session?.token]);
-
-  const save = async (): Promise<void> => {
-    const result = await saveMySetting(
-      session?.token,
-      groupTypeTime,
-      type_show_del,
-      update_interval,
-      centered_map,
-      color,
-      fontSize,
-      groupTypeTheme,
-      mapScale,
-      night_map,
-      is_scaleMap,
-      pointId
-    );
-
-    if (result?.st) {
-      setGlobalFontSize(fontSize);
-      setTheme(groupTypeTheme);
-      setGlobalMapScale(String(mapScale));
-      setState(prev => ({
-        ...prev,
-        open: true,
-        severity: 'success',
-        message: 'Сохранено',
-      }));
-      return;
-    }
-
-    setState(prev => ({
-      ...prev,
-      open: true,
-      severity: 'error',
-      message: result?.text || 'Не удалось сохранить настройки',
-    }));
-  };
-
-  const closeModal = (): void => {
-    setState({ ...state, open: false });
-  };
+  const currentPoint = points?.find((p) => String(p.id) === String(pointId)) || null;
 
   return (
     <>
-      <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isSaving}>
+      <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isSaving as boolean}>
         <CircularProgress color="inherit" />
       </Backdrop>
 
       <Grid container spacing={3} className="price">
-        <Snackbar
-          anchorOrigin={{ vertical, horizontal }}
-          open={open}
-          onClose={closeModal}
-          autoHideDuration={5000}
-        >
-          <Alert onClose={closeModal} severity={severity} sx={{ width: '100%', fontSize: globalFontSize }}>
-            {message}
-          </Alert>
-        </Snackbar>
+        <SnackbarNotification
+          state={snackbarState}
+          onClose={closeSnackbar}
+          fontSize={globalFontSize}
+        />
 
-        <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper className='container_paper' elevation={5}>
-            <div style={{ paddingBottom: 10 }}>
-              <span style={{fontSize: globalFontSize }}>Точка</span>
-              <Autocomplete
-                multiple={false}
-                options={points}
-                getOptionLabel={(option) => {
-                  if (typeof option === 'object' && option !== null) {
-                    return option.name || String(option.id);
-                  }
-                  const found = points.find(p => String(p.id) === String(option));
-                  return found?.name || String(option);
-                }}
-                isOptionEqualToValue={(option, value) => {
-                  if (!value) return false;
-                  const optionId = typeof option === 'object' ? option.id : option;
-                  const valueId = typeof value === 'object' ? value.id : value;
-                  return String(optionId) === String(valueId);
-                }}
-                value={points.find(p => String(p.id) === String(pointId)) || null}
-                onChange={(event, newValue) => {
-                  if (newValue && typeof newValue === 'object' && 'id' in newValue) {
-                    setPointId(newValue.id);
-                  }
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="outlined"
-                    placeholder="Выберите точку"
-                    size="small"
-                    sx={{
-                      '& .MuiInputBase-root': {
-                        fontSize: globalFontSize,
-                      }
-                    }}
-                  />
-                )}
-                sx={{
-                  width: '100%',
-                  '& .MuiAutocomplete-inputRoot': {
-                    fontSize: globalFontSize,
-                  }
-                }}
-              />
-            </div>
-          </Paper>
-        </Grid>
+        <SettingsSection marginTop={10} padding={20}>
+          <div style={{ paddingBottom: 10 }}>
+            <span style={{ fontSize: globalFontSize }}>Точка</span>
+          </div>
+          <AutocompleteField
+            options={points}
+            value={currentPoint}
+            onChange={(newValue) => newValue && setPointId(newValue.id)}
+            placeholder="Выберите точку"
+            fontSize={globalFontSize}
+          />
+        </SettingsSection>
 
-        {/* Формат данных на карте */}
-        <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper className="container_paper" elevation={5}>
-            <div style={{ paddingBottom: 10 }}>
-              <span style={{ fontSize: globalFontSize }}>Формат данных на карте</span>
-            </div>
-            <div style={{ width: '100%', height: '400px', backgroundColor: 'rgba(252,232,131,0.5)' }} alt="Пример карты" />
-            <div className='location' onClick={() => setGroupTypeTime('norm')}>
-              <Location fill={groupTypeTime === 'norm' ? 'red' : 'blue'}/>
-              <span className='span_text_white_border'>21:46 (53 мин.)</span>
-            </div>
-            <div className='location' style={{top: '40%'}} onClick={() => setGroupTypeTime('full')}>
-              <Location fill={groupTypeTime === 'full' ? 'red' : 'blue'}/>
-              <span className='span_text_white_border'>21:46 - 22:16 (53 мин.)</span>
-            </div>
-            <div className='location' style={{top: '60%'}} onClick={() => setGroupTypeTime('min')}>
-              <Location fill={groupTypeTime === 'min' ? 'red' : 'blue'}/>
-              <span className='span_text_white_border'>53 мин.</span>
-            </div>
-          </Paper>
-        </Grid>
+        <SettingsSectionWithPreview title="Формат данных на карте" fontSize={globalFontSize}>
+          <div className="location" onClick={() => setGroupTypeTime('norm')}>
+            <Location fill={groupTypeTime === 'norm' ? 'red' : 'blue'} />
+            <span className="span_text_white_border">21:46 (53 мин.)</span>
+          </div>
+          <div className="location" style={{ top: '40%' }} onClick={() => setGroupTypeTime('full')}>
+            <Location fill={groupTypeTime === 'full' ? 'red' : 'blue'} />
+            <span className="span_text_white_border">21:46 - 22:16 (53 мин.)</span>
+          </div>
+          <div className="location" style={{ top: '60%' }} onClick={() => setGroupTypeTime('min')}>
+            <Location fill={groupTypeTime === 'min' ? 'red' : 'blue'} />
+            <span className="span_text_white_border">53 мин.</span>
+          </div>
+        </SettingsSectionWithPreview>
 
-        {/* Оформление */}
-        <Grid size={12} style={{marginTop: 10}}>
-          <Paper className="container_paper" elevation={5}>
-            <div style={{paddingBottom: 10}}>
-              <span style={{ fontSize: globalFontSize }}>Оформление</span>
-            </div>
-            <div style={{width: '100%', height: '400px', backgroundColor: 'rgba(252,232,131,0.5)'}} alt="Пример карты"/>
-            <div className="location_ya" style={{top: 80}} onClick={() => setGroupTypeTheme('classic')}>
-              <span>Классический яндекс</span>
-            </div>
-            <div className='location_ya' style={{top: 80}} onClick={() => setGroupTypeTheme('classic')}>
-              <PlacemarkIcon fill={groupTypeTheme === 'classic' ? 'red' : 'blue'}/>
-              <span>Классический яндекс</span>
-            </div>
-            <div className='location' style={{top: 140}} onClick={() => setGroupTypeTheme('transparent')}>
-              <Location fill={groupTypeTheme === 'transparent' ? 'red' : 'blue'}/>
-              <span className='span_text_transparent'>21:46 (53 мин.)</span>
-            </div>
-            <div className='location' style={{top: 200}} onClick={() => setGroupTypeTheme('transparent_white')}>
-              <Location fill={groupTypeTheme === 'transparent_white' ? 'red' : 'blue'}/>
-              <span className='span_text_transparent_white'>21:46 (53 мин.)</span>
-            </div>
-            <div className='location' style={{top: 260}} onClick={() => setGroupTypeTheme('white')}>
-              <Location fill={groupTypeTheme === 'white' ? 'red' : 'blue'}/>
-              <span className='span_text_white'>21:46 (53 мин.)</span>
-            </div>
-            <div className='location' style={{top: 325}} onClick={() => setGroupTypeTheme('white_border')}>
-              <Location fill={groupTypeTheme === 'white_border' ? 'red' : 'blue'}/>
-              <span className='span_text_white_border'>21:46 (53 мин.)</span>
-            </div>
-            <div className='location' style={{top: 385}} onClick={() => setGroupTypeTheme('black')}>
-              <Location fill={groupTypeTheme === 'black' ? 'red' : 'blue'}/>
-              <span className='span_text_black'>21:46 (53 мин.)</span>
-            </div>
-          </Paper>
-        </Grid>
+        <SettingsSectionWithPreview title="Оформление" fontSize={globalFontSize}>
+          <div
+            className="location_ya"
+            style={{ top: 80 }}
+            onClick={() => setGroupTypeTheme('classic')}
+          >
+            <PlacemarkIcon fill={groupTypeTheme === 'classic' ? 'red' : 'blue'} />
+            <span>Классический яндекс</span>
+          </div>
+          <div
+            className="location"
+            style={{ top: 140 }}
+            onClick={() => setGroupTypeTheme('transparent')}
+          >
+            <Location fill={groupTypeTheme === 'transparent' ? 'red' : 'blue'} />
+            <span className="span_text_transparent">21:46 (53 мин.)</span>
+          </div>
+          <div
+            className="location"
+            style={{ top: 200 }}
+            onClick={() => setGroupTypeTheme('transparent_white')}
+          >
+            <Location fill={groupTypeTheme === 'transparent_white' ? 'red' : 'blue'} />
+            <span className="span_text_transparent_white">21:46 (53 мин.)</span>
+          </div>
+          <div className="location" style={{ top: 260 }} onClick={() => setGroupTypeTheme('white')}>
+            <Location fill={groupTypeTheme === 'white' ? 'red' : 'blue'} />
+            <span className="span_text_white">21:46 (53 мин.)</span>
+          </div>
+          <div
+            className="location"
+            style={{ top: 325 }}
+            onClick={() => setGroupTypeTheme('white_border')}
+          >
+            <Location fill={groupTypeTheme === 'white_border' ? 'red' : 'blue'} />
+            <span className="span_text_white_border">21:46 (53 мин.)</span>
+          </div>
+          <div className="location" style={{ top: 385 }} onClick={() => setGroupTypeTheme('black')}>
+            <Location fill={groupTypeTheme === 'black' ? 'red' : 'blue'} />
+            <span className="span_text_black">21:46 (53 мин.)</span>
+          </div>
+        </SettingsSectionWithPreview>
 
-        {/* Отмененные заказы */}
-        <Grid size={12} style={{marginTop: 10}}>
-          <Paper style={{padding: 20}} elevation={5}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend" style={{ fontSize: globalFontSize, color: 'rgba(0, 0, 0, 0.8)' }}>
-                Отмененные заказы
-              </FormLabel>
-              <RadioGroup value={type_show_del} onChange={(_, data) => setType_show_del(data as TypeShowDel)}>
-                <FormControlLabel
-                  value="full"
-                  control={<Radio />}
-                  label="Показывать весь день"
-                  sx={{
-                    '& .MuiFormControlLabel-label': { fontSize: globalFontSize },
-                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked .MuiSvgIcon-root': { color: '#CC0033' },
-                  }}
-                />
-                <FormControlLabel
-                  value="min"
-                  control={<Radio />}
-                  label="30 минут"
-                  sx={{
-                    '& .MuiFormControlLabel-label': { fontSize: globalFontSize },
-                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked .MuiSvgIcon-root': { color: '#CC0033' },
-                  }}
-                />
-                <FormControlLabel
-                  value="max"
-                  control={<Radio />}
-                  label="2 часа"
-                  sx={{
-                    '& .MuiFormControlLabel-label': { fontSize: globalFontSize },
-                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked .MuiSvgIcon-root': { color: '#CC0033' },
-                  }}
-                />
-              </RadioGroup>
-            </FormControl>
-          </Paper>
-        </Grid>
+        <SettingsSection>
+          <RadioGroupField
+            label="Отмененные заказы"
+            value={typeShowDel}
+            onChange={(val) => setTypeShowDel(val as string)}
+            options={cancelOrdersOptions}
+            fontSize={globalFontSize}
+          />
+        </SettingsSection>
 
-        {/* Центрирование карты */}
-        <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper style={{ padding: 20 }} elevation={5}>
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Checkbox checked={centered_map} onClick={e => setСentered_map((e.target as HTMLInputElement).checked)} />
-                }
-                label="При взятии, отмене заказа, центрировать карту"
-                sx={{
-                  '& .MuiFormControlLabel-label': { fontSize: globalFontSize },
-                  '& .MuiButtonBase-root.MuiRadio-root.Mui-checked .MuiSvgIcon-root': { color: '#CC0033' },
-                }}
-              />
-            </FormGroup>
-          </Paper>
-        </Grid>
+        <SettingsSection>
+          <CheckboxField
+            options={[
+              {
+                label: 'При взятии, отмене заказа, центрировать карту',
+                value: centeredMap,
+                onChange: setCenteredMap,
+              },
+            ]}
+            fontSize={globalFontSize}
+          />
+        </SettingsSection>
 
-        {/* Настройки карты */}
-        <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper style={{ padding: 20 }} elevation={5}>
-            <div style={{ paddingBottom: '10px' }}>
-              <span style={{ fontSize: globalFontSize }}>Карта</span>
-            </div>
-            <FormGroup>
-              <FormControlLabel
-                control={<Checkbox checked={night_map} onClick={e => setNight_map((e.target as HTMLInputElement).checked)} />}
-                label="Темная тема"
-                sx={{
-                  '& .MuiFormControlLabel-label': { fontSize: globalFontSize },
-                  '& .MuiButtonBase-root.MuiRadio-root.Mui-checked .MuiSvgIcon-root': { color: '#CC0033' },
-                }}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox checked={is_scaleMap} onClick={e => setIs_scaleMap((e.target as HTMLInputElement).checked)} />
-                }
-                label="Ползунок масштабирования карты"
-                sx={{
-                  '& .MuiFormControlLabel-label': { fontSize: globalFontSize },
-                  '& .MuiButtonBase-root.MuiRadio-root.Mui-checked .MuiSvgIcon-root': { color: '#CC0033' },
-                }}
-              />
-            </FormGroup>
-          </Paper>
-        </Grid>
+        <SettingsSection>
+          <div style={{ paddingBottom: '10px' }}>
+            <span style={{ fontSize: globalFontSize }}>Карта</span>
+          </div>
+          <CheckboxField options={mapOptions} fontSize={globalFontSize} />
+        </SettingsSection>
 
-        {/* Размер шрифта */}
-        <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper className="container_paper" elevation={5}>
-            <div style={{ paddingBottom: '10px' }}>
-              <span style={{ fontSize: globalFontSize }}>Размер шрифта ({fontSize})</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ color: '#000', fontSize: '10px' }}>Ая</span>
-              <span style={{ color: '#000', fontSize }}>Ая</span>
-              <span style={{ color: '#000', fontSize: '40px' }}>Ая</span>
-            </div>
-            <Slider
-              size="medium"
-              value={fontSize}
-              valueLabelDisplay="off"
-              step={1}
-              max={40}
-              min={10}
-              color="info"
-              onChange={(_, value) => setFontSize(value as number)}
-            />
-          </Paper>
-        </Grid>
+        <FontSizeSlider value={fontSize} onChange={setFontSize} fontSize={globalFontSize} />
 
-        {/* Масштабирование иконок */}
-        <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper className="container_paper" elevation={5}>
-            <div style={{ paddingBottom: '10px' }}>
-              <span style={{ fontSize: globalFontSize }}>Масштабирование иконок на карте ({mapScale})</span>
-            </div>
-            <Slider
-              size="medium"
-              value={mapScale}
-              valueLabelDisplay="off"
-              step={0.1}
-              max={1.3}
-              min={0.5}
-              color="info"
-              onChange={(_, value) => setMapScale(value as number)}
-            />
-          </Paper>
-        </Grid>
+        <MapScaleSlider value={mapScale} onChange={setMapScale} fontSize={globalFontSize} />
 
-        {/* Частота обновления */}
-        <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper style={{ padding: 20 }} elevation={5}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend" style={{ fontSize: globalFontSize, color: 'rgba(0, 0, 0, 0.8)' }}>
-                Частота обновления заказов
-              </FormLabel>
-              <RadioGroup value={update_interval} onChange={(_, data) => setUpdate_interval(Number(data))}>
-                <FormControlLabel
-                  value={0}
-                  control={<Radio />}
-                  label="Не обновлять"
-                  sx={{ '& .MuiFormControlLabel-label': { fontSize: globalFontSize } }}
-                />
-                <FormControlLabel
-                  value={10}
-                  control={<Radio />}
-                  label="Каждые 10 секунд"
-                  sx={{ '& .MuiFormControlLabel-label': { fontSize: globalFontSize } }}
-                />
-                <FormControlLabel
-                  value={30}
-                  control={<Radio />}
-                  label="Каждые 30 секунд"
-                  sx={{ '& .MuiFormControlLabel-label': { fontSize: globalFontSize } }}
-                />
-                <FormControlLabel
-                  value={60}
-                  control={<Radio />}
-                  label="Каждые 60 секунд"
-                  sx={{ '& .MuiFormControlLabel-label': { fontSize: globalFontSize } }}
-                />
-                <FormControlLabel
-                  value={120}
-                  control={<Radio />}
-                  label="Каждые 120 секунд"
-                  sx={{ '& .MuiFormControlLabel-label': { fontSize: globalFontSize } }}
-                />
-              </RadioGroup>
-            </FormControl>
-          </Paper>
-        </Grid>
+        <SettingsSection>
+          <RadioGroupField
+            label="Частота обновления заказов"
+            value={updateInterval}
+            onChange={(val) => setUpdateInterval(Number(val))}
+            options={updateIntervalOptions}
+            fontSize={globalFontSize}
+          />
+        </SettingsSection>
 
-        {/* Цвет на карте */}
-        <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper className="container_paper_picker" elevation={5}>
-            <div style={{ paddingBottom: 30, alignSelf: 'flex-start' }}>
-              <span style={{ fontSize: globalFontSize }}>Цвет на карте</span>
-            </div>
-            <Wheel
-              color={color}
-              onChange={c => {
-                setHsva(c.hsva);
-                setColor(c.hex);
-              }}
-              style={{ marginBottom: 40 }}
-            />
-            <Alpha
-              hsva={hsva}
-              width="90%"
-              onChange={newAlpha => {
-                setHsva(prev => {
-                  const nextHsva = { ...prev, ...newAlpha };
-                  setColor(hsvaToHex(nextHsva));
-                  return nextHsva;
-                });
-              }}
-              style={{ marginBottom: 40 }}
-            />
-            <div className="container_picker">
-              <CirclePicker
-                width="100%"
-                color={color}
-                onChangeComplete={(c: { hex: string }) => {
-                  setHsva(hexToHsva(c.hex));
-                  setColor(c.hex);
-                }}
-              />
-            </div>
-          </Paper>
-        </Grid>
+        <ColorPicker color={color} onChange={setColor} fontSize={globalFontSize} />
 
-        {/* Кнопка сохранения */}
-        <Grid size={12} style={{ marginTop: 10, marginBottom: 50 }}>
-          <Paper style={{ padding: 20 }} elevation={5}>
-            <Button
-              disabled={isSaving}
-              onClick={save}
-              color="primary"
-              variant="contained"
-              style={{ width: '100%', fontSize: globalFontSize }}
-            >
-              {isSaving ? 'Сохраняем...' : 'Сохранить'}
-            </Button>
-          </Paper>
-        </Grid>
+        <SaveButton onClick={handleSave} isSaving={isSaving} fontSize={globalFontSize} />
       </Grid>
     </>
   );
