@@ -7,9 +7,9 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import { useSettingsStore } from '@/entities/settings/model/settings.store';
 import { getActiveMonthLabel } from '@/entities/graph/model/graph.utils';
 import { GraphMonthItem, GraphOrderError, GraphCameraError } from '@/entities/graph/model/types';
+import { roboto } from '@/shared/config/fonts';
 import { useGraphStore } from '@/widgets/graph-screen/model/graph.store';
 import { GraphScreenView } from '@/widgets/graph-screen/ui/GraphScreenView';
-import { roboto } from '@/ui/Font';
 import { log } from '@/components/analytics';
 
 export default function GraphScreen() {

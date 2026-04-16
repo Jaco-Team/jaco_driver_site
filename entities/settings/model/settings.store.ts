@@ -1,6 +1,7 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import { http, getApiErrorInfo, log } from '@/shared/api/client';
+import { fetchDriverSettings } from '@/entities/settings/api/settings.api';
 import {
   SettingsData,
   SaveSettingsPayload,
@@ -137,8 +138,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
     },
 
     getMySetting: async (token: string) => {
-      const { data } = await http.get<{ data: SettingsData }>('/api/v1/settings/get');
-      const settings = unwrapSettingsPayload(data);
+      const settings = unwrapSettingsPayload(await fetchDriverSettings());
       const normalizedSettings = {
         ...settings,
         type_data_map: normalizeTypeDataMapForUi(settings?.type_data_map),
@@ -147,9 +147,15 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
 
       set({
         settings: normalizedSettings as SettingsResponse,
-        pointId: (data as any).pointId || '',
-        points: (data as any).points || [],
+        pointId: normalizeIdString(settings?.point_id),
+        points: [],
         cityId: normalizeIdString(settings?.city_id),
+        point_id:
+          settings?.point_id === null ||
+          settings?.point_id === undefined ||
+          normalizeIdString(settings?.point_id) === ''
+            ? null
+            : parseInt(normalizeIdString(settings?.point_id), 10),
       });
 
       return normalizedSettings as SettingsResponse;

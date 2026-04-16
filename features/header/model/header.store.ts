@@ -1,26 +1,33 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
-import { http, log } from '@/shared/api/client';
+import {
+  PointPhonesPayload,
+  fetchDriverAverageTime,
+  fetchDriverSettings,
+  fetchPointPhones,
+  saveDriverPosition,
+} from '@/entities/settings/api/settings.api';
 import { SettingsData } from '@/entities/settings/model/types';
+import { useSettingsStore } from '@/entities/settings/model/settings.store';
 
 interface HeaderState {
   isOpenMenu: boolean;
   activePageRU: string;
-  phones: string | null;
+  phones: PointPhonesPayload | null;
   token: string;
   is_scaleMap: boolean;
   check_pos_check: boolean;
-  avgTime: string | number;
+  avgTime: string;
   is_need_avg_time: boolean;
   is_need_page_stat: boolean;
   night_map: boolean;
   globalFontSize: number;
   theme: string;
   mapScale: string;
-  point: any | null;
 }
 
 interface HeaderActions {
+  applySettings: (settings: SettingsData) => void;
   setGlobalFontSize: (fontSize: number) => void;
   setTheme: (theme: string) => void;
   setGlobalMapScale: (mapScale: string) => void;
@@ -33,25 +40,10 @@ interface HeaderActions {
   saveMyPos: (latitude?: number | string, longitude?: number | string) => Promise<void>;
   setOpenMenu: () => void;
   setCloseMenu: () => void;
-  getStat: (token: string) => Promise<void>;
+  getStat: (token: string, pointId?: string | number | null) => Promise<void>;
 }
 
 type HeaderStore = HeaderState & HeaderActions;
-
-function unwrapSettingsPayload(payload: any): SettingsData {
-  if (
-    payload &&
-    typeof payload === 'object' &&
-    payload.settings &&
-    typeof payload.settings === 'object'
-  ) {
-    return payload.settings;
-  }
-  if (payload && typeof payload === 'object') {
-    return payload;
-  }
-  return {};
-}
 
 function normalizeBoolLike(value: any): boolean {
   if (value === true || value === 1 || value === '1') {
@@ -74,7 +66,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     token: '',
     is_scaleMap: false,
     check_pos_check: false,
-    avgTime: 0,
+    avgTime: '00:00:00',
     is_need_avg_time: false,
     is_need_page_stat: false,
     night_map: false,
@@ -82,34 +74,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     theme: 'white',
     mapScale: '1',
 
-    setGlobalFontSize: (fontSize: number) => {
-      set({ globalFontSize: parseInt(String(fontSize)) });
-    },
-
-    setTheme: (theme: string) => {
-      set({ theme });
-    },
-
-    setGlobalMapScale: (mapScale: string) => {
-      set({ mapScale });
-    },
-
-    getMyFontSize: async (token: string) => {
-      await get().getSettings(token);
-    },
-
-    getMyAvgTime: async (token: string) => {
-      const { data } = await http.get<{ text?: string | number }>('/api/v1/settings/avg-time');
-      set({ avgTime: `${data?.text ?? '00:00:00'}` });
-    },
-
-    setActivePageRU: (activePageRU: string) => {
-      set({ activePageRU });
-    },
-
-    getSettings: async (token: string) => {
-      const { data } = await http.get<{ data: SettingsData }>('/api/v1/settings/get');
-      const settings = unwrapSettingsPayload(data);
+    applySettings: (settings) => {
       const currentState = get();
       const hasField = (field: keyof SettingsData) =>
         settings[field] !== undefined && settings[field] !== null && settings[field] !== '';
@@ -137,17 +102,48 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
       });
     },
 
+    setGlobalFontSize: (fontSize: number) => {
+      set({ globalFontSize: parseInt(String(fontSize)) });
+    },
+
+    setTheme: (theme: string) => {
+      set({ theme });
+    },
+
+    setGlobalMapScale: (mapScale: string) => {
+      set({ mapScale });
+    },
+
+    getMyFontSize: async (token: string) => {
+      await get().getSettings(token);
+    },
+
+    getMyAvgTime: async (_token: string) => {
+      const avgTime = await fetchDriverAverageTime();
+      set({ avgTime });
+    },
+
+    setActivePageRU: (activePageRU: string) => {
+      set({ activePageRU });
+    },
+
+    getSettings: async (_token: string) => {
+      get().applySettings(await fetchDriverSettings());
+    },
+
     check_pos: async (func: (lat: number, lng: number) => void) => {
-      await navigator.geolocation.getCurrentPosition(
-        ({ coords }) => {
-          const { latitude, longitude } = coords;
-          func(latitude, longitude);
-        },
-        ({ message }) => {
-          // Обработка ошибки
-        },
-        { enableHighAccuracy: true }
-      );
+      await new Promise<void>((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) => {
+            func(coords.latitude, coords.longitude);
+            resolve();
+          },
+          () => {
+            resolve();
+          },
+          { enableHighAccuracy: true }
+        );
+      });
     },
 
     checkMyPos: () => {
@@ -165,10 +161,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     saveMyPos: async (latitude: number | string = '', longitude: number | string = '') => {
-      await http.post('/api/v1/settings/save-position', {
-        latitude,
-        longitude,
-      });
+      await saveDriverPosition(latitude, longitude);
     },
 
     setOpenMenu: () => {
@@ -179,15 +172,20 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
       set({ isOpenMenu: false });
     },
 
-    getStat: async (token: string) => {
-      if (get().phones === null) {
-        const data = { point_id: 1 };
-        const json = await http.post<{ data: { phone: string } }>(
-          'api/v1/settings/get_point_phones',
-          data
-        );
-        set({ phones: json?.data?.data?.phone ?? null, token });
+    getStat: async (token: string, pointId?: string | number | null) => {
+      const resolvedPointId = pointId ?? useSettingsStore.getState().point_id;
+
+      if (
+        resolvedPointId === undefined ||
+        resolvedPointId === null ||
+        `${resolvedPointId}`.trim() === ''
+      ) {
+        set({ phones: null, token });
+        return;
       }
+
+      const phones = await fetchPointPhones(resolvedPointId);
+      set({ phones, token });
     },
   }),
   shallow

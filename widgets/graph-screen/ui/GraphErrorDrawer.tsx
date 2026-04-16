@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 
 import { GraphErrorModal } from '@/entities/graph/model/types';
-import { appPalette } from '@/ui/palette';
+import { appPalette } from '@/shared/styles/appPalette';
 
 interface GraphErrorDrawerProps {
   open: boolean;

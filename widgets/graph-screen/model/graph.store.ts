@@ -2,11 +2,11 @@ import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 
 import {
-  ApiResponse,
   fetchGraph,
   submitGraphCameraAppeal as submitGraphCameraAppealRequest,
   submitGraphOrderAppeal as submitGraphOrderAppealRequest,
-} from '@/shared/api/client';
+} from '@/entities/graph/api/graph.api';
+import { ApiResponse } from '@/shared/api/client';
 import {
   normalizeGraphCameraError,
   normalizeGraphOrderError,
