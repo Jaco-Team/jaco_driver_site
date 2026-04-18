@@ -141,26 +141,6 @@ export interface ErrorInfo {
   isNetwork: boolean;
 }
 
-export interface GraphApiPayload {
-  date?: string;
-  all_dates?: unknown[];
-  users?: unknown[];
-  month?: unknown[];
-  errs?: {
-    orders?: unknown[];
-    err_cam?: unknown[];
-  };
-  user_id?: string | number;
-  user_name?: string;
-}
-
-export interface GraphPointPayload {
-  id?: string | number;
-  city_id?: string | number;
-  base?: string;
-  name?: string;
-}
-
 function getValidationMessage(data: any): string {
   const errors = data?.errors;
   if (!errors || typeof errors !== 'object') {
@@ -271,51 +251,6 @@ export const fetchMe = async (): Promise<User> => {
     throw error;
   }
 };
-
-export async function fetchGraph(
-  date: string,
-  pointId?: string | number | null
-): Promise<GraphApiPayload> {
-  const params: Record<string, string | number> = { date };
-
-  if (pointId !== undefined && pointId !== null && `${pointId}` !== '') {
-    params.point_id = typeof pointId === 'number' ? pointId : parseInt(`${pointId}`, 10);
-  }
-
-  const { data } = await http.get<GraphApiPayload>('/api/v1/graph', {
-    params,
-  });
-  return data;
-}
-
-export async function fetchGraphPoints(): Promise<GraphPointPayload[]> {
-  const { data } = await http.get<{ data?: GraphPointPayload[] }>('/api/v1/settings/points');
-  return Array.isArray(data?.data) ? data.data : [];
-}
-
-export async function submitGraphOrderAppeal(
-  errId: string | number,
-  rowId: string | number,
-  text: string
-): Promise<ApiResponse> {
-  const { data } = await http.post<ApiResponse>('/api/v1/graph/order-appeals', {
-    err_id: errId,
-    row_id: rowId,
-    text,
-  });
-  return data;
-}
-
-export async function submitGraphCameraAppeal(
-  id: string | number,
-  text: string
-): Promise<ApiResponse> {
-  const { data } = await http.post<ApiResponse>('/api/v1/graph/camera-appeals', {
-    id,
-    text,
-  });
-  return data;
-}
 
 export async function fetchSessionMeta(): Promise<any> {
   const { data } = await http.get('/api/v1/auth/session/meta');

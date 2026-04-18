@@ -7,18 +7,10 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import { useSettingsStore } from '@/entities/settings/model/settings.store';
 import { getActiveMonthLabel } from '@/entities/graph/model/graph.utils';
 import { GraphMonthItem, GraphOrderError, GraphCameraError } from '@/entities/graph/model/types';
+import { roboto } from '@/shared/config/fonts';
 import { useGraphStore } from '@/widgets/graph-screen/model/graph.store';
 import { GraphScreenView } from '@/widgets/graph-screen/ui/GraphScreenView';
-import { roboto } from '@/ui/Font';
 import { log } from '@/components/analytics';
-
-function toPointId(value: unknown): string {
-  if (value === null || value === undefined) {
-    return '';
-  }
-
-  return `${value}`;
-}
 
 export default function GraphScreen() {
   const session = useSession();
@@ -40,7 +32,6 @@ export default function GraphScreen() {
     errCam,
     chooseDate,
     setMonthDrawerOpen,
-    setSelectedPointId,
     setAppealText,
     closeAlert,
     closeErrorModal,
@@ -65,7 +56,6 @@ export default function GraphScreen() {
     errCam: state.errCam,
     chooseDate: state.chooseDate,
     setMonthDrawerOpen: state.setMonthDrawerOpen,
-    setSelectedPointId: state.setSelectedPointId,
     setAppealText: state.setAppealText,
     closeAlert: state.closeAlert,
     closeErrorModal: state.closeErrorModal,
@@ -78,22 +68,18 @@ export default function GraphScreen() {
 
   const [isLoaded, setIsLoaded] = useState(false);
   const month = getActiveMonthLabel(monthList);
-  const sessionPointId = toPointId(session?.user?.point_id);
 
   useEffect(() => {
     const fetchData = async () => {
       if (session?.isAuth === true) {
-        let initialPointId = sessionPointId;
-
         try {
           const settings = await getMySetting(session?.token ?? '');
-          initialPointId = toPointId(settings?.point_id) || initialPointId;
+          void settings;
         } catch {
-          initialPointId = sessionPointId;
+          // Graph request will omit point_id when settings are unavailable.
         }
 
-        setSelectedPointId(initialPointId);
-        await loadGraph(dayjs().format('YYYY-MM'), initialPointId || undefined);
+        await loadGraph(dayjs().format('YYYY-MM'));
         setIsLoaded(true);
       }
     };
@@ -101,15 +87,7 @@ export default function GraphScreen() {
     if (!isLoaded) {
       void fetchData();
     }
-  }, [
-    getMySetting,
-    isLoaded,
-    loadGraph,
-    session?.isAuth,
-    session?.token,
-    sessionPointId,
-    setSelectedPointId,
-  ]);
+  }, [getMySetting, isLoaded, loadGraph, session?.isAuth, session?.token]);
 
   const handleOpenMonthDrawer = () => {
     log('graph_month_picker_open', 'Открытие выбора месяца (График работы)');

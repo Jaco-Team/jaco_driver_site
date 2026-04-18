@@ -1,7 +1,9 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import { http, getApiErrorInfo, log } from '@/shared/api/client';
+import { fetchDriverSettings } from '@/entities/settings/api/settings.api';
 import {
+  DriverSettingsPayload,
   SettingsData,
   SaveSettingsPayload,
   TypeDataMap,
@@ -32,7 +34,7 @@ export interface SettingsResponse extends SettingsData {
 interface SettingsState {
   isClick: boolean;
   settings: SettingsResponse | null;
-  pointId: string;
+  pointId: string | number;
   points: PointsState[];
   cityId: string;
   point_id: number | null;
@@ -51,7 +53,7 @@ interface SettingsActions {
     mapScale: number,
     night_map: boolean,
     is_scaleMap: boolean,
-    point_id: number
+    point_id: number | null
   ) => Promise<{ st: boolean; text?: string; data?: any; status?: number; errors?: any }>;
   getMySetting: (token: string) => Promise<SettingsResponse>;
   setPointId: (id: number) => void;
@@ -80,7 +82,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       mapScale: number,
       night_map: boolean,
       is_scaleMap: boolean,
-      point_id: number
+      point_id: number | null
     ) => {
       if (get().isClick === false) {
         set({ isClick: true });
@@ -137,8 +139,8 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
     },
 
     getMySetting: async (token: string) => {
-      const { data } = await http.get<{ data: SettingsData }>('/api/v1/settings/get');
-      const settings = unwrapSettingsPayload(data);
+      const payload = (await fetchDriverSettings()) as DriverSettingsPayload;
+      const settings = unwrapSettingsPayload(payload);
       const normalizedSettings = {
         ...settings,
         type_data_map: normalizeTypeDataMapForUi(settings?.type_data_map),
@@ -147,9 +149,15 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
 
       set({
         settings: normalizedSettings as SettingsResponse,
-        pointId: (data as any).pointId || '',
-        points: (data as any).points || [],
+        pointId: normalizeIdString(settings?.point_id),
+        points: Array.isArray(payload?.all_points) ? payload.all_points : [],
         cityId: normalizeIdString(settings?.city_id),
+        point_id:
+          settings?.point_id === null ||
+          settings?.point_id === undefined ||
+          normalizeIdString(settings?.point_id) === ''
+            ? null
+            : parseInt(normalizeIdString(settings?.point_id), 10),
       });
 
       return normalizedSettings as SettingsResponse;

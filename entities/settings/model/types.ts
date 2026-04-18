@@ -25,6 +25,18 @@ export interface SettingsData {
   mapScale?: number;
 }
 
+export interface SettingsPointOption {
+  id: number;
+  city_id: number;
+  base: string;
+  name: string;
+}
+
+export interface DriverSettingsPayload {
+  settings?: SettingsData;
+  all_points?: SettingsPointOption[];
+}
+
 export interface SettingsResponse extends SettingsData {
   st?: boolean;
   text?: string;
@@ -41,5 +53,5 @@ export interface SaveSettingsPayload {
   fontSize: number;
   theme: string;
   mapScale: number;
-  point_id: number;
+  point_id: number | null;
 }

@@ -22,28 +22,37 @@
 
 ## Repository Map
 
-- `pages/*.jsx`: route wrappers, auth checks, page entrypoints
-- `modules/*.jsx`: main screen implementations and large UI blocks
-- `components/store.js`: Zustand stores, API actions, shared app state
-- `components/api.js`: low-level API client
+- `pages/*`: route entrypoints only
+- `widgets/*-screen`: full screens and large page composition
+- `widgets/app-header`: app header entrypoint during migration away from `modules/header.jsx`
+- `features/*`: user actions and flows
+- `entities/*`: domain state, API adapters, normalization, entity-level UI
+- `shared/api/*`: transport, API clients, legacy wrappers
+- `shared/lib/*`: helpers, formatters, analytics re-exports, utilities
+- `shared/ui/*`: reusable UI primitives
+- `styles/*.scss`: existing screen/global SCSS kept during migration
+- `ui/*`: legacy shared UI bucket during migration
 - `components/meta.js`: document title and app icons
-- `components/analytics.js`: page hits, events, tel-click tracking
-- `components/sessionHook.js`: current lightweight auth/session access
-- `styles/*.scss`: global and screen-level styles
-- `styles/settings.scss`: shared SCSS tokens and spacing variables
-- `ui/palette.js`: JS color tokens used in theme and components
-- `ui/Font.js`: font setup
+- `components/sessionHook.ts`: current lightweight auth/session access
 
 ## Architecture Rules
 
-- Keep route logic in `pages`, but put most screen UI in `modules`.
-- Put cross-screen async logic in Zustand stores instead of scattering requests across components.
-- Reuse `components/api.js` for backend calls unless there is a strong reason not to.
-- Use `Meta` for page titles and metadata.
-- Keep analytics calls in `components/analytics.js` conventions instead of ad hoc `window.ym` calls.
+- Keep `pages/*` thin:
+  - auth/session guard
+  - route redirects
+  - `Meta`
+  - rendering the page widget
+- Put page-sized UI in `widgets/*-screen`.
+- Put user actions and flows in `features/*`.
+- Put domain state, normalization, and API-facing entity logic in `entities/*`.
+- Widget-local `model/*` is allowed only for screen orchestration state. Do not put durable domain state there if it belongs to an entity slice.
+- Prefer `shared/api/client.ts` and related `shared/api/*` files for transport. Treat `components/api.js` as legacy isolation only.
+- Keep analytics calls in existing analytics conventions instead of ad hoc `window.ym` calls.
 - Work within the current auth pattern unless the task explicitly asks for auth refactoring:
   - token in `localStorage`
-  - session resolved via `components/sessionHook.js`
+  - session resolved via `components/sessionHook.ts`
+- `modules/*` is legacy. Do not place new screens there.
+- `ui/*` and `styles/*` may remain during migration, but new reusable primitives should prefer `shared/ui/*` and new shared helpers should prefer `shared/lib/*`.
 - Treat `modules/price_page 2.jsx` and `modules/statistics_page 2.jsx` as legacy duplicates. Do not build new features in those files unless intentionally migrating them.
 
 ## Design System
