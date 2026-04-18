@@ -18,6 +18,7 @@ interface HeaderState {
   theme: string;
   mapScale: string;
   point: any | null;
+  pointId: number | null;
 }
 
 interface HeaderActions {
@@ -81,6 +82,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     globalFontSize: 16,
     theme: 'white',
     mapScale: '1',
+    pointId: null,
 
     setGlobalFontSize: (fontSize: number) => {
       set({ globalFontSize: parseInt(String(fontSize)) });
@@ -111,10 +113,11 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
       const { data } = await http.get<{ data: SettingsData }>('/api/v1/settings/get');
       const settings = unwrapSettingsPayload(data);
       const currentState = get();
+      console.log(currentState);
       const hasField = (field: keyof SettingsData) =>
         settings[field] !== undefined && settings[field] !== null && settings[field] !== '';
-
       set({
+        pointId: (data as any).pointId,
         is_need_avg_time: hasField('driver_avg_time')
           ? normalizeBoolLike((settings as any).driver_avg_time)
           : currentState.is_need_avg_time,
@@ -151,8 +154,6 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     checkMyPos: () => {
-      // Нужно импортировать useOrdersStore, но пока оставим заглушку
-      // if (useOrdersStore.getState().driver_need_gps === false) return;
       if (get().check_pos_check === false) {
         set({ check_pos_check: true });
       } else {
