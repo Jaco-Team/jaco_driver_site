@@ -132,7 +132,7 @@ export function buildSaveSettingsPayload(params: {
   mapScale: number;
   night_map: boolean;
   is_scaleMap: boolean;
-  point_id: number;
+  point_id: number | string | null;
 }): SaveSettingsPayload {
   return {
     type_data_map: normalizeTypeDataMapForApi(params.groupTypeTime),
@@ -144,7 +144,12 @@ export function buildSaveSettingsPayload(params: {
     color: params.color,
     fontSize: parseInt(String(params.fontSize)),
     theme: params.theme,
-    point_id: params.point_id,
+    point_id:
+      params.point_id === null ||
+      params.point_id === undefined ||
+      `${params.point_id}`.trim() === ''
+        ? null
+        : parseInt(`${params.point_id}`, 10),
     mapScale: parseFloat(String(params.mapScale)),
   };
 }
