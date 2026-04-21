@@ -60,6 +60,15 @@ function normalizeBoolLike(value: any): boolean {
   return false;
 }
 
+function normalizePointId(value: SettingsData['point_id']): number | null {
+  if (value === undefined || value === null || `${value}`.trim() === '') {
+    return null;
+  }
+
+  const parsed = parseInt(`${value}`, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 export const useHeaderStore = createWithEqualityFn<HeaderStore>(
   (set, get) => ({
     isOpenMenu: false,
@@ -75,14 +84,17 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     globalFontSize: 16,
     theme: 'white',
     mapScale: '1',
+    point: null,
     pointId: null,
 
     applySettings: (settings) => {
       const currentState = get();
       const hasField = (field: keyof SettingsData) =>
         settings[field] !== undefined && settings[field] !== null && settings[field] !== '';
+      const nextPointId = normalizePointId(settings.point_id);
+
       set({
-        pointId: (data as any).pointId,
+        pointId: nextPointId ?? currentState.pointId,
         is_need_avg_time: hasField('driver_avg_time')
           ? normalizeBoolLike((settings as any).driver_avg_time)
           : currentState.is_need_avg_time,
@@ -131,7 +143,8 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     getSettings: async (_token: string) => {
-      get().applySettings(await fetchDriverSettings());
+      const payload = await fetchDriverSettings();
+      get().applySettings(payload.settings ?? {});
     },
 
     check_pos: async (func: (lat: number, lng: number) => void) => {
