@@ -21,7 +21,7 @@ module.exports = {
     deploy : {
         production : {
           user : 'root',
-          host : '80.78.253.241',
+          host : '95.163.233.239',
           ref  : 'origin/main',
           repo : 'git@github.com:Jaco-Team/jaco_driver_site.git',
           path : '/root/jaco_driver_site',
