@@ -5,7 +5,7 @@ import { useOrdersStore } from '@/entities/order/model/order.store';
 export interface UseOrdersListReturn {
   orders: any[];
   updateInterval: number;
-  getOrders: (isReload?: boolean, isMap?: boolean) => Promise<void>;
+  getOrders: (isReload?: boolean, pointId?: number) => Promise<void>;
 }
 
 export const useOrdersList = (): UseOrdersListReturn => {

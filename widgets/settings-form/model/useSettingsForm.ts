@@ -8,15 +8,9 @@ import {
 } from '@/entities/settings';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import useSession from '@/components/sessionHook';
-import { SnackbarState } from '../ui/components';
+import type { SnackbarState } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
 
-const initialSnackbarState: {
-  severity: string;
-  horizontal: string;
-  vertical: string;
-  message: string;
-  open: boolean;
-} = {
+const initialSnackbarState: SnackbarState = {
   open: false,
   vertical: 'top',
   horizontal: 'center',
@@ -66,7 +60,11 @@ export const useSettingsForm = () => {
       if (res?.color && res?.color?.length > 0) {
         setColor(res.color as string);
       }
-      setPointId(parseInt(String(res.point_id)));
+      setPointId(
+        res.point_id === null || res.point_id === undefined || `${res.point_id}`.trim() === ''
+          ? null
+          : parseInt(String(res.point_id), 10)
+      );
       setCenteredMap(parseInt(String(res.action_centered_map)) === 1);
       setNightMap(parseInt(String(res.night_map)) === 1);
       setIsScaleMap(parseInt(String(res.is_scaleMap)) === 1);

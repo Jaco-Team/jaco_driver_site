@@ -26,9 +26,9 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, fontS
     onChange(c.hex);
   };
 
-  const handleAlphaChange = (newAlpha: HsvaColor) => {
+  const handleAlphaChange = (newAlpha: { a: number }) => {
     setHsva((prev) => {
-      const nextHsva = { ...prev, ...newAlpha };
+      const nextHsva = { ...prev, a: newAlpha.a };
       onChange(hsvaToHex(nextHsva));
       return nextHsva;
     });

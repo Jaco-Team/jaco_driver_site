@@ -20,7 +20,7 @@ import {
 interface SettingsState {
   isClick: boolean;
   settings: SettingsResponse | null;
-  pointId: string | number;
+  pointId: number | null;
   points: Point[];
   cityId: string;
   point_id: number | null;
@@ -42,7 +42,7 @@ interface SettingsActions {
     point_id: number | null
   ) => Promise<{ st: boolean; text?: string; data?: any; status?: number; errors?: any }>;
   getMySetting: (token: string) => Promise<SettingsResponse>;
-  setPointId: (id: number) => void;
+  setPointId: (id: number | null) => void;
 }
 
 type SettingsStore = SettingsState & SettingsActions;
@@ -51,7 +51,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
   (set, get) => ({
     isClick: false,
     settings: null,
-    pointId: '',
+    pointId: null,
     cityId: '',
     points: [],
     point_id: null,
@@ -120,8 +120,8 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       }
     },
 
-    setPointId: (id: number) => {
-      set({ pointId: String(id) });
+    setPointId: (id: number | null) => {
+      set({ pointId: id });
     },
 
     getMySetting: async (token: string) => {
@@ -134,7 +134,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       };
       set({
         settings: normalizedSettings as SettingsResponse,
-        pointId: payload.pointId,
+        pointId: payload.pointId ?? null,
         points: Array.isArray(payload?.all_points) ? payload.all_points : [],
         cityId: normalizeIdString(settings?.city_id),
         point_id:

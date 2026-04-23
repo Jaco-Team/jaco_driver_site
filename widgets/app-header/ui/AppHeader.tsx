@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useEffect } from 'react';
+import { type ReactElement, type ReactNode, useEffect } from 'react';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -58,7 +58,7 @@ type ContactItem = {
   label: string;
   phone: string;
   formattedPhone: string;
-  icon: ReactNode;
+  icon: ReactElement;
   eventName: string;
   logTitle: string;
 };
@@ -76,6 +76,7 @@ const routeTitles: Record<string, string> = {
 };
 
 function OrderMapDrawer() {
+  const globalFontSize = useHeaderStore((state) => state.globalFontSize);
   const [isOpenOrderMap, closeOrderMap, showOrders] = useOrdersStore((state) => [
     state.isOpenOrderMap,
     state.closeOrderMap,
@@ -91,7 +92,7 @@ function OrderMapDrawer() {
       onOpen={() => {}}
     >
       {showOrders.map((item: unknown, index: number) => (
-        <OrderCard key={index} item={item} is_map />
+        <OrderCard key={index} item={item} is_map globalFontSize={globalFontSize} />
       ))}
     </SwipeableDrawer>
   );
@@ -262,7 +263,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
     },
   ];
 
-  const contactItems: ContactItem[] = [
+  const contactItems = [
     phones?.phone_upr
       ? {
           label: 'Директор',

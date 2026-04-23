@@ -101,7 +101,7 @@ export function unwrapSettingsPayload(payload: unknown): SettingsData {
   return {};
 }
 
-export function getFirstValidationError(errors?: Record<string, string | string[]>): string {
+export function getFirstValidationError(errors?: Record<string, string | string[]> | null): string {
   if (!errors || typeof errors !== 'object') return '';
   for (const value of Object.values(errors)) {
     if (Array.isArray(value) && value.length > 0 && value[0]) {

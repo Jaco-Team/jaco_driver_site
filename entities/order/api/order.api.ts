@@ -2,7 +2,7 @@ import { api, ApiResponse, http } from '@/shared/api/client';
 import { Order, DelOrder, PayData, HomeLocation } from '../model/order.types';
 import { normalizeOrderRow } from '../model/order.utils';
 import type { SettingsData } from '@/entities/settings';
-import axios from 'axios';
+import type { AxiosResponse } from 'axios';
 
 export interface GetOrdersResponse extends ApiResponse {
   orders?: any[];
@@ -61,8 +61,8 @@ export interface GetOrdersRequest {
 }
 
 export async function fetchOrders(request: { type_orders: any }): Promise<GetOrdersResponse> {
-  const response = await http.post('/api/v1/orders/get_orders', request);
-  return response as GetOrdersResponse;
+  const response = await http.post<GetOrdersResponse>('/api/v1/orders/get_orders', request);
+  return response.data;
 }
 
 export async function actionOrder(request: {
@@ -72,21 +72,19 @@ export async function actionOrder(request: {
   id: any;
   type: string;
   longitude: string;
-}): Promise<axios.AxiosResponse<any>> {
+}): Promise<AxiosResponse<any>> {
   const response = await http.post('/api/v1/orders/action_order', request);
   return response;
 }
 
-export async function checkFakeOrder(
-  request: CheckFakeOrderRequest
-): Promise<axios.AxiosResponse<any>> {
+export async function checkFakeOrder(request: CheckFakeOrderRequest): Promise<AxiosResponse<any>> {
   const response = await http.post('/api/v1/orders/check_fake_order', request);
   return response;
 }
 
 export async function getPayQr(request: GetPayQrRequest): Promise<GetPayQrResponse> {
-  const response = await http.post('/api/v1/orders/get_pay_qr', request);
-  return response as GetPayQrResponse;
+  const response = await http.post<GetPayQrResponse>('/api/v1/orders/get_pay_qr', request);
+  return response.data;
 }
 
 export async function hideDelOrders(token: string, idList: number[]): Promise<ApiResponse> {

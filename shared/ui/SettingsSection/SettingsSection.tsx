@@ -50,7 +50,8 @@ export const SettingsSectionWithPreview: React.FC<SettingsSectionWithPreviewProp
         ) : (
           <div
             style={{ width: '100%', height: previewHeight, backgroundColor: previewBackground }}
-            alt="Пример карты"
+            role="img"
+            aria-label="Пример карты"
           />
         )}
         {children}

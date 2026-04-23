@@ -20,7 +20,6 @@ import {
   hideDelOrders as apiHideDelOrders,
   checkPayOrder as apiCheckPayOrder,
   normalizeOrdersResponse,
-  GetOrdersResponse,
 } from '../api/order.api';
 
 interface OrdersStore {
@@ -100,9 +99,21 @@ interface OrdersStore {
     longitude?: string;
   }) => Promise<void>;
   checkPos: (callback: (coords: { latitude: string; longitude: string }) => void) => void;
-  actionOrder: (params: { data: any; latitude: string; longitude: string }) => Promise<void>;
-  actionOrderFake: (params: { data: any; latitude: string; longitude: string }) => Promise<void>;
-  actionPay: (params: { data: any; latitude: string; longitude: string }) => Promise<void>;
+  actionOrder: (params: {
+    data: { order_id: number; type: number; is_map: boolean; point_id?: number };
+    latitude: string;
+    longitude: string;
+  }) => Promise<void>;
+  actionOrderFake: (params: {
+    data: { order_id: number; type: number; is_map: boolean };
+    latitude: string;
+    longitude: string;
+  }) => Promise<void>;
+  actionPay: (params: {
+    data: { order_id: number; is_map: boolean };
+    latitude: string;
+    longitude: string;
+  }) => Promise<void>;
 }
 
 export const useOrdersStore = createWithEqualityFn<OrdersStore>(
@@ -221,7 +232,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
           type_orders: get().type.id,
         });
 
-        const normalized = normalizeOrdersResponse(response.data);
+        const normalized = normalizeOrdersResponse(response);
         let orders = normalized.orders;
 
         console.log('Normalized orders:', orders);
@@ -337,7 +348,6 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
             maximumAge: 10000,
             timeout: 10000,
             enableHighAccuracy: true,
-            distanceFilter: 15,
           }
         );
 
@@ -409,7 +419,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
       }
     },
 
-    actionOrderFake: async ({ data, latitude, longitude, point_id }) => {
+    actionOrderFake: async ({ data, latitude, longitude }) => {
       const { order_id, is_map } = data;
 
       const res = await apiCheckFakeOrder({
@@ -419,9 +429,10 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         latitude,
         longitude,
       });
+      const dataRes = res?.data;
 
-      if (!res?.st) {
-        get().openErrOrder(res?.text || 'Ошибка');
+      if (!dataRes?.st) {
+        get().openErrOrder(dataRes?.text || 'Ошибка');
         setTimeout(() => set({ is_load: false }), 500);
       } else {
         const now = new Date();
@@ -440,7 +451,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
       }
     },
 
-    acttionPay: async ({ data, latitude, longitude }) => {
+    actionPay: async ({ data, latitude, longitude }) => {
       const { order_id, is_map } = data;
 
       const res = await apiGetPayQr({
@@ -453,6 +464,12 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         get().openErrOrder(res?.text || 'Ошибка');
         setTimeout(() => set({ is_load: false }), 500);
       } else {
+        if (!res.pay) {
+          get().openErrOrder('Ошибка');
+          setTimeout(() => set({ is_load: false }), 500);
+          return;
+        }
+
         res.pay.check_data = { data: { order_id, is_map }, latitude, longitude };
         get().openErrOrder('Заказ оплачен');
         setTimeout(() => set({ is_load: false, showPay: true, payData: res.pay }), 500);
@@ -552,7 +569,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
       if (get().isClick) return;
       set({ isClick: true, is_load: true });
       get().checkPos(({ latitude, longitude }) => {
-        get().acttionPay({ latitude, longitude, data: { order_id, is_map } });
+        get().actionPay({ latitude, longitude, data: { order_id, is_map } });
       });
       setTimeout(() => set({ isClick: false }), 300);
     },
@@ -569,7 +586,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
       set({ showOrders: [], isOpenOrderMap: false });
     },
 
-    getCheckStatusPay: async ({ data, latitude, longitude }) => {
+    getCheckStatusPay: async ({ data, latitude = '', longitude = '' }) => {
       const { order_id, is_map } = data;
 
       const res = await apiCheckPayOrder(get().token, order_id);

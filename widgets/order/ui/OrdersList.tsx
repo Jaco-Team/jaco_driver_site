@@ -52,7 +52,7 @@ export const OrdersList: React.FC<OrdersListProps> = memo(
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={item.id}>
             <OrderCard
               item={item}
-              isMap={false}
+              is_map={false}
               globalFontSize={globalFontSize}
               onAction={handleAction}
               onPay={handlePay}
