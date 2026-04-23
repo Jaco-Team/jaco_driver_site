@@ -5,18 +5,18 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { Location, PlacemarkIcon } from '@/ui/Icons';
 
 import { useSettingsForm } from '../model/useSettingsForm';
-import { SnackbarNotification } from '@/widgets/settings-form/ui/components/SnackbarNotification/SnackbarNotification';
+import { SnackbarNotification } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
 import {
   SettingsSection,
   SettingsSectionWithPreview,
-} from '@/widgets/settings-form/ui/components/SettingsSection/SettingsSection';
+} from '@/shared/ui/SettingsSection/SettingsSection';
 import { AutocompleteField } from '@/shared/ui/AutocompleteField/AutocompleteField';
-import { RadioGroupField } from '@/widgets/settings-form/ui/components/RadioGroupField/RadioGroupField';
-import { CheckboxField } from '@/widgets/settings-form/ui/components/CheckboxField/CheckboxField';
-import { FontSizeSlider } from '@/widgets/settings-form/ui/components/FontSizeSlider/FontSizeSlider';
-import { MapScaleSlider } from '@/widgets/settings-form/ui/components/MapScaleSlider/MapScaleSlider';
-import { ColorPicker } from '@/widgets/settings-form/ui/components/ColorPicker/ColorPicker';
-import { SaveButton } from '@/widgets/settings-form/ui/components/SaveButton/SaveButton';
+import { RadioGroupField } from '@/shared/ui/RadioGroupField/RadioGroupField';
+import { CheckboxField } from '@/shared/ui/CheckboxField/CheckboxField';
+import { FontSizeSlider } from '@/shared/ui/FontSizeSlider/FontSizeSlider';
+import { MapScaleSlider } from '@/shared/ui/MapScaleSlider/MapScaleSlider';
+import { ColorPicker } from '@/shared/ui/ColorPicker/ColorPicker';
+import { SaveButton } from '@/shared/ui/SaveButton/SaveButton';
 
 export const SettingsForm: React.FC = () => {
   const {

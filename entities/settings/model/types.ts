@@ -34,6 +34,7 @@ export interface SettingsPointOption {
 
 export interface DriverSettingsPayload {
   settings?: SettingsData;
+  pointId?: number;
   all_points?: SettingsPointOption[];
 }
 

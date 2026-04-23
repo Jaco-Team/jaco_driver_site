@@ -61,7 +61,7 @@ export const useSettingsForm = () => {
       if (res?.color && res?.color?.length > 0) {
         setColor(res.color as string);
       }
-
+      setPointId(parseInt(String(res.point_id)));
       setCenteredMap(parseInt(String(res.action_centered_map)) === 1);
       setNightMap(parseInt(String(res.night_map)) === 1);
       setIsScaleMap(parseInt(String(res.is_scaleMap)) === 1);

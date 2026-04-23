@@ -1,4 +1,3 @@
-// widgets/order/ui/OrdersPage.tsx
 import React, { useCallback } from 'react';
 import Grid from '@mui/material/Grid';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -11,6 +10,8 @@ import { useOrdersAutoRefresh } from '../model/useOrdersAutoRefresh';
 import { OrdersHeader } from './OrdersHeader';
 import { OrdersList } from './OrdersList';
 import { OrderConfirmModal } from './components/OrderConfirmModal';
+import { useSettingsStore } from '@/entities/settings/model/settings.store';
+import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 
 export interface OrdersPageProps {
   onFilterOpen?: () => void;
@@ -19,6 +20,7 @@ export interface OrdersPageProps {
 export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
   const { isLoading, isAuth } = useOrdersPage();
   const globalFontSize = useHeaderStore((state: any) => state.globalFontSize);
+  const pointId = useSettingsStore((state: any) => state.pointId);
 
   const {
     orders,
@@ -35,6 +37,9 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
     actionGetOrder,
     actionFakeOrder,
     is_load,
+    showErrOrder,
+    textErrOrder,
+    closeErrOrder,
   } = useOrdersStore((state: any) => ({
     orders: state.orders,
     type: state.type,
@@ -50,9 +55,11 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
     actionGetOrder: state.actionGetOrder,
     actionFakeOrder: state.actionFakeOrder,
     is_load: state.is_load,
+    showErrOrder: state.showErrOrder,
+    textErrOrder: state.textErrOrder,
+    closeErrOrder: state.closeErrOrder,
   }));
 
-  // Включаем автообновление только когда пользователь авторизован
   useOrdersAutoRefresh({ isEnabled: isAuth === true });
 
   const handleOrderAction = useCallback(
@@ -109,7 +116,6 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
     setActiveConfirm(false, null, false, null, null);
   }, [setActiveConfirm]);
 
-  // Показываем загрузку при первой загрузке
   if (isLoading) {
     return (
       <Meta title="Список заказов">
@@ -163,6 +169,8 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
         onClose={handleCloseModal}
         onConfirm={handleConfirm}
       />
+
+      <ErrorModal open={showErrOrder} errorText={textErrOrder} onClose={closeErrOrder} />
     </Meta>
   );
 };

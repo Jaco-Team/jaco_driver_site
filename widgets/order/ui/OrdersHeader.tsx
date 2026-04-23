@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Grid from '@mui/material/Grid';
-import { OrderFilters } from './components/OrderFilters';
+import Button from '@mui/material/Button';
 import { OrderStats } from './components/OrderStats';
 import { ModalFilterOrders } from '@/components/ModalFilterOrders';
+import { OrderStatusModal } from './components/OrderStatusModal';
 
 export interface OrdersHeaderProps {
   typeText: string;
@@ -19,10 +20,31 @@ export const OrdersHeader: React.FC<OrdersHeaderProps> = ({
   globalFontSize,
   onOpenMenu,
 }) => {
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+
+  const handleFilterClick = () => {
+    setStatusModalOpen(true);
+  };
+
+  const handleCloseStatusModal = () => {
+    setStatusModalOpen(false);
+  };
+
   return (
     <>
       <ModalFilterOrders />
-      <OrderFilters typeText={typeText} globalFontSize={globalFontSize} onOpenMenu={onOpenMenu} />
+      <OrderStatusModal
+        open={statusModalOpen}
+        onClose={handleCloseStatusModal}
+        globalFontSize={globalFontSize}
+      />
+
+      <Grid size={12}>
+        <Button variant="text" onClick={handleFilterClick} style={{ fontSize: globalFontSize }}>
+          {typeText}
+        </Button>
+      </Grid>
+
       <OrderStats limit={limit} limitCount={limitCount} globalFontSize={globalFontSize} />
     </>
   );

@@ -9,7 +9,6 @@ export interface PointPhonesPayload {
 
 export async function fetchDriverSettings(): Promise<DriverSettingsPayload> {
   const { data } = await http.get<DriverSettingsPayload>('/api/v1/settings/get');
-
   if (data && typeof data === 'object') {
     return data;
   }

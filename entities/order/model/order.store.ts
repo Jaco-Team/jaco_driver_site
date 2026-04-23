@@ -22,7 +22,6 @@ import {
   normalizeOrdersResponse,
   GetOrdersResponse,
 } from '../api/order.api';
-import { useSettingsStore } from '@/entities/settings/model/settings.store';
 
 interface OrdersStore {
   // State
@@ -79,12 +78,12 @@ interface OrdersStore {
   setNotifToken: (token: string) => void;
   closeErrOrder: () => void;
   openErrOrder: (text: string) => void;
-  getOrders: (is_reload?: boolean) => Promise<void>;
+  getOrders: (is_reload?: boolean, point_id?: number) => Promise<void>;
   set_type_location: () => void;
   showLocationDriver: () => Promise<void>;
   MyCurrentLocation: () => Promise<void>;
   showOrdersMap: (id: number | string) => void;
-  setType: (type: OrderType) => void;
+  setType: (type: OrderType, pointId: number) => void;
   setCloseMenu: () => void;
   setOpenMenu: () => void;
   actionFinishOrder: (order_id: number, is_map?: boolean) => void;
@@ -108,7 +107,6 @@ interface OrdersStore {
 
 export const useOrdersStore = createWithEqualityFn<OrdersStore>(
   (set, get) => ({
-    // Initial state
     orders: [],
     isOpenMenu: false,
     update_interval: 30,
@@ -205,7 +203,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
       set({ showErrOrder: true, textErrOrder: text });
     },
 
-    getOrders: async (is_reload = false, point_id) => {
+    getOrders: async (is_reload = false) => {
       const { type_dop, types_dop, type, is_check } = get();
 
       if (is_check) {
@@ -221,11 +219,12 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
       try {
         const response = await fetchOrders({
           type_orders: get().type.id,
-          point_id,
         });
 
-        const normalized = normalizeOrdersResponse(response);
+        const normalized = normalizeOrdersResponse(response.data);
         let orders = normalized.orders;
+
+        console.log('Normalized orders:', orders);
 
         if (type.id === 1 && type_dop.length !== types_dop.length) {
           orders = filterOrdersByTypes(orders, type_dop, get().typeToStatus);
@@ -367,7 +366,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
 
     setType: (type) => {
       set({ type, isOpenMenu: false });
-      get().getOrders();
+      get().getOrders(false);
     },
 
     setCloseMenu: () => set({ isOpenMenu: false }),
@@ -387,20 +386,20 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
     },
 
     actionOrder: async ({ data, latitude, longitude }) => {
-      const { order_id, type, is_map } = data;
+      const { order_id, type, is_map, point_id } = data;
 
       const res = await apiActionOrder({
         type: 'actionOrder',
-        token: get().token,
         id: order_id,
+        point_id,
         type_action: type,
-        appToken: get().notifToken,
         latitude,
         longitude,
       });
+      const dataRes = res?.data;
 
-      if (!res?.st) {
-        get().openErrOrder(res?.text || 'Ошибка');
+      if (!dataRes?.st) {
+        get().openErrOrder(dataRes?.text || 'Ошибка');
         setTimeout(() => set({ is_load: false }), 500);
       } else {
         get().closeOrderMap();
@@ -410,7 +409,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
       }
     },
 
-    actionOrderFake: async ({ data, latitude, longitude }) => {
+    actionOrderFake: async ({ data, latitude, longitude, point_id }) => {
       const { order_id, is_map } = data;
 
       const res = await apiCheckFakeOrder({

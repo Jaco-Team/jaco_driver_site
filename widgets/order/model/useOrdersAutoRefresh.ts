@@ -1,7 +1,5 @@
 import { useEffect } from 'react';
 import { useOrdersStore } from '@/entities/order/model/order.store';
-import { useSettingsStore } from '@/entities/settings/model/settings.store';
-import { useHeaderStore } from '@/features/header/model/header.store';
 
 export interface UseOrdersAutoRefreshOptions {
   isEnabled?: boolean;
@@ -16,7 +14,6 @@ export const useOrdersAutoRefresh = (options: UseOrdersAutoRefreshOptions = {}) 
     update_interval: state.update_interval,
     is_load: state.is_load,
   }));
-  const pointId = useHeaderStore((state: any) => state.pointId);
 
   useEffect(() => {
     if (!isEnabled) return;
@@ -27,7 +24,7 @@ export const useOrdersAutoRefresh = (options: UseOrdersAutoRefreshOptions = {}) 
       if (!is_load) {
         console.log(`Auto-refreshing orders (interval: ${update_interval}s)...`);
         try {
-          getOrders(false, pointId);
+          getOrders(false);
         } catch (error) {
           console.error('Auto-refresh error:', error);
           onError?.(error as Error);

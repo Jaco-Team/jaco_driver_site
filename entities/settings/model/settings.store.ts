@@ -146,10 +146,9 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         type_data_map: normalizeTypeDataMapForUi(settings?.type_data_map),
         type_show_del: normalizeTypeShowDelForUi(settings?.type_show_del),
       };
-
       set({
         settings: normalizedSettings as SettingsResponse,
-        pointId: normalizeIdString(settings?.point_id),
+        pointId: payload.pointId,
         points: Array.isArray(payload?.all_points) ? payload.all_points : [],
         cityId: normalizeIdString(settings?.city_id),
         point_id:
