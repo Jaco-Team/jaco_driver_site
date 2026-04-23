@@ -1,27 +1,26 @@
 import React from 'react';
-import Autocomplete, { AutocompleteValue } from '@mui/material/Autocomplete';
+import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import { SxProps, Theme } from '@mui/material';
 
-export interface AutocompleteOption {
+export interface AutocompleteOptionBase {
   id: number;
   name: string;
-  [key: string]: unknown;
 }
 
-interface AutocompleteFieldProps {
-  options: AutocompleteOption[];
-  value: AutocompleteOption | null;
-  onChange: (value: AutocompleteValue<unknown, false, false, false>) => void;
+interface AutocompleteFieldProps<TOption extends AutocompleteOptionBase> {
+  options: TOption[];
+  value: TOption | null;
+  onChange: (value: TOption | null) => void;
   placeholder?: string;
   label?: string;
   fontSize?: number;
   sx?: SxProps<Theme>;
   disabled?: boolean;
-  getOptionLabel?: (option: AutocompleteOption | string) => string;
+  getOptionLabel?: (option: TOption) => string;
 }
 
-export const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
+export function AutocompleteField<TOption extends AutocompleteOptionBase>({
   options,
   value,
   onChange,
@@ -31,26 +30,15 @@ export const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
   sx,
   disabled = false,
   getOptionLabel: customGetOptionLabel,
-}) => {
-  const defaultGetOptionLabel = (option: AutocompleteOption | string) => {
-    if (typeof option === 'object' && option !== null) {
-      return option.name || String(option.id);
-    }
-    const found = options.find((p) => String(p.id) === String(option));
-    return found?.name || String(option);
-  };
+}: AutocompleteFieldProps<TOption>) {
+  const defaultGetOptionLabel = (option: TOption) => option.name || String(option.id);
 
   return (
     <Autocomplete
       multiple={false}
       options={options}
       getOptionLabel={customGetOptionLabel || defaultGetOptionLabel}
-      isOptionEqualToValue={(option, value) => {
-        if (!value) return false;
-        const optionId = typeof option === 'object' ? option.id : option;
-        const valueId = typeof value === 'object' ? value.id : value;
-        return String(optionId) === String(valueId);
-      }}
+      isOptionEqualToValue={(option, selected) => String(option.id) === String(selected.id)}
       value={value}
       onChange={(_, newValue) => onChange(newValue)}
       disabled={disabled}
@@ -77,4 +65,4 @@ export const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
       }}
     />
   );
-};
+}

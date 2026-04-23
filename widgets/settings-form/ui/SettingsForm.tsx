@@ -70,7 +70,7 @@ export const SettingsForm: React.FC = () => {
     { label: 'Ползунок масштабирования карты', value: isScaleMap, onChange: setIsScaleMap },
   ];
 
-  const pointOptions = [
+  const pointOptions: PointsState[] = [
     { id: -1, city_id: -1, base: '', name: 'Все точки' },
     ...points.filter((p) => p.id !== -1),
   ];
@@ -93,10 +93,14 @@ export const SettingsForm: React.FC = () => {
           <div style={{ paddingBottom: 10 }}>
             <span style={{ fontSize: globalFontSize }}>Точка</span>
           </div>
-          <AutocompleteField
+          <AutocompleteField<PointsState>
             options={pointOptions}
             value={currentPoint}
-            onChange={(newValue: PointsState[]) => setPointId(newValue?.id)}
+            onChange={(newValue: PointsState | null) => {
+              if (newValue) {
+                setPointId(newValue.id);
+              }
+            }}
             placeholder="Выберите точку"
             fontSize={globalFontSize}
           />
