@@ -11,9 +11,9 @@ import OrderCard from '@/modules/order_card';
 import Meta from '@/components/meta.js';
 import Modal_Confirm from './modal_confirm';
 
-import { roboto } from '@/ui/Font';
-import {ModalFilterOrders} from "@/components/ModalFilterOrders";
-import {FilterAlt} from "@mui/icons-material";
+import { roboto } from '@/shared/ui/Font';
+import { ModalFilterOrders } from '@/components/ModalFilterOrders';
+import { FilterAlt } from '@mui/icons-material';
 
 export default function ListPage() {
   const [
@@ -36,12 +36,15 @@ export default function ListPage() {
     state.showModalTypeDop,
   ]);
 
-  const [ globalFontSize ] = useHeaderStore(state => [ state.globalFontSize ]);
+  const [globalFontSize] = useHeaderStore((state) => [state.globalFontSize]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      getOrders(false, false);
-    }, parseInt(update_interval) * 1000);
+    const interval = setInterval(
+      () => {
+        getOrders(false, false);
+      },
+      parseInt(update_interval) * 1000
+    );
 
     return () => clearInterval(interval);
   }, [update_interval]);
@@ -65,8 +68,7 @@ export default function ListPage() {
           size={12}
           style={{
             display: 'flex',
-            justifyContent:
-              limit_count?.length > 0 ? 'space-between' : 'center',
+            justifyContent: limit_count?.length > 0 ? 'space-between' : 'center',
             maxWidth: '70%',
           }}
         >

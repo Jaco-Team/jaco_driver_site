@@ -1,7 +1,7 @@
-import { Html, Head, Main, NextScript } from 'next/document'
-import Script from 'next/script'
+import { Html, Head, Main, NextScript } from 'next/document';
+import Script from 'next/script';
 
-import { roboto } from '@/ui/Font.js';
+import { roboto } from '@/shared/ui/Font';
 
 //console.log( roboto )
 
@@ -23,5 +23,5 @@ export default function Document() {
         <NextScript />
       </body>
     </Html>
-  )
+  );
 }

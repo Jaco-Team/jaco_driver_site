@@ -10,7 +10,7 @@ import { fetchMe, getApiErrorInfo } from '@/shared/api/client';
 import { log } from '@/components/analytics';
 import { markSessionAuthenticated, markSessionUnauthorized } from '@/components/sessionHook';
 
-import { roboto } from '@/ui/Font';
+import { roboto } from '@/shared/ui/Font';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -70,9 +70,14 @@ export default function AuthCallbackPage() {
     <Meta title="SSO авторизация">
       <Grid container justifyContent="center" className={`auth ${roboto.variable}`}>
         <Grid size={{ xs: 12, md: 8, lg: 5 }}>
-          <section className="auth__panel auth__panel--solo" style={{ alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+          <section
+            className="auth__panel auth__panel--solo"
+            style={{ alignItems: 'center', justifyContent: 'center', gap: 16 }}
+          >
             <CircularProgress />
-            <h2 className="auth__panelTitle" style={{ marginBottom: 0 }}>Завершаем вход</h2>
+            <h2 className="auth__panelTitle" style={{ marginBottom: 0 }}>
+              Завершаем вход
+            </h2>
             <p className="auth__panelText" style={{ textAlign: 'center', maxWidth: 360 }}>
               Проверяем авторизацию и перенаправляем в приложение.
             </p>

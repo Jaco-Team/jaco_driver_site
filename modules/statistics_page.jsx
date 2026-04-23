@@ -24,7 +24,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 
 import Meta from '@/components/meta.js';
-import { roboto } from '@/ui/Font';
+import { roboto } from '@/shared/ui/Font';
 
 import { log } from '@/components/analytics';
 
@@ -86,7 +86,8 @@ function reasonsToMessage(reasons, start, end, minDate) {
   if (reasons.includes('afterToday')) lines.push('Дата "от" не может быть позже сегодняшней.');
   if (reasons.includes('beforeMin')) lines.push(`Дата "от" не может быть раньше ${fmt(minDate)}.`);
   if (reasons.includes('endBeforeStart')) lines.push('Дата "до" не может быть раньше "от".');
-  if (reasons.includes('spanTooLong')) lines.push(`Диапазон не может превышать ${MAX_SPAN_DAYS} дней.`);
+  if (reasons.includes('spanTooLong'))
+    lines.push(`Диапазон не может превышать ${MAX_SPAN_DAYS} дней.`);
   if (reasons.includes('spanTrimmedByToday')) lines.push('Дата "до" ограничена сегодняшним днём.');
   if (reasons.includes('spanTrimmedByMin')) lines.push(`Дата "от" ограничена ${fmt(minDate)}.`);
 
@@ -115,7 +116,10 @@ function MetricRow({ label, value, emphasize = false, hideDivider = false, globa
         <span style={{ fontSize: globalFontSize }}>{label}</span>
       </div>
 
-      <span className={`price__metricValue${emphasize ? ' price__metricValue--emphasis' : ''}`} style={{ fontSize: globalFontSize }}>
+      <span
+        className={`price__metricValue${emphasize ? ' price__metricValue--emphasis' : ''}`}
+        style={{ fontSize: globalFontSize }}
+      >
         {value}
       </span>
     </div>
@@ -373,7 +377,11 @@ export default function StatisticsPage() {
       </Snackbar>
 
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
-        <Grid container spacing={2} className={`price priceScreen statisticsScreen ${roboto.variable}`}>
+        <Grid
+          container
+          spacing={2}
+          className={`price priceScreen statisticsScreen ${roboto.variable}`}
+        >
           <Grid size={12}>
             <div className="price__content">
               <section className="price__hero">
@@ -419,7 +427,13 @@ export default function StatisticsPage() {
                     row={row}
                     globalFontSize={globalFontSize}
                     title={isSummaryRow(row) ? 'Итого' : row?.name || 'Курьер'}
-                    icon={isSummaryRow(row) ? <SummarizeRoundedIcon fontSize="inherit" /> : <PersonRoundedIcon fontSize="inherit" />}
+                    icon={
+                      isSummaryRow(row) ? (
+                        <SummarizeRoundedIcon fontSize="inherit" />
+                      ) : (
+                        <PersonRoundedIcon fontSize="inherit" />
+                      )
+                    }
                     description={null}
                   />
                 </div>

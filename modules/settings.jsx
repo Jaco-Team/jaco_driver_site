@@ -25,39 +25,49 @@ import { CirclePicker } from 'react-color';
 
 import Wheel from '@uiw/react-color-wheel';
 import Alpha from '@uiw/react-color-alpha';
-import { hsvaToHex, hexToHsva } from '@uiw/color-convert'
+import { hsvaToHex, hexToHsva } from '@uiw/color-convert';
 
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 
 import Meta from '@/components/meta.js';
 
-import { roboto } from '@/ui/Font';
-import { Location, PlacemarkIcon } from '@/ui/Icons';
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
+import { roboto } from '@/shared/ui/Font';
+import { Location, PlacemarkIcon } from '@/shared/ui/Icons';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-export default function SettingsPage(){
-
+export default function SettingsPage() {
   const session = useSession();
-  const [ saveMySetting, getMySetting, isSaving ] = useSettingsStore( state => [ state.saveMySetting, state.getMySetting, state.isClick ] )
+  const [saveMySetting, getMySetting, isSaving] = useSettingsStore((state) => [
+    state.saveMySetting,
+    state.getMySetting,
+    state.isClick,
+  ]);
 
-  const [ globalFontSize, setGlobalFontSize, setTheme, setGlobalMapScale] = useHeaderStore(state => [state.globalFontSize, state.setGlobalFontSize, state.setTheme, state.setGlobalMapScale]);
+  const [globalFontSize, setGlobalFontSize, setTheme, setGlobalMapScale] = useHeaderStore(
+    (state) => [
+      state.globalFontSize,
+      state.setGlobalFontSize,
+      state.setTheme,
+      state.setGlobalMapScale,
+    ]
+  );
 
-  const [ is_load, setIsLoad ] = useState( false );
-  const [ groupTypeTime, setGroupTypeTime ] = useState( 'norm' );
-  const [ type_show_del, setType_show_del ] = useState( 'min' );
-  const [ update_interval, setUpdate_interval ] = useState( 30 );
-  const [ centered_map, setСentered_map ] = useState( false );
-  const [ night_map, setNight_map ] = useState( false );
-  const [ is_scaleMap, setIs_scaleMap ] = useState( false );
+  const [is_load, setIsLoad] = useState(false);
+  const [groupTypeTime, setGroupTypeTime] = useState('norm');
+  const [type_show_del, setType_show_del] = useState('min');
+  const [update_interval, setUpdate_interval] = useState(30);
+  const [centered_map, setСentered_map] = useState(false);
+  const [night_map, setNight_map] = useState(false);
+  const [is_scaleMap, setIs_scaleMap] = useState(false);
   const [point, setPoint] = useState({});
   const [points, setPoints] = useState([]);
-  const [ color, setColor ] = useState("#000000");
+  const [color, setColor] = useState('#000000');
   const [hsva, setHsva] = useState({ h: 214, s: 43, v: 90, a: 1 });
 
   const [groupTypeTheme, setGroupTypeTheme] = useState('white');
@@ -74,41 +84,41 @@ export default function SettingsPage(){
 
   const { vertical, horizontal, open, severity, message } = state;
 
-  useEffect( () => {
+  useEffect(() => {
     const fetchData = async () => {
       if (session?.isAuth !== true) {
         return;
       }
 
       const res = await getMySetting(session?.token ?? '');
-      if( res?.color && res?.color?.length > 0 ){
-        const color = res.color === "#000000" ? { h: 214, s: 43, v: 90, a: 1 } : res.color;
+      if (res?.color && res?.color?.length > 0) {
+        const color = res.color === '#000000' ? { h: 214, s: 43, v: 90, a: 1 } : res.color;
         const color_2 = hexToHsva(color);
         setColor(color);
         setHsva(color_2);
       }
 
       setPoints(res.points);
-      setСentered_map( parseInt(res.action_centered_map) == 1 ? true : false )
-      setNight_map( parseInt(res.night_map) == 1 ? true : false )
-      setIs_scaleMap( parseInt(res.is_scaleMap) == 1 ? true : false )
-      setUpdate_interval( parseInt(res.update_interval ?? 30) )
-      setType_show_del( res.type_show_del ?? 'min' )
-      setGroupTypeTime( res.type_data_map ?? 'norm' )
+      setСentered_map(parseInt(res.action_centered_map) == 1 ? true : false);
+      setNight_map(parseInt(res.night_map) == 1 ? true : false);
+      setIs_scaleMap(parseInt(res.is_scaleMap) == 1 ? true : false);
+      setUpdate_interval(parseInt(res.update_interval ?? 30));
+      setType_show_del(res.type_show_del ?? 'min');
+      setGroupTypeTime(res.type_data_map ?? 'norm');
 
-      setGroupTypeTheme(res.theme ?? 'white')
+      setGroupTypeTheme(res.theme ?? 'white');
       setFontSize(parseInt(res.fontSize ?? 16));
       setMapScale(parseFloat(res.mapScale ?? 1));
 
       setIsLoad(true);
-    }
+    };
 
-    if( !is_load ){
+    if (!is_load) {
       void fetchData();
     }
-  }, [getMySetting, is_load, session?.isAuth, session?.token] )
+  }, [getMySetting, is_load, session?.isAuth, session?.token]);
 
-  async function save(){
+  async function save() {
     const result = await saveMySetting(
       session?.token,
       groupTypeTime,
@@ -128,7 +138,7 @@ export default function SettingsPage(){
       setTheme(groupTypeTheme);
       setGlobalMapScale(mapScale);
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         open: true,
         severity: 'success',
@@ -137,7 +147,7 @@ export default function SettingsPage(){
       return;
     }
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       open: true,
       severity: 'error',
@@ -145,33 +155,36 @@ export default function SettingsPage(){
     }));
   }
 
-  function closeModal(){
+  function closeModal() {
     setState({ ...state, open: false });
   }
 
   return (
-    <Meta title='Настройки'>
+    <Meta title="Настройки">
       <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isSaving}>
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      <Grid container spacing={3} className={"price " + roboto.variable}>
-
+      <Grid container spacing={3} className={'price ' + roboto.variable}>
         <Snackbar
           anchorOrigin={{ vertical, horizontal }}
           open={open}
-          onClose={ () => closeModal() }
+          onClose={() => closeModal()}
           autoHideDuration={5000}
         >
-          <Alert onClose={ () => closeModal() } severity={severity} sx={{ width: '100%', fontSize: globalFontSize }}>
+          <Alert
+            onClose={() => closeModal()}
+            severity={severity}
+            sx={{ width: '100%', fontSize: globalFontSize }}
+          >
             {message}
           </Alert>
         </Snackbar>
 
         <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper className='container_paper' elevation={5}>
+          <Paper className="container_paper" elevation={5}>
             <div style={{ paddingBottom: 10 }}>
-              <span style={{fontSize: globalFontSize }}>Точка</span>
+              <span style={{ fontSize: globalFontSize }}>Точка</span>
               <Autocomplete
                 multiple={false}
                 options={points}
@@ -189,7 +202,7 @@ export default function SettingsPage(){
                     sx={{
                       '& .MuiInputBase-root': {
                         fontSize: globalFontSize,
-                      }
+                      },
                     }}
                   />
                 )}
@@ -197,7 +210,7 @@ export default function SettingsPage(){
                   width: '100%',
                   '& .MuiAutocomplete-inputRoot': {
                     fontSize: globalFontSize,
-                  }
+                  },
                 }}
               />
             </div>
@@ -205,61 +218,87 @@ export default function SettingsPage(){
         </Grid>
 
         <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper className='container_paper' elevation={5}>
+          <Paper className="container_paper" elevation={5}>
             <div style={{ paddingBottom: 10 }}>
-              <span style={{fontSize: globalFontSize }}>Формат данных на карте</span>
+              <span style={{ fontSize: globalFontSize }}>Формат данных на карте</span>
             </div>
-            <img
-              style={{ width: '100%', height: 'auto' }}
-              src={'/map.png'}
-            />
-            <div className='location' onClick={() => setGroupTypeTime('norm')}>
-              <Location fill={groupTypeTime === 'norm' ? 'red' : 'blue'}/>
-              <span className='span_text_white_border'>21:46 (53 мин.)</span>
+            <img style={{ width: '100%', height: 'auto' }} src={'/map.png'} />
+            <div className="location" onClick={() => setGroupTypeTime('norm')}>
+              <Location fill={groupTypeTime === 'norm' ? 'red' : 'blue'} />
+              <span className="span_text_white_border">21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: '40%'}} onClick={() => setGroupTypeTime('full')}>
+            <div
+              className="location"
+              style={{ top: '40%' }}
+              onClick={() => setGroupTypeTime('full')}
+            >
               <Location fill={groupTypeTime === 'full' ? 'red' : 'blue'} />
-              <span className='span_text_white_border'>21:46 - 22:16 (53 мин.)</span>
+              <span className="span_text_white_border">21:46 - 22:16 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: '60%'}} onClick={() => setGroupTypeTime('min')}>
+            <div
+              className="location"
+              style={{ top: '60%' }}
+              onClick={() => setGroupTypeTime('min')}
+            >
               <Location fill={groupTypeTime === 'min' ? 'red' : 'blue'} />
-              <span className='span_text_white_border'>53 мин.</span>
+              <span className="span_text_white_border">53 мин.</span>
             </div>
           </Paper>
         </Grid>
 
         <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper className='container_paper' elevation={5}>
+          <Paper className="container_paper" elevation={5}>
             <div style={{ paddingBottom: 10 }}>
-              <span style={{fontSize: globalFontSize }}>Оформление</span>
+              <span style={{ fontSize: globalFontSize }}>Оформление</span>
             </div>
-            <img
-              style={{ width: '100%', height: 'auto' }}
-              src={'/map_2.png'}
-            />
-            <div className='location_ya' style={{ top: 80}} onClick={() => setGroupTypeTheme('classic')}>
-              <PlacemarkIcon fill={groupTypeTheme === 'classic' ? 'red' : 'blue'}/>
+            <img style={{ width: '100%', height: 'auto' }} src={'/map_2.png'} />
+            <div
+              className="location_ya"
+              style={{ top: 80 }}
+              onClick={() => setGroupTypeTheme('classic')}
+            >
+              <PlacemarkIcon fill={groupTypeTheme === 'classic' ? 'red' : 'blue'} />
               <span>Классический яндекс</span>
             </div>
-            <div className='location' style={{ top: 140}} onClick={() => setGroupTypeTheme('transparent')}>
-              <Location fill={groupTypeTheme === 'transparent' ? 'red' : 'blue'}/>
-              <span className='span_text_transparent'>21:46 (53 мин.)</span>
+            <div
+              className="location"
+              style={{ top: 140 }}
+              onClick={() => setGroupTypeTheme('transparent')}
+            >
+              <Location fill={groupTypeTheme === 'transparent' ? 'red' : 'blue'} />
+              <span className="span_text_transparent">21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: 200}} onClick={() => setGroupTypeTheme('transparent_white')}>
-              <Location fill={groupTypeTheme === 'transparent_white' ? 'red' : 'blue'}/>
-              <span className='span_text_transparent_white'>21:46 (53 мин.)</span>
+            <div
+              className="location"
+              style={{ top: 200 }}
+              onClick={() => setGroupTypeTheme('transparent_white')}
+            >
+              <Location fill={groupTypeTheme === 'transparent_white' ? 'red' : 'blue'} />
+              <span className="span_text_transparent_white">21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: 260}} onClick={() => setGroupTypeTheme('white')}>
+            <div
+              className="location"
+              style={{ top: 260 }}
+              onClick={() => setGroupTypeTheme('white')}
+            >
               <Location fill={groupTypeTheme === 'white' ? 'red' : 'blue'} />
-              <span className='span_text_white'>21:46 (53 мин.)</span>
+              <span className="span_text_white">21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: 325}} onClick={() => setGroupTypeTheme('white_border')}>
+            <div
+              className="location"
+              style={{ top: 325 }}
+              onClick={() => setGroupTypeTheme('white_border')}
+            >
               <Location fill={groupTypeTheme === 'white_border' ? 'red' : 'blue'} />
-              <span className='span_text_white_border'>21:46 (53 мин.)</span>
+              <span className="span_text_white_border">21:46 (53 мин.)</span>
             </div>
-            <div className='location' style={{ top: 385}} onClick={() => setGroupTypeTheme('black')}>
+            <div
+              className="location"
+              style={{ top: 385 }}
+              onClick={() => setGroupTypeTheme('black')}
+            >
               <Location fill={groupTypeTheme === 'black' ? 'red' : 'blue'} />
-              <span className='span_text_black'>21:46 (53 мин.)</span>
+              <span className="span_text_black">21:46 (53 мин.)</span>
             </div>
           </Paper>
         </Grid>
@@ -267,47 +306,63 @@ export default function SettingsPage(){
         <Grid size={12} style={{ marginTop: 10 }}>
           <Paper style={{ padding: 20 }} elevation={5}>
             <FormControl component="fieldset">
-              <FormLabel component="legend" style={{fontSize: globalFontSize, color: 'rgba(0, 0, 0, 0.8)' }}>Отмененные заказы</FormLabel>
+              <FormLabel
+                component="legend"
+                style={{ fontSize: globalFontSize, color: 'rgba(0, 0, 0, 0.8)' }}
+              >
+                Отмененные заказы
+              </FormLabel>
               <RadioGroup
                 aria-label="gender"
                 name="radio-buttons-group"
                 value={type_show_del}
-                onChange={ (event, data) => { setType_show_del( data ) } }
+                onChange={(event, data) => {
+                  setType_show_del(data);
+                }}
               >
-                <FormControlLabel value="full" control={<Radio />} label="Показывать весь день"
+                <FormControlLabel
+                  value="full"
+                  control={<Radio />}
+                  label="Показывать весь день"
                   sx={{
-                    "& .MuiFormControlLabel-label": {
-                      fontSize: globalFontSize
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: globalFontSize,
                     },
-                    "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                      "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                        color: '#CC0033'
-                      }
-                    }
+                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                      '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                        color: '#CC0033',
+                      },
+                    },
                   }}
                 />
-                <FormControlLabel value="min" control={<Radio />} label="30 минут"
+                <FormControlLabel
+                  value="min"
+                  control={<Radio />}
+                  label="30 минут"
                   sx={{
-                    "& .MuiFormControlLabel-label": {
-                      fontSize: globalFontSize
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: globalFontSize,
                     },
-                    "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                      "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                        color: '#CC0033'
-                      }
-                    }
+                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                      '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                        color: '#CC0033',
+                      },
+                    },
                   }}
                 />
-                <FormControlLabel value="max" control={<Radio />} label="2 часа"
+                <FormControlLabel
+                  value="max"
+                  control={<Radio />}
+                  label="2 часа"
                   sx={{
-                    "& .MuiFormControlLabel-label": {
-                      fontSize: globalFontSize
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: globalFontSize,
                     },
-                    "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                      "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                        color: '#CC0033'
-                      }
-                    }
+                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                      '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                        color: '#CC0033',
+                      },
+                    },
                   }}
                 />
               </RadioGroup>
@@ -319,104 +374,132 @@ export default function SettingsPage(){
           <Paper style={{ padding: 20 }} elevation={5}>
             <FormGroup>
               <FormControlLabel
-                control={<Checkbox checked={centered_map}
-                onClick={ (event) => { setСentered_map( event.target.checked ) } } />}
+                control={
+                  <Checkbox
+                    checked={centered_map}
+                    onClick={(event) => {
+                      setСentered_map(event.target.checked);
+                    }}
+                  />
+                }
                 label="При взятии, отмене заказа, центрировать карту"
                 sx={{
-                  "& .MuiFormControlLabel-label": {
-                    fontSize: globalFontSize
+                  '& .MuiFormControlLabel-label': {
+                    fontSize: globalFontSize,
                   },
-                  "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                    "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                      color: '#CC0033'
-                    }
-                  }
+                  '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                    '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                      color: '#CC0033',
+                    },
+                  },
                 }}
               />
             </FormGroup>
           </Paper>
         </Grid>
 
-        <Grid size={12} style={{marginTop: 10}}>
-          <Paper style={{padding: 20}} elevation={5}>
-            <div style={{paddingBottom: '10px'}}>
-              <span style={{fontSize: globalFontSize}}>Карта</span>
+        <Grid size={12} style={{ marginTop: 10 }}>
+          <Paper style={{ padding: 20 }} elevation={5}>
+            <div style={{ paddingBottom: '10px' }}>
+              <span style={{ fontSize: globalFontSize }}>Карта</span>
             </div>
             <FormGroup>
               <FormControlLabel
-                control={<Checkbox checked={night_map} onClick={(event) => {setNight_map(event.target.checked)}}/>}
+                control={
+                  <Checkbox
+                    checked={night_map}
+                    onClick={(event) => {
+                      setNight_map(event.target.checked);
+                    }}
+                  />
+                }
                 label="Темная тема"
                 sx={{
-                  "& .MuiFormControlLabel-label": {
-                    fontSize: globalFontSize
+                  '& .MuiFormControlLabel-label': {
+                    fontSize: globalFontSize,
                   },
-                  "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                    "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                      color: '#CC0033'
-                    }
-                  }
+                  '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                    '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                      color: '#CC0033',
+                    },
+                  },
                 }}
               />
               <FormControlLabel
                 control={
-                  <Checkbox checked={is_scaleMap}
-                  onClick={(event) => {
-                     setIs_scaleMap(event.target.checked)
-                  }}
-                  />}
+                  <Checkbox
+                    checked={is_scaleMap}
+                    onClick={(event) => {
+                      setIs_scaleMap(event.target.checked);
+                    }}
+                  />
+                }
                 label="Ползунок масштабирования карты"
                 sx={{
-                  "& .MuiFormControlLabel-label": {
-                    fontSize: globalFontSize
+                  '& .MuiFormControlLabel-label': {
+                    fontSize: globalFontSize,
                   },
-                  "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                    "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                      color: '#CC0033'
-                    }
-                  }
+                  '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                    '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                      color: '#CC0033',
+                    },
+                  },
                 }}
               />
             </FormGroup>
           </Paper>
         </Grid>
 
-        <Grid size={12} style={{marginTop: 10}}>
-          <Paper className='container_paper' elevation={5}>
+        <Grid size={12} style={{ marginTop: 10 }}>
+          <Paper className="container_paper" elevation={5}>
             <div style={{ paddingBottom: '10px' }}>
               <span style={{ fontSize: globalFontSize }}>Размер шрифта ({fontSize})</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{color: '#000', fontSize: '10px'}}>Ая</span>
-              <span style={{color: '#000', fontSize: fontSize}}>Ая</span>
-              <span style={{color: '#000', fontSize: '40px'}}>Ая</span>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span style={{ color: '#000', fontSize: '10px' }}>Ая</span>
+              <span style={{ color: '#000', fontSize: fontSize }}>Ая</span>
+              <span style={{ color: '#000', fontSize: '40px' }}>Ая</span>
             </div>
             <Slider
-              size='medium'
+              size="medium"
               value={fontSize}
               valueLabelDisplay="off"
               step={1}
               max={40}
               min={10}
-              color='info'
-              onChange={event => { event && setFontSize(Math.floor(event.target.value)); }}
+              color="info"
+              onChange={(event) => {
+                event && setFontSize(Math.floor(event.target.value));
+              }}
             />
           </Paper>
         </Grid>
 
         <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper className='container_paper' elevation={5}>
+          <Paper className="container_paper" elevation={5}>
             <div style={{ paddingBottom: '10px' }}>
-              <span style={{ fontSize: globalFontSize }}>Масштабирование иконок на карте ({mapScale})</span>
+              <span style={{ fontSize: globalFontSize }}>
+                Масштабирование иконок на карте ({mapScale})
+              </span>
             </div>
             <Slider
-              size='medium'
+              size="medium"
               value={mapScale}
               valueLabelDisplay="off"
               step={0.1}
               max={1.3}
               min={0.5}
-              color='info'
-              onChange={event => { event && setMapScale(event.target.value); }}
+              color="info"
+              onChange={(event) => {
+                event && setMapScale(event.target.value);
+              }}
             />
           </Paper>
         </Grid>
@@ -424,71 +507,93 @@ export default function SettingsPage(){
         <Grid size={12} style={{ marginTop: 10 }}>
           <Paper style={{ padding: 20 }} elevation={5}>
             <FormControl component="fieldset">
-              <FormLabel component="legend" style={{fontSize: globalFontSize, color: 'rgba(0, 0, 0, 0.8)' }}>Частота обновления заказов</FormLabel>
+              <FormLabel
+                component="legend"
+                style={{ fontSize: globalFontSize, color: 'rgba(0, 0, 0, 0.8)' }}
+              >
+                Частота обновления заказов
+              </FormLabel>
               <RadioGroup
                 aria-label="gender"
                 name="radio-buttons-group1"
                 value={update_interval}
-                onChange={ (event, data) => { setUpdate_interval( data ) } }
+                onChange={(event, data) => {
+                  setUpdate_interval(data);
+                }}
               >
-                <FormControlLabel value={0} control={<Radio />} label={'Не обновлять'}
+                <FormControlLabel
+                  value={0}
+                  control={<Radio />}
+                  label={'Не обновлять'}
                   sx={{
-                    "& .MuiFormControlLabel-label": {
-                      fontSize: globalFontSize
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: globalFontSize,
                     },
-                    "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                      "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                        color: '#CC0033'
-                      }
-                    }
+                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                      '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                        color: '#CC0033',
+                      },
+                    },
                   }}
                 />
-                <FormControlLabel value={10} control={<Radio />} label={'Каждые 10 секунд'}
+                <FormControlLabel
+                  value={10}
+                  control={<Radio />}
+                  label={'Каждые 10 секунд'}
                   sx={{
-                    "& .MuiFormControlLabel-label": {
-                      fontSize: globalFontSize
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: globalFontSize,
                     },
-                    "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                      "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                        color: '#CC0033'
-                      }
-                    }
+                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                      '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                        color: '#CC0033',
+                      },
+                    },
                   }}
                 />
-                <FormControlLabel value={30} control={<Radio />} label={'Каждые 30 секунд'}
+                <FormControlLabel
+                  value={30}
+                  control={<Radio />}
+                  label={'Каждые 30 секунд'}
                   sx={{
-                    "& .MuiFormControlLabel-label": {
-                      fontSize: globalFontSize
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: globalFontSize,
                     },
-                    "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                      "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                        color: '#CC0033'
-                      }
-                    }
+                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                      '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                        color: '#CC0033',
+                      },
+                    },
                   }}
                 />
-                <FormControlLabel value={60} control={<Radio />} label={'Каждые 60 секунд'}
+                <FormControlLabel
+                  value={60}
+                  control={<Radio />}
+                  label={'Каждые 60 секунд'}
                   sx={{
-                    "& .MuiFormControlLabel-label": {
-                      fontSize: globalFontSize
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: globalFontSize,
                     },
-                    "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                      "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                        color: '#CC0033'
-                      }
-                    }
+                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                      '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                        color: '#CC0033',
+                      },
+                    },
                   }}
                 />
-                <FormControlLabel value={120} control={<Radio />} label={'Каждые 120 секунд'}
+                <FormControlLabel
+                  value={120}
+                  control={<Radio />}
+                  label={'Каждые 120 секунд'}
                   sx={{
-                    "& .MuiFormControlLabel-label": {
-                      fontSize: globalFontSize
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: globalFontSize,
                     },
-                    "& .MuiButtonBase-root.MuiRadio-root.Mui-checked": {
-                      "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                        color: '#CC0033'
-                      }
-                    }
+                    '& .MuiButtonBase-root.MuiRadio-root.Mui-checked': {
+                      '& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium': {
+                        color: '#CC0033',
+                      },
+                    },
                   }}
                 />
               </RadioGroup>
@@ -497,40 +602,54 @@ export default function SettingsPage(){
         </Grid>
 
         <Grid size={12} style={{ marginTop: 10 }}>
-          <Paper className='container_paper_picker' elevation={5} >
+          <Paper className="container_paper_picker" elevation={5}>
             <div style={{ paddingBottom: 30, alignSelf: 'flex-start' }}>
-              <span style={{fontSize: globalFontSize }}>Цвет на карте</span>
+              <span style={{ fontSize: globalFontSize }}>Цвет на карте</span>
             </div>
             <Wheel
               color={color}
-              onChange={c => {setHsva(c.hsva); setColor(c.hex);}}
+              onChange={(c) => {
+                setHsva(c.hsva);
+                setColor(c.hex);
+              }}
               style={{ marginBottom: 40 }}
             />
             <Alpha
               hsva={hsva}
-              width='90%'
-              onChange={(newAlpha) => {setHsva(newAlpha); setColor(hsvaToHex(newAlpha));}}
+              width="90%"
+              onChange={(newAlpha) => {
+                setHsva(newAlpha);
+                setColor(hsvaToHex(newAlpha));
+              }}
               style={{ marginBottom: 40 }}
             />
-            <div className='container_picker'>
+            <div className="container_picker">
               <CirclePicker
-                width='100%'
-                color={ color }
-                onChangeComplete={ c => {setHsva(hexToHsva(c.hex)); setColor(c.hex);}}
+                width="100%"
+                color={color}
+                onChangeComplete={(c) => {
+                  setHsva(hexToHsva(c.hex));
+                  setColor(c.hex);
+                }}
               />
             </div>
           </Paper>
         </Grid>
 
         <Grid size={12} style={{ marginTop: 10, marginBottom: 50 }}>
-          <Paper style={{ padding: 20 }} elevation={5} >
-            <Button disabled={isSaving} onClick={ () => save() } color="primary" variant="contained" style={{ width: '100%', fontSize: globalFontSize }}>
+          <Paper style={{ padding: 20 }} elevation={5}>
+            <Button
+              disabled={isSaving}
+              onClick={() => save()}
+              color="primary"
+              variant="contained"
+              style={{ width: '100%', fontSize: globalFontSize }}
+            >
               {isSaving ? 'Сохраняем...' : 'Сохранить'}
             </Button>
           </Paper>
         </Grid>
-
       </Grid>
     </Meta>
-  )
+  );
 }

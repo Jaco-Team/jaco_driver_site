@@ -23,11 +23,18 @@ import useSession from '@/components/sessionHook';
 
 import Meta from '@/components/meta.js';
 
-import { roboto } from '@/ui/Font';
+import { roboto } from '@/shared/ui/Font';
 
 import { log } from '@/components/analytics';
 
-function MetricRow({ label, value, description, emphasize = false, hideDivider = false, globalFontSize }) {
+function MetricRow({
+  label,
+  value,
+  description,
+  emphasize = false,
+  hideDivider = false,
+  globalFontSize,
+}) {
   return (
     <div className={`price__metricRow${hideDivider ? ' price__metricRow--last' : ''}`}>
       <div className={`price__metricLabel${emphasize ? ' price__metricLabel--emphasis' : ''}`}>
@@ -46,7 +53,10 @@ function MetricRow({ label, value, description, emphasize = false, hideDivider =
         ) : null}
       </div>
 
-      <span className={`price__metricValue${emphasize ? ' price__metricValue--emphasis' : ''}`} style={{ fontSize: globalFontSize }}>
+      <span
+        className={`price__metricValue${emphasize ? ' price__metricValue--emphasis' : ''}`}
+        style={{ fontSize: globalFontSize }}
+      >
         {value}
       </span>
     </div>
@@ -146,12 +156,14 @@ export default function PricePage() {
     {
       label: 'Сумма безнала',
       value: `${formatPrice(statPrice?.sum_bank)} ₽`,
-      description: 'Сумма заказов по безналичному расчету за выбранную дату, включая стоимость доставки',
+      description:
+        'Сумма заказов по безналичному расчету за выбранную дату, включая стоимость доставки',
     },
     {
       label: 'Заработал',
       value: `${formatPrice(statPrice?.my_price)} ₽`,
-      description: 'Сумма стоимости доставки для курьера за выбранную дату плюс доплаты за этот же день',
+      description:
+        'Сумма стоимости доставки для курьера за выбранную дату плюс доплаты за этот же день',
       emphasize: true,
     },
     {
@@ -237,7 +249,10 @@ export default function PricePage() {
           <Grid size={12}>
             <div className="price__content">
               <section className="price__card price__card--plain">
-                <div className="price__total" style={{ fontSize: Math.max(globalFontSize * 2.6, 48) }}>
+                <div
+                  className="price__total"
+                  style={{ fontSize: Math.max(globalFontSize * 2.6, 48) }}
+                >
                   {formatPrice(statPrice?.my_price)} ₽
                 </div>
 
@@ -285,9 +300,7 @@ export default function PricePage() {
           maxWidth="xs"
           className="price__pickerDialog"
         >
-          <DialogTitle>
-            {activePicker === 'start' ? 'Дата от' : 'Дата до'}
-          </DialogTitle>
+          <DialogTitle>{activePicker === 'start' ? 'Дата от' : 'Дата до'}</DialogTitle>
 
           <DialogContent>
             <DateCalendar
@@ -300,7 +313,9 @@ export default function PricePage() {
 
           <DialogActions>
             <Button onClick={closePicker}>Отмена</Button>
-            <Button variant="contained" onClick={applyDraftDate}>Готово</Button>
+            <Button variant="contained" onClick={applyDraftDate}>
+              Готово
+            </Button>
           </DialogActions>
         </Dialog>
       </LocalizationProvider>

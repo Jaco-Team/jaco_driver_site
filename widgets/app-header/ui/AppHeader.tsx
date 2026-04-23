@@ -695,13 +695,21 @@ export function AppHeader() {
     }
 
     void (async () => {
-      const settings = await getMySetting(session.token ?? '');
-      applySettings(settings);
+      let pointId: string | number | null | undefined;
+
+      try {
+        const settings = await getMySetting(session.token ?? '');
+        applySettings(settings);
+        pointId = settings?.point_id;
+      } catch (error) {
+        console.error('header_settings_load_failed', error);
+      }
+
       await Promise.allSettled([
-        getStat(session.token ?? '', settings?.point_id),
+        getStat(session.token ?? '', pointId),
         getMyAvgTime(session.token ?? ''),
+        Promise.resolve(myCurrentLocation()),
       ]);
-      myCurrentLocation();
     })();
   }, [
     applySettings,
@@ -719,15 +727,17 @@ export function AppHeader() {
     }
 
     checkMyPos();
+    getMyAvgTime(session.token ?? '');
 
     const intervalId = window.setInterval(() => {
       checkMyPos();
+      getMyAvgTime(session.token ?? '');
     }, 120 * 1000);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [checkMyPos, session?.isAuth]);
+  }, [checkMyPos, getMyAvgTime, session?.isAuth, session?.token]);
 
   const pageTitle = activePageRU || routeTitles[pathname] || '';
 

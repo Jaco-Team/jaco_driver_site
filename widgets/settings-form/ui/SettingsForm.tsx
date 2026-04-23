@@ -2,7 +2,7 @@ import React from 'react';
 import Grid from '@mui/material/Grid';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-import { Location, PlacemarkIcon } from '@/ui/Icons';
+import { Location, PlacemarkIcon } from '@/shared/ui/Icons';
 
 import { useSettingsForm } from '../model/useSettingsForm';
 import { SnackbarNotification } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
@@ -17,6 +17,7 @@ import { FontSizeSlider } from '@/shared/ui/FontSizeSlider/FontSizeSlider';
 import { MapScaleSlider } from '@/shared/ui/MapScaleSlider/MapScaleSlider';
 import { ColorPicker } from '@/shared/ui/ColorPicker/ColorPicker';
 import { SaveButton } from '@/shared/ui/SaveButton/SaveButton';
+import { PointsState } from '@/entities/settings/model/settings.store';
 
 export const SettingsForm: React.FC = () => {
   const {
@@ -95,7 +96,7 @@ export const SettingsForm: React.FC = () => {
           <AutocompleteField
             options={pointOptions}
             value={currentPoint}
-            onChange={(newValue) => newValue && setPointId(newValue.id)}
+            onChange={(newValue: PointsState[]) => setPointId(newValue?.id)}
             placeholder="Выберите точку"
             fontSize={globalFontSize}
           />

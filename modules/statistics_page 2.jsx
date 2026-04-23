@@ -17,11 +17,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 
 import { useStatisticsStore, useHeaderStore } from '@/components/store.js';
-import MyDatepicker from '@/ui/MyDatepicker';
+import MyDatepicker from '@/shared/ui/MyDatepicker';
 import dayjs from 'dayjs';
 
 import Meta from '@/components/meta.js';
-import { roboto } from '@/ui/Font';
+import { roboto } from '@/shared/ui/Font';
 
 import { log } from '@/components/analytics';
 
@@ -83,7 +83,8 @@ function reasonsToMessage(reasons, s, e, minDate) {
   if (reasons.includes('afterToday')) lines.push('Дата “от” не может быть позже сегодняшней.');
   if (reasons.includes('beforeMin')) lines.push(`Дата “от” не может быть раньше ${fmt(minDate)}.`);
   if (reasons.includes('endBeforeStart')) lines.push('Дата “до” не может быть раньше “от”.');
-  if (reasons.includes('spanTooLong')) lines.push(`Диапазон не может превышать ${MAX_SPAN_DAYS} дней.`);
+  if (reasons.includes('spanTooLong'))
+    lines.push(`Диапазон не может превышать ${MAX_SPAN_DAYS} дней.`);
   if (reasons.includes('spanTrimmedByToday')) lines.push('Дата “до” ограничена сегодняшним днём.');
   if (reasons.includes('spanTrimmedByMin')) lines.push(`Дата “от” ограничена ${fmt(minDate)}.`);
   lines.push(`Выбран период: ${fmt(s)} — ${fmt(e)}`);
@@ -197,8 +198,10 @@ export default function StatisticsPage() {
     if (token) getStatistics(token, fmt(s), fmt(e));
   };
 
-  const onStartOpen = () => log('statistics_calendar_start_open', 'Открытие календаря (Статистика времени): Дата от');
-  const onEndOpen = () => log('statistics_calendar_end_open', 'Открытие календаря (Статистика времени): Дата до');
+  const onStartOpen = () =>
+    log('statistics_calendar_start_open', 'Открытие календаря (Статистика времени): Дата от');
+  const onEndOpen = () =>
+    log('statistics_calendar_end_open', 'Открытие календаря (Статистика времени): Дата до');
 
   return (
     <Meta title="Статистика">

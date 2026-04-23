@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 
 import Meta from '@/components/meta.js';
 
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import Image from 'next/image';
 
@@ -13,19 +13,22 @@ import Button from '@mui/material/Button';
 import { useLoginStore } from '@/features/auth/model/login.store';
 import { redirectToSsoLogin } from '@/shared/api/client';
 
-import MyTextInput from '@/ui/MyTextinput';
-
-import { roboto } from '@/ui/Font';
+import MyTextInput from '@/shared/ui/MyTextInput';
+import { roboto } from '@/shared/ui/Font';
 
 import { log } from '@/shared/api/client';
 
-export default function AuthPage(){
+export default function AuthPage() {
   const router = useRouter();
 
-  const [ loginErr, login, setLoginErr ] = useLoginStore(state => [state.loginErr, state.login, state.setLoginErr]);
+  const [loginErr, login, setLoginErr] = useLoginStore((state) => [
+    state.loginErr,
+    state.login,
+    state.setLoginErr,
+  ]);
 
-  const [ myLogin, setMyLogin ] = useState('');
-  const [ myPWD, setMyPWD ] = useState('');
+  const [myLogin, setMyLogin] = useState('');
+  const [myPWD, setMyPWD] = useState('');
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -40,14 +43,14 @@ export default function AuthPage(){
     }
   }, [setLoginErr]);
 
-  async function loginFN(){
-    if(myLogin.length === 0 || myPWD.length === 0) {
+  async function loginFN() {
+    if (myLogin.length === 0 || myPWD.length === 0) {
       return;
     }
 
     const res = await login(myLogin, myPWD);
 
-    if(res.st === true) {
+    if (res.st === true) {
       log('auth_login', 'Успешная авторизация');
       router.push('/list_orders', { scroll: false });
     } else {
@@ -61,18 +64,12 @@ export default function AuthPage(){
   }
 
   return (
-    <Meta title='Авторизация'>
-      <Grid container spacing={3} justifyContent="center" className={"auth " + roboto.variable}>
+    <Meta title="Авторизация">
+      <Grid container spacing={3} justifyContent="center" className={'auth ' + roboto.variable}>
         <Grid size={{ xs: 12, md: 8, lg: 5 }}>
           <section className="auth__panel auth__panel--solo">
             <div className="auth__logoBadge">
-              <Image
-                alt={'Лого'}
-                src='/Logo.png'
-                width={92}
-                height={92}
-                priority={true}
-              />
+              <Image alt={'Лого'} src="/Logo.png" width={92} height={92} priority={true} />
             </div>
 
             <span className="auth__eyebrow">Авторизация</span>
@@ -86,13 +83,13 @@ export default function AuthPage(){
                 label="Номер телефона"
                 type={'text'}
                 value={myLogin}
-                onChange={e => setMyLogin(e.target.value)}
+                onChange={(e) => setMyLogin(e.target.value)}
               />
               <MyTextInput
                 label="Пароль"
                 type={'password'}
                 value={myPWD}
-                onChange={e => setMyPWD(e.target.value)}
+                onChange={(e) => setMyPWD(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && loginFN()}
               />
             </div>
@@ -100,14 +97,26 @@ export default function AuthPage(){
             {loginErr ? (
               <div className="auth__error">{loginErr}</div>
             ) : (
-              <div className="auth__hint">Используйте номер телефона, указанный в вашем рабочем аккаунте.</div>
+              <div className="auth__hint">
+                Используйте номер телефона, указанный в вашем рабочем аккаунте.
+              </div>
             )}
 
-            <Button variant="contained" fullWidth className="auth__primaryButton" onClick={() => loginFN()}>
+            <Button
+              variant="contained"
+              fullWidth
+              className="auth__primaryButton"
+              onClick={() => loginFN()}
+            >
               Войти
             </Button>
 
-            <Button variant="outlined" fullWidth className="auth__secondaryButton" onClick={loginWithSso}>
+            <Button
+              variant="outlined"
+              fullWidth
+              className="auth__secondaryButton"
+              onClick={loginWithSso}
+            >
               Продолжить через SSO
             </Button>
 
@@ -115,7 +124,7 @@ export default function AuthPage(){
               <span className="auth__linkCaption">Не получается войти?</span>
               <Link
                 className="auth__link"
-                href='/registration'
+                href="/registration"
                 onClick={(e) => {
                   e.preventDefault();
                   let done = false;

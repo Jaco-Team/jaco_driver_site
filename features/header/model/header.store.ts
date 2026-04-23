@@ -189,16 +189,15 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     getStat: async (token: string, pointId?: string | number | null) => {
-      const resolvedPointId = pointId ?? useSettingsStore.getState().point_id;
-
-      if (
-        resolvedPointId === undefined ||
-        resolvedPointId === null ||
-        `${resolvedPointId}`.trim() === ''
-      ) {
-        set({ phones: null, token });
-        return;
-      }
+      const settingsPointId = useSettingsStore.getState().point_id;
+      const resolvedPointId =
+        pointId !== undefined && pointId !== null && `${pointId}`.trim() !== ''
+          ? pointId
+          : settingsPointId !== undefined &&
+              settingsPointId !== null &&
+              `${settingsPointId}`.trim() !== ''
+            ? settingsPointId
+            : 1;
 
       const phones = await fetchPointPhones(resolvedPointId);
       set({ phones, token });

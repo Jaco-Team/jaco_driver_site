@@ -1,28 +1,26 @@
+import '../styles/globals.scss';
 
-
-import '../styles/globals.scss'
-
-import '../styles/initial.scss'
-import '../styles/price.scss'
-import '../styles/graph.scss'
-import '../styles/list.scss'
-import '../styles/map.scss'
-import '../styles/order_card.scss'
-import '../styles/auth.scss'
-import '../styles/settings.scss'
-import '../styles/setting_style.scss'
+import '../styles/initial.scss';
+import '../styles/price.scss';
+import '../styles/graph.scss';
+import '../styles/list.scss';
+import '../styles/map.scss';
+import '../styles/order_card.scss';
+import '../styles/auth.scss';
+import '../styles/settings.scss';
+import '../styles/setting_style.scss';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { log, hit, screenOpen } from '@/components/analytics'
+import { log, hit, screenOpen } from '@/components/analytics';
 
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-import * as Sentry from "@sentry/react";
-import { appPalette } from '@/ui/palette';
-import YandexMetrika from "@/components/YandexMetrika";
-import {useLoginStore} from "@/features/auth/model/login.store";
-import {refreshSession} from "@/components/sessionHook";
+import * as Sentry from '@sentry/react';
+import { appPalette } from '@/shared/styles/appPalette';
+import YandexMetrika from '@/components/YandexMetrika';
+import { useLoginStore } from '@/features/auth/model/login.store';
+import { refreshSession } from '@/components/sessionHook';
 
 const theme = createTheme({
   palette: {
@@ -40,10 +38,10 @@ const theme = createTheme({
       },
     },
   },
-})
+});
 
 export function reportWebVitals(metric) {
-  console.log(metric)
+  console.log(metric);
 }
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
@@ -55,7 +53,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
     }
 
     Sentry.init({
-      dsn: "https://0446c6db46dce5a0368f09bc573ad37d@o4505941569830912.ingest.sentry.io/4505946950008832",
+      dsn: 'https://0446c6db46dce5a0368f09bc573ad37d@o4505941569830912.ingest.sentry.io/4505946950008832',
       integrations: [],
       tracesSampleRate: 1.0,
       replaysSessionSampleRate: 0.1,
@@ -83,7 +81,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
     return () => router.events.off('routeChangeComplete', send);
   }, [router.events]);
 
-  const checkToken = useLoginStore(state => state.check_token);
+  const checkToken = useLoginStore((state) => state.check_token);
   useEffect(() => {
     const initAuth = async () => {
       await refreshSession();
@@ -98,7 +96,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
       <YandexMetrika yid={104768072} />
       <Component {...pageProps} />
     </ThemeProvider>
-  )
+  );
 }
 
-export default MyApp
+export default MyApp;

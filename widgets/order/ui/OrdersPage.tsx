@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import Grid from '@mui/material/Grid';
 import CircularProgress from '@mui/material/CircularProgress';
 import Meta from '@/components/meta';
-import { roboto } from '@/ui/Font';
+import { roboto } from '@/shared/ui/Font';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersPage } from '../model/useOrdersPage';
