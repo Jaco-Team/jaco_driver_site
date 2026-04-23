@@ -1,10 +1,10 @@
 import {
   SettingsData,
+  SettingsResponse,
   TypeDataMap,
   TypeShowDel,
   SaveSettingsPayload,
 } from '@/entities/settings/model/types';
-import { SettingsResponse } from './settings.store';
 
 export const TYPE_SHOW_DEL_TO_INT: Record<TypeShowDel, number> = {
   min: 30,

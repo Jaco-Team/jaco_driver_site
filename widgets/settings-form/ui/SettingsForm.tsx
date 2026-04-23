@@ -17,7 +17,8 @@ import { FontSizeSlider } from '@/shared/ui/FontSizeSlider/FontSizeSlider';
 import { MapScaleSlider } from '@/shared/ui/MapScaleSlider/MapScaleSlider';
 import { ColorPicker } from '@/shared/ui/ColorPicker/ColorPicker';
 import { SaveButton } from '@/shared/ui/SaveButton/SaveButton';
-import { PointsState } from '@/entities/settings/model/settings.store';
+import type { Point } from '@/entities/point';
+import { TypeShowDel } from '@/entities/settings';
 
 export const SettingsForm: React.FC = () => {
   const {
@@ -70,7 +71,7 @@ export const SettingsForm: React.FC = () => {
     { label: 'Ползунок масштабирования карты', value: isScaleMap, onChange: setIsScaleMap },
   ];
 
-  const pointOptions: PointsState[] = [
+  const pointOptions: Point[] = [
     { id: -1, city_id: -1, base: '', name: 'Все точки' },
     ...points.filter((p) => p.id !== -1),
   ];
@@ -93,10 +94,10 @@ export const SettingsForm: React.FC = () => {
           <div style={{ paddingBottom: 10 }}>
             <span style={{ fontSize: globalFontSize }}>Точка</span>
           </div>
-          <AutocompleteField<PointsState>
+          <AutocompleteField<Point>
             options={pointOptions}
             value={currentPoint}
-            onChange={(newValue: PointsState | null) => {
+            onChange={(newValue: Point | null) => {
               if (newValue) {
                 setPointId(newValue.id);
               }
@@ -168,7 +169,7 @@ export const SettingsForm: React.FC = () => {
           <RadioGroupField
             label="Отмененные заказы"
             value={typeShowDel}
-            onChange={(val) => setTypeShowDel(val as string)}
+            onChange={(val) => setTypeShowDel(val as TypeShowDel)}
             options={cancelOrdersOptions}
             fontSize={globalFontSize}
           />

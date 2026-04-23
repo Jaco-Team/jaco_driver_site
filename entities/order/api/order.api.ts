@@ -1,7 +1,7 @@
 import { api, ApiResponse, http } from '@/shared/api/client';
 import { Order, DelOrder, PayData, HomeLocation } from '../model/order.types';
 import { normalizeOrderRow } from '../model/order.utils';
-import { SettingsData } from '@/entities/settings/model/types';
+import type { SettingsData } from '@/entities/settings';
 import axios from 'axios';
 
 export interface GetOrdersResponse extends ApiResponse {

@@ -2,12 +2,11 @@ import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import { http, getApiErrorInfo, log } from '@/shared/api/client';
 import { fetchDriverSettings } from '@/entities/settings/api/settings.api';
+import type { Point } from '@/entities/point';
 import {
   DriverSettingsPayload,
-  SettingsData,
   SaveSettingsPayload,
-  TypeDataMap,
-  TypeShowDel,
+  SettingsResponse,
 } from '@/entities/settings/model/types';
 import {
   normalizeTypeDataMapForUi,
@@ -18,24 +17,11 @@ import {
   buildSaveSettingsPayload,
 } from './settings.utils';
 
-export interface PointsState {
-  base: string;
-  name: string;
-  id: number;
-  city_id: number;
-}
-
-export interface SettingsResponse extends SettingsData {
-  type_data_map?: TypeDataMap;
-  type_show_del?: TypeShowDel | string;
-  points?: PointsState[];
-}
-
 interface SettingsState {
   isClick: boolean;
   settings: SettingsResponse | null;
   pointId: string | number;
-  points: PointsState[];
+  points: Point[];
   cityId: string;
   point_id: number | null;
 }

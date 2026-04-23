@@ -1,3 +1,5 @@
+import type { Point } from '@/entities/point';
+
 export type TypeDataMap = 'norm' | 'full' | 'min';
 export type TypeShowDel = 'full' | 'min' | 'max';
 export type ThemeType =
@@ -25,12 +27,7 @@ export interface SettingsData {
   mapScale?: number;
 }
 
-export interface SettingsPointOption {
-  id: number;
-  city_id: number;
-  base: string;
-  name: string;
-}
+export type SettingsPointOption = Point;
 
 export interface DriverSettingsPayload {
   settings?: SettingsData;
@@ -41,6 +38,9 @@ export interface DriverSettingsPayload {
 export interface SettingsResponse extends SettingsData {
   st?: boolean;
   text?: string;
+  type_data_map?: TypeDataMap;
+  type_show_del?: TypeShowDel | string;
+  points?: Point[];
 }
 
 export interface SaveSettingsPayload {

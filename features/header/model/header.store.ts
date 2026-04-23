@@ -7,8 +7,7 @@ import {
   fetchPointPhones,
   saveDriverPosition,
 } from '@/entities/settings/api/settings.api';
-import { SettingsData } from '@/entities/settings/model/types';
-import { useSettingsStore } from '@/entities/settings/model/settings.store';
+import { type SettingsData, useSettingsStore } from '@/entities/settings';
 
 interface HeaderState {
   isOpenMenu: boolean;

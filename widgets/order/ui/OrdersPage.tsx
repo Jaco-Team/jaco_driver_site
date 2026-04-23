@@ -10,7 +10,7 @@ import { useOrdersAutoRefresh } from '../model/useOrdersAutoRefresh';
 import { OrdersHeader } from './OrdersHeader';
 import { OrdersList } from './OrdersList';
 import { OrderConfirmModal } from './components/OrderConfirmModal';
-import { useSettingsStore } from '@/entities/settings/model/settings.store';
+import { useSettingsStore } from '@/entities/settings';
 import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 
 export interface OrdersPageProps {

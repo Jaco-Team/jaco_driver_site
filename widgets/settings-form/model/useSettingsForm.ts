@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useSettingsStore, SettingsResponse } from '@/entities/settings/model/settings.store';
+import {
+  useSettingsStore,
+  type SettingsResponse,
+  type ThemeType,
+  type TypeDataMap,
+  type TypeShowDel,
+} from '@/entities/settings';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import useSession from '@/components/sessionHook';
-import { TypeDataMap, TypeShowDel, ThemeType } from '@/entities/settings/model/types';
 import { SnackbarState } from '../ui/components';
 
 const initialSnackbarState: {

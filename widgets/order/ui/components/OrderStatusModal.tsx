@@ -13,7 +13,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 import { useOrdersStore } from '@/entities/order/model/order.store';
-import { useSettingsStore } from '@/entities/settings/model/settings.store';
+import { useSettingsStore } from '@/entities/settings';
 
 const StyledDrawer = styled(Drawer)(({ theme }) => ({
   '& .MuiDrawer-paper': {

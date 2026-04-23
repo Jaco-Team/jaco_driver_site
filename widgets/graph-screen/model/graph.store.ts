@@ -12,7 +12,7 @@ import {
   normalizeGraphOrderError,
   normalizeGraphResponse,
 } from '@/entities/graph/model/graph.utils';
-import { useSettingsStore } from '@/entities/settings/model/settings.store';
+import { useSettingsStore } from '@/entities/settings';
 import { GraphCameraError, GraphErrorModal, GraphOrderError } from '@/entities/graph/model/types';
 import { log } from '@/components/analytics';
 

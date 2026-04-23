@@ -1,3 +1,5 @@
+import type { Point } from '@/entities/point';
+
 export interface GraphMonthItem {
   day: string;
   month: string;
@@ -5,12 +7,7 @@ export interface GraphMonthItem {
   [key: string]: unknown;
 }
 
-export interface GraphPointItem {
-  id: number | string;
-  city_id?: number | string;
-  base?: string;
-  name: string;
-}
+export type GraphPointItem = Point;
 
 export interface GraphDateCell {
   day: number | string;

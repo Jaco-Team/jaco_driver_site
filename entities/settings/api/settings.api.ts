@@ -1,5 +1,5 @@
 import { http } from '@/shared/api/client';
-import { DriverSettingsPayload } from '@/entities/settings/model/types';
+import type { DriverSettingsPayload } from '@/entities/settings/model/types';
 
 export interface PointPhonesPayload {
   phone_upr?: string | null;

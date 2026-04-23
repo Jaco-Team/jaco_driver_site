@@ -72,7 +72,7 @@ public/       статические файлы и иконки
 
 Ключевые файлы:
 
-- [pages/_app.js](./pages/_app.js) — подключение темы, глобальных стилей, аналитики и Sentry
+- [pages/\_app.js](./pages/_app.js) — подключение темы, глобальных стилей, аналитики и Sentry
 - [components/store.js](./components/store.js) — Zustand stores и API-экшены
 - [components/api.js](./components/api.js) — базовый API-клиент
 - [components/analytics.js](./components/analytics.js) — события Метрики и page hit-логика
@@ -107,6 +107,63 @@ https://api.jacochef.ru/driver/public/index.php/
 - флаги часто приходят строками `"0"` / `"1"`
 - часть полей может быть пустой строкой вместо `null`
 - при работе с данными нужно закладывать fallback-логику
+
+## Type Design Guide
+
+Типы в проекте должны принадлежать своему домену, а не случайному месту, где они впервые понадобились.
+
+Базовые правила:
+
+- бизнесовые типы живут в своих сущностях: `entities/<domain>/model/types.ts`
+- DTO транспортного слоя живут рядом с API: `entities/<domain>/api/types.ts` или feature-local `api/types.ts`
+- типы пропсов компонента живут рядом с компонентом
+- store-private типы можно держать внутри store-файла только если они не импортируются снаружи
+- внешние импорты должны идти через public API слайса: `entities/<domain>/index.ts`
+
+Что считается правильным:
+
+- `Point`, `City`, `Employee` — глобические доменные типы, их нельзя держать в `settings.store.ts`, `GraphScreen`, `SettingsForm` или других экранных файлах
+- `TypeShowDel`, `ThemeType`, `SettingsData` — типы домена настроек, им место в `entities/settings/model/types.ts`
+- если backend-форма отличается от UI-модели, нужно держать отдельные типы:
+  - `PointDto`
+  - `SettingsResponseDto`
+  - `GraphPointPayload`
+
+Чего не делать:
+
+- не импортировать доменные типы из store-файлов
+- не импортировать типы графика из настроек или наоборот
+- не создавать общий мусорный бак вида `shared/types` для всего подряд
+- не использовать названия вроде `PointsState`, `CityState`, `EmployeeState` для переиспользуемых моделей
+
+Предпочтительные имена:
+
+- доменные модели: `Point`, `City`, `Employee`
+- DTO: `PointDto`, `EmployeeDto`
+- узкоспециализированные формы: `EmployeeScheduleCell`, `PointPhonesPayload`
+
+Предпочтительные импорт-пути:
+
+```ts
+import type { Point } from '@/entities/point';
+import type { SettingsData, TypeShowDel } from '@/entities/settings';
+```
+
+Неправильно:
+
+```ts
+import type { PointsState } from '@/entities/settings/model/settings.store';
+import type { TypeShowDel } from '@/widgets/settings-form/model/types';
+```
+
+Порядок принятия решений:
+
+1. Это бизнес-сущность, которая может понадобиться в других местах проекта?
+2. Если да, тип должен жить в `entities/<domain>`.
+3. Это форма backend-ответа, а не реальная модель приложения?
+4. Если да, тип должен жить рядом с API и нормализоваться на границе.
+5. Это локальная форма состояния одного компонента или store?
+6. Если да, тип можно оставить локально, пока он не стал частью внешнего контракта.
 
 ## Дизайн и UI
 
@@ -161,7 +218,8 @@ npm run build
 ## Что важно помнить при доработках
 
 - не плодить новую логику в `pages`, если её можно вынести в `modules`
-- не дублировать API-вызовы по компонентам, если их можно держать в Zustand store
+- не держать переиспользуемые доменные типы в store-файлах или screen-level модулях
+- не импортировать бизнесовые типы через deep import из чужого slice
 - не добавлять случайные цвета мимо `ui/palette.js` и `styles/settings.scss`
 - не расширять таблицы на мобильном без необходимости
 - не ломать текущие сценарии логирования событий в Метрику
