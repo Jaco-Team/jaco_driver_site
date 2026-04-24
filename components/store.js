@@ -3,6 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { api, http, fetchMe, getApiErrorInfo, getAuthErrorMessage, loginWeb } from './api.js';
 import { markSessionAuthenticated, markSessionUnauthorized } from './sessionHook.ts';
+import { apiRoutes } from '@/shared/api/routes';
 
 import { log } from '@/components/analytics';
 
@@ -1246,7 +1247,7 @@ export const useHeaderStore = createWithEqualityFn(
     },
 
     getSettings: async (token) => {
-      const { data } = await http.get('/api/v1/settings/get');
+      const { data } = await http.get(apiRoutes.settings.get);
       const settings = unwrapSettingsPayload(data);
       const currentState = get();
       const hasField = (field) =>
@@ -1335,7 +1336,7 @@ export const useHeaderStore = createWithEqualityFn(
           point_id: 1,
         };
 
-        const json = await http.post('api/v1/settings/get_point_phones', data);
+        const json = await http.post(apiRoutes.settings.pointPhones, data);
 
         set({
           phones: json?.data?.data?.phone ?? null,
@@ -1759,7 +1760,7 @@ export const useSettingsStore = createWithEqualityFn(
       };
 
       try {
-        const response = await http.post('/api/v1/settings/save', data);
+        const response = await http.post(apiRoutes.settings.save, data);
         log('settings_save_success', 'Успешное сохранение настроек');
         return {
           st: true,
@@ -1791,7 +1792,7 @@ export const useSettingsStore = createWithEqualityFn(
       //   type: 'getMySetting'
       // };
 
-      const { data } = await http.get('/api/v1/settings/get');
+      const { data } = await http.get(apiRoutes.settings.get);
       const settings = unwrapSettingsPayload(data);
 
       return {

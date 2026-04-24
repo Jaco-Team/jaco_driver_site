@@ -1,6 +1,8 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
-import { http, getApiErrorInfo, log } from '@/shared/api/client';
+import { getApiErrorInfo, log } from '@/shared/api/client';
+import { connector } from '@/shared/api/connector';
+import { apiRoutes } from '@/shared/api/routes';
 import { fetchDriverSettings } from '@/entities/settings/api/settings.api';
 import type { Point } from '@/entities/point';
 import {
@@ -91,14 +93,14 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       });
 
       try {
-        const response = await http.post<{ data?: SaveSettingsPayload; message?: string }>(
-          '/api/v1/settings/save',
-          data
-        );
+        const response = await connector.rest.post<
+          { data?: SaveSettingsPayload; message?: string },
+          SaveSettingsPayload
+        >(apiRoutes.settings.save, data);
         log('settings_save_success', 'Успешное сохранение настроек');
         return {
           st: true,
-          text: response?.data?.message || 'Сохранено',
+          text: response?.message || 'Сохранено',
           data: response?.data,
         };
       } catch (e) {

@@ -1,37 +1,31 @@
 import React, { useEffect } from 'react';
 
-import dynamic from 'next/dynamic'
-import useSession from '@/components/sessionHook';
-import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic';
+import Meta from '@/components/meta';
+import { useProtectedRoute } from '@/shared/lib/session/useProtectedRoute';
 
-const DynamicHeader = dynamic(() => import('@/modules/header.jsx'))
-const DynamicHomePage = dynamic(() => import('@/modules/price_page.jsx'))
+const DynamicHeader = dynamic(() => import('@/modules/header.jsx'));
+const DynamicHomePage = dynamic(() => import('@/modules/price_page.jsx'));
 
 import { useHeaderStore } from '@/components/store.js';
 
 export default function Price() {
+  const { isAuthenticated } = useProtectedRoute();
 
-  const router = useRouter();
-  const session = useSession();
+  const [setActivePageRU] = useHeaderStore((state) => [state.setActivePageRU]);
 
-  const [ setActivePageRU ] = useHeaderStore( state => [ state.setActivePageRU ] )
-
-  useEffect( () => {
+  useEffect(() => {
     setActivePageRU('Расчет');
+  }, [setActivePageRU]);
 
-    if( session.isAuth === 'load' ){
-      return;
-    }
-
-    if( session.isAuth === false ){
-      router.push('/auth', { scroll: false })
-    }
-  }, [router, session.isAuth, setActivePageRU] )
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
-    <>
+    <Meta title="Расчет">
       <DynamicHeader />
       <DynamicHomePage />
-    </>
-  )
+    </Meta>
+  );
 }

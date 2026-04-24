@@ -1,5 +1,6 @@
-import { http } from '@/shared/api/client';
-import type { DriverSettingsPayload } from '@/entities/settings/model/types';
+import { connector } from '@/shared/api/connector';
+import { apiRoutes } from '@/shared/api/routes';
+import { DriverSettingsPayload } from '@/entities/settings/model/types';
 
 export interface PointPhonesPayload {
   phone_upr?: string | null;
@@ -8,7 +9,7 @@ export interface PointPhonesPayload {
 }
 
 export async function fetchDriverSettings(): Promise<DriverSettingsPayload> {
-  const { data } = await http.get<DriverSettingsPayload>('/api/v1/settings/get');
+  const data = await connector.rest.get<DriverSettingsPayload>(apiRoutes.settings.get);
   if (data && typeof data === 'object') {
     return data;
   }
@@ -17,7 +18,7 @@ export async function fetchDriverSettings(): Promise<DriverSettingsPayload> {
 }
 
 export async function fetchDriverAverageTime(): Promise<string> {
-  const { data } = await http.get<{ text?: string | number }>('/api/v1/settings/avg-time');
+  const data = await connector.rest.get<{ text?: string | number }>(apiRoutes.settings.avgTime);
   return `${data?.text ?? '00:00:00'}`;
 }
 
@@ -32,8 +33,8 @@ export async function fetchPointPhones(
     point_id: typeof pointId === 'number' ? pointId : parseInt(`${pointId}`, 10),
   };
 
-  const { data } = await http.post<{ phone?: PointPhonesPayload }>(
-    '/api/v1/settings/get_point_phones',
+  const data = await connector.rest.post<{ phone?: PointPhonesPayload }, typeof payload>(
+    apiRoutes.settings.pointPhones,
     payload
   );
 
@@ -44,7 +45,7 @@ export async function saveDriverPosition(
   latitude?: number | string,
   longitude?: number | string
 ): Promise<void> {
-  await http.post('/api/v1/settings/save-position', {
+  await connector.rest.post(apiRoutes.settings.savePosition, {
     latitude,
     longitude,
   });

@@ -1,7 +1,8 @@
-import { api, ApiResponse, http } from '@/shared/api/client';
+import type { ApiResponse } from '@/shared/api/client';
+import { connector } from '@/shared/api/connector';
+import { apiRoutes } from '@/shared/api/routes';
 import { Order, DelOrder, PayData, HomeLocation } from '../model/order.types';
 import { normalizeOrderRow } from '../model/order.utils';
-import type { SettingsData } from '@/entities/settings';
 import type { AxiosResponse } from 'axios';
 
 export interface GetOrdersResponse extends ApiResponse {
@@ -61,8 +62,10 @@ export interface GetOrdersRequest {
 }
 
 export async function fetchOrders(request: { type_orders: any }): Promise<GetOrdersResponse> {
-  const response = await http.post<GetOrdersResponse>('/api/v1/orders/get_orders', request);
-  return response.data;
+  return connector.rest.post<GetOrdersResponse, { type_orders: any }>(
+    apiRoutes.orders.getOrders,
+    request
+  );
 }
 
 export async function actionOrder(request: {
@@ -72,33 +75,35 @@ export async function actionOrder(request: {
   id: any;
   type: string;
   longitude: string;
-}): Promise<AxiosResponse<any>> {
-  const response = await http.post('/api/v1/orders/action_order', request);
-  return response;
+}): Promise<ApiResponse> {
+  return connector.rest.post<ApiResponse, typeof request>(apiRoutes.orders.actionOrder, request);
 }
 
-export async function checkFakeOrder(request: CheckFakeOrderRequest): Promise<AxiosResponse<any>> {
-  const response = await http.post('/api/v1/orders/check_fake_order', request);
-  return response;
+export async function checkFakeOrder(request: CheckFakeOrderRequest): Promise<ApiResponse> {
+  return connector.rest.post<ApiResponse, CheckFakeOrderRequest>(
+    apiRoutes.orders.checkFakeOrder,
+    request
+  );
 }
 
 export async function getPayQr(request: GetPayQrRequest): Promise<GetPayQrResponse> {
-  const response = await http.post<GetPayQrResponse>('/api/v1/orders/get_pay_qr', request);
-  return response.data;
+  return connector.rest.post<GetPayQrResponse, GetPayQrRequest>(apiRoutes.orders.getPayQr, request);
 }
 
-export async function hideDelOrders(token: string, idList: number[]): Promise<ApiResponse> {
+export async function hideDelOrders(_token: string, idList: number[]): Promise<ApiResponse> {
   const data: { idList: string } = {
     idList: JSON.stringify(idList),
   };
-  return await http.post('/api/v1/orders/hide_del_orders', data);
+
+  return connector.rest.post<ApiResponse, typeof data>(apiRoutes.orders.hideDeletedOrders, data);
 }
 
-export async function checkPayOrder(token: string, order_id: number): Promise<ApiResponse> {
+export async function checkPayOrder(_token: string, order_id: number): Promise<ApiResponse> {
   const data: { order_id: number } = {
     order_id,
   };
-  return await http.post('/api/v1/orders/check_pay_order', data);
+
+  return connector.rest.post<ApiResponse, typeof data>(apiRoutes.orders.checkPayOrder, data);
 }
 
 export function normalizeOrdersResponse(response: GetOrdersResponse): {

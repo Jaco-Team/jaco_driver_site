@@ -79,6 +79,39 @@ public/       статические файлы и иконки
 - [ui/palette.js](./ui/palette.js) — актуальная JS-палитра
 - [styles/settings.scss](./styles/settings.scss) — SCSS-токены и переменные
 
+## Текущая архитектура API
+
+Cookie session auth остается основной моделью.
+Фронтенд не должен прокидывать токен как источник авторизации для новых HTTP-запросов.
+
+Новая схема слоев:
+
+```text
+pages/widgets/features
+  -> entities/<domain>/api
+  -> shared/api/client.ts
+  -> shared/api/connector.ts
+  -> shared/api/routes.ts + shared/api/config.ts
+```
+
+Правила:
+
+- `shared/api/config.ts` хранит только origin/base-url конфиг и env resolution
+- `shared/api/routes.ts` хранит только именованные endpoint/path builder'ы и URL resolver'ы
+- `shared/api/connector.ts` хранит transport:
+  - axios instance
+  - CSRF/session cookie behavior
+  - legacy form-urlencoded connector
+- `shared/api/client.ts` остается публичным compatibility entrypoint для auth/session helper'ов и legacy re-export usage
+- `entities/*/api/*.ts` владеют domain-specific запросами
+- `pages/*`, `widgets/*`, `features/*` не должны собирать URL руками и не должны знать base URL
+
+Это означает:
+
+- новые или мигрируемые экраны используют `entities/*/api`
+- прямые `http.get('/api/v1/...')` и `http.post('/api/v1/...')` вне API слоя считаются техническим долгом
+- `components/api.js` сохранен как compatibility re-export, а не как отдельный источник truth
+
 ## Маршруты
 
 - `/auth` — авторизация
@@ -93,13 +126,40 @@ public/       статические файлы и иконки
 
 ## API
 
-Запросы идут через `components/api.js` на backend:
+Сейчас есть два режима API:
+
+- новый HTTP/session-based API через `shared/api/*`
+- legacy module API через `api()` / `api_get()` compatibility слой
+
+Новые HTTP endpoints настраиваются через env:
+
+```text
+NEXT_PUBLIC_API_ORIGIN
+NEXT_PUBLIC_LEGACY_API_ORIGIN
+NEXT_PUBLIC_MEDIA_ORIGIN
+```
+
+Env-файлы:
+
+- [.env.example](./.env.example)
+- [.env.development](./.env.development)
+- [.env.production](./.env.production)
+
+Legacy backend path по-прежнему поддерживается для несовершенных миграций:
 
 ```text
 https://api.jacochef.ru/driver/public/index.php/
 ```
 
-Формат запросов в проекте сейчас построен на `axios.post(...)` + `query-string.stringify(data)`.
+Но для нового кода это не целевой путь.
+Целевой путь:
+
+- cookie session
+- CSRF cookie
+- именованные endpoints
+- domain API adapters
+
+Legacy `api()` / `api_get()` оставлены только для совместимости со старыми flows.
 
 Важно:
 
@@ -220,9 +280,33 @@ npm run build
 - не плодить новую логику в `pages`, если её можно вынести в `modules`
 - не держать переиспользуемые доменные типы в store-файлах или screen-level модулях
 - не импортировать бизнесовые типы через deep import из чужого slice
+- не дублировать API-вызовы по компонентам, если их можно держать в Zustand store
+- не собирать URL и origin вручную вне `shared/api/config.ts` и `shared/api/routes.ts`
+- не вызывать backend напрямую из page/screen, если запрос можно вынести в `entities/*/api`
+
 - не добавлять случайные цвета мимо `ui/palette.js` и `styles/settings.scss`
 - не расширять таблицы на мобильном без необходимости
 - не ломать текущие сценарии логирования событий в Метрику
+
+## Legacy Compatibility
+
+Legacy код пока не удаляется автоматически.
+Он остается до тех пор, пока активные entrypoints не будут полностью переведены на новую схему.
+
+Что уже оставлено намеренно:
+
+- [components/api.js](./components/api.js) — compatibility re-export на новый shared client
+- [components/store.js](./components/store.js) — legacy Zustand layer для старых modules/screens
+- [modules/header.jsx](./modules/header.jsx) и часть `modules/*` — совместимость для старых route entrypoints
+
+Что считается кандидатами на удаление после полной миграции:
+
+- legacy вызовы `api('orders', ...)`
+- legacy вызовы `api('price', ...)`
+- legacy вызовы `api('graph', ...)`
+- legacy вызовы `api('stat_time', ...)`
+- leftover legacy auth/settings flows, если им появится Laravel/session replacement
+- прямые imports legacy wrappers там, где уже есть `widgets/*` и `entities/*`
 
 ## Статус документации
 

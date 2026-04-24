@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 
 import { GraphErrorModal } from '@/entities/graph/model/types';
+import { resolveGraphErrorImageUrl } from '@/shared/api/routes';
 import { appPalette } from '@/shared/styles/appPalette';
 
 interface GraphErrorDrawerProps {
@@ -205,7 +206,12 @@ export function GraphErrorDrawer({
             )}
 
             {orderError.imgs.map((item, key) => (
-              <img key={key} alt="" style={{ width: '100%', height: 'auto' }} src={item} />
+              <img
+                key={key}
+                alt=""
+                style={{ width: '100%', height: 'auto' }}
+                src={resolveGraphErrorImageUrl(item)}
+              />
             ))}
 
             <GraphAppealBlock
@@ -265,7 +271,7 @@ export function GraphErrorDrawer({
                 key={key}
                 alt=""
                 style={{ width: '100%', height: 'auto' }}
-                src={`https://jacochef.ru/src/img/fine_err/uploads/${item}`}
+                src={resolveGraphErrorImageUrl(item)}
               />
             ))}
 

@@ -235,8 +235,6 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         const normalized = normalizeOrdersResponse(response);
         let orders = normalized.orders;
 
-        console.log('Normalized orders:', orders);
-
         if (type.id === 1 && type_dop.length !== types_dop.length) {
           orders = filterOrdersByTypes(orders, type_dop, get().typeToStatus);
         }
@@ -406,7 +404,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         latitude,
         longitude,
       });
-      const dataRes = res?.data;
+      const dataRes = res;
 
       if (!dataRes?.st) {
         get().openErrOrder(dataRes?.text || 'Ошибка');
@@ -464,13 +462,9 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         get().openErrOrder(res?.text || 'Ошибка');
         setTimeout(() => set({ is_load: false }), 500);
       } else {
-        if (!res.pay) {
-          get().openErrOrder('Ошибка');
-          setTimeout(() => set({ is_load: false }), 500);
-          return;
+        if (res.pay) {
+          res.pay.check_data = { data: { order_id, is_map }, latitude, longitude };
         }
-
-        res.pay.check_data = { data: { order_id, is_map }, latitude, longitude };
         get().openErrOrder('Заказ оплачен');
         setTimeout(() => set({ is_load: false, showPay: true, payData: res.pay }), 500);
       }
