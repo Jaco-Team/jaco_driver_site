@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { fetchMe } from '@/shared/api/client';
 import { useLoginStore } from '@/features/auth/model/login.store';
@@ -48,7 +47,6 @@ async function fetchSessionFromServer(): Promise<void> {
         token,
         user,
       });
-
     } catch (error) {
       console.log('❌ Сессия не найдена на сервере');
       sessionData = {
@@ -67,17 +65,11 @@ async function fetchSessionFromServer(): Promise<void> {
       isFetching = false;
       fetchPromise = null;
       // Оповещаем всех слушателей
-      listeners.forEach(listener => listener(sessionData));
+      listeners.forEach((listener) => listener(sessionData));
     }
   })();
 
   return fetchPromise;
-}
-
-// Инициализация - загружаем сессию с сервера при старте
-if (typeof window !== 'undefined') {
-  // Не ждем, запускаем в фоне
-  fetchSessionFromServer();
 }
 
 export async function refreshSession(): Promise<void> {
@@ -92,7 +84,7 @@ export function markSessionAuthenticated(user: any): void {
     user,
   };
   console.log('✅ SessionHook: Сессия отмечена как авторизованная', sessionData);
-  listeners.forEach(listener => listener(sessionData));
+  listeners.forEach((listener) => listener(sessionData));
 
   // Обновляем стор
   useLoginStore.getState().setAuthData({
@@ -109,7 +101,7 @@ export function markSessionUnauthorized(): void {
     token: '',
     user: null,
   };
-  listeners.forEach(listener => listener(sessionData));
+  listeners.forEach((listener) => listener(sessionData));
 
   // Обновляем стор
   useLoginStore.getState().setAuthData({
@@ -121,7 +113,7 @@ export function markSessionUnauthorized(): void {
 
 export function setSessionData(data: SessionData): void {
   sessionData = data;
-  listeners.forEach(listener => listener(sessionData));
+  listeners.forEach((listener) => listener(sessionData));
 }
 
 export function getSessionData(): SessionData {
@@ -132,13 +124,11 @@ export default function useSession(): { isAuth: boolean | 'load'; user: any; tok
   const [session, setSession] = useState<SessionData>(sessionData);
 
   useEffect(() => {
-    // Если сессия еще не загружена, запускаем загрузку
     if (session.isAuth === 'load') {
-      fetchSessionFromServer().then(() => {
+      void fetchSessionFromServer().then(() => {
         setSession(sessionData);
       });
     }
-
     const listener = (newData: SessionData) => {
       setSession(newData);
     };

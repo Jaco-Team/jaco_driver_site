@@ -11,9 +11,11 @@ import '../styles/settings.scss';
 import '../styles/setting_style.scss';
 
 import { useEffect } from 'react';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { log, hit, screenOpen } from '@/components/analytics';
 
+import { AppCacheProvider } from '@mui/material-nextjs/v16-pagesRouter';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import * as Sentry from '@sentry/react';
@@ -44,7 +46,11 @@ export function reportWebVitals(metric) {
   console.log(metric);
 }
 
-function MyApp({ Component, pageProps: { session, ...pageProps } }) {
+function MyApp(props) {
+  const {
+    Component,
+    pageProps: { session, ...pageProps },
+  } = props;
   const router = useRouter();
 
   useEffect(() => {
@@ -92,10 +98,15 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   }, [checkToken]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <YandexMetrika yid={104768072} />
-      <Component {...pageProps} />
-    </ThemeProvider>
+    <AppCacheProvider {...props}>
+      <Head>
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+      </Head>
+      <ThemeProvider theme={theme}>
+        <YandexMetrika yid={104768072} />
+        <Component {...pageProps} />
+      </ThemeProvider>
+    </AppCacheProvider>
   );
 }
 
