@@ -3,6 +3,7 @@ import { shallow } from 'zustand/shallow';
 
 import { api, http, fetchMe, getApiErrorInfo, getAuthErrorMessage, loginWeb } from './api.js';
 import { markSessionAuthenticated, markSessionUnauthorized } from './sessionHook.ts';
+import { fetchPriceBetween } from '@/entities/price/api/price.api';
 import { apiRoutes } from '@/shared/api/routes';
 
 import { log } from '@/components/analytics';
@@ -1353,30 +1354,8 @@ export const usePriceStore = createWithEqualityFn(
     statPrice: null,
     give_hist: [],
 
-    getStat: async (date, token) => {
-      const data = {
-        token: token,
-        type: 'get_my_price',
-        date: date,
-      };
-
-      const json = await api('price', data);
-
-      set({
-        statPrice: json?.stat ?? null,
-        give_hist: Array.isArray(json?.give_hist) ? json.give_hist : [],
-      });
-    },
-
-    getStatBetween: async (dateStart, dateEnd, token) => {
-      const data = {
-        token: token,
-        type: 'get_my_price_between',
-        dateStart,
-        dateEnd,
-      };
-
-      const json = await api('price', data);
+    getStatBetween: async (dateStart, dateEnd) => {
+      const json = await fetchPriceBetween(dateStart, dateEnd);
 
       set({
         statPrice: json?.stat ?? null,

@@ -9,6 +9,12 @@
 - The UI language is Russian. New copy should stay short, direct, and practical.
 - The interface should reduce cognitive load: fast scanning, large tap targets, low visual noise.
 
+## Output And Communication
+
+- Do not output diffs to chat unless explicitly requested.
+- Do not paste patch tool output, patch contents, colored code chunks, or generated diff-like blocks into chat unless explicitly requested.
+- When work is written to files, reply with a concise recap of what changed and what was verified.
+
 ## Stack
 
 - Next.js 16 with the pages router

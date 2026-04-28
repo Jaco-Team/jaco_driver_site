@@ -38,6 +38,9 @@ export const apiRoutes = {
     hideDeletedOrders: '/api/v1/orders/hide_del_orders',
     checkPayOrder: '/api/v1/orders/check_pay_order',
   },
+  price: {
+    between: '/api/v1/price/between',
+  },
 } as const;
 
 export function getLegacyModulePath(module: string = ''): string {

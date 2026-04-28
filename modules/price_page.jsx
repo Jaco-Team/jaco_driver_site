@@ -99,13 +99,9 @@ export default function PricePage() {
 
   useEffect(() => {
     if (session?.isAuth === true) {
-      getStatBetween(
-        dayjs(startDate).format('YYYY-MM-DD'),
-        dayjs(endDate).format('YYYY-MM-DD'),
-        session?.token
-      );
+      getStatBetween(dayjs(startDate).format('YYYY-MM-DD'), dayjs(endDate).format('YYYY-MM-DD'));
     }
-  }, [endDate, getStatBetween, session?.isAuth, session?.token, startDate]);
+  }, [endDate, getStatBetween, session?.isAuth, startDate]);
 
   const openPicker = (type) => {
     setDraftDate(type === 'start' ? startDate : endDate);
