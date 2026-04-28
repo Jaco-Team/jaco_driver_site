@@ -8,6 +8,8 @@ import { apiRoutes } from '@/shared/api/routes';
 
 import { log } from '@/components/analytics';
 
+const priceBetweenRequests = new Map();
+
 function unwrapSettingsPayload(payload) {
   if (
     payload &&
@@ -1355,7 +1357,17 @@ export const usePriceStore = createWithEqualityFn(
     give_hist: [],
 
     getStatBetween: async (dateStart, dateEnd) => {
-      const json = await fetchPriceBetween(dateStart, dateEnd);
+      const requestKey = `${dateStart}:${dateEnd}`;
+      let request = priceBetweenRequests.get(requestKey);
+
+      if (!request) {
+        request = fetchPriceBetween(dateStart, dateEnd).finally(() => {
+          priceBetweenRequests.delete(requestKey);
+        });
+        priceBetweenRequests.set(requestKey, request);
+      }
+
+      const json = await request;
 
       set({
         statPrice: json?.stat ?? null,

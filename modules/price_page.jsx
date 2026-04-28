@@ -10,6 +10,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
 
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -24,6 +25,7 @@ import useSession from '@/components/sessionHook';
 import Meta from '@/components/meta.js';
 
 import { roboto } from '@/shared/ui/Font';
+import { useFullscreen } from '@/shared/lib/useFullscreen';
 
 import { log } from '@/components/analytics';
 
@@ -79,7 +81,7 @@ function DateLauncher({ label, value, onClick, globalFontSize }) {
 export default function PricePage() {
   const session = useSession();
 
-  const [startDate, setStartDate] = useState(dayjs().startOf('day'));
+  const [startDate, setStartDate] = useState(dayjs().startOf('day').subtract(7, 'day'));
   const [endDate, setEndDate] = useState(dayjs().startOf('day'));
   const [activePicker, setActivePicker] = useState(null);
   const [draftDate, setDraftDate] = useState(dayjs().startOf('day'));
@@ -90,12 +92,15 @@ export default function PricePage() {
     state.getStatBetween,
   ]);
   const [globalFontSize] = useHeaderStore((state) => [state.globalFontSize]);
+  const pickerFullScreen = useFullscreen('xs');
 
   const formatPrice = (price) => new Intl.NumberFormat('ru-RU').format(price ?? 0);
   const formatDate = (date) => dayjs(date).locale('ru').format('D MMMM YYYY');
 
   const maxSelectableDate = dayjs().startOf('day');
   const minSelectableDate = maxSelectableDate.subtract(93, 'day');
+  const pickerMinDate = activePicker === 'end' ? startDate : minSelectableDate;
+  const pickerMaxDate = activePicker === 'start' ? endDate : maxSelectableDate;
 
   useEffect(() => {
     if (session?.isAuth === true) {
@@ -294,16 +299,29 @@ export default function PricePage() {
           onClose={closePicker}
           fullWidth
           maxWidth="xs"
+          fullScreen={pickerFullScreen}
           className="price__pickerDialog"
         >
-          <DialogTitle>{activePicker === 'start' ? 'Дата от' : 'Дата до'}</DialogTitle>
+          <DialogTitle>
+            {activePicker === 'start' ? 'Дата от' : 'Дата до'}
+            {pickerFullScreen ? (
+              <IconButton
+                aria-label="Закрыть"
+                className="price__pickerClose"
+                onClick={closePicker}
+                size="small"
+              >
+                <CloseIcon />
+              </IconButton>
+            ) : null}
+          </DialogTitle>
 
           <DialogContent>
             <DateCalendar
               value={draftDate}
               onChange={(value) => value && setDraftDate(value)}
-              minDate={minSelectableDate}
-              maxDate={maxSelectableDate}
+              minDate={pickerMinDate}
+              maxDate={pickerMaxDate}
             />
           </DialogContent>
 

@@ -6,7 +6,7 @@ import Meta from '@/components/meta';
 import { useProtectedRoute } from '@/shared/lib/session/useProtectedRoute';
 import { useHeaderStore } from '@/features/header/model/header.store';
 
-const DynamicHomePage = dynamic(() => import('@/modules/price_page.jsx'));
+const DynamicPricePage = dynamic(() => import('@/modules/price_page.jsx'));
 
 export default function Price() {
   const { isAuthenticated } = useProtectedRoute();
@@ -24,7 +24,7 @@ export default function Price() {
   return (
     <Meta title="Расчет">
       <AppHeader />
-      <DynamicHomePage />
+      <DynamicPricePage />
     </Meta>
   );
 }

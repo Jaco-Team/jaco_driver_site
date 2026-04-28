@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 
 import useSession from '@/components/sessionHook';
-import { useSettingsStore } from '@/entities/settings';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { getActiveMonthLabel } from '@/entities/graph/model/graph.utils';
 import { GraphMonthItem, GraphOrderError, GraphCameraError } from '@/entities/graph/model/types';
@@ -15,7 +14,6 @@ import { log } from '@/components/analytics';
 export default function GraphScreen() {
   const session = useSession();
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
-  const getMySetting = useSettingsStore((state) => state.getMySetting);
   const {
     isMonthDrawerOpen,
     errorModal,
@@ -72,13 +70,6 @@ export default function GraphScreen() {
   useEffect(() => {
     const fetchData = async () => {
       if (session?.isAuth === true) {
-        try {
-          const settings = await getMySetting(session?.token ?? '');
-          void settings;
-        } catch {
-          // Graph request will omit point_id when settings are unavailable.
-        }
-
         await loadGraph(dayjs().format('YYYY-MM'));
         setIsLoaded(true);
       }
@@ -87,7 +78,7 @@ export default function GraphScreen() {
     if (!isLoaded) {
       void fetchData();
     }
-  }, [getMySetting, isLoaded, loadGraph, session?.isAuth, session?.token]);
+  }, [isLoaded, loadGraph, session?.isAuth, session?.token]);
 
   const handleOpenMonthDrawer = () => {
     log('graph_month_picker_open', 'Открытие выбора месяца (График работы)');

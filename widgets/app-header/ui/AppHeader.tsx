@@ -728,7 +728,6 @@ export function AppHeader() {
     }
 
     checkMyPos();
-    getMyAvgTime(session.token ?? '');
 
     const intervalId = window.setInterval(() => {
       checkMyPos();
@@ -738,7 +737,7 @@ export function AppHeader() {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [checkMyPos, getMyAvgTime, session?.isAuth, session?.token]);
+  }, [session?.isAuth, session?.token]);
 
   const pageTitle = activePageRU || routeTitles[pathname] || '';
 

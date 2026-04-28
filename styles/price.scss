@@ -1,443 +1,455 @@
-@use "./settings" as *;
+@use './settings' as *;
 
-.price{ 
-    margin-top: 64px!important;
-    margin: 0;
-    padding-left: 20px;
-    padding-right: 20px;
+.price {
+  margin-top: 64px !important;
+  margin: 0;
+  padding-left: 20px;
+  padding-right: 20px;
+  width: 100%;
+  z-index: 3;
+
+  & .MuiGrid-item {
+    padding-left: 0;
+  }
+  & .MuiFormControl-root.MuiTextField-root {
     width: 100%;
-    z-index: 3;
+  }
 
-    & .MuiGrid-item{
-        padding-left: 0;
-    }
-    & .MuiFormControl-root.MuiTextField-root{
-        width: 100%;
-    }
+  & .dopPadding {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
 
-    & .dopPadding{
-        padding-top: 20px;
-        padding-bottom: 20px;
-    }
+  & h1,
+  h2 {
+    @include font75_700();
+    text-align: start;
+    width: 100%;
+  }
 
-    & h1, h2{
-        @include font75_700();
-        text-align: start;
-        width: 100%;
+  & p,
+  b,
+  span,
+  th,
+  td {
+    @include font30_400();
+  }
+
+  & b {
+    font-weight: 800 !important;
+  }
+  & li {
+    & > div {
+      padding-left: 0;
     }
-    
-    & p,b,span, th, td{
-        @include font30_400();
+    & span {
+      padding-left: 5px;
     }
-    
-    & b{
-        font-weight: 800!important;
-        
-    }
-    & li{ 
-        & > div{
-            padding-left: 0;
-        }
-        & span{
-            padding-left: 5px;
-        }
-    }
+  }
 }
 
 .priceScreen {
-    padding-bottom: 48px;
+  padding-bottom: 48px;
 
-    & .price__content,
-    & .price__dateLauncher,
-    & .price__card,
-    & .price__hero {
-        box-sizing: border-box;
-    }
+  & .price__content,
+  & .price__dateLauncher,
+  & .price__card,
+  & .price__hero {
+    box-sizing: border-box;
+  }
 
-    & .price__content {
-        width: 100%;
-        max-width: 760px;
-        margin: 0 auto;
-    }
+  & .price__content {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+  }
 
-    & .price__hero,
-    & .price__card {
-        width: 100%;
-        border-radius: 28px;
-        border: 1px solid rgba(37, 18, 22, 0.08);
-        background: #ffffff;
-        box-shadow: 0 18px 40px rgba(24, 17, 20, 0.08);
-    }
+  & .price__hero,
+  & .price__card {
+    width: 100%;
+    border-radius: 28px;
+    border: 1px solid rgba(37, 18, 22, 0.08);
+    background: #ffffff;
+    box-shadow: 0 18px 40px rgba(24, 17, 20, 0.08);
+  }
 
-    & .price__hero {
-        padding: 28px;
-    }
+  & .price__hero {
+    padding: 28px;
+  }
 
-    & .price__hero--minimal {
-        padding-top: 24px;
-        padding-bottom: 24px;
-
-        & .price__heroTop {
-            justify-content: center;
-        }
-
-        & .price__heroMain {
-            width: 100%;
-            text-align: center;
-        }
-
-        & .price__heroTitle {
-            margin: 0 0 20px;
-            text-align: center;
-        }
-
-        & .price__heroActions {
-            margin-top: 0;
-        }
-    }
+  & .price__hero--minimal {
+    padding-top: 24px;
+    padding-bottom: 24px;
 
     & .price__heroTop {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 18px;
+      justify-content: center;
     }
 
     & .price__heroMain {
-        min-width: 0;
-    }
-
-    & .price__eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        @include font_custom(0.84rem, 800, rgba(66, 98, 125, 0.82));
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
+      width: 100%;
+      text-align: center;
     }
 
     & .price__heroTitle {
-        margin: 12px 0 10px;
-        @include font_custom(clamp(2rem, 4.6vw, 3rem), 800, #1e1216);
-        line-height: 1.02;
-    }
-
-    & .price__heroText {
-        margin: 0;
-        max-width: 700px;
-        @include font_custom(1rem, 400, $colorTextMuted);
-        line-height: 1.65;
+      margin: 0 0 20px;
+      text-align: center;
     }
 
     & .price__heroActions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-        margin-top: 24px;
+      margin-top: 0;
+    }
+  }
+
+  & .price__heroTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  & .price__heroMain {
+    min-width: 0;
+  }
+
+  & .price__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    @include font_custom(0.84rem, 800, rgba(66, 98, 125, 0.82));
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  & .price__heroTitle {
+    margin: 12px 0 10px;
+    @include font_custom(clamp(2rem, 4.6vw, 3rem), 800, #1e1216);
+    line-height: 1.02;
+  }
+
+  & .price__heroText {
+    margin: 0;
+    max-width: 700px;
+    @include font_custom(1rem, 400, $colorTextMuted);
+    line-height: 1.65;
+  }
+
+  & .price__heroActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  & .price__heroSubmit {
+    margin-top: 18px;
+  }
+
+  & .price__dateLauncher {
+    width: 100%;
+    border: 1px solid $colorSecondaryBorder;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, $colorSurfaceSoft 100%);
+    box-shadow: 0 12px 24px rgba(24, 17, 20, 0.05);
+    min-height: 82px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 6px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  & .price__dateLauncherLabel {
+    @include font_custom(0.84rem, 800, $colorTextMuted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  & .price__dateLauncherValue {
+    @include font_custom(1.15rem, 700, $colorSecondaryDeep);
+    line-height: 1.25;
+  }
+
+  & .price__card {
+    overflow: hidden;
+    padding: 0 0 10px;
+  }
+
+  & .price__card--compact {
+    padding-bottom: 10px;
+  }
+
+  & .price__card--plain {
+    padding-top: 12px;
+  }
+
+  & .price__cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 22px 18px;
+  }
+
+  & .price__cardHeaderMain {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  & .price__cardIcon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    background: $colorSecondarySoft;
+    color: $colorSecondary;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+  }
+
+  & .price__cardHeading {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 0;
+  }
+
+  & .price__cardTitle {
+    margin: 0;
+    @include font_custom(1.42rem, 800, #1f1015);
+    line-height: 1.08;
+  }
+
+  & .price__cardDescription {
+    margin: 8px 0 0;
+    @include font_custom(0.98rem, 400, $colorTextMuted);
+    line-height: 1.55;
+  }
+
+  & .price__total {
+    padding: 0 22px;
+    @include font_custom(3.2rem, 800, $colorSecondaryDeep);
+    text-align: center;
+    line-height: 1;
+    margin: 20px 0 20px;
+  }
+
+  & .price__metrics {
+    padding: 0 22px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  & .price__metricRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid #f0ebed;
+  }
+
+  & .price__metricRow--last {
+    border-bottom: none;
+  }
+
+  & .price__metricLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+
+    & > span {
+      @include font_custom(1.05rem, 600, #312126);
+      line-height: 1.3;
+    }
+  }
+
+  & .price__metricLabel--emphasis {
+    & > span {
+      font-weight: 800;
+      color: $colorSecondaryDeep;
+    }
+  }
+
+  & .price__metricValue {
+    @include font_custom(1.05rem, 600, #312126);
+    min-width: 0;
+    max-width: 42%;
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  & .price__metricValue--emphasis {
+    font-weight: 800;
+    color: $colorSecondaryDeep;
+  }
+
+  & .price__metricInfo {
+    color: $colorTextMuted;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  & .price__pickerDialog {
+    & .MuiDialog-paper {
+      border-radius: 24px;
+      box-shadow: 0 20px 44px rgba(15, 23, 42, 0.18);
     }
 
-    & .price__heroSubmit {
-        margin-top: 18px;
+    & .MuiDialogTitle-root {
+      position: relative;
+      @include font_custom(1.15rem, 800, $colorSecondaryDeep);
+      padding: 18px 56px 4px;
+      text-align: center;
+    }
+
+    & .price__pickerClose {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      color: $colorTextMuted;
+    }
+
+    & .MuiDialogContent-root {
+      padding-top: 8px;
+    }
+
+    & .MuiDialogActions-root {
+      padding: 0 20px 20px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    padding-left: 16px;
+    padding-right: 16px;
+
+    & .price__hero,
+    & .price__card {
+      border-radius: 24px;
+    }
+
+    & .price__hero {
+      padding: 22px 18px;
+    }
+
+    & .price__hero--minimal {
+      padding-top: 18px;
+      padding-bottom: 18px;
+
+      & .price__heroTitle {
+        margin-bottom: 18px;
+      }
+    }
+
+    & .price__heroActions {
+      grid-template-columns: 1fr;
+      margin-top: 20px;
     }
 
     & .price__dateLauncher {
-        width: 100%;
-        border: 1px solid $colorSecondaryBorder;
-        border-radius: 18px;
-        background: linear-gradient(180deg, #ffffff 0%, $colorSurfaceSoft 100%);
-        box-shadow: 0 12px 24px rgba(24, 17, 20, 0.05);
-        min-height: 82px;
-        padding: 18px 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: center;
-        gap: 6px;
-        text-align: left;
-        cursor: pointer;
-    }
-
-    & .price__dateLauncherLabel {
-        @include font_custom(0.84rem, 800, $colorTextMuted);
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-    }
-
-    & .price__dateLauncherValue {
-        @include font_custom(1.15rem, 700, $colorSecondaryDeep);
-        line-height: 1.25;
+      min-height: 74px;
+      padding: 16px 18px;
     }
 
     & .price__card {
-        overflow: hidden;
-        padding: 0 0 10px;
-    }
-
-    & .price__card--compact {
-        padding-bottom: 10px;
+      padding-bottom: 8px;
     }
 
     & .price__card--plain {
-        padding-top: 12px;
+      padding-top: 8px;
     }
 
     & .price__cardHeader {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 22px 22px 18px;
-    }
-
-    & .price__cardHeaderMain {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        min-width: 0;
-    }
-
-    & .price__cardIcon {
-        display: grid;
-        place-items: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 16px;
-        background: $colorSecondarySoft;
-        color: $colorSecondary;
-        font-size: 1.35rem;
-        flex-shrink: 0;
-    }
-
-    & .price__cardHeading {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-height: 44px;
-        min-width: 0;
-    }
-
-    & .price__cardTitle {
-        margin: 0;
-        @include font_custom(1.42rem, 800, #1f1015);
-        line-height: 1.08;
-    }
-
-    & .price__cardDescription {
-        margin: 8px 0 0;
-        @include font_custom(0.98rem, 400, $colorTextMuted);
-        line-height: 1.55;
-    }
-
-    & .price__total {
-        padding: 0 22px;
-        @include font_custom(3.2rem, 800, $colorSecondaryDeep);
-        text-align: center;
-        line-height: 1;
-        margin: 20px 0 20px;
-    }
-
-    & .price__metrics {
-        padding: 0 22px;
-        width: 100%;
-        box-sizing: border-box;
+      padding: 20px 18px 16px;
     }
 
     & .price__metricRow {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 16px 0;
-        border-bottom: 1px solid #f0ebed;
+      padding: 14px 0;
     }
 
-    & .price__metricRow--last {
-        border-bottom: none;
+    & .price__metrics,
+    & .price__total {
+      padding-left: 18px;
+      padding-right: 18px;
     }
 
-    & .price__metricLabel {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 0;
-        flex: 1;
-
-        & > span {
-            @include font_custom(1.05rem, 600, #312126);
-            line-height: 1.3;
-        }
-    }
-
-    & .price__metricLabel--emphasis {
-        & > span {
-            font-weight: 800;
-            color: $colorSecondaryDeep;
-        }
-    }
-
-    & .price__metricValue {
-        @include font_custom(1.05rem, 600, #312126);
-        min-width: 0;
-        max-width: 42%;
-        text-align: right;
-        white-space: normal;
-        overflow-wrap: anywhere;
-    }
-
-    & .price__metricValue--emphasis {
-        font-weight: 800;
-        color: $colorSecondaryDeep;
-    }
-
-    & .price__metricInfo {
-        color: $colorTextMuted;
-        padding: 0;
-        width: 24px;
-        height: 24px;
-        font-size: 24px;
-        flex-shrink: 0;
-    }
-
-    & .price__pickerDialog {
-        & .MuiDialog-paper {
-            border-radius: 24px;
-            box-shadow: 0 20px 44px rgba(15, 23, 42, 0.18);
-        }
-
-        & .MuiDialogTitle-root {
-            @include font_custom(1.15rem, 800, $colorSecondaryDeep);
-            padding-bottom: 4px;
-            text-align: center;
-        }
-
-        & .MuiDialogContent-root {
-            padding-top: 8px;
-        }
-
-        & .MuiDialogActions-root {
-            padding: 0 20px 20px;
-        }
-    }
-
-    @media (max-width: 600px) {
-        padding-left: 16px;
-        padding-right: 16px;
-
-        & .price__hero,
-        & .price__card {
-            border-radius: 24px;
-        }
-
-        & .price__hero {
-            padding: 22px 18px;
-        }
-
-        & .price__hero--minimal {
-            padding-top: 18px;
-            padding-bottom: 18px;
-
-            & .price__heroTitle {
-                margin-bottom: 18px;
-            }
-        }
-
-        & .price__heroActions {
-            grid-template-columns: 1fr;
-            margin-top: 20px;
-        }
-
-        & .price__dateLauncher {
-            min-height: 74px;
-            padding: 16px 18px;
-        }
-
-        & .price__card {
-            padding-bottom: 8px;
-        }
-
-        & .price__card--plain {
-            padding-top: 8px;
-        }
-
-        & .price__cardHeader {
-            padding: 20px 18px 16px;
-        }
-
-        & .price__metricRow {
-            padding: 14px 0;
-        }
-
-        & .price__metrics,
-        & .price__total {
-            padding-left: 18px;
-            padding-right: 18px;
-        }
-
-        & .price__metricLabel,
-        & .price__metricValue,
-        & .price__dateLauncherLabel,
-        & .price__dateLauncherValue,
-        & .price__heroText,
-        & .price__cardDescription {
-            font-size: 1.05rem !important;
-        }
-
-        & .price__heroTitle {
-            font-size: 2rem;
-        }
-    }
-}
-
-.statisticsScreen {
-    & .price__heroTop {
-        gap: 0;
+    & .price__metricLabel,
+    & .price__metricValue,
+    & .price__dateLauncherLabel,
+    & .price__dateLauncherValue,
+    & .price__heroText,
+    & .price__cardDescription {
+      font-size: 1.05rem !important;
     }
 
     & .price__heroTitle {
-        margin-bottom: 0;
+      font-size: 2rem;
+    }
+  }
+}
+
+.statisticsScreen {
+  & .price__heroTop {
+    gap: 0;
+  }
+
+  & .price__heroTitle {
+    margin-bottom: 0;
+  }
+
+  & .statistics__submit {
+    width: 100%;
+    min-height: 58px;
+    border-radius: 18px;
+    background: $colorMain;
+    box-shadow: 0 14px 30px rgba(166, 0, 42, 0.22);
+    text-transform: none;
+    font-weight: 700;
+
+    &:hover {
+      background: $colorMainDark;
+    }
+  }
+
+  & .statistics__card {
+    padding-bottom: 10px;
+  }
+
+  & .statistics__emptyCard {
+    padding-bottom: 28px;
+  }
+
+  & .statistics__emptyText {
+    margin: 0 22px;
+    text-align: center;
+    @include font_custom(1.05rem, 500, #5d5d5d);
+    line-height: 1.45;
+  }
+
+  @media (max-width: 600px) {
+    & .price__metricRow {
+      align-items: flex-start;
     }
 
-    & .statistics__submit {
-        width: 100%;
-        min-height: 58px;
-        border-radius: 18px;
-        background: $colorMain;
-        box-shadow: 0 14px 30px rgba(166, 0, 42, 0.22);
-        text-transform: none;
-        font-weight: 700;
-
-        &:hover {
-            background: $colorMainDark;
-        }
-    }
-
-    & .statistics__card {
-        padding-bottom: 10px;
-    }
-
-    & .statistics__emptyCard {
-        padding-bottom: 28px;
+    & .price__metricValue {
+      max-width: 46%;
     }
 
     & .statistics__emptyText {
-        margin: 0 22px;
-        text-align: center;
-        @include font_custom(1.05rem, 500, #5d5d5d);
-        line-height: 1.45;
+      margin-left: 18px;
+      margin-right: 18px;
     }
-
-    @media (max-width: 600px) {
-        & .price__metricRow {
-            align-items: flex-start;
-        }
-
-        & .price__metricValue {
-            max-width: 46%;
-        }
-
-        & .statistics__emptyText {
-            margin-left: 18px;
-            margin-right: 18px;
-        }
-    }
+  }
 }

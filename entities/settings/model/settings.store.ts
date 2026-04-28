@@ -59,6 +59,29 @@ interface SettingsActions {
 
 type SettingsStore = SettingsState & SettingsActions;
 
+let settingsFetchPromise: Promise<SettingsResponse> | null = null;
+
+function normalizeSettingsPayload(payload: DriverSettingsPayload): {
+  settings: SettingsResponse;
+  pointId: number | null;
+  points: Point[];
+  cityId: string;
+} {
+  const settings = unwrapSettingsPayload(payload);
+  const normalizedSettings = {
+    ...settings,
+    type_data_map: normalizeTypeDataMapForUi(settings?.type_data_map),
+    type_show_del: normalizeTypeShowDelForUi(settings?.type_show_del),
+  } as SettingsResponse;
+
+  return {
+    settings: normalizedSettings,
+    pointId: normalizePointId(settings?.point_id),
+    points: Array.isArray(payload?.all_points) ? payload.all_points : [],
+    cityId: normalizeIdString(settings?.city_id),
+  };
+}
+
 export const useSettingsStore = createWithEqualityFn<SettingsStore>(
   (set, get) => ({
     isClick: false,
@@ -144,25 +167,37 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       set({ pointId: id, point_id: id });
     },
 
-    getMySetting: async (token: string) => {
-      const payload = (await fetchDriverSettings()) as DriverSettingsPayload;
-      const settings = unwrapSettingsPayload(payload);
-      const normalizedSettings = {
-        ...settings,
-        type_data_map: normalizeTypeDataMapForUi(settings?.type_data_map),
-        type_show_del: normalizeTypeShowDelForUi(settings?.type_show_del),
-      };
-      const normalizedPointId = normalizePointId(settings?.point_id);
+    getMySetting: async (_token: string) => {
+      const current = get();
 
-      set({
-        settings: normalizedSettings as SettingsResponse,
-        pointId: normalizedPointId,
-        points: Array.isArray(payload?.all_points) ? payload.all_points : [],
-        cityId: normalizeIdString(settings?.city_id),
-        point_id: normalizedPointId,
-      });
+      if (current.settings) {
+        return current.settings;
+      }
 
-      return normalizedSettings as SettingsResponse;
+      if (settingsFetchPromise) {
+        return settingsFetchPromise;
+      }
+
+      settingsFetchPromise = (async () => {
+        const payload = (await fetchDriverSettings()) as DriverSettingsPayload;
+        const normalized = normalizeSettingsPayload(payload);
+
+        set({
+          settings: normalized.settings,
+          pointId: normalized.pointId,
+          points: normalized.points,
+          cityId: normalized.cityId,
+          point_id: normalized.pointId,
+        });
+
+        return normalized.settings;
+      })();
+
+      try {
+        return await settingsFetchPromise;
+      } finally {
+        settingsFetchPromise = null;
+      }
     },
   }),
   shallow

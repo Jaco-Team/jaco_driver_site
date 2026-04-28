@@ -46,6 +46,10 @@ interface HeaderActions {
 
 type HeaderStore = HeaderState & HeaderActions;
 
+let avgTimePromise: Promise<string> | null = null;
+let pointPhonesPromise: Promise<PointPhonesPayload> | null = null;
+let pointPhonesKey = '';
+
 function normalizeBoolLike(value: any): boolean {
   if (value === true || value === 1 || value === '1') {
     return true;
@@ -133,7 +137,13 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     getMyAvgTime: async (_token: string) => {
-      const avgTime = await fetchDriverAverageTime();
+      if (!avgTimePromise) {
+        avgTimePromise = fetchDriverAverageTime().finally(() => {
+          avgTimePromise = null;
+        });
+      }
+
+      const avgTime = await avgTimePromise;
       set({ avgTime });
     },
 
@@ -198,7 +208,17 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
             ? settingsPointId
             : 1;
 
-      const phones = await fetchPointPhones(resolvedPointId);
+      const nextPointPhonesKey = `${resolvedPointId}`;
+
+      if (!pointPhonesPromise || pointPhonesKey !== nextPointPhonesKey) {
+        pointPhonesKey = nextPointPhonesKey;
+        pointPhonesPromise = fetchPointPhones(resolvedPointId).finally(() => {
+          pointPhonesPromise = null;
+          pointPhonesKey = '';
+        });
+      }
+
+      const phones = await pointPhonesPromise;
       set({ phones, token });
     },
   }),

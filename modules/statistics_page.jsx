@@ -13,6 +13,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import QueryStatsRoundedIcon from '@mui/icons-material/QueryStatsRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import SummarizeRoundedIcon from '@mui/icons-material/SummarizeRounded';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -25,8 +26,10 @@ import 'dayjs/locale/ru';
 
 import Meta from '@/components/meta.js';
 import { roboto } from '@/shared/ui/Font';
+import { useFullscreen } from '@/shared/lib/useFullscreen';
 
 import { log } from '@/components/analytics';
+import { IconButton } from '@mui/material';
 
 const MAX_SPAN_DAYS = 93;
 const fmt = (date) => dayjs(date).format('YYYY-MM-DD');
@@ -222,6 +225,7 @@ export default function StatisticsPage() {
     state.is_load,
   ]);
   const [globalFontSize] = useHeaderStore((state) => [state.globalFontSize]);
+  const pickerFullScreen = useFullscreen('xs');
 
   const isSummaryRow = (row) => !row?.driver_id && !row?.user_id && !row?.name;
   const getRowUserId = (row) => `${row?.driver_id ?? row?.user_id ?? ''}`;
@@ -462,9 +466,22 @@ export default function StatisticsPage() {
           onClose={closePicker}
           fullWidth
           maxWidth="xs"
+          fullScreen={pickerFullScreen}
           className="price__pickerDialog"
         >
-          <DialogTitle>{activePicker === 'start' ? 'Дата от' : 'Дата до'}</DialogTitle>
+          <DialogTitle>
+            {activePicker === 'start' ? 'Дата от' : 'Дата до'}
+            {pickerFullScreen ? (
+              <IconButton
+                aria-label="Закрыть"
+                className="price__pickerClose"
+                onClick={closePicker}
+                size="small"
+              >
+                <CloseIcon />
+              </IconButton>
+            ) : null}
+          </DialogTitle>
 
           <DialogContent>
             <DateCalendar

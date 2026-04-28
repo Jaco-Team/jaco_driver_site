@@ -2,6 +2,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import type { Dayjs } from 'dayjs';
+import { useFullscreen } from '@/shared/lib/useFullscreen';
 
 import 'dayjs/locale/ru';
 
@@ -28,6 +29,13 @@ export default function MyDatepicker({
   onClose,
   ...props
 }: MyDatepickerProps) {
+  const fullScreen = useFullscreen('xs');
+  const slotProps = props.slotProps && typeof props.slotProps === 'object' ? props.slotProps : {};
+  const dialogSlotProps =
+    'dialog' in slotProps && slotProps.dialog && typeof slotProps.dialog === 'object'
+      ? slotProps.dialog
+      : {};
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
       <DatePicker
@@ -41,6 +49,13 @@ export default function MyDatepicker({
         onOpen={onOpen}
         onClose={onClose}
         {...props}
+        slotProps={{
+          ...slotProps,
+          dialog: {
+            ...dialogSlotProps,
+            fullScreen,
+          },
+        }}
         sx={{
           '& .MuiInputLabel-root': {
             fontSize,

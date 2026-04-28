@@ -91,11 +91,10 @@ function MyApp(props) {
   useEffect(() => {
     const initAuth = async () => {
       await refreshSession();
-      await checkToken();
     };
 
     initAuth();
-  }, [checkToken]);
+  }, []);
 
   return (
     <AppCacheProvider {...props}>

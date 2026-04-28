@@ -49,6 +49,9 @@ interface GraphStoreActions {
 
 type GraphStore = GraphStoreState & GraphStoreActions;
 
+let graphLoadPromise: Promise<void> | null = null;
+let graphLoadKey = '';
+
 const initialGraphState = {
   selectedPointId: '',
   monthList: [],
@@ -88,6 +91,18 @@ function resolveGraphPointId(explicitPointId: string | undefined, selectedPointI
   }
 
   return `${settingsPointId}`.trim();
+}
+
+async function ensureSettingsLoaded(): Promise<void> {
+  if (useSettingsStore.getState().settings) {
+    return;
+  }
+
+  try {
+    await useSettingsStore.getState().getMySetting('');
+  } catch {
+    // Graph can still load without point_id when settings are unavailable.
+  }
 }
 
 export const useGraphStore = createWithEqualityFn<GraphStore>(
@@ -141,13 +156,31 @@ export const useGraphStore = createWithEqualityFn<GraphStore>(
     },
 
     loadGraph: async (date, pointId) => {
-      const nextPointId = resolveGraphPointId(pointId, get().selectedPointId);
-      const response = await fetchGraph(date, nextPointId || undefined);
+      await ensureSettingsLoaded();
 
-      set({
-        ...normalizeGraphResponse(response, date),
-        selectedPointId: nextPointId,
-      });
+      const nextPointId = resolveGraphPointId(pointId, get().selectedPointId);
+      const nextKey = `${date}:${nextPointId}`;
+
+      if (graphLoadPromise && graphLoadKey === nextKey) {
+        return graphLoadPromise;
+      }
+
+      graphLoadKey = nextKey;
+      graphLoadPromise = (async () => {
+        const response = await fetchGraph(date, nextPointId || undefined);
+
+        set({
+          ...normalizeGraphResponse(response, date),
+          selectedPointId: nextPointId,
+        });
+      })();
+
+      try {
+        return await graphLoadPromise;
+      } finally {
+        graphLoadPromise = null;
+        graphLoadKey = '';
+      }
     },
 
     submitOrderAppeal: async () => {

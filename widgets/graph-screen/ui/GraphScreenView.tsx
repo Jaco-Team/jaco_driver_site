@@ -89,8 +89,13 @@ export function GraphScreenView({
                 <span className="graph__eyebrow">График работы</span>
               </div>
 
-              <Grid container spacing={1.5} justifyContent="flex-end">
-                <Grid>
+              <Grid
+                container
+                spacing={1.5}
+                justifyContent="flex-end"
+                className="graph__monthAction"
+              >
+                <Grid className="graph__monthActionItem">
                   <Button
                     variant="outlined"
                     className="graph__monthButton"
