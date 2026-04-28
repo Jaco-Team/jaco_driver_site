@@ -19,6 +19,16 @@ import {
   buildSaveSettingsPayload,
 } from './settings.utils';
 
+function normalizePointId(value: unknown): number | null {
+  if (value === null || value === undefined || `${value}`.trim() === '') {
+    return null;
+  }
+
+  const parsed = parseInt(`${value}`, 10);
+
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 interface SettingsState {
   isClick: boolean;
   settings: SettingsResponse | null;
@@ -94,14 +104,22 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
 
       try {
         const response = await connector.rest.post<
-          { data?: SaveSettingsPayload; message?: string },
+          { data?: SaveSettingsPayload; settings?: SettingsResponse; message?: string },
           SaveSettingsPayload
         >(apiRoutes.settings.save, data);
         log('settings_save_success', 'Успешное сохранение настроек');
+        const savedSettings = response?.settings ?? response?.data;
+        const savedPointId = normalizePointId(savedSettings?.point_id ?? data.point_id);
+        set({
+          settings: savedSettings ? (savedSettings as SettingsResponse) : get().settings,
+          pointId: savedPointId,
+          point_id: savedPointId,
+          cityId: normalizeIdString(savedSettings?.city_id ?? get().cityId),
+        });
         return {
           st: true,
           text: response?.message || 'Сохранено',
-          data: response?.data,
+          data: savedSettings,
         };
       } catch (e) {
         const errorInfo = getApiErrorInfo(e);
@@ -123,7 +141,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
     },
 
     setPointId: (id: number | null) => {
-      set({ pointId: id });
+      set({ pointId: id, point_id: id });
     },
 
     getMySetting: async (token: string) => {
@@ -134,17 +152,14 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         type_data_map: normalizeTypeDataMapForUi(settings?.type_data_map),
         type_show_del: normalizeTypeShowDelForUi(settings?.type_show_del),
       };
+      const normalizedPointId = normalizePointId(settings?.point_id);
+
       set({
         settings: normalizedSettings as SettingsResponse,
-        pointId: payload.pointId ?? null,
+        pointId: normalizedPointId,
         points: Array.isArray(payload?.all_points) ? payload.all_points : [],
         cityId: normalizeIdString(settings?.city_id),
-        point_id:
-          settings?.point_id === null ||
-          settings?.point_id === undefined ||
-          normalizeIdString(settings?.point_id) === ''
-            ? null
-            : parseInt(normalizeIdString(settings?.point_id), 10),
+        point_id: normalizedPointId,
       });
 
       return normalizedSettings as SettingsResponse;

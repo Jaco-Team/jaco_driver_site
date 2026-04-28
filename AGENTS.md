@@ -30,7 +30,7 @@
 
 - `pages/*`: route entrypoints only
 - `widgets/*-screen`: full screens and large page composition
-- `widgets/app-header`: app header entrypoint during migration away from `modules/header.jsx`
+- `widgets/app-header`: app header entrypoint
 - `features/*`: user actions and flows
 - `entities/*`: domain state, API adapters, normalization, entity-level UI
 - `shared/api/*`: transport, API clients, legacy wrappers

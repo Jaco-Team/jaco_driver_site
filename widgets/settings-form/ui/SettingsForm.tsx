@@ -75,7 +75,9 @@ export const SettingsForm: React.FC = () => {
     { id: -1, city_id: -1, base: '', name: 'Все точки' },
     ...points.filter((p) => p.id !== -1),
   ];
-  const currentPoint = pointOptions.find((p) => String(p.id) === String(pointId)) || null;
+  const allPointsOption = pointOptions[0] ?? null;
+  const currentPoint =
+    pointOptions.find((p) => String(p.id) === String(pointId ?? -1)) || allPointsOption;
 
   return (
     <>
@@ -98,9 +100,7 @@ export const SettingsForm: React.FC = () => {
             options={pointOptions}
             value={currentPoint}
             onChange={(newValue: Point | null) => {
-              if (newValue) {
-                setPointId(newValue.id);
-              }
+              setPointId(newValue?.id ?? -1);
             }}
             placeholder="Выберите точку"
             fontSize={globalFontSize}

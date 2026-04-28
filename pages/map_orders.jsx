@@ -1,14 +1,15 @@
 import React, { useEffect } from 'react';
 
 import dynamic from 'next/dynamic';
+import { AppHeader } from '@/widgets/app-header/ui/AppHeader';
 
 import Meta from '@/components/meta';
 import { useProtectedRoute } from '@/shared/lib/session/useProtectedRoute';
+import { useHeaderStore } from '@/features/header/model/header.store';
 
-const DynamicHeader = dynamic(() => import('@/modules/header.jsx'));
 const DynamicHomePage = dynamic(() => import('@/modules/map.jsx'));
 
-import { useOrdersStore, useHeaderStore } from '@/components/store.js';
+import { useOrdersStore } from '@/components/store.js';
 
 export default function Map() {
   const { isAuthenticated, session } = useProtectedRoute();
@@ -36,7 +37,7 @@ export default function Map() {
 
   return (
     <Meta title="Карта заказов">
-      <DynamicHeader />
+      <AppHeader />
       <DynamicHomePage />
     </Meta>
   );

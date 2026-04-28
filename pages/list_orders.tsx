@@ -1,10 +1,8 @@
 import React from 'react';
-import dynamic from 'next/dynamic';
+import { AppHeader } from '@/widgets/app-header/ui/AppHeader';
 import Meta from '@/components/meta';
 import { useProtectedRoute } from '@/shared/lib/session/useProtectedRoute';
 import { OrdersPage } from '@/widgets/order/ui/OrdersPage';
-
-const DynamicHeader = dynamic(() => import('@/modules/header.jsx'));
 
 export default function List() {
   const { isAuthenticated } = useProtectedRoute();
@@ -15,7 +13,7 @@ export default function List() {
 
   return (
     <Meta title="Список заказов">
-      <DynamicHeader />
+      <AppHeader />
       <OrdersPage />
     </Meta>
   );

@@ -297,7 +297,7 @@ Legacy код пока не удаляется автоматически.
 
 - [components/api.js](./components/api.js) — compatibility re-export на новый shared client
 - [components/store.js](./components/store.js) — legacy Zustand layer для старых modules/screens
-- [modules/header.jsx](./modules/header.jsx) и часть `modules/*` — совместимость для старых route entrypoints
+- часть `modules/*` — совместимость для старых route entrypoints
 
 Что считается кандидатами на удаление после полной миграции:
 

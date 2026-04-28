@@ -1,13 +1,12 @@
 import React, { useEffect } from 'react';
 
 import dynamic from 'next/dynamic';
+import { AppHeader } from '@/widgets/app-header/ui/AppHeader';
 import Meta from '@/components/meta';
 import { useProtectedRoute } from '@/shared/lib/session/useProtectedRoute';
+import { useHeaderStore } from '@/features/header/model/header.store';
 
-const DynamicHeader = dynamic(() => import('@/modules/header.jsx'));
 const DynamicHomePage = dynamic(() => import('@/modules/statistics_page.jsx'));
-
-import { useHeaderStore } from '@/components/store.js';
 
 export default function Statistics() {
   const { isAuthenticated } = useProtectedRoute();
@@ -24,7 +23,7 @@ export default function Statistics() {
 
   return (
     <Meta title="Статистика">
-      <DynamicHeader />
+      <AppHeader />
       <DynamicHomePage />
     </Meta>
   );
