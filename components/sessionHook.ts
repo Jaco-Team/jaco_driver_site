@@ -111,15 +111,6 @@ export function markSessionUnauthorized(): void {
   });
 }
 
-export function setSessionData(data: SessionData): void {
-  sessionData = data;
-  listeners.forEach((listener) => listener(sessionData));
-}
-
-export function getSessionData(): SessionData {
-  return sessionData;
-}
-
 export default function useSession(): { isAuth: boolean | 'load'; user: any; token: string } {
   const [session, setSession] = useState<SessionData>(sessionData);
 

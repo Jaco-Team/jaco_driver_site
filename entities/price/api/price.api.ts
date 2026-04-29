@@ -1,14 +1,14 @@
 import { connector } from '@/shared/api/connector';
 import { apiRoutes } from '@/shared/api/routes';
 
-export type PriceStat = Record<string, number | string | null>;
+type PriceStat = Record<string, number | string | null>;
 
-export type PriceGiveHistoryRow = {
+type PriceGiveHistoryRow = {
   give?: number | string | null;
   time?: string | null;
 };
 
-export type PriceBetweenResponse = {
+type PriceBetweenResponse = {
   stat: PriceStat | null;
   give_hist: PriceGiveHistoryRow[];
 };

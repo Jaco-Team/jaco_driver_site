@@ -1,6 +1,6 @@
 import { useOrdersStore } from '@/entities/order/model/order.store';
 
-export interface UseOrdersFiltersReturn {
+interface UseOrdersFiltersReturn {
   type: { id: number; text: string };
   limit: string;
   limitCount: string;
@@ -8,7 +8,7 @@ export interface UseOrdersFiltersReturn {
   showModalTypeDop: (isShow: boolean) => void;
 }
 
-export const useOrdersFilters = (): UseOrdersFiltersReturn => {
+const useOrdersFilters = (): UseOrdersFiltersReturn => {
   const { type, limit, limit_count, setOpenMenu, showModalTypeDop } = useOrdersStore((state) => ({
     type: state.type,
     limit: state.limit,

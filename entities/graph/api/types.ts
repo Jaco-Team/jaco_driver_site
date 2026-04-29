@@ -10,10 +10,3 @@ export interface GraphApiPayload {
   user_id?: string | number;
   user_name?: string;
 }
-
-export interface GraphPointPayload {
-  id?: string | number;
-  city_id?: string | number;
-  base?: string;
-  name?: string;
-}

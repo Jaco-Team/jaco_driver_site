@@ -14,7 +14,7 @@ interface SelectionTriggerProps {
   active?: boolean;
 }
 
-export const SelectionTrigger = forwardRef<HTMLButtonElement, SelectionTriggerProps>(
+const SelectionTrigger = forwardRef<HTMLButtonElement, SelectionTriggerProps>(
   function SelectionTrigger(
     {
       value,

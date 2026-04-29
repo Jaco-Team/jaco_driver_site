@@ -139,6 +139,30 @@ NEXT_PUBLIC_LEGACY_API_ORIGIN
 NEXT_PUBLIC_MEDIA_ORIGIN
 ```
 
+### Контракты Auth API
+
+Auth-маршруты описаны в [shared/api/routes.ts](/home/ted/JACO/git/driver/jaco_driver_site/shared/api/routes.ts) и вызываются через [shared/api/client.ts](/home/ted/JACO/git/driver/jaco_driver_site/shared/api/client.ts).
+
+Вход через web использует Laravel session cookies:
+
+- `POST /api/v1/auth/session/login`
+- запрос: `{ login: string, password: string, remember: boolean }`
+- ответ: payload текущего пользователя; после этого фронт вызывает `GET /api/v1/auth/me`
+
+Восстановление пароля работает через Laravel, не через legacy-модуль `auth`:
+
+- `POST /api/v1/auth/password/recovery/send-code`
+- запрос: `{ login: string, password: string }`
+- успешный ответ: `{ st: true }`
+- ошибка: `{ st: false, text: string, data?: unknown }`
+
+- `POST /api/v1/auth/password/recovery/confirm-code`
+- запрос: `{ login: string, code: string }`
+- успешный ответ: `{ st: true }`
+- ошибка: `{ st: false, text: string }`
+
+Поведение восстановления повторяет legacy-сценарий driver: backend отправляет SMS-код, хранит новый пароль как ожидающий подтверждения, после проверки кода обновляет пароль существующего пользователя, а frontend возвращает пользователя на `/list_orders`.
+
 Env-файлы:
 
 - [.env.example](./.env.example)

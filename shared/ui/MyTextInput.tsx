@@ -1,5 +1,5 @@
 import TextField from '@mui/material/TextField';
-import type { ChangeEvent, KeyboardEvent } from 'react';
+import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 
 interface MyTextInputProps {
   label?: string;
@@ -7,7 +7,8 @@ interface MyTextInputProps {
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   type?: string;
-  onKeyPress?: () => void;
+  onKeyPress?: (event: KeyboardEvent<HTMLInputElement>) => void;
+  endAdornment?: ReactNode;
 }
 
 export default function MyTextInput({
@@ -17,6 +18,7 @@ export default function MyTextInput({
   onBlur,
   type,
   onKeyPress,
+  endAdornment,
 }: MyTextInputProps) {
   return (
     <TextField
@@ -29,9 +31,10 @@ export default function MyTextInput({
       type={type}
       color="primary"
       style={{ width: '100%' }}
+      InputProps={endAdornment ? { endAdornment } : undefined}
       onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
         if (onKeyPress && event.key === 'Enter') {
-          onKeyPress();
+          onKeyPress(event);
         }
       }}
     />

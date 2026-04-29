@@ -22,10 +22,6 @@ function toStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.map((item) => toStringValue(item)).filter(Boolean) : [];
 }
 
-export function formatMoney(value: unknown): string {
-  return new Intl.NumberFormat('ru-RU').format(Number(value ?? 0));
-}
-
 export function isWeekend(dow: unknown): boolean {
   const normalized = String(dow ?? '')
     .trim()
@@ -33,7 +29,7 @@ export function isWeekend(dow: unknown): boolean {
   return normalized.includes('сб') || normalized.includes('вс');
 }
 
-export function toMonthStart(value: unknown): Dayjs | null {
+function toMonthStart(value: unknown): Dayjs | null {
   if (!value) {
     return null;
   }
@@ -43,15 +39,15 @@ export function toMonthStart(value: unknown): Dayjs | null {
   return parsed.isValid() ? parsed : null;
 }
 
-export function isTruthyFlag(value: unknown): boolean {
+function isTruthyFlag(value: unknown): boolean {
   return value === true || value === 1 || value === '1' || value === 'true';
 }
 
-export function getRowIdentifier(cellData: GraphScheduleCell | undefined): string {
+function getRowIdentifier(cellData: GraphScheduleCell | undefined): string {
   return `${cellData?.user_id ?? cellData?.driver_id ?? cellData?.id ?? ''}`;
 }
 
-export function normalizeUserName(value: unknown): string {
+function normalizeUserName(value: unknown): string {
   return String(value ?? '')
     .trim()
     .toLowerCase();
@@ -93,7 +89,7 @@ export function isTodayColumn(dayValue: unknown, chooseDate: string): boolean {
   return Number(dayValue) === dayjs().date();
 }
 
-export function normalizeGraphMonthItem(value: unknown): GraphMonthItem {
+function normalizeGraphMonthItem(value: unknown): GraphMonthItem {
   const record = toRecord(value);
 
   return {
@@ -104,7 +100,7 @@ export function normalizeGraphMonthItem(value: unknown): GraphMonthItem {
   };
 }
 
-export function normalizeGraphDateCell(value: unknown): GraphDateCell {
+function normalizeGraphDateCell(value: unknown): GraphDateCell {
   const record = toRecord(value);
 
   return {
@@ -114,7 +110,7 @@ export function normalizeGraphDateCell(value: unknown): GraphDateCell {
   };
 }
 
-export function normalizeGraphScheduleCell(value: unknown): GraphScheduleCell {
+function normalizeGraphScheduleCell(value: unknown): GraphScheduleCell {
   const record = toRecord(value);
   const base = record as Partial<GraphScheduleCell>;
 
@@ -128,7 +124,7 @@ export function normalizeGraphScheduleCell(value: unknown): GraphScheduleCell {
   };
 }
 
-export function normalizeGraphScheduleRow(value: unknown): GraphScheduleRow {
+function normalizeGraphScheduleRow(value: unknown): GraphScheduleRow {
   return Array.isArray(value) ? value.map((item) => normalizeGraphScheduleCell(item)) : [];
 }
 

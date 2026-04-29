@@ -4,7 +4,7 @@ import Button from '@mui/material/Button';
 import { OrderStats } from './components/OrderStats';
 import { OrderStatusModal } from './components/OrderStatusModal';
 
-export interface OrdersHeaderProps {
+interface OrdersHeaderProps {
   typeText: string;
   limit: string;
   limitCount: string;

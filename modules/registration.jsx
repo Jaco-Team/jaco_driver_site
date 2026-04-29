@@ -21,6 +21,7 @@ import { useLoginStore } from '@/components/store.js';
 import Meta from '@/components/meta.js';
 
 import MyTextInput from '@/shared/ui/MyTextInput';
+import PasswordInput from '@/shared/ui/PasswordInput';
 import { roboto } from '@/shared/ui/Font';
 
 import { log } from '@/components/analytics';
@@ -39,16 +40,20 @@ export default function RegistrationPage() {
   const [myPWD, setMyPWD] = useState('');
   const [myCode, setMyCode] = useState('');
 
-  const [sendSMS, sendCode] = useLoginStore((state) => [state.sendSMS, state.sendCode]);
+  const [requestPasswordRecoveryCode, confirmPasswordRecoveryCode] = useLoginStore((state) => [
+    state.requestPasswordRecoveryCode,
+    state.confirmPasswordRecoveryCode,
+  ]);
 
-  async function next1() {
-    if (myLogin.length == 0 || myPWD.length == 0) {
+  async function requestRecoveryCode() {
+    if (myLogin.length === 0 || myPWD.length === 0) {
       return;
     }
 
     setLoader(true);
+    setErr1('');
 
-    let res = await sendSMS(myLogin, myPWD);
+    const res = await requestPasswordRecoveryCode(myLogin, myPWD);
 
     if (res.st === true) {
       log('auth_send_sms', 'Отправка СМС-кода');
@@ -63,17 +68,18 @@ export default function RegistrationPage() {
     }, 300);
   }
 
-  async function next2() {
-    if (myCode.length != 4) {
+  async function confirmRecoveryCode() {
+    if (myCode.length !== 4) {
       return;
     }
 
     setLoader(true);
+    setErr2('');
 
-    let res = await sendCode(myLogin, myCode);
+    const res = await confirmPasswordRecoveryCode(myLogin, myCode);
 
     if (res.st === true) {
-      router.push('/list_orders', { scroll: false });
+      router.push('/auth', { scroll: false });
     } else {
       setErr2(res.text);
     }
@@ -133,12 +139,11 @@ export default function RegistrationPage() {
                     type={'text'}
                     onChange={(e) => setMyLogin(e.target.value)}
                   />
-                  <MyTextInput
+                  <PasswordInput
                     label="Новый пароль"
                     value={myPWD}
-                    type={'password'}
                     onChange={(e) => setMyPWD(e.target.value)}
-                    onKeyPress={() => next1()}
+                    onKeyPress={() => requestRecoveryCode()}
                   />
                 </>
               ) : (
@@ -146,7 +151,7 @@ export default function RegistrationPage() {
                   label="Код из смс"
                   value={myCode}
                   onChange={(e) => setMyCode(e.target.value)}
-                  onKeyPress={() => next2()}
+                  onKeyPress={() => confirmRecoveryCode()}
                 />
               )}
             </div>
@@ -161,7 +166,7 @@ export default function RegistrationPage() {
               variant="contained"
               fullWidth
               className="auth__primaryButton"
-              onClick={() => (activeStep === 0 ? next1() : next2())}
+              onClick={() => (activeStep === 0 ? requestRecoveryCode() : confirmRecoveryCode())}
             >
               {activeStep === 0 ? 'Получить код' : 'Подтвердить'}
             </Button>

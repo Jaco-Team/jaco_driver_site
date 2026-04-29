@@ -1,7 +1,7 @@
 import { ApiResponse, http } from '@/shared/api/client';
 import { connector } from '@/shared/api/connector';
 import { apiRoutes } from '@/shared/api/routes';
-import { GraphApiPayload, GraphPointPayload } from '@/entities/graph/api/types';
+import { GraphApiPayload } from '@/entities/graph/api/types';
 
 export async function fetchGraph(
   date: string,
@@ -14,11 +14,6 @@ export async function fetchGraph(
   }
 
   return connector.rest.post<GraphApiPayload, typeof payload>(apiRoutes.graph.root, payload);
-}
-
-export async function fetchGraphPoints(): Promise<GraphPointPayload[]> {
-  const { data } = await http.get<{ data?: GraphPointPayload[] }>(apiRoutes.settings.points);
-  return Array.isArray(data?.data) ? data.data : [];
 }
 
 export async function submitGraphOrderAppeal(

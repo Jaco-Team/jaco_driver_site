@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 
-export interface UseOrdersAutoRefreshOptions {
+interface UseOrdersAutoRefreshOptions {
   isEnabled?: boolean;
   onError?: (error: Error) => void;
 }

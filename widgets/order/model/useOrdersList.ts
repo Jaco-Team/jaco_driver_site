@@ -2,13 +2,13 @@
 import { useEffect } from 'react';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 
-export interface UseOrdersListReturn {
+interface UseOrdersListReturn {
   orders: any[];
   updateInterval: number;
   getOrders: (isReload?: boolean, pointId?: number) => Promise<void>;
 }
 
-export const useOrdersList = (): UseOrdersListReturn => {
+const useOrdersList = (): UseOrdersListReturn => {
   const { orders, getOrders, update_interval } = useOrdersStore((state) => ({
     orders: state.orders,
     getOrders: state.getOrders,

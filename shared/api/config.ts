@@ -11,7 +11,7 @@ function readEnv(key: string): string | undefined {
   return normalized.length > 0 ? normalized : undefined;
 }
 
-export function normalizeBaseUrl(value: string | undefined): string {
+function normalizeBaseUrl(value: string | undefined): string {
   return `${value || ''}`.replace(/\/+$/, '');
 }
 

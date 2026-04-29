@@ -41,6 +41,36 @@ export async function loginToken(
   });
 }
 
+export async function sendPasswordRecoveryCode(
+  login: string,
+  password: string
+): Promise<ApiResponse> {
+  await ensureCsrfCookie();
+
+  return connector.rest.post<ApiResponse, { login: string; password: string }>(
+    apiRoutes.auth.passwordRecoverySendCode,
+    {
+      login: login.trim(),
+      password,
+    }
+  );
+}
+
+export async function confirmPasswordRecoveryCode(
+  login: string,
+  code: string
+): Promise<ApiResponse> {
+  await ensureCsrfCookie();
+
+  return connector.rest.post<ApiResponse, { login: string; code: string }>(
+    apiRoutes.auth.passwordRecoveryConfirmCode,
+    {
+      login: login.trim(),
+      code,
+    }
+  );
+}
+
 export const fetchMe = async (): Promise<User> => connector.rest.get<User>(apiRoutes.auth.me);
 
 export async function fetchSessionMeta(): Promise<any> {

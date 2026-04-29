@@ -3,7 +3,11 @@ function sendToAllCounters(cb) {
   const ym = window.ym;
   const ids = window.__ymIds;
   if (!ym || !Array.isArray(ids) || !ids.length) return;
-  ids.forEach(id => { try { cb(id); } catch(e) {} });
+  ids.forEach((id) => {
+    try {
+      cb(id);
+    } catch (e) {}
+  });
 }
 
 /** отправка события в Метрику */
@@ -12,7 +16,7 @@ export function log(event, label, params, opts) {
   if (typeof window !== 'undefined') {
     console.debug('[YM] reachGoal', { event, payload, ids: window.__ymIds });
   }
-  sendToAllCounters(id => {
+  sendToAllCounters((id) => {
     const cb = opts && typeof opts.callback === 'function' ? opts.callback : undefined;
     window.ym(id, 'reachGoal', event, Object.keys(payload).length ? payload : undefined, cb);
   });
@@ -21,19 +25,19 @@ export function log(event, label, params, opts) {
 /** Читаемые названия страниц */
 const PAGE_TITLES = {
   '/list_orders': 'Список заказов',
-  '/map_orders':  'Карта заказов',
+  '/map_orders': 'Карта заказов',
   '/price': 'Расчёт',
   '/graph': 'График работы',
   '/statistics': 'Статистика',
   '/settings': 'Настройки',
   '/auth': 'Авторизация',
   '/auth/callback': 'SSO авторизация',
-  '/registration':'Восстановление пароля',
+  '/registration': 'Восстановление пароля',
   '/initial': 'Стартовая',
 };
 
 /** Резолвим человекочитаемый title для URL */
-export function resolveTitle(url, explicitTitle) {
+function resolveTitle(url, explicitTitle) {
   try {
     if (explicitTitle) return explicitTitle;
     const path = new URL(url, location.origin).pathname;
@@ -46,7 +50,7 @@ export function resolveTitle(url, explicitTitle) {
 /** Хит просмотра страницы (SPA) — назад совместим: hit(url) или hit(url, title) */
 export function hit(url, title) {
   const finalTitle = resolveTitle(url, title);
-  sendToAllCounters(id => {
+  sendToAllCounters((id) => {
     window.ym(id, 'hit', url, { title: finalTitle });
   });
 }
@@ -60,14 +64,22 @@ export function screenOpen(urlOrTitle) {
 
 // хвост телефона (последние N цифр)
 function phoneSuffix(phone, n = 4) {
-  return String(phone || '').replace(/\D/g, '').slice(-n);
+  return String(phone || '')
+    .replace(/\D/g, '')
+    .slice(-n);
 }
 
 // готовая функция для tel-кликов — вызываем прямо из onClick
 export function logTel(goal, phone, label, e) {
-  try { e?.preventDefault?.(); } catch {}
+  try {
+    e?.preventDefault?.();
+  } catch {}
   let done = false;
-  const go = () => { if (done) return; done = true; location.href = `tel:${phone}`; };
+  const go = () => {
+    if (done) return;
+    done = true;
+    location.href = `tel:${phone}`;
+  };
   log(goal, label, { phone_last: phoneSuffix(phone) }, { callback: go });
   setTimeout(go, 200);
 }

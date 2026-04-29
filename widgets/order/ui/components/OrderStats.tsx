@@ -2,7 +2,7 @@ import React from 'react';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 
-export interface OrderStatsProps {
+interface OrderStatsProps {
   limit: string;
   limitCount: string;
   globalFontSize: number;

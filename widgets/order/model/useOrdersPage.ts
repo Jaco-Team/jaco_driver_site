@@ -4,7 +4,7 @@ import useSession from '@/components/sessionHook';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 
-export interface UseOrdersPageReturn {
+interface UseOrdersPageReturn {
   isLoading: boolean;
   isAuth: boolean | 'load';
 }

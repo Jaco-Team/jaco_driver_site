@@ -1,7 +1,16 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 
-import { api, http, fetchMe, getApiErrorInfo, getAuthErrorMessage, loginWeb } from './api.js';
+import {
+  api,
+  http,
+  fetchMe,
+  getApiErrorInfo,
+  getAuthErrorMessage,
+  loginWeb,
+  sendPasswordRecoveryCode as requestPasswordRecoveryCodeApi,
+  confirmPasswordRecoveryCode as confirmPasswordRecoveryCodeApi,
+} from './api.js';
 import { markSessionAuthenticated, markSessionUnauthorized } from './sessionHook.ts';
 import { fetchPriceBetween } from '@/entities/price/api/price.api';
 import { apiRoutes } from '@/shared/api/routes';
@@ -1598,48 +1607,48 @@ export const useLoginStore = createWithEqualityFn(
       }
     },
 
-    sendSMS: async (login, pwd) => {
+    requestPasswordRecoveryCode: async (login, pwd) => {
       if (!get().is_load) {
         set({ is_load: true });
       } else {
-        return;
+        return { st: false, text: 'Подождите' };
       }
 
-      const data = {
-        type: 'get_sms',
-        login: login,
-        pwd: pwd,
-      };
-
-      const json = await api('auth', data);
-
-      if (json.st === true) {
-        // localStorage.setItem('token', json.token)
+      try {
+        return await requestPasswordRecoveryCodeApi(login, pwd);
+      } catch (error) {
+        const errorInfo = getApiErrorInfo(error);
+        return {
+          st: false,
+          text: getAuthErrorMessage(error, 'Не удалось отправить код восстановления.'),
+          status: errorInfo.status,
+          data: errorInfo.data,
+        };
+      } finally {
+        set({ is_load: false });
       }
-
-      set({ is_load: false });
-
-      return json;
     },
 
-    sendCode: async (login, code) => {
+    confirmPasswordRecoveryCode: async (login, code) => {
       if (!get().is_load) {
         set({ is_load: true });
       } else {
-        return;
+        return { st: false, text: 'Подождите' };
       }
 
-      const data = {
-        type: 'check_code',
-        login: login,
-        code: code,
-      };
-
-      const json = await api('auth', data);
-
-      set({ is_load: false });
-
-      return json;
+      try {
+        return await confirmPasswordRecoveryCodeApi(login, code);
+      } catch (error) {
+        const errorInfo = getApiErrorInfo(error);
+        return {
+          st: false,
+          text: getAuthErrorMessage(error, 'Не удалось подтвердить код восстановления.'),
+          status: errorInfo.status,
+          data: errorInfo.data,
+        };
+      } finally {
+        set({ is_load: false });
+      }
     },
 
     save_settings_format: async (value) => {

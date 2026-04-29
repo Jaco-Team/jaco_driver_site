@@ -14,6 +14,7 @@ import { useLoginStore } from '@/features/auth/model/login.store';
 import { redirectToSsoLogin } from '@/shared/api/client';
 
 import MyTextInput from '@/shared/ui/MyTextInput';
+import PasswordInput from '@/shared/ui/PasswordInput';
 import { roboto } from '@/shared/ui/Font';
 
 import { log } from '@/shared/api/client';
@@ -85,9 +86,8 @@ export default function AuthPage() {
                 value={myLogin}
                 onChange={(e) => setMyLogin(e.target.value)}
               />
-              <MyTextInput
+              <PasswordInput
                 label="Пароль"
-                type={'password'}
                 value={myPWD}
                 onChange={(e) => setMyPWD(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && loginFN()}

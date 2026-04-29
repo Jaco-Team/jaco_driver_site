@@ -11,6 +11,8 @@
 
 ## Output And Communication
 
+- Chat replies must be in English by default.
+- Project documentation and user-facing product copy must be written in Russian unless explicitly requested otherwise.
 - Do not output diffs to chat unless explicitly requested.
 - Do not paste patch tool output, patch contents, colored code chunks, or generated diff-like blocks into chat unless explicitly requested.
 - When work is written to files, reply with a concise recap of what changed and what was verified.

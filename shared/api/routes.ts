@@ -9,6 +9,8 @@ export const apiRoutes = {
   auth: {
     sessionLogin: '/api/v1/auth/session/login',
     tokenLogin: '/api/v1/auth/token/login',
+    passwordRecoverySendCode: '/api/v1/auth/password/recovery/send-code',
+    passwordRecoveryConfirmCode: '/api/v1/auth/password/recovery/confirm-code',
     me: '/api/v1/auth/me',
     sessionMeta: '/api/v1/auth/session/meta',
     logout: '/api/v1/auth/logout',

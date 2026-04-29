@@ -20,7 +20,7 @@ export interface Order {
   close_time_?: string;
 }
 
-export interface DrinkItem {
+interface DrinkItem {
   id?: number;
   name?: string;
   count?: number;
@@ -32,7 +32,7 @@ export interface OrderType {
   text: string;
 }
 
-export interface LocationCoords {
+interface LocationCoords {
   latitude: number;
   longitude: number;
 }

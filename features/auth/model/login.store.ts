@@ -8,6 +8,8 @@ import {
   getAuthErrorMessage,
   loginWeb,
   log,
+  sendPasswordRecoveryCode as requestPasswordRecoveryCodeApi,
+  confirmPasswordRecoveryCode as confirmPasswordRecoveryCodeApi,
 } from '@/shared/api/client';
 
 import { markSessionAuthenticated, markSessionUnauthorized } from '@/components/sessionHook';
@@ -30,8 +32,8 @@ interface LoginActions {
   setLoginErr: (err: string) => void;
   setAuthData: (data: any) => void;
   login: (login: string, pwd: string) => Promise<any>;
-  sendSMS: (login: string, pwd: string) => Promise<any>;
-  sendCode: (login: string, code: string) => Promise<any>;
+  requestPasswordRecoveryCode: (login: string, pwd: string) => Promise<any>;
+  confirmPasswordRecoveryCode: (login: string, code: string) => Promise<any>;
   save_settings_format: (value: string) => Promise<any>;
   check_token: () => Promise<any>;
 }
@@ -141,7 +143,7 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
       }
     },
 
-    sendSMS: async (login: string, pwd: string) => {
+    requestPasswordRecoveryCode: async (login: string, pwd: string) => {
       if (!get().is_load) {
         set({ is_load: true });
         try {
@@ -151,23 +153,25 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
         return { st: false, text: 'Подождите' };
       }
 
-      const data = {
-        type: 'get_sms',
-        login: login,
-        pwd: pwd,
-      };
-
-      const json = await api('auth', data);
-
-      set({ is_load: false });
       try {
-        oldLoginStore.setState({ is_load: false });
-      } catch (e) {}
-
-      return json;
+        return await requestPasswordRecoveryCodeApi(login, pwd);
+      } catch (error) {
+        const errorInfo = getApiErrorInfo(error);
+        return {
+          st: false,
+          text: getAuthErrorMessage(error, 'Не удалось отправить код восстановления.'),
+          status: errorInfo.status,
+          data: errorInfo.data,
+        };
+      } finally {
+        set({ is_load: false });
+        try {
+          oldLoginStore.setState({ is_load: false });
+        } catch (e) {}
+      }
     },
 
-    sendCode: async (login: string, code: string) => {
+    confirmPasswordRecoveryCode: async (login: string, code: string) => {
       if (!get().is_load) {
         set({ is_load: true });
         try {
@@ -177,20 +181,22 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
         return { st: false, text: 'Подождите' };
       }
 
-      const data = {
-        type: 'check_code',
-        login: login,
-        code: code,
-      };
-
-      const json = await api('auth', data);
-
-      set({ is_load: false });
       try {
-        oldLoginStore.setState({ is_load: false });
-      } catch (e) {}
-
-      return json;
+        return await confirmPasswordRecoveryCodeApi(login, code);
+      } catch (error) {
+        const errorInfo = getApiErrorInfo(error);
+        return {
+          st: false,
+          text: getAuthErrorMessage(error, 'Не удалось подтвердить код восстановления.'),
+          status: errorInfo.status,
+          data: errorInfo.data,
+        };
+      } finally {
+        set({ is_load: false });
+        try {
+          oldLoginStore.setState({ is_load: false });
+        } catch (e) {}
+      }
     },
 
     save_settings_format: async (value: string) => {

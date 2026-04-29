@@ -11,7 +11,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
 
-export interface OrderConfirmModalProps {
+interface OrderConfirmModalProps {
   open: boolean;
   orderId: number | null;
   typeConfirm: string | null;

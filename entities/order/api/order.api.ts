@@ -4,7 +4,7 @@ import { apiRoutes } from '@/shared/api/routes';
 import { Order, DelOrder, PayData, HomeLocation } from '../model/order.types';
 import { normalizeOrderRow } from '../model/order.utils';
 
-export interface GetOrdersResponse extends ApiResponse {
+interface GetOrdersResponse extends ApiResponse {
   orders?: any[];
   update_interval?: number;
   limit?: string;
@@ -18,7 +18,7 @@ export interface GetOrdersResponse extends ApiResponse {
   };
 }
 
-export interface ActionOrderRequest {
+interface ActionOrderRequest {
   type: 'actionOrder';
   id: number;
   point_id?: number;
@@ -27,7 +27,7 @@ export interface ActionOrderRequest {
   longitude: string;
 }
 
-export interface CheckFakeOrderRequest {
+interface CheckFakeOrderRequest {
   type: 'checkFakeOrder';
   token: string;
   order_id: number;
@@ -35,17 +35,17 @@ export interface CheckFakeOrderRequest {
   longitude: string;
 }
 
-export interface GetPayQrRequest {
+interface GetPayQrRequest {
   type: 'get_pay_qr';
   token: string;
   order_id: number;
 }
 
-export interface GetPayQrResponse extends ApiResponse {
+interface GetPayQrResponse extends ApiResponse {
   pay?: PayData;
 }
 
-export interface GetOrdersRequest {
+interface GetOrdersRequest {
   point_id?: number;
   type_orders: number;
 }

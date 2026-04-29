@@ -20,7 +20,7 @@ import { GraphIssuesCard } from '@/widgets/graph-screen/ui/GraphIssuesCard';
 import { GraphMonthPickerDrawer } from '@/widgets/graph-screen/ui/GraphMonthPickerDrawer';
 import { GraphScheduleCard } from '@/widgets/graph-screen/ui/GraphScheduleCard';
 
-export interface GraphScreenViewProps {
+interface GraphScreenViewProps {
   globalFontSize: number;
   fontClassName: string;
   month: string;

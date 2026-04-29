@@ -5,7 +5,7 @@ import { Order } from '@/entities/order/model/order.types';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
-export interface OrdersListProps {
+interface OrdersListProps {
   orders: Order[];
   globalFontSize: number;
   onOrderAction?: (action: string, orderId: number) => void;

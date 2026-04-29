@@ -3,7 +3,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import { SxProps, Theme } from '@mui/material';
 
-export interface AutocompleteOptionBase {
+interface AutocompleteOptionBase {
   id: number;
   name: string;
 }

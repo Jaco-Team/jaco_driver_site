@@ -1,14 +1,14 @@
 import React from 'react';
 import { ORDER_STATUS_TYPES } from '@/entities/order/model/order.types';
 
-export interface OrderFilterModalProps {
+interface OrderFilterModalProps {
   open: boolean;
   selectedTypes: string[];
   onClose: () => void;
   onSave: (types: string[]) => void;
 }
 
-export const OrderFilterModal: React.FC<OrderFilterModalProps> = ({
+const OrderFilterModal: React.FC<OrderFilterModalProps> = ({
   open,
   selectedTypes,
   onClose,

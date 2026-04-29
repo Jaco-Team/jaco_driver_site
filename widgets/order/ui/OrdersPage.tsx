@@ -14,7 +14,7 @@ import { OrdersFilterSheet } from './components/OrdersFilterSheet';
 import { useSettingsStore } from '@/entities/settings';
 import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 
-export interface OrdersPageProps {
+interface OrdersPageProps {
   onFilterOpen?: () => void;
 }
 
