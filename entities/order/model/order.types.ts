@@ -47,6 +47,9 @@ export interface PayData {
   qr?: string;
   url?: string;
   check_data?: any;
+  confirmation?: {
+    confirmation_data?: string;
+  };
 }
 
 export interface DelOrder {

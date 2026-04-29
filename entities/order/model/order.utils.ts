@@ -12,6 +12,10 @@ export function normalizeOrderRow(order: any): Order {
     };
   }
 
+  const id = parseInt(`${order.id ?? 0}`, 10);
+  const latitude = parseFloat(`${order?.xy?.latitude ?? ''}`);
+  const longitude = parseFloat(`${order?.xy?.longitude ?? ''}`);
+
   return {
     ...order,
     drink_list: Array.isArray(order.drink_list) ? order.drink_list : [],
@@ -19,7 +23,14 @@ export function normalizeOrderRow(order: any): Order {
     et: order.et ?? '',
     kv: order.kv ?? '',
     comment: order.comment ?? '',
-    id: order.id ?? 0,
+    id: Number.isNaN(id) ? 0 : id,
+    xy:
+      Number.isNaN(latitude) || Number.isNaN(longitude)
+        ? order.xy
+        : {
+            latitude,
+            longitude,
+          },
   };
 }
 

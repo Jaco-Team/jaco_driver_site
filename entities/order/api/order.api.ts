@@ -3,7 +3,6 @@ import { connector } from '@/shared/api/connector';
 import { apiRoutes } from '@/shared/api/routes';
 import { Order, DelOrder, PayData, HomeLocation } from '../model/order.types';
 import { normalizeOrderRow } from '../model/order.utils';
-import type { AxiosResponse } from 'axios';
 
 export interface GetOrdersResponse extends ApiResponse {
   orders?: any[];
@@ -20,7 +19,9 @@ export interface GetOrdersResponse extends ApiResponse {
 }
 
 export interface ActionOrderRequest {
+  type: 'actionOrder';
   id: number;
+  point_id?: number;
   type_action: number;
   latitude: string;
   longitude: string;
@@ -44,39 +45,23 @@ export interface GetPayQrResponse extends ApiResponse {
   pay?: PayData;
 }
 
-export interface CheckCloseOrdersRequest {
-  type: 'check_close_orders';
-  token: string;
-  idList: string;
-}
-
-export interface CheckPayOrderRequest {
-  type: 'check_pay_order';
-  token: string;
-  order_id: number;
-}
-
 export interface GetOrdersRequest {
-  point_id: number;
+  point_id?: number;
   type_orders: number;
 }
 
-export async function fetchOrders(request: { type_orders: any }): Promise<GetOrdersResponse> {
-  return connector.rest.post<GetOrdersResponse, { type_orders: any }>(
+export async function fetchOrders(request: GetOrdersRequest): Promise<GetOrdersResponse> {
+  return connector.rest.post<GetOrdersResponse, GetOrdersRequest>(
     apiRoutes.orders.getOrders,
     request
   );
 }
 
-export async function actionOrder(request: {
-  point_id: any;
-  type_action: any;
-  latitude: string;
-  id: any;
-  type: string;
-  longitude: string;
-}): Promise<ApiResponse> {
-  return connector.rest.post<ApiResponse, typeof request>(apiRoutes.orders.actionOrder, request);
+export async function actionOrder(request: ActionOrderRequest): Promise<ApiResponse> {
+  return connector.rest.post<ApiResponse, ActionOrderRequest>(
+    apiRoutes.orders.actionOrder,
+    request
+  );
 }
 
 export async function checkFakeOrder(request: CheckFakeOrderRequest): Promise<ApiResponse> {
@@ -91,8 +76,8 @@ export async function getPayQr(request: GetPayQrRequest): Promise<GetPayQrRespon
 }
 
 export async function hideDelOrders(_token: string, idList: number[]): Promise<ApiResponse> {
-  const data: { idList: string } = {
-    idList: JSON.stringify(idList),
+  const data: { id_list: string } = {
+    id_list: JSON.stringify(idList),
   };
 
   return connector.rest.post<ApiResponse, typeof data>(apiRoutes.orders.hideDeletedOrders, data);

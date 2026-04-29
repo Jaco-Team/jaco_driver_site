@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import { OrderStats } from './components/OrderStats';
-import { ModalFilterOrders } from '@/components/ModalFilterOrders';
 import { OrderStatusModal } from './components/OrderStatusModal';
 
 export interface OrdersHeaderProps {
@@ -32,7 +31,6 @@ export const OrdersHeader: React.FC<OrdersHeaderProps> = ({
 
   return (
     <>
-      <ModalFilterOrders />
       <OrderStatusModal
         open={statusModalOpen}
         onClose={handleCloseStatusModal}

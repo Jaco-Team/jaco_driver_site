@@ -39,9 +39,9 @@ import AlertOrder from '@/components/AlertOrder';
 import { log, logTel } from '@/components/analytics';
 import useSession, { markSessionUnauthorized } from '@/components/sessionHook';
 import { useSettingsStore } from '@/entities/settings';
-import { useOrdersStore } from '@/components/store.js';
+import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
-import OrderCard from '@/modules/order_card';
+import { OrderCard } from '@/widgets/order/ui/components/OrderCard';
 import PayModel from '@/components/PayModel';
 import { roboto } from '@/shared/config/fonts';
 import { formatPhoneNumber } from '@/shared/lib/formatters/formatPhoneNumber';
@@ -77,11 +77,18 @@ const routeTitles: Record<string, string> = {
 
 function OrderMapDrawer() {
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
-  const [isOpenOrderMap, closeOrderMap, showOrders] = useOrdersStore((state) => [
-    state.isOpenOrderMap,
-    state.closeOrderMap,
-    state.showOrders,
-  ]);
+  const { isOpenOrderMap, closeOrderMap, showOrders, setActiveConfirm, actionPayOrder } =
+    useOrdersStore((state) => ({
+      isOpenOrderMap: state.isOpenOrderMap,
+      closeOrderMap: state.closeOrderMap,
+      showOrders: state.showOrders,
+      setActiveConfirm: state.setActiveConfirm,
+      actionPayOrder: state.actionPayOrder,
+    }));
+
+  const handleAction = (action: string, orderId: number) => {
+    setActiveConfirm(true, orderId, true, action, null);
+  };
 
   return (
     <SwipeableDrawer
@@ -92,7 +99,14 @@ function OrderMapDrawer() {
       onOpen={() => {}}
     >
       {showOrders.map((item: unknown, index: number) => (
-        <OrderCard key={index} item={item} is_map globalFontSize={globalFontSize} />
+        <OrderCard
+          key={index}
+          item={item}
+          is_map
+          globalFontSize={globalFontSize}
+          onAction={handleAction}
+          onPay={(orderId) => actionPayOrder(orderId, true)}
+        />
       ))}
     </SwipeableDrawer>
   );
@@ -111,7 +125,7 @@ function OrderTypeDrawer() {
   return (
     <SwipeableDrawer anchor="bottom" open={isOpenMenu} onClose={setCloseMenu} onOpen={setOpenMenu}>
       <List className={`monthList ${roboto.variable}`}>
-        {types.map((item: { text: string }, index: number) => (
+        {types.map((item, index: number) => (
           <ListItem disablePadding key={index} onClick={() => setType(item)}>
             <ListItemButton>
               <ListItemText
@@ -171,7 +185,7 @@ function DeletedOrdersDrawer() {
           paddingTop: 10,
         }}
       >
-        {delOrders?.map((item: { id: string | number; addr: string }, index: number) => (
+        {delOrders?.map((item, index: number) => (
           <div key={index} style={{ display: 'flex', flexDirection: 'column' }}>
             <Typography component="span" style={{ fontSize: globalFontSize }}>
               Удаленный заказ #{item.id}

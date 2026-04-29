@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import Script from 'next/script';
-import { useOrdersStore } from '@/components/store.js';
+import { useOrdersStore } from '@/entities/order/model/order.store';
 
 export default function PayModel() {
   const [showPay, payData, setShowPay, getCheckStatusPay] = useOrdersStore((state) => [

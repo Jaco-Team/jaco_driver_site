@@ -10,6 +10,7 @@ import { useOrdersAutoRefresh } from '../model/useOrdersAutoRefresh';
 import { OrdersHeader } from './OrdersHeader';
 import { OrdersList } from './OrdersList';
 import { OrderConfirmModal } from './components/OrderConfirmModal';
+import { OrdersFilterSheet } from './components/OrdersFilterSheet';
 import { useSettingsStore } from '@/entities/settings';
 import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 
@@ -171,6 +172,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
       />
 
       <ErrorModal open={showErrOrder} errorText={textErrOrder} onClose={closeErrOrder} />
+      <OrdersFilterSheet />
     </Meta>
   );
 };
