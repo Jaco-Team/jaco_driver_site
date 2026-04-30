@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   log: vi.fn(),
   markSessionAuthenticated: vi.fn(),
   markSessionUnauthorized: vi.fn(),
-  getApiErrorInfo: vi.fn(() => ({ status: 500 })),
+  getApiErrorInfo: vi.fn((_error?: unknown) => ({ status: 500 })),
 }));
 
 vi.mock('next/navigation', () => ({

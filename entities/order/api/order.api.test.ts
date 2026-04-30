@@ -47,6 +47,7 @@ describe('order api adapter', () => {
       limit_count: '2',
       driver_pay: true,
       driver_need_gps: '1' as any,
+      st: true,
       home: { latitude: 55.7, longitude: 37.6 },
     });
 

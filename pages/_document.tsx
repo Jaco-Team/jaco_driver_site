@@ -1,11 +1,14 @@
 import { Html, Head, Main, NextScript } from 'next/document';
 import type { DocumentContext, DocumentInitialProps } from 'next/document';
+import type { ReactElement } from 'react';
 import Script from 'next/script';
 import { DocumentHeadTags, documentGetInitialProps } from '@mui/material-nextjs/v16-pagesRouter';
 
 import { roboto } from '@/shared/ui/Font';
 
-export default function Document(props: DocumentInitialProps) {
+type DocumentProps = DocumentInitialProps & { emotionStyleTags: ReactElement<unknown>[] };
+
+export default function Document(props: DocumentProps) {
   return (
     <Html lang="ru" data-scroll="0">
       <Head>

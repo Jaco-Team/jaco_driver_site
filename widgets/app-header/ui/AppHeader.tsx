@@ -774,7 +774,7 @@ export function AppHeader() {
       router.push('/auth', { scroll: false });
     };
 
-    log('logout', 'Выход из аккаунта', null, { callback: go });
+    log('logout', 'Выход из аккаунта', undefined, { callback: go });
     setTimeout(go, 200);
   };
 

@@ -17,7 +17,7 @@ import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 
 declare const ymaps: {
   templateLayoutFactory: {
-    createClass: (template: string) => unknown;
+    createClass: (template: string) => string;
   };
 };
 
@@ -112,16 +112,18 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
         instanceRef={(ref: any) => {
           ref?.events.add('click', () => showOrdersMap(item.id));
         }}
-        options={{
-          iconLayout: !item.close_time_ ? circleLayout : locationLayout,
-          iconShape: {
-            type: 'Rectangle',
-            coordinates: [
-              [-10, -15],
-              [activeWidth, 10],
-            ],
-          },
-        }}
+        options={
+          {
+            iconLayout: !item.close_time_ ? circleLayout : locationLayout,
+            iconShape: {
+              type: 'Rectangle',
+              coordinates: [
+                [-10, -15],
+                [activeWidth, 10],
+              ],
+            },
+          } as any
+        }
       />
     );
   }
@@ -162,16 +164,18 @@ const OrdersMapHomePoint = memo(function OrdersMapHomePoint({
     <Placemark
       geometry={point}
       onClick={getHome}
-      options={{
-        iconLayout: homeLayout,
-        iconShape: {
-          type: 'Rectangle',
-          coordinates: [
-            [-10, -10],
-            [10, 10],
-          ],
-        },
-      }}
+      options={
+        {
+          iconLayout: homeLayout,
+          iconShape: {
+            type: 'Rectangle',
+            coordinates: [
+              [-10, -10],
+              [10, 10],
+            ],
+          },
+        } as any
+      }
     />
   );
 });
@@ -197,16 +201,18 @@ const OrdersMapDriverPoint = memo(function OrdersMapDriverPoint({
   return (
     <Placemark
       geometry={location_driver}
-      options={{
-        iconLayout: trackLayout,
-        iconShape: {
-          type: 'Rectangle',
-          coordinates: [
-            [-10, -10],
-            [10, 10],
-          ],
-        },
-      }}
+      options={
+        {
+          iconLayout: trackLayout,
+          iconShape: {
+            type: 'Rectangle',
+            coordinates: [
+              [-10, -10],
+              [10, 10],
+            ],
+          },
+        } as any
+      }
     />
   );
 });
@@ -314,9 +320,13 @@ export function OrdersMapScreen() {
               style={{ minHeight: '100vh' }}
               modules={['control.ZoomControl', 'control.TrafficControl']}
             >
-              <TrafficControl options={{ size: 'small', position: { top: 150, right: 20 } }} />
+              <TrafficControl
+                options={{ size: 'small', position: { top: 150, right: 20 } } as any}
+              />
               {header.is_scaleMap ? (
-                <ZoomControl options={{ size: 'large', position: { top: 200, right: 20 } }} />
+                <ZoomControl
+                  options={{ size: 'large', position: { top: 200, right: 20 } } as any}
+                />
               ) : null}
 
               <OrdersMapHomePoint point={orders.home.center} getHome={getHome} />

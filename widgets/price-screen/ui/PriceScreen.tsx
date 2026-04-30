@@ -33,11 +33,11 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import { log } from '@/shared/api/client';
 
 type MetricRowProps = {
-  label: string;
-  value: ReactNode;
   description?: string;
   emphasize?: boolean;
   hideDivider?: boolean;
+  label: string;
+  value: ReactNode;
   globalFontSize: number;
 };
 
@@ -168,7 +168,7 @@ export default function PricePage() {
     closePicker();
   };
 
-  const summaryRows = [
+  const summaryRows: Array<Omit<MetricRowProps, 'globalFontSize'>> = [
     {
       label: 'Сумма налички',
       value: `${formatPrice(statPrice?.sum_cash)} ₽`,
@@ -217,7 +217,7 @@ export default function PricePage() {
     },
   ];
 
-  const settlementRows = [
+  const settlementRows: Array<Omit<MetricRowProps, 'globalFontSize'>> = [
     ...give_hist.map((row) => ({
       label: row.time ?? '',
       value: `${formatPrice(row.give)} ₽`,

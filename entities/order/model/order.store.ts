@@ -77,12 +77,12 @@ interface OrdersStore {
   setNotifToken: (token: string) => void;
   closeErrOrder: () => void;
   openErrOrder: (text: string) => void;
-  getOrders: (is_reload?: boolean, point_id?: number) => Promise<void>;
+  getOrders: (is_reload?: boolean, point_id?: number | boolean) => Promise<void>;
   set_type_location: () => void;
   showLocationDriver: () => Promise<void>;
   MyCurrentLocation: () => Promise<void>;
   showOrdersMap: (id: number | string) => void;
-  setType: (type: OrderType, pointId: number) => void;
+  setType: (type: OrderType, pointId?: number) => void;
   setCloseMenu: () => void;
   setOpenMenu: () => void;
   actionFinishOrder: (order_id: number, is_map?: boolean) => void;

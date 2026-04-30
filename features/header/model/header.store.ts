@@ -47,7 +47,7 @@ interface HeaderActions {
 type HeaderStore = HeaderState & HeaderActions;
 
 let avgTimePromise: Promise<string> | null = null;
-let pointPhonesPromise: Promise<PointPhonesPayload> | null = null;
+let pointPhonesPromise: Promise<PointPhonesPayload | null> | null = null;
 let pointPhonesKey = '';
 
 function normalizeBoolLike(value: any): boolean {
