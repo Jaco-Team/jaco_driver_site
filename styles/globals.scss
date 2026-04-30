@@ -1,13 +1,15 @@
 @charset "utf-8";
 
-@use "./settings" as *;
+@use './settings' as *;
 
-body{
-    margin: 0px;
+body {
+  margin: 0px;
+  font-family: Roboto, Helvetica, Arial, sans-serif;
 }
-.MuiDrawer-paper li a, .MuiDrawer-paper li span{
-    text-decoration: none;
-    @include font_custom(1rem, 400);
-    line-height: 2rem;
-    padding: 0 40px;
+.MuiDrawer-paper li a,
+.MuiDrawer-paper li span {
+  text-decoration: none;
+  @include font_custom(1rem, 400);
+  line-height: 2rem;
+  padding: 0 40px;
 }

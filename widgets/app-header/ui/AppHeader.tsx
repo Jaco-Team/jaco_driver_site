@@ -809,11 +809,7 @@ export function AppHeader() {
               >
                 <FilterAlt style={{ color: '#fff' }} />
               </Button>
-              <Button
-                className="noselect"
-                style={{ flex: 1 }}
-                onClick={() => getOrders(true, true)}
-              >
+              <Button className="noselect" style={{ flex: 1 }} onClick={() => getOrders(true)}>
                 <CachedIcon style={{ color: '#fff' }} />
               </Button>
             </div>

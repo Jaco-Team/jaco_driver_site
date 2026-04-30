@@ -34,6 +34,9 @@ const theme = createTheme({
       main: appPalette.primary,
     },
   },
+  typography: {
+    fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+  },
   components: {
     MuiButtonBase: {
       defaultProps: {

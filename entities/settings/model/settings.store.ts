@@ -72,16 +72,19 @@ function normalizeSettingsPayload(payload: DriverSettingsPayload): {
   cityId: string;
 } {
   const settings = unwrapSettingsPayload(payload);
+  const points = Array.isArray(payload?.all_points) ? payload.all_points : [];
+  const pointId = normalizePointId(settings?.point_id);
   const normalizedSettings = {
     ...settings,
+    point_id: pointId,
     type_data_map: normalizeTypeDataMapForUi(settings?.type_data_map),
     type_show_del: normalizeTypeShowDelForUi(settings?.type_show_del),
   } as SettingsResponse;
 
   return {
     settings: normalizedSettings,
-    pointId: normalizePointId(settings?.point_id),
-    points: Array.isArray(payload?.all_points) ? payload.all_points : [],
+    pointId,
+    points,
     cityId: normalizeIdString(settings?.city_id),
   };
 }

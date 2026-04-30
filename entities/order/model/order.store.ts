@@ -12,6 +12,7 @@ import {
 } from './order.types';
 import { normalizeOrderRow, filterOrdersByTypes } from './order.utils';
 import { log } from '@/shared/api/client';
+import { useSettingsStore } from '@/entities/settings';
 import {
   fetchOrders,
   actionOrder as apiActionOrder,
@@ -21,6 +22,10 @@ import {
   checkPayOrder as apiCheckPayOrder,
   normalizeOrdersResponse,
 } from '../api/order.api';
+
+function getSelectedPointId(): number | null {
+  return useSettingsStore.getState().pointId;
+}
 
 interface OrdersStore {
   // State
@@ -77,7 +82,7 @@ interface OrdersStore {
   setNotifToken: (token: string) => void;
   closeErrOrder: () => void;
   openErrOrder: (text: string) => void;
-  getOrders: (is_reload?: boolean, point_id?: number | boolean) => Promise<void>;
+  getOrders: (is_reload?: boolean) => Promise<void>;
   set_type_location: () => void;
   showLocationDriver: () => Promise<void>;
   MyCurrentLocation: () => Promise<void>;
@@ -194,7 +199,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
 
     hideDelOrders: async () => {
       const idList = get().del_orders.map((item) => item.id);
-      await apiHideDelOrders(get().token, idList);
+      await apiHideDelOrders(get().token, idList, getSelectedPointId());
       set({ del_orders: [] });
     },
 
@@ -229,6 +234,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
 
       try {
         const response = await fetchOrders({
+          point_id: getSelectedPointId() ?? undefined,
           type_orders: get().type.id,
         });
 
@@ -399,7 +405,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
       const res = await apiActionOrder({
         type: 'actionOrder',
         id: order_id,
-        point_id,
+        point_id: point_id ?? getSelectedPointId() ?? undefined,
         type_action: type,
         latitude,
         longitude,
@@ -424,6 +430,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         type: 'checkFakeOrder',
         token: get().token,
         order_id,
+        point_id: getSelectedPointId() ?? undefined,
         latitude,
         longitude,
       });
@@ -456,6 +463,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         type: 'get_pay_qr',
         token: get().token,
         order_id,
+        point_id: getSelectedPointId() ?? undefined,
       });
 
       if (!res?.st) {
@@ -583,7 +591,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
     getCheckStatusPay: async ({ data, latitude = '', longitude = '' }) => {
       const { order_id, is_map } = data;
 
-      const res = await apiCheckPayOrder(get().token, order_id);
+      const res = await apiCheckPayOrder(get().token, order_id, getSelectedPointId());
 
       if (res?.st === true) {
         get().actionOrder({ latitude, longitude, data: { order_id, type: 3, is_map } });

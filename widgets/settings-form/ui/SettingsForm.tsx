@@ -10,6 +10,7 @@ import {
   SettingsSection,
   SettingsSectionWithPreview,
 } from '@/shared/ui/SettingsSection/SettingsSection';
+import { SectionTitle } from '@/shared/ui/SectionTitle/SectionTitle';
 import { AutocompleteField } from '@/shared/ui/AutocompleteField/AutocompleteField';
 import { RadioGroupField } from '@/shared/ui/RadioGroupField/RadioGroupField';
 import { CheckboxField } from '@/shared/ui/CheckboxField/CheckboxField';
@@ -75,9 +76,9 @@ export const SettingsForm: React.FC = () => {
     { id: -1, city_id: -1, base: '', name: 'Все точки' },
     ...points.filter((p) => p.id !== -1),
   ];
-  const allPointsOption = pointOptions[0] ?? null;
+  const fallbackPointOption = null;
   const currentPoint =
-    pointOptions.find((p) => String(p.id) === String(pointId ?? -1)) || allPointsOption;
+    pointOptions.find((p) => String(p.id) === String(pointId ?? '')) || fallbackPointOption;
 
   return (
     <>
@@ -92,22 +93,26 @@ export const SettingsForm: React.FC = () => {
           fontSize={globalFontSize}
         />
 
-        <SettingsSection marginTop={10} padding={20}>
-          <div style={{ paddingBottom: 10 }}>
-            <span style={{ fontSize: globalFontSize }}>Точка</span>
-          </div>
-          <AutocompleteField<Point>
-            options={pointOptions}
-            value={currentPoint}
-            onChange={(newValue: Point | null) => {
-              setPointId(newValue?.id ?? -1);
-            }}
-            placeholder="Выберите точку"
-            fontSize={globalFontSize}
-          />
-        </SettingsSection>
+        {pointOptions.length > 0 ? (
+          <SettingsSection marginTop={10} padding={20}>
+            <SectionTitle title="Точка" fontSize={globalFontSize} />
+            <AutocompleteField<Point>
+              options={pointOptions}
+              value={currentPoint}
+              onChange={(newValue: Point | null) => {
+                setPointId(newValue?.id ?? null);
+              }}
+              placeholder="Выберите точку"
+              fontSize={globalFontSize}
+            />
+          </SettingsSection>
+        ) : null}
 
-        <SettingsSectionWithPreview title="Формат данных на карте" fontSize={globalFontSize}>
+        <SettingsSectionWithPreview
+          title="Формат данных на карте"
+          fontSize={globalFontSize}
+          previewClassName="settings_preview settings_preview--map"
+        >
           <div className="location" onClick={() => setGroupTypeTime('norm')}>
             <Location fill={groupTypeTime === 'norm' ? 'red' : 'blue'} />
             <span className="span_text_white_border">21:46 (53 мин.)</span>
@@ -122,7 +127,11 @@ export const SettingsForm: React.FC = () => {
           </div>
         </SettingsSectionWithPreview>
 
-        <SettingsSectionWithPreview title="Оформление" fontSize={globalFontSize}>
+        <SettingsSectionWithPreview
+          title="Оформление"
+          fontSize={globalFontSize}
+          previewClassName="settings_preview settings_preview--map-2"
+        >
           <div
             className="location_ya"
             style={{ top: 80 }}
@@ -189,9 +198,7 @@ export const SettingsForm: React.FC = () => {
         </SettingsSection>
 
         <SettingsSection>
-          <div style={{ paddingBottom: '10px' }}>
-            <span style={{ fontSize: globalFontSize }}>Карта</span>
-          </div>
+          <SectionTitle title="Карта" fontSize={globalFontSize} />
           <CheckboxField options={mapOptions} fontSize={globalFontSize} />
         </SettingsSection>
 

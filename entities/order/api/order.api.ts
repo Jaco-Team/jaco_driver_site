@@ -31,6 +31,7 @@ interface CheckFakeOrderRequest {
   type: 'checkFakeOrder';
   token: string;
   order_id: number;
+  point_id?: number;
   latitude: string;
   longitude: string;
 }
@@ -39,6 +40,7 @@ interface GetPayQrRequest {
   type: 'get_pay_qr';
   token: string;
   order_id: number;
+  point_id?: number;
 }
 
 interface GetPayQrResponse extends ApiResponse {
@@ -75,18 +77,34 @@ export async function getPayQr(request: GetPayQrRequest): Promise<GetPayQrRespon
   return connector.rest.post<GetPayQrResponse, GetPayQrRequest>(apiRoutes.orders.getPayQr, request);
 }
 
-export async function hideDelOrders(_token: string, idList: number[]): Promise<ApiResponse> {
-  const data: { id_list: string } = {
+export async function hideDelOrders(
+  _token: string,
+  idList: number[],
+  pointId?: number | null
+): Promise<ApiResponse> {
+  const data: { id_list: string; point_id?: number } = {
     id_list: JSON.stringify(idList),
   };
+
+  if (pointId) {
+    data.point_id = pointId;
+  }
 
   return connector.rest.post<ApiResponse, typeof data>(apiRoutes.orders.hideDeletedOrders, data);
 }
 
-export async function checkPayOrder(_token: string, order_id: number): Promise<ApiResponse> {
-  const data: { order_id: number } = {
+export async function checkPayOrder(
+  _token: string,
+  order_id: number,
+  pointId?: number | null
+): Promise<ApiResponse> {
+  const data: { order_id: number; point_id?: number } = {
     order_id,
   };
+
+  if (pointId) {
+    data.point_id = pointId;
+  }
 
   return connector.rest.post<ApiResponse, typeof data>(apiRoutes.orders.checkPayOrder, data);
 }

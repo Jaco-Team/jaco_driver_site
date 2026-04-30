@@ -101,7 +101,7 @@ async function ensureSettingsLoaded(): Promise<void> {
   try {
     await useSettingsStore.getState().getMySetting('');
   } catch {
-    // Graph can still load without point_id when settings are unavailable.
+    // Graph will surface the API error if a point cannot be resolved.
   }
 }
 

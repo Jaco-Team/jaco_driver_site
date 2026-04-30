@@ -1,8 +1,23 @@
-@use "./settings" as *;
+@use './settings' as *;
 
 .container_paper {
   padding: 20px;
   position: relative;
+
+  .settings_preview {
+    width: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  .settings_preview--map {
+    background-image: url('/map.png');
+  }
+
+  .settings_preview--map-2 {
+    background-image: url('/map_2.png');
+  }
 
   .location {
     display: flex;
@@ -122,7 +137,6 @@
       margin: 0;
       margin-left: 5px;
     }
-
   }
 }
 
