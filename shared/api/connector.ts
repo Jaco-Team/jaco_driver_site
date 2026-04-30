@@ -1,10 +1,6 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
-import queryString from 'query-string';
 
-import { apiConfig, joinUrl } from '@/shared/api/config';
-import { getApiErrorInfo } from '@/shared/api/errors';
-import { getLegacyModulePath } from '@/shared/api/routes';
-import type { ApiResponse } from '@/shared/api/types';
+import { apiConfig } from '@/shared/api/config';
 
 const BASE_HEADERS = {
   'X-Requested-With': 'XMLHttpRequest',
@@ -108,66 +104,6 @@ export const connector = {
     ): Promise<T> {
       const { data } = await http.post<T>(url, payload, config);
       return data;
-    },
-  },
-  legacy: {
-    async get<T extends ApiResponse = ApiResponse>(
-      module: string = '',
-      params: Record<string, any> = {}
-    ): Promise<T> {
-      const url = joinUrl(apiConfig.legacyApiOrigin, getLegacyModulePath(module));
-
-      try {
-        const response = await axios.get<T | string>(url, {
-          params,
-          withCredentials: true,
-          headers: BASE_HEADERS,
-        });
-
-        if (typeof response.data === 'string') {
-          return { st: false, text: response.data } as T;
-        }
-
-        return response.data;
-      } catch (error) {
-        const info = getApiErrorInfo(error);
-        return {
-          st: false,
-          text: info.message,
-          status: info.status ?? undefined,
-          data: info.data,
-        } as T;
-      }
-    },
-    async post<T extends ApiResponse = ApiResponse>(
-      module: string = '',
-      payload: Record<string, any> = {}
-    ): Promise<T> {
-      const url = joinUrl(apiConfig.legacyApiOrigin, getLegacyModulePath(module));
-
-      try {
-        const response = await axios.post<T | string>(url, queryString.stringify(payload), {
-          withCredentials: true,
-          headers: {
-            ...BASE_HEADERS,
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-          },
-        });
-
-        if (typeof response.data === 'string') {
-          return { st: false, text: response.data } as T;
-        }
-
-        return response.data;
-      } catch (error) {
-        const info = getApiErrorInfo(error);
-        return {
-          st: false,
-          text: info.message,
-          status: info.status ?? undefined,
-          data: info.data,
-        } as T;
-      }
     },
   },
 };

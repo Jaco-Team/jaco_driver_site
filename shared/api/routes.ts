@@ -43,11 +43,10 @@ export const apiRoutes = {
   price: {
     between: '/api/v1/price/between',
   },
+  statistics: {
+    showData: '/api/v1/statistics/show-data',
+  },
 } as const;
-
-export function getLegacyModulePath(module: string = ''): string {
-  return `${module || ''}`.replace(/^\/+/, '');
-}
 
 export function getSsoLoginUrl(): string {
   return joinUrl(apiConfig.apiOrigin, apiRoutes.sso.login);

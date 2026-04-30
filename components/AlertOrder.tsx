@@ -3,7 +3,8 @@ import Button from '@mui/material/Button';
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
-import { useOrdersStore, useHeaderStore } from '@/components/store.js';
+import { useOrdersStore } from '@/entities/order/model/order.store';
+import { useHeaderStore } from '@/features/header/model/header.store';
 
 export default function AlertOrder() {
   const [showErrOrder, textErrOrder, closeErrOrder] = useOrdersStore((state) => [

@@ -20,13 +20,17 @@ import {
 } from './settings.utils';
 
 function normalizePointId(value: unknown): number | null {
-  if (value === null || value === undefined || `${value}`.trim() === '') {
+  if (value === null || value === undefined || String(value).trim() === '') {
     return null;
   }
 
-  const parsed = parseInt(`${value}`, 10);
+  const parsed = parseInt(String(value), 10);
 
   return Number.isNaN(parsed) ? null : parsed;
+}
+
+function hasCityId(value: unknown): value is { city_id?: number | string } {
+  return Boolean(value && typeof value === 'object' && 'city_id' in value);
 }
 
 interface SettingsState {
@@ -137,7 +141,9 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
           settings: savedSettings ? (savedSettings as SettingsResponse) : get().settings,
           pointId: savedPointId,
           point_id: savedPointId,
-          cityId: normalizeIdString(savedSettings?.city_id ?? get().cityId),
+          cityId: normalizeIdString(
+            hasCityId(savedSettings) ? savedSettings.city_id : get().cityId
+          ),
         });
         return {
           st: true,

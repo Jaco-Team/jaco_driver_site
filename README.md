@@ -62,9 +62,12 @@ npm run deploy:prod
 ## Структура проекта
 
 ```text
-pages/        маршруты и page-обёртки
-modules/      основные экраны и крупные UI-блоки
-components/   store, API, аналитика, общие компоненты
+pages/        маршруты и page-обёртки; экранные маршруты держим папками с index.tsx
+tests/pages/  page-тесты, сгруппированные по маршрутам; не кладём тесты внутрь pages, чтобы Next не считал их route files
+widgets/      экраны и крупная композиция страниц
+features/     пользовательские сценарии и действия
+entities/     доменное состояние, API и нормализация
+components/   совместимые общие компоненты
 styles/       глобальные и экранные SCSS-стили
 ui/           палитра, шрифты и UI-токены
 public/       статические файлы и иконки
@@ -72,10 +75,8 @@ public/       статические файлы и иконки
 
 Ключевые файлы:
 
-- [pages/\_app.js](./pages/_app.js) — подключение темы, глобальных стилей, аналитики и Sentry
-- [components/store.js](./components/store.js) — Zustand stores и API-экшены
-- [components/api.js](./components/api.js) — базовый API-клиент
-- [components/analytics.js](./components/analytics.js) — события Метрики и page hit-логика
+- [pages/\_app.tsx](./pages/_app.tsx) — подключение темы, глобальных стилей, аналитики и Sentry
+- [components/analytics.ts](./components/analytics.ts) — события Метрики и page hit-логика
 - [ui/palette.js](./ui/palette.js) — актуальная JS-палитра
 - [styles/settings.scss](./styles/settings.scss) — SCSS-токены и переменные
 
@@ -101,7 +102,6 @@ pages/widgets/features
 - `shared/api/connector.ts` хранит transport:
   - axios instance
   - CSRF/session cookie behavior
-  - legacy form-urlencoded connector
 - `shared/api/client.ts` остается публичным compatibility entrypoint для auth/session helper'ов и legacy re-export usage
 - `entities/*/api/*.ts` владеют domain-specific запросами
 - `pages/*`, `widgets/*`, `features/*` не должны собирать URL руками и не должны знать base URL
@@ -110,7 +110,7 @@ pages/widgets/features
 
 - новые или мигрируемые экраны используют `entities/*/api`
 - прямые `http.get('/api/v1/...')` и `http.post('/api/v1/...')` вне API слоя считаются техническим долгом
-- `components/api.js` сохранен как compatibility re-export, а не как отдельный источник truth
+- legacy `components/api.js` удален; транспорт живет в `shared/api/*`
 
 ## Маршруты
 
@@ -126,16 +126,12 @@ pages/widgets/features
 
 ## API
 
-Сейчас есть два режима API:
-
-- новый HTTP/session-based API через `shared/api/*`
-- legacy module API через `api()` / `api_get()` compatibility слой
+Сейчас frontend использует новый HTTP/session-based API через `shared/api/*`
 
 Новые HTTP endpoints настраиваются через env:
 
 ```text
 NEXT_PUBLIC_API_ORIGIN
-NEXT_PUBLIC_LEGACY_API_ORIGIN
 NEXT_PUBLIC_MEDIA_ORIGIN
 ```
 
@@ -169,21 +165,12 @@ Env-файлы:
 - [.env.development](./.env.development)
 - [.env.production](./.env.production)
 
-Legacy backend path по-прежнему поддерживается для несовершенных миграций:
-
-```text
-https://api.jacochef.ru/driver/public/index.php/
-```
-
-Но для нового кода это не целевой путь.
 Целевой путь:
 
 - cookie session
 - CSRF cookie
 - именованные endpoints
 - domain API adapters
-
-Legacy `api()` / `api_get()` оставлены только для совместимости со старыми flows.
 
 Важно:
 
@@ -301,7 +288,8 @@ npm run build
 
 ## Что важно помнить при доработках
 
-- не плодить новую логику в `pages`, если её можно вынести в `modules`
+- не плодить новую логику в `pages`, если её можно вынести в `widgets`, `features` или `entities`
+- новые и мигрированные экраны держать в `widgets/*-screen`; `modules/` больше не используется активным кодом
 - не держать переиспользуемые доменные типы в store-файлах или screen-level модулях
 - не импортировать бизнесовые типы через deep import из чужого slice
 - не дублировать API-вызовы по компонентам, если их можно держать в Zustand store
@@ -314,22 +302,11 @@ npm run build
 
 ## Legacy Compatibility
 
-Legacy код пока не удаляется автоматически.
-Он остается до тех пор, пока активные entrypoints не будут полностью переведены на новую схему.
+Legacy слой `modules/` удален из активного frontend-кода.
 
-Что уже оставлено намеренно:
+Что считается кандидатами на удаление после следующих миграций:
 
-- [components/api.js](./components/api.js) — compatibility re-export на новый shared client
-- [components/store.js](./components/store.js) — legacy Zustand layer для старых modules/screens
-- часть `modules/*` — совместимость для старых route entrypoints
-
-Что считается кандидатами на удаление после полной миграции:
-
-- legacy вызовы `api('orders', ...)`
-- legacy вызовы `api('price', ...)`
-- legacy вызовы `api('graph', ...)`
-- legacy вызовы `api('stat_time', ...)`
-- leftover legacy auth/settings flows, если им появится Laravel/session replacement
+- прямые legacy-адаптеры, если снова появятся при переносе старого функционала
 - прямые imports legacy wrappers там, где уже есть `widgets/*` и `entities/*`
 
 ## Статус документации

@@ -24,13 +24,13 @@
 - MUI 7
 - Sass/SCSS for screen styling
 - Zustand for app state and API actions
-- Axios + `query-string` for API requests
+  -Axios for API requests
 - Yandex Metrika + custom analytics helpers
-- Sentry initialized in `pages/_app.js`
+- Sentry initialized in `pages/_app.tsx`
 
 ## Repository Map
 
-- `pages/*`: route entrypoints only
+- `pages/*`: route entrypoints only; screen routes should be grouped as `pages/<route>/index.tsx` where possible, with page tests under `tests/pages/<route>` so Next does not register tests as routes
 - `widgets/*-screen`: full screens and large page composition
 - `widgets/app-header`: app header entrypoint
 - `features/*`: user actions and flows
@@ -40,7 +40,7 @@
 - `shared/ui/*`: reusable UI primitives
 - `styles/*.scss`: existing screen/global SCSS kept during migration
 - `ui/*`: legacy shared UI bucket during migration
-- `components/meta.js`: document title and app icons
+- `components/meta.tsx`: document title and app icons
 - `components/sessionHook.ts`: current lightweight auth/session access
 
 ## Architecture Rules
@@ -54,14 +54,13 @@
 - Put user actions and flows in `features/*`.
 - Put domain state, normalization, and API-facing entity logic in `entities/*`.
 - Widget-local `model/*` is allowed only for screen orchestration state. Do not put durable domain state there if it belongs to an entity slice.
-- Prefer `shared/api/client.ts` and related `shared/api/*` files for transport. Treat `components/api.js` as legacy isolation only.
+- Prefer `shared/api/client.ts` and related `shared/api/*` files for transport; the old `components/api.js` shim has been removed.
 - Keep analytics calls in existing analytics conventions instead of ad hoc `window.ym` calls.
 - Work within the current auth pattern unless the task explicitly asks for auth refactoring:
   - token in `localStorage`
   - session resolved via `components/sessionHook.ts`
-- `modules/*` is legacy. Do not place new screens there.
+- `modules/` удален: активные экраны живут в `widgets/*-screen/ui`, состояние и API — в `entities/*`.
 - `ui/*` and `styles/*` may remain during migration, but new reusable primitives should prefer `shared/ui/*` and new shared helpers should prefer `shared/lib/*`.
-- Treat `modules/price_page 2.jsx` and `modules/statistics_page 2.jsx` as legacy duplicates. Do not build new features in those files unless intentionally migrating them.
 
 ## Design System
 

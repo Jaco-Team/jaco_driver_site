@@ -28,12 +28,6 @@ function resolveApiOrigin(): string {
   );
 }
 
-function resolveLegacyApiOrigin(apiOrigin: string): string {
-  return normalizeBaseUrl(
-    readEnv('NEXT_PUBLIC_LEGACY_API_ORIGIN') ?? readEnv('NEXT_PUBLIC_LEGACY_API_URL') ?? apiOrigin
-  );
-}
-
 function resolveMediaOrigin(apiOrigin: string): string {
   return normalizeBaseUrl(readEnv('NEXT_PUBLIC_MEDIA_ORIGIN') ?? apiOrigin);
 }
@@ -42,7 +36,6 @@ const apiOrigin = resolveApiOrigin();
 
 export const apiConfig = {
   apiOrigin,
-  legacyApiOrigin: resolveLegacyApiOrigin(apiOrigin),
   mediaOrigin: resolveMediaOrigin(apiOrigin),
   isDevelopment: process.env.NODE_ENV === 'development',
 } as const;

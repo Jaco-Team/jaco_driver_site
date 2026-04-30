@@ -1,10 +1,22 @@
 import { connector } from '@/shared/api/connector';
 import { apiRoutes } from '@/shared/api/routes';
 
-type PriceStat = Record<string, number | string | null>;
+type PriceMetric = number | string | null;
 
-type PriceGiveHistoryRow = {
-  give?: number | string | null;
+export type PriceStat = {
+  sum_cash?: PriceMetric;
+  sum_bank?: PriceMetric;
+  my_price?: PriceMetric;
+  sdacha?: PriceMetric;
+  my_cash?: PriceMetric;
+  count_cash?: PriceMetric;
+  count_bank?: PriceMetric;
+  count?: PriceMetric;
+  full_give?: PriceMetric;
+};
+
+export type PriceGiveHistoryRow = {
+  give?: PriceMetric;
   time?: string | null;
 };
 

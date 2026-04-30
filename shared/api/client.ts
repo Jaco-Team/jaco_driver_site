@@ -103,14 +103,6 @@ export function redirectToSsoLogin(): void {
   window.location.assign(getSsoLoginUrl());
 }
 
-export async function api_get(module: string = '', data: any = {}): Promise<ApiResponse> {
-  return connector.legacy.get(module, data);
-}
-
-export async function api(module: string = '', data: any = {}): Promise<ApiResponse> {
-  return connector.legacy.post(module, data);
-}
-
 export const log = (event: string, message: string, data?: any): void => {
   if (process.env.NODE_ENV === 'development') {
     console.log(`[${event}]`, message, data || '');

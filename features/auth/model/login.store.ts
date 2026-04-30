@@ -2,7 +2,6 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import {
-  api,
   fetchMe,
   getApiErrorInfo,
   getAuthErrorMessage,
@@ -13,7 +12,6 @@ import {
 } from '@/shared/api/client';
 
 import { markSessionAuthenticated, markSessionUnauthorized } from '@/components/sessionHook';
-import { useLoginStore as oldLoginStore } from '@/components/store';
 
 interface AuthData {
   isAuth: boolean | 'load';
@@ -34,29 +32,10 @@ interface LoginActions {
   login: (login: string, pwd: string) => Promise<any>;
   requestPasswordRecoveryCode: (login: string, pwd: string) => Promise<any>;
   confirmPasswordRecoveryCode: (login: string, code: string) => Promise<any>;
-  save_settings_format: (value: string) => Promise<any>;
   check_token: () => Promise<any>;
 }
 
 type LoginStore = LoginState & LoginActions;
-
-// Функция для обновления старого стора
-const updateOldStore = (data: any) => {
-  try {
-    oldLoginStore.setState({
-      authData: {
-        isAuth: data.isAuth,
-        token: data.token,
-        user: data.user,
-      },
-      loginErr: data.text || '',
-      is_load: false,
-      is_loadToken: false,
-    });
-  } catch (e) {
-    console.error('Failed to update old store', e);
-  }
-};
 
 export const useLoginStore = createWithEqualityFn<LoginStore>(
   (set, get) => ({
@@ -67,9 +46,6 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
 
     setLoginErr: (err: string) => {
       set({ loginErr: err });
-      try {
-        oldLoginStore.setState({ loginErr: err });
-      } catch (e) {}
     },
 
     setAuthData: (data: any) => {
@@ -83,10 +59,6 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
 
       console.log('🔐 Начинаем процесс авторизации для:', login);
       set({ is_load: true });
-
-      try {
-        oldLoginStore.setState({ is_load: true });
-      } catch (e) {}
 
       try {
         // Выполняем loginWeb - он устанавливает cookie
@@ -109,9 +81,6 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
           loginErr: '',
           authData: json,
         });
-
-        // Обновляем старый стор
-        updateOldStore(json);
 
         // Обновляем sessionHook
         markSessionAuthenticated(me);
@@ -136,7 +105,6 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
           authData: json,
         });
 
-        updateOldStore(json);
         markSessionUnauthorized();
 
         return json;
@@ -146,9 +114,6 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
     requestPasswordRecoveryCode: async (login: string, pwd: string) => {
       if (!get().is_load) {
         set({ is_load: true });
-        try {
-          oldLoginStore.setState({ is_load: true });
-        } catch (e) {}
       } else {
         return { st: false, text: 'Подождите' };
       }
@@ -165,18 +130,12 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
         };
       } finally {
         set({ is_load: false });
-        try {
-          oldLoginStore.setState({ is_load: false });
-        } catch (e) {}
       }
     },
 
     confirmPasswordRecoveryCode: async (login: string, code: string) => {
       if (!get().is_load) {
         set({ is_load: true });
-        try {
-          oldLoginStore.setState({ is_load: true });
-        } catch (e) {}
       } else {
         return { st: false, text: 'Подождите' };
       }
@@ -193,20 +152,7 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
         };
       } finally {
         set({ is_load: false });
-        try {
-          oldLoginStore.setState({ is_load: false });
-        } catch (e) {}
       }
-    },
-
-    save_settings_format: async (value: string) => {
-      const data = {
-        type: 'save_settings_format',
-        value: value,
-      };
-
-      const json = await api('auth', data);
-      return json;
     },
 
     check_token: async () => {
@@ -229,7 +175,6 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
         };
 
         set({ authData: json });
-        updateOldStore(json);
         markSessionAuthenticated(me);
 
         return json;
@@ -250,7 +195,6 @@ export const useLoginStore = createWithEqualityFn<LoginStore>(
         };
 
         set({ authData: json });
-        updateOldStore(json);
         markSessionUnauthorized();
 
         return json;
