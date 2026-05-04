@@ -45,7 +45,7 @@ import { OrderCard } from '@/widgets/order/ui/components/OrderCard';
 import PayModel from '@/components/PayModel';
 import { roboto } from '@/shared/config/fonts';
 import { formatPhoneNumber } from '@/shared/lib/formatters/formatPhoneNumber';
-import { logoutWeb } from '@/shared/api/client';
+import { logoutWeb } from '@/features/auth/api/auth.api';
 import { appPalette } from '@/shared/styles/appPalette';
 
 type NavigationItem = {

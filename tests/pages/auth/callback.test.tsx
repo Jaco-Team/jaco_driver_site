@@ -31,9 +31,15 @@ vi.mock('@/components/meta', () => ({
   ),
 }));
 
-vi.mock('@/shared/api/client', () => ({
+vi.mock('@/features/auth/api/auth.api', () => ({
   fetchMe: () => mocks.fetchMe(),
+}));
+
+vi.mock('@/shared/api/errors', () => ({
   getApiErrorInfo: (error: unknown) => mocks.getApiErrorInfo(error),
+}));
+
+vi.mock('@/shared/api/client', () => ({
   log: (...args: unknown[]) => mocks.log(...args),
 }));
 

@@ -1,4 +1,4 @@
-import type { ApiResponse } from '@/shared/api/client';
+import type { ApiResponse } from '@/shared/api/types';
 import { connector } from '@/shared/api/connector';
 import { apiRoutes } from '@/shared/api/routes';
 import { Order, DelOrder, PayData, HomeLocation } from '../model/order.types';

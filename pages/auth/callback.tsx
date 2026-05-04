@@ -6,8 +6,10 @@ import Grid from '@mui/material/Grid';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import Meta from '@/components/meta';
-import { fetchMe, getApiErrorInfo, log } from '@/shared/api/client';
+import { fetchMe } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/features/auth/model/auth.store';
+import { getApiErrorInfo } from '@/shared/api/errors';
+import { log } from '@/shared/api/client';
 
 import { roboto } from '@/shared/ui/Font';
 

@@ -4,11 +4,10 @@ import { shallow } from 'zustand/shallow';
 import {
   confirmPasswordRecoveryCode as confirmPasswordRecoveryCodeApi,
   fetchMe,
-  getApiErrorInfo,
-  getAuthErrorMessage,
   loginWeb,
   sendPasswordRecoveryCode as requestPasswordRecoveryCodeApi,
-} from '@/shared/api/client';
+} from '@/features/auth/api/auth.api';
+import { getApiErrorInfo, getAuthErrorMessage } from '@/shared/api/errors';
 import type { ApiResponse, User } from '@/shared/api/types';
 
 export interface AuthSession {

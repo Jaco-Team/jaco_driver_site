@@ -1,4 +1,5 @@
-import { ApiResponse, http } from '@/shared/api/client';
+import { http } from '@/shared/api/client';
+import type { ApiResponse } from '@/shared/api/types';
 import { connector } from '@/shared/api/connector';
 import { apiRoutes } from '@/shared/api/routes';
 import { GraphApiPayload } from '@/entities/graph/api/types';

@@ -6,7 +6,7 @@ import {
   submitGraphCameraAppeal as submitGraphCameraAppealRequest,
   submitGraphOrderAppeal as submitGraphOrderAppealRequest,
 } from '@/entities/graph/api/graph.api';
-import { ApiResponse } from '@/shared/api/client';
+import type { ApiResponse } from '@/shared/api/types';
 import {
   normalizeGraphCameraError,
   normalizeGraphOrderError,

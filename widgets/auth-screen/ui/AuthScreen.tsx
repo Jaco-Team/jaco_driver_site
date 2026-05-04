@@ -11,7 +11,8 @@ import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 
 import { useAuthStore } from '@/features/auth/model/auth.store';
-import { log, redirectToSsoLogin } from '@/shared/api/client';
+import { redirectToSsoLogin } from '@/features/auth/api/auth.api';
+import { log } from '@/shared/api/client';
 
 import MyTextInput from '@/shared/ui/MyTextInput';
 import PasswordInput from '@/shared/ui/PasswordInput';
