@@ -34,7 +34,6 @@ function sendToAllCounters(cb: (id: number | string) => void) {
   });
 }
 
-/** отправка события в Метрику */
 export function log(
   event: string,
   label?: string,
@@ -42,7 +41,7 @@ export function log(
   opts?: AnalyticsOptions
 ) {
   const payload = { ...(params || {}), ...(label ? { label } : {}) };
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     console.debug('[YM] reachGoal', { event, payload, ids: getAnalyticsWindow().__ymIds });
   }
   sendToAllCounters((id) => {
@@ -57,7 +56,6 @@ export function log(
   });
 }
 
-/** Читаемые названия страниц */
 const PAGE_TITLES: Record<string, string> = {
   '/list_orders': 'Список заказов',
   '/map_orders': 'Карта заказов',
@@ -71,7 +69,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/initial': 'Стартовая',
 };
 
-/** Резолвим человекочитаемый title для URL */
 function resolveTitle(url: string, explicitTitle?: string) {
   try {
     if (explicitTitle) return explicitTitle;
@@ -82,7 +79,6 @@ function resolveTitle(url: string, explicitTitle?: string) {
   }
 }
 
-/** Хит просмотра страницы (SPA) — назад совместим: hit(url) или hit(url, title) */
 export function hit(url: string, title?: string) {
   const finalTitle = resolveTitle(url, title);
   sendToAllCounters((id) => {
@@ -90,21 +86,18 @@ export function hit(url: string, title?: string) {
   });
 }
 
-/** "Открытие страницы ${title}" */
 export function screenOpen(urlOrTitle: string) {
   const isUrl = typeof urlOrTitle === 'string' && /^(\/|https?:\/\/)/.test(urlOrTitle);
   const title = isUrl ? resolveTitle(urlOrTitle) : String(urlOrTitle);
   log('screen_open', `Открытие страницы ${title}`);
 }
 
-// хвост телефона (последние N цифр)
 function phoneSuffix(phone: string, n = 4) {
   return String(phone || '')
     .replace(/\D/g, '')
     .slice(-n);
 }
 
-// готовая функция для tel-кликов — вызываем прямо из onClick
 export function logTel(goal: string, phone: string, label?: string, e?: MouseEvent) {
   try {
     e?.preventDefault?.();

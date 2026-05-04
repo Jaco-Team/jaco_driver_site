@@ -11,7 +11,8 @@ import {
   TYPE_STATUS_MAP,
 } from './order.types';
 import { normalizeOrderRow, filterOrdersByTypes } from './order.utils';
-import { log } from '@/shared/api/client';
+import { log } from '@/components/analytics';
+import { devLog } from '@/shared/lib/devLog';
 import { useSettingsStore } from '@/entities/settings';
 import {
   fetchOrders,
@@ -262,7 +263,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
           set({ home: normalized.home });
         }
       } catch (err) {
-        console.error(err);
+        devLog('orders_fetch_error', 'Orders fetch error', err);
         log('orders_fetch_fail', 'Ошибка при получении списка заказов');
         get().openErrOrder('Ошибка ' + err);
       }
@@ -313,7 +314,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
             }, 30000);
           },
           (error) => {
-            console.error('Geolocation error:', error);
+            devLog('orders_geolocation_error', 'Geolocation error', error);
             setTimeout(() => set({ is_load: false }), 300);
           },
           { enableHighAccuracy: true }
@@ -346,7 +347,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
             }, 100);
           },
           (error) => {
-            console.error('Watch position error:', error);
+            devLog('orders_watch_position_error', 'Watch position error', error);
           },
           {
             maximumAge: 10000,
@@ -357,7 +358,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
 
         set({ id_watch });
       } catch (err) {
-        console.error('MyCurrentLocation error:', err);
+        devLog('orders_current_location_error', 'Current location error', err);
       }
     },
 
@@ -391,7 +392,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         ({ coords }) =>
           callback({ latitude: `${coords.latitude}`, longitude: `${coords.longitude}` }),
         ({ message }) => {
-          console.error('Geolocation error:', message);
+          devLog('orders_geolocation_error', 'Geolocation error', message);
           get().openErrOrder(`Не удалось определить местоположение. ${message}`);
           set({ is_load: false });
         },
@@ -580,7 +581,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
 
     renderMap: (home, orders) => {
       // Yandex maps implementation - simplified for now
-      console.log('renderMap called', home, orders);
+      devLog('orders_render_map', 'Render map called', { home, orders });
     },
 
     closeOrderMap: () => {

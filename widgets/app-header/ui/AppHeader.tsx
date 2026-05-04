@@ -46,6 +46,7 @@ import PayModel from '@/components/PayModel';
 import { roboto } from '@/shared/config/fonts';
 import { formatPhoneNumber } from '@/shared/lib/formatters/formatPhoneNumber';
 import { logoutWeb } from '@/features/auth/api/auth.api';
+import { devLog } from '@/shared/lib/devLog';
 import { appPalette } from '@/shared/styles/appPalette';
 
 type NavigationItem = {
@@ -717,7 +718,7 @@ export function AppHeader() {
         applySettings(settings);
         pointId = settings?.point_id;
       } catch (error) {
-        console.error('header_settings_load_failed', error);
+        devLog('header_settings_load_failed', 'Header settings load failed', error);
       }
 
       await Promise.allSettled([
@@ -757,7 +758,7 @@ export function AppHeader() {
 
   const handleLogout = () => {
     void logoutWeb().catch((error) => {
-      console.error('logout_request_failed', error);
+      devLog('logout_request_failed', 'Logout request failed', error);
     });
 
     useAuthStore.getState().setUnauthorized();

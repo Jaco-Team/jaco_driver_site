@@ -9,7 +9,7 @@ import Meta from '@/components/meta';
 import { fetchMe } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { getApiErrorInfo } from '@/shared/api/errors';
-import { log } from '@/shared/api/client';
+import { log } from '@/components/analytics';
 
 import { roboto } from '@/shared/ui/Font';
 

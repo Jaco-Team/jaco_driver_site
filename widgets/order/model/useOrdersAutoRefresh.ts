@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useOrdersStore } from '@/entities/order/model/order.store';
+import { devLog } from '@/shared/lib/devLog';
 
 interface UseOrdersAutoRefreshOptions {
   isEnabled?: boolean;
@@ -22,18 +23,18 @@ export const useOrdersAutoRefresh = (options: UseOrdersAutoRefreshOptions = {}) 
 
     const interval = setInterval(() => {
       if (!is_load) {
-        console.log(`Auto-refreshing orders (interval: ${update_interval}s)...`);
+        devLog('orders_auto_refresh', 'Auto-refreshing orders', update_interval);
         try {
           getOrders(false);
         } catch (error) {
-          console.error('Auto-refresh error:', error);
+          devLog('orders_auto_refresh_error', 'Auto-refresh error', error);
           onError?.(error as Error);
         }
       }
     }, intervalTime);
 
     return () => {
-      console.log('Clearing auto-refresh interval');
+      devLog('orders_auto_refresh_clear', 'Clearing auto-refresh interval');
       clearInterval(interval);
     };
   }, [getOrders, update_interval, is_load, isEnabled, onError]);

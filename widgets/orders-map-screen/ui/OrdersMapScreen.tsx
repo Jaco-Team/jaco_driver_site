@@ -10,7 +10,7 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import type { HomeLocation, Order } from '@/entities/order/model/order.types';
 import { roboto } from '@/shared/ui/Font';
-import { log } from '@/shared/api/client';
+import { log } from '@/components/analytics';
 import { OrdersFilterSheet } from '@/widgets/order/ui/components/OrdersFilterSheet';
 import { OrderConfirmModal } from '@/widgets/order/ui/components/OrderConfirmModal';
 import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';

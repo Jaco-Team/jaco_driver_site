@@ -10,7 +10,7 @@ import { styled } from '@mui/material/styles';
 
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
-import { log } from '@/shared/api/client';
+import { log } from '@/components/analytics';
 
 const StyledBottomSheet = styled(Modal)(({ theme }) => ({
   '& .MuiBackdrop-root': {

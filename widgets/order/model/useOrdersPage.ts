@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from '@/features/auth/model/auth.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
+import { devLog } from '@/shared/lib/devLog';
 
 interface UseOrdersPageReturn {
   isLoading: boolean;
@@ -28,34 +29,34 @@ export const useOrdersPage = (): UseOrdersPageReturn => {
   }, [setActivePageRU]);
 
   useEffect(() => {
-    console.log('Session state:', session.isAuth);
+    devLog('orders_session_state', 'Session state', session.isAuth);
 
     if (session.isAuth === 'load') {
-      console.log('Session loading...');
+      devLog('orders_session_loading', 'Session loading');
       return;
     }
 
     if (session.isAuth === false) {
-      console.log('Not authenticated, redirecting to auth...');
+      devLog('orders_session_unauthorized', 'Redirecting to auth');
       router.push('/auth', { scroll: false });
       return;
     }
 
     if (session.isAuth === true && !hasInitialized.current) {
-      console.log('Authenticated, initializing orders...');
+      devLog('orders_init', 'Initializing orders');
       hasInitialized.current = true;
 
       // Устанавливаем токен
       if (session?.token) {
         setToken(session.token);
-        console.log('Token set:', session.token);
+        devLog('orders_token_set', 'Token set');
       }
 
       const loadSettingsAndOrders = async () => {
         try {
           getOrders(false);
         } catch (error) {
-          console.error('Error loading settings:', error);
+          devLog('orders_settings_load_error', 'Error loading settings', error);
           getOrders(false);
         }
       };
@@ -67,10 +68,10 @@ export const useOrdersPage = (): UseOrdersPageReturn => {
   // Отладка - логируем состояние заказов
   useEffect(() => {
     if (orders.length > 0) {
-      console.log(`Loaded ${orders.length} orders`);
+      devLog('orders_loaded', 'Loaded orders', orders.length);
     }
     if (is_check) {
-      console.log('Orders are being fetched...');
+      devLog('orders_fetching', 'Orders are being fetched');
     }
   }, [orders.length, is_check]);
 

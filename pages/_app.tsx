@@ -21,6 +21,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import * as Sentry from '@sentry/react';
 import { appPalette } from '@/shared/styles/appPalette';
+import { devLog } from '@/shared/lib/devLog';
 import YandexMetrika from '@/components/YandexMetrika';
 import { useAuthStore } from '@/features/auth/model/auth.store';
 
@@ -46,7 +47,7 @@ const theme = createTheme({
 });
 
 export function reportWebVitals(metric: NextWebVitalsMetric) {
-  console.log(metric);
+  devLog('web_vitals', 'Next web vitals', metric);
 }
 
 function MyApp(props: AppProps) {

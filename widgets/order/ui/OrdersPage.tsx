@@ -13,6 +13,7 @@ import { OrderConfirmModal } from './components/OrderConfirmModal';
 import { OrdersFilterSheet } from './components/OrdersFilterSheet';
 import { useSettingsStore } from '@/entities/settings';
 import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
+import { devLog } from '@/shared/lib/devLog';
 
 interface OrdersPageProps {
   onFilterOpen?: () => void;
@@ -79,7 +80,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
           setActiveConfirm(true, orderId, false, 'fake', null);
           break;
         default:
-          console.warn(`Unknown action: ${action}`);
+          devLog('orders_unknown_action', 'Unknown action', action);
       }
     },
     [setActiveConfirm]
@@ -102,7 +103,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
         actionFakeOrder(order_finish_id);
         break;
       default:
-        console.warn(`Unknown confirm type: ${type_confirm}`);
+        devLog('orders_unknown_confirm_type', 'Unknown confirm type', type_confirm);
     }
   }, [
     order_finish_id,

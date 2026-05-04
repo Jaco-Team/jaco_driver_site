@@ -39,7 +39,7 @@ vi.mock('@/shared/api/errors', () => ({
   getApiErrorInfo: (error: unknown) => mocks.getApiErrorInfo(error),
 }));
 
-vi.mock('@/shared/api/client', () => ({
+vi.mock('@/components/analytics', () => ({
   log: (...args: unknown[]) => mocks.log(...args),
 }));
 

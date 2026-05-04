@@ -24,7 +24,7 @@ import MyTextInput from '@/shared/ui/MyTextInput';
 import PasswordInput from '@/shared/ui/PasswordInput';
 import { roboto } from '@/shared/ui/Font';
 
-import { log } from '@/shared/api/client';
+import { log } from '@/components/analytics';
 
 export default function RegistrationPage() {
   const router = useRouter();

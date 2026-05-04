@@ -1,6 +1,7 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
-import { getApiErrorInfo, log } from '@/shared/api/client';
+import { getApiErrorInfo } from '@/shared/api/client';
+import { log } from '@/components/analytics';
 import { connector } from '@/shared/api/connector';
 import { apiRoutes } from '@/shared/api/routes';
 import { fetchDriverSettings } from '@/entities/settings/api/settings.api';

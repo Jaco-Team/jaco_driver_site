@@ -30,7 +30,7 @@ import { useFullscreen } from '@/shared/lib/useFullscreen';
 import { usePriceStore } from '@/entities/price';
 import { useHeaderStore } from '@/features/header/model/header.store';
 
-import { log } from '@/shared/api/client';
+import { log } from '@/components/analytics';
 
 type MetricRowProps = {
   description?: string;

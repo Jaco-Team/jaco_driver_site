@@ -12,7 +12,7 @@ import Button from '@mui/material/Button';
 
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { redirectToSsoLogin } from '@/features/auth/api/auth.api';
-import { log } from '@/shared/api/client';
+import { log } from '@/components/analytics';
 
 import MyTextInput from '@/shared/ui/MyTextInput';
 import PasswordInput from '@/shared/ui/PasswordInput';
