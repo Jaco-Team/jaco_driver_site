@@ -8,8 +8,8 @@ const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   fetchMe: vi.fn(),
   log: vi.fn(),
-  markSessionAuthenticated: vi.fn(),
-  markSessionUnauthorized: vi.fn(),
+  setAuthenticated: vi.fn(),
+  setUnauthorized: vi.fn(),
   getApiErrorInfo: vi.fn((_error?: unknown) => ({ status: 500 })),
 }));
 
@@ -37,9 +37,13 @@ vi.mock('@/shared/api/client', () => ({
   log: (...args: unknown[]) => mocks.log(...args),
 }));
 
-vi.mock('@/components/sessionHook', () => ({
-  markSessionAuthenticated: (payload: unknown) => mocks.markSessionAuthenticated(payload),
-  markSessionUnauthorized: () => mocks.markSessionUnauthorized(),
+vi.mock('@/features/auth/model/auth.store', () => ({
+  useAuthStore: {
+    getState: () => ({
+      setAuthenticated: (payload: unknown) => mocks.setAuthenticated(payload),
+      setUnauthorized: () => mocks.setUnauthorized(),
+    }),
+  },
 }));
 
 vi.mock('@/shared/ui/Font', () => ({
@@ -51,8 +55,8 @@ describe('AuthCallbackPage', () => {
     mocks.replace.mockClear();
     mocks.fetchMe.mockReset();
     mocks.log.mockClear();
-    mocks.markSessionAuthenticated.mockClear();
-    mocks.markSessionUnauthorized.mockClear();
+    mocks.setAuthenticated.mockClear();
+    mocks.setUnauthorized.mockClear();
     mocks.getApiErrorInfo.mockClear();
     window.history.pushState({}, '', '/auth/callback');
   });
@@ -71,7 +75,7 @@ describe('AuthCallbackPage', () => {
 
     render(<AuthCallbackPage />);
 
-    await waitFor(() => expect(mocks.markSessionAuthenticated).toHaveBeenCalledWith(me));
+    await waitFor(() => expect(mocks.setAuthenticated).toHaveBeenCalledWith(me));
     expect(mocks.replace).toHaveBeenCalledWith('/list_orders', { scroll: false });
   });
 
@@ -80,7 +84,7 @@ describe('AuthCallbackPage', () => {
 
     render(<AuthCallbackPage />);
 
-    await waitFor(() => expect(mocks.markSessionUnauthorized).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.setUnauthorized).toHaveBeenCalled());
     expect(mocks.replace).toHaveBeenCalledWith('/auth?error=sso_failed', { scroll: false });
   });
 
@@ -90,7 +94,7 @@ describe('AuthCallbackPage', () => {
 
     render(<AuthCallbackPage />);
 
-    await waitFor(() => expect(mocks.markSessionUnauthorized).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.setUnauthorized).toHaveBeenCalled());
     expect(mocks.replace).toHaveBeenCalledWith('/auth?error=sso_failed', { scroll: false });
   });
 });

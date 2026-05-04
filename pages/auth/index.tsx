@@ -7,7 +7,7 @@ const DynamicHomePage = dynamic(() => import('@/widgets/auth-screen/ui/AuthScree
 import { useHeaderStore } from '@/features/header/model/header.store';
 
 import { useRouter } from 'next/navigation';
-import useSession from '@/components/sessionHook';
+import { useSession } from '@/features/auth/model/auth.store';
 
 export default function Auth() {
   const session = useSession();

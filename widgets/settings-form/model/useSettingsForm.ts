@@ -7,7 +7,7 @@ import {
   type TypeShowDel,
 } from '@/entities/settings';
 import { useHeaderStore } from '@/features/header/model/header.store';
-import useSession from '@/components/sessionHook';
+import { useSession } from '@/features/auth/model/auth.store';
 import type { SnackbarState } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
 
 const initialSnackbarState: SnackbarState = {

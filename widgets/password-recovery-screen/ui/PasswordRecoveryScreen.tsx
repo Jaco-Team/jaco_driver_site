@@ -16,7 +16,7 @@ import StepLabel from '@mui/material/StepLabel';
 
 const steps = ['Телефон', 'Подтверждение'];
 
-import { useLoginStore } from '@/features/auth/model/login.store';
+import { useAuthStore } from '@/features/auth/model/auth.store';
 
 import Meta from '@/components/meta';
 
@@ -40,7 +40,7 @@ export default function RegistrationPage() {
   const [myPWD, setMyPWD] = useState('');
   const [myCode, setMyCode] = useState('');
 
-  const [requestPasswordRecoveryCode, confirmPasswordRecoveryCode] = useLoginStore((state) => [
+  const [requestPasswordRecoveryCode, confirmPasswordRecoveryCode] = useAuthStore((state) => [
     state.requestPasswordRecoveryCode,
     state.confirmPasswordRecoveryCode,
   ]);
@@ -60,7 +60,7 @@ export default function RegistrationPage() {
       setActiveStep(1);
     } else {
       log('auth_send_sms_fail', 'Ошибка отправки СМС-кода');
-      setErr1(res.text);
+      setErr1(res.text || 'Не удалось отправить код восстановления.');
     }
 
     setTimeout(() => {
@@ -81,7 +81,7 @@ export default function RegistrationPage() {
     if (res.st === true) {
       router.push('/auth', { scroll: false });
     } else {
-      setErr2(res.text);
+      setErr2(res.text || 'Не удалось подтвердить код восстановления.');
     }
 
     setTimeout(() => {

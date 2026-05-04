@@ -23,7 +23,7 @@ import type { Dayjs } from 'dayjs';
 import type { SnackbarOrigin } from '@mui/material/Snackbar';
 import { useStatisticsStore, type StatisticsSummaryRow } from '@/entities/statistics';
 import { useHeaderStore } from '@/features/header/model/header.store';
-import useSession from '@/components/sessionHook';
+import { useSession } from '@/features/auth/model/auth.store';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 

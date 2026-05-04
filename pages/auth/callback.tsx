@@ -7,7 +7,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import Meta from '@/components/meta';
 import { fetchMe, getApiErrorInfo, log } from '@/shared/api/client';
-import { markSessionAuthenticated, markSessionUnauthorized } from '@/components/sessionHook';
+import { useAuthStore } from '@/features/auth/model/auth.store';
 
 import { roboto } from '@/shared/ui/Font';
 
@@ -24,7 +24,7 @@ export default function AuthCallbackPage() {
 
       if (status !== 'success') {
         log('auth_sso_callback_fail', 'Ошибка SSO авторизации', { code: code || 'unknown' });
-        markSessionUnauthorized();
+        useAuthStore.getState().setUnauthorized();
 
         if (!cancelled) {
           router.replace('/auth?error=sso_failed', { scroll: false });
@@ -40,7 +40,7 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        markSessionAuthenticated(me);
+        useAuthStore.getState().setAuthenticated(me);
         log('auth_sso_callback_success', 'Успешная SSO авторизация');
         router.replace('/list_orders', { scroll: false });
       } catch (error) {
@@ -50,7 +50,7 @@ export default function AuthCallbackPage() {
           status: errorInfo.status || 'unknown',
         });
 
-        markSessionUnauthorized();
+        useAuthStore.getState().setUnauthorized();
 
         if (!cancelled) {
           router.replace('/auth?error=sso_failed', { scroll: false });

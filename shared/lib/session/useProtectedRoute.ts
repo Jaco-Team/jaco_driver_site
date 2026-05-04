@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-import useSession from '@/components/sessionHook';
+import { useSession } from '@/features/auth/model/auth.store';
 
 export function useProtectedRoute(): {
   isCheckingAuth: boolean;

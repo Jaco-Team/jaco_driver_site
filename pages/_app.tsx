@@ -22,8 +22,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import * as Sentry from '@sentry/react';
 import { appPalette } from '@/shared/styles/appPalette';
 import YandexMetrika from '@/components/YandexMetrika';
-import { useLoginStore } from '@/features/auth/model/login.store';
-import { refreshSession } from '@/components/sessionHook';
+import { useAuthStore } from '@/features/auth/model/auth.store';
 
 const theme = createTheme({
   palette: {
@@ -91,10 +90,9 @@ function MyApp(props: AppProps) {
     return () => router.events.off('routeChangeComplete', send);
   }, [router.events]);
 
-  useLoginStore((state) => state.check_token);
   useEffect(() => {
     const initAuth = async () => {
-      await refreshSession();
+      await useAuthStore.getState().refreshSession();
     };
 
     initAuth();

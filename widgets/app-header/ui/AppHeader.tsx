@@ -37,7 +37,7 @@ import AppBar from '@mui/material/AppBar';
 
 import AlertOrder from '@/components/AlertOrder';
 import { log, logTel } from '@/components/analytics';
-import useSession, { markSessionUnauthorized } from '@/components/sessionHook';
+import { useAuthStore, useSession } from '@/features/auth/model/auth.store';
 import { useSettingsStore } from '@/entities/settings';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
@@ -760,7 +760,7 @@ export function AppHeader() {
       console.error('logout_request_failed', error);
     });
 
-    markSessionUnauthorized();
+    useAuthStore.getState().setUnauthorized();
     useOrdersStore.setState({ token: '' });
     useHeaderStore.setState({ token: '', phones: null });
 

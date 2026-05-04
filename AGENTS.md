@@ -41,7 +41,7 @@
 - `styles/*.scss`: existing screen/global SCSS kept during migration
 - `ui/*`: legacy shared UI bucket during migration
 - `components/meta.tsx`: document title and app icons
-- `components/sessionHook.ts`: current lightweight auth/session access
+- `features/auth/model/auth.store.ts`: auth/session state and actions
 
 ## Architecture Rules
 
@@ -58,7 +58,7 @@
 - Keep analytics calls in existing analytics conventions instead of ad hoc `window.ym` calls.
 - Work within the current auth pattern unless the task explicitly asks for auth refactoring:
   - token in `localStorage`
-  - session resolved via `components/sessionHook.ts`
+  - session resolved via `features/auth/model/auth.store.ts`
 - `modules/` удален: активные экраны живут в `widgets/*-screen/ui`, состояние и API — в `entities/*`.
 - `ui/*` and `styles/*` may remain during migration, but new reusable primitives should prefer `shared/ui/*` and new shared helpers should prefer `shared/lib/*`.
 

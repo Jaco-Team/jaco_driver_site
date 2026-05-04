@@ -10,7 +10,7 @@ import Image from 'next/image';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 
-import { useLoginStore } from '@/features/auth/model/login.store';
+import { useAuthStore } from '@/features/auth/model/auth.store';
 import { log, redirectToSsoLogin } from '@/shared/api/client';
 
 import MyTextInput from '@/shared/ui/MyTextInput';
@@ -20,7 +20,7 @@ import { roboto } from '@/shared/ui/Font';
 export default function AuthPage() {
   const router = useRouter();
 
-  const [loginErr, login, setLoginErr] = useLoginStore((state) => [
+  const [loginErr, login, setLoginErr] = useAuthStore((state) => [
     state.loginErr,
     state.login,
     state.setLoginErr,

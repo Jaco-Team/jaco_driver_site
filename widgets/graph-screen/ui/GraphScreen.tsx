@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import dayjs from 'dayjs';
 
-import useSession from '@/components/sessionHook';
+import { useSession } from '@/features/auth/model/auth.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { getActiveMonthLabel } from '@/entities/graph/model/graph.utils';
 import { GraphMonthItem, GraphOrderError, GraphCameraError } from '@/entities/graph/model/types';

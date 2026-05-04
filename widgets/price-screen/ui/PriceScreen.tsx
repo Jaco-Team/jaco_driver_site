@@ -21,7 +21,7 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 
-import useSession from '@/components/sessionHook';
+import { useSession } from '@/features/auth/model/auth.store';
 
 import Meta from '@/components/meta';
 

@@ -20,8 +20,8 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push }),
 }));
 
-vi.mock('@/components/sessionHook', () => ({
-  default: () => mocks.session,
+vi.mock('@/features/auth/model/auth.store', () => ({
+  useSession: () => mocks.session,
 }));
 
 vi.mock('@/features/header/model/header.store', () => ({
