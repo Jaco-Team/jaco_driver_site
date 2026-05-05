@@ -48,6 +48,7 @@ import { formatPhoneNumber } from '@/shared/lib/formatters/formatPhoneNumber';
 import { logoutWeb } from '@/features/auth/api/auth.api';
 import { devLog } from '@/shared/lib/devLog';
 import { appPalette } from '@/shared/styles/appPalette';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 type NavigationItem = {
   href: string;
@@ -70,6 +71,7 @@ const routeTitles: Record<string, string> = {
   '/registration': 'Восстановление пароля',
   '/list_orders': 'Список заказов',
   '/map_orders': 'Карта заказов',
+  '/feedback': 'Предложения',
   '/price': 'Расчет',
   '/graph': 'График работы',
   '/statistics': 'Статистика',
@@ -275,6 +277,11 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
       href: '/settings',
       label: 'Настройки',
       icon: <SettingsRoundedIcon />,
+    },
+    {
+      href: '/feedback',
+      label: 'Предложения',
+      icon: <ErrorOutlineIcon />,
     },
   ];
 

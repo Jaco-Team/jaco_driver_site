@@ -63,6 +63,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/graph': 'График работы',
   '/statistics': 'Статистика',
   '/settings': 'Настройки',
+  '/feedback': 'Предложения',
   '/auth': 'Авторизация',
   '/auth/callback': 'SSO авторизация',
   '/registration': 'Восстановление пароля',

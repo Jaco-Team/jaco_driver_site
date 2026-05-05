@@ -8,7 +8,10 @@ interface MyTextInputProps {
   onBlur?: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   type?: string;
   onKeyPress?: (event: KeyboardEvent<HTMLInputElement>) => void;
+  startAdornment?: ReactNode;
   endAdornment?: ReactNode;
+  multiline?: boolean;
+  rows?: number;
 }
 
 export default function MyTextInput({
@@ -18,8 +21,23 @@ export default function MyTextInput({
   onBlur,
   type,
   onKeyPress,
+  startAdornment,
   endAdornment,
+  multiline,
+  rows = 1,
 }: MyTextInputProps) {
+  const inputProps: any = {};
+
+  if (startAdornment || endAdornment) {
+    inputProps.InputProps = {};
+    if (startAdornment) {
+      inputProps.InputProps.startAdornment = startAdornment;
+    }
+    if (endAdornment) {
+      inputProps.InputProps.endAdornment = endAdornment;
+    }
+  }
+
   return (
     <TextField
       label={label}
@@ -30,8 +48,10 @@ export default function MyTextInput({
       size="small"
       type={type}
       color="primary"
+      multiline={multiline}
+      rows={rows}
       style={{ width: '100%' }}
-      InputProps={endAdornment ? { endAdornment } : undefined}
+      {...inputProps}
       onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
         if (onKeyPress && event.key === 'Enter') {
           onKeyPress(event);

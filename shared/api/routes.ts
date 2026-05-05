@@ -32,6 +32,11 @@ export const apiRoutes = {
     orderAppeals: '/api/v1/graph/order-appeals',
     cameraAppeals: '/api/v1/graph/camera-appeals',
   },
+  feedback: {
+    root: '/api/v1/feedback',
+    getFeedbacks: '/api/v1/feedback/get_feedbacks',
+    saveFeedbacks: '/api/v1/feedback/save_feedbacks',
+  },
   orders: {
     getOrders: '/api/v1/orders/get_orders',
     actionOrder: '/api/v1/orders/action_order',
