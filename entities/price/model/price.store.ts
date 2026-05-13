@@ -6,6 +6,7 @@ import type { PriceGiveHistoryRow, PriceStat } from '@/entities/price/api/price.
 interface PriceState {
   statPrice: PriceStat | null;
   give_hist: PriceGiveHistoryRow[];
+  isStatLoading: boolean;
 }
 
 interface PriceActions {
@@ -18,14 +19,18 @@ const priceBetweenRequests = new Map<
   string,
   Promise<Awaited<ReturnType<typeof fetchPriceBetween>>>
 >();
+let latestPriceRequestKey = '';
 
 export const usePriceStore = createWithEqualityFn<PriceStore>(
   (set) => ({
     statPrice: null,
     give_hist: [],
+    isStatLoading: false,
 
     getStatBetween: async (dateStart, dateEnd) => {
       const requestKey = `${dateStart}:${dateEnd}`;
+      latestPriceRequestKey = requestKey;
+      set({ isStatLoading: true });
       let request = priceBetweenRequests.get(requestKey);
 
       if (!request) {
@@ -35,12 +40,22 @@ export const usePriceStore = createWithEqualityFn<PriceStore>(
         priceBetweenRequests.set(requestKey, request);
       }
 
-      const json = await request;
+      try {
+        const json = await request;
 
-      set({
-        statPrice: json?.stat ?? null,
-        give_hist: Array.isArray(json?.give_hist) ? json.give_hist : [],
-      });
+        if (latestPriceRequestKey !== requestKey) {
+          return;
+        }
+
+        set({
+          statPrice: json?.stat ?? null,
+          give_hist: Array.isArray(json?.give_hist) ? json.give_hist : [],
+        });
+      } finally {
+        if (latestPriceRequestKey === requestKey) {
+          set({ isStatLoading: false });
+        }
+      }
     },
   }),
   shallow

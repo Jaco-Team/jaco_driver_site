@@ -1,11 +1,7 @@
 import { useEffect } from 'react';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { devLog } from '@/shared/lib/devLog';
-
-interface UseOrdersAutoRefreshOptions {
-  isEnabled?: boolean;
-  onError?: (error: Error) => void;
-}
+import type { UseOrdersAutoRefreshOptions } from './useOrdersAutoRefresh.type';
 
 export const useOrdersAutoRefresh = (options: UseOrdersAutoRefreshOptions = {}) => {
   const { isEnabled = true, onError } = options;

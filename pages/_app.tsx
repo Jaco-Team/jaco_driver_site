@@ -15,8 +15,9 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import type { AppProps, NextWebVitalsMetric } from 'next/app';
 import { log, hit, screenOpen } from '@/components/analytics';
+import type { EmotionCache } from '@emotion/react';
 
-import { AppCacheProvider } from '@mui/material-nextjs/v16-pagesRouter';
+import { AppCacheProvider, createEmotionCache } from '@mui/material-nextjs/v16-pagesRouter';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import * as Sentry from '@sentry/react';
@@ -46,12 +47,17 @@ const theme = createTheme({
   },
 });
 
+const clientEmotionCache = createEmotionCache({ key: 'css' });
+const PUBLIC_ROUTES = new Set(['/auth', '/auth/callback', '/registration', '/initial']);
+
 export function reportWebVitals(metric: NextWebVitalsMetric) {
   devLog('web_vitals', 'Next web vitals', metric);
 }
 
-function MyApp(props: AppProps) {
-  const { Component, pageProps } = props;
+type MyAppProps = AppProps & { emotionCache?: EmotionCache };
+
+function MyApp(props: MyAppProps) {
+  const { Component, pageProps, emotionCache = clientEmotionCache } = props;
   const { session: _session, ...pagePropsWithoutSession } = pageProps as typeof pageProps & {
     session?: unknown;
   };
@@ -92,15 +98,19 @@ function MyApp(props: AppProps) {
   }, [router.events]);
 
   useEffect(() => {
-    const initAuth = async () => {
-      await useAuthStore.getState().refreshSession();
-    };
+    if (PUBLIC_ROUTES.has(router.pathname)) {
+      return;
+    }
 
-    initAuth();
-  }, []);
+    if (useAuthStore.getState().session.isAuth !== 'load') {
+      return;
+    }
+
+    void useAuthStore.getState().refreshSession();
+  }, [router.pathname]);
 
   return (
-    <AppCacheProvider {...props}>
+    <AppCacheProvider emotionCache={emotionCache}>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>

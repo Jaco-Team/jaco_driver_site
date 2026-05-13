@@ -1,51 +1,31 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import { roboto } from '@/shared/ui/Font';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { Box, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import Button from '@mui/material/Button';
-import { useFeedbackStore } from '@/widgets/feedback/model/feedback.store';
-import { Feedback } from '@/entities/feedback/model/types';
 import { CreateFeedbackDialog } from '@/widgets/feedback/ui/CreateFeedbackDialog';
 import { FeedbackFilters } from '@/widgets/feedback/ui/FeedbackFilters';
 import { FeedbackCard } from '@/widgets/feedback/ui/FeedbackCard';
 import { FeedbackDetailsDrawer } from '@/widgets/feedback/ui/FeedbackDetailsDrawer';
 import CircularProgress from '@mui/material/CircularProgress';
 import { SnackbarNotification } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
+import { useFeedbackPage } from '../model/useFeedbackPage';
 
 const FeedbackPage: React.FC = () => {
-  const { addModal, setAddModal, feedbacks, getFeedbacks, isLoad, snackbar, hideSnackbar } =
-    useFeedbackStore();
-
-  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
-  const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
-
-  const getFeedbacksFetch = useCallback(async () => {
-    try {
-      const data = await getFeedbacks();
-    } catch (e) {
-      console.error('Failed to fetch feedbacks:', e);
-    }
-  }, [getFeedbacks]);
-
-  useEffect(() => {
-    getFeedbacksFetch();
-  }, [getFeedbacksFetch]);
-
-  const handleCardClick = (feedback: Feedback) => {
-    setSelectedFeedback(feedback);
-    setBottomSheetOpen(true);
-  };
-
-  const handleCloseDrawer = () => {
-    setBottomSheetOpen(false);
-    setTimeout(() => setSelectedFeedback(null), 300);
-  };
-
-  const handleCloseSnackbar = () => {
-    hideSnackbar();
-  };
+  const {
+    addModal,
+    setAddModal,
+    feedbacks,
+    isLoad,
+    snackbar,
+    selectedFeedback,
+    bottomSheetOpen,
+    handleCardClick,
+    handleCloseDrawer,
+    handleCloseSnackbar,
+  } = useFeedbackPage();
 
   if (isLoad) {
     return (

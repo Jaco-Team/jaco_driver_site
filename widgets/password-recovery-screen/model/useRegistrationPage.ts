@@ -1,0 +1,128 @@
+import { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/features/auth/model/auth.store';
+import { log } from '@/components/analytics';
+import type {
+  ConfirmPasswordRecoveryCode,
+  LoginByPassword,
+  RecoveryStep,
+  RequestPasswordRecoveryCode,
+  SubmitHandler,
+  SubmitOnEnter,
+  UseRegistrationPageResult,
+} from './useRegistrationPage.type';
+
+export function useRegistrationPage(): UseRegistrationPageResult {
+  const router = useRouter();
+
+  const [activeStep, setActiveStep] = useState<RecoveryStep>(0);
+
+  const [loader, setLoader] = useState(false);
+
+  const [err1, setErr1] = useState('');
+  const [err2, setErr2] = useState('');
+
+  const [myLogin, setMyLogin] = useState('');
+  const [myPWD, setMyPWD] = useState('');
+  const [myCode, setMyCode] = useState('');
+
+  const { requestPasswordRecoveryCode, confirmPasswordRecoveryCode, login } = useAuthStore(
+    (state) => ({
+      requestPasswordRecoveryCode: state.requestPasswordRecoveryCode,
+      confirmPasswordRecoveryCode: state.confirmPasswordRecoveryCode,
+      login: state.login,
+    })
+  );
+  const requestRecoveryCodeApi: RequestPasswordRecoveryCode = requestPasswordRecoveryCode;
+  const confirmRecoveryCodeApi: ConfirmPasswordRecoveryCode = confirmPasswordRecoveryCode;
+  const loginByPasswordApi: LoginByPassword = login;
+
+  async function requestRecoveryCode(): Promise<void> {
+    if (myLogin.length === 0 || myPWD.length === 0) {
+      return;
+    }
+
+    setLoader(true);
+    setErr1('');
+
+    const res = await requestRecoveryCodeApi(myLogin, myPWD);
+
+    if (res.st === true) {
+      log('auth_send_sms', 'Отправка СМС-кода');
+      setActiveStep(1);
+    } else {
+      log('auth_send_sms_fail', 'Ошибка отправки СМС-кода');
+      setErr1(res.text || 'Не удалось отправить код восстановления.');
+    }
+
+    setTimeout(() => {
+      setLoader(false);
+    }, 300);
+  }
+
+  async function confirmRecoveryCode(): Promise<void> {
+    if (myCode.length !== 4) {
+      return;
+    }
+
+    setLoader(true);
+    setErr2('');
+
+    const res = await confirmRecoveryCodeApi(myLogin, myCode);
+
+    if (res.st === true) {
+      const authResult = await loginByPasswordApi(myLogin, myPWD);
+
+      if (authResult.st === true) {
+        log('auth_recovery_autologin_success', 'Автовход после восстановления пароля');
+        router.push('/list_orders', { scroll: false });
+      } else {
+        log('auth_recovery_autologin_fail', 'Не удалось выполнить автовход после восстановления');
+        setErr2(
+          authResult.text || 'Код подтвержден, но не удалось войти автоматически. Войдите вручную.'
+        );
+      }
+    } else {
+      setErr2(res.text || 'Не удалось подтвердить код восстановления.');
+    }
+
+    setTimeout(() => {
+      setLoader(false);
+    }, 300);
+  }
+
+  const panelTitle = activeStep === 0 ? 'Восстановление доступа' : 'Подтверждение по SMS';
+  const panelText =
+    activeStep === 0
+      ? 'Укажите номер телефона и новый пароль. После этого мы отправим код подтверждения.'
+      : 'Введите код из SMS, чтобы подтвердить номер и завершить восстановление пароля.';
+  const errorText = activeStep === 0 ? err1 : err2;
+  const helperText =
+    activeStep === 0
+      ? 'Пароль лучше задать новый, чтобы сразу обновить доступ к аккаунту.'
+      : 'Если код не пришел, проверьте номер телефона и повторите отправку.';
+  const submitOnEnter: SubmitOnEnter = (handler: SubmitHandler) => (event) => {
+    if (event.key === 'Enter') {
+      handler();
+    }
+  };
+
+  return {
+    loader,
+    panelTitle,
+    panelText,
+    activeStep,
+    myLogin,
+    setMyLogin,
+    myPWD,
+    setMyPWD,
+    submitOnEnter,
+    requestRecoveryCode,
+    myCode,
+    setMyCode,
+    confirmRecoveryCode,
+    errorText,
+    helperText,
+  };
+}

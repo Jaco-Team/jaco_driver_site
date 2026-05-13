@@ -7,6 +7,7 @@ import {
   fetchPointPhones,
   saveDriverPosition,
 } from '@/entities/settings/api/settings.api';
+import { useAuthStore } from '@/features/auth/model/auth.store';
 import { type SettingsData, useSettingsStore } from '@/entities/settings';
 
 interface HeaderState {
@@ -49,6 +50,27 @@ type HeaderStore = HeaderState & HeaderActions;
 let avgTimePromise: Promise<string> | null = null;
 let pointPhonesPromise: Promise<PointPhonesPayload | null> | null = null;
 let pointPhonesKey = '';
+
+function canRunProtectedRequest(token: string): boolean {
+  const session = useAuthStore.getState().session;
+
+  if (session.isAuth !== true) {
+    return false;
+  }
+
+  const requestToken = `${token ?? ''}`.trim();
+  const sessionToken = `${session.token ?? ''}`.trim();
+
+  if (!sessionToken && requestToken) {
+    return false;
+  }
+
+  if (sessionToken && requestToken && sessionToken !== requestToken) {
+    return false;
+  }
+
+  return true;
+}
 
 function normalizeBoolLike(value: any): boolean {
   if (value === true || value === 1 || value === '1') {
@@ -136,7 +158,11 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
       await get().getSettings(token);
     },
 
-    getMyAvgTime: async (_token: string) => {
+    getMyAvgTime: async (token: string) => {
+      if (!canRunProtectedRequest(token)) {
+        return;
+      }
+
       if (!avgTimePromise) {
         avgTimePromise = fetchDriverAverageTime().finally(() => {
           avgTimePromise = null;
@@ -198,6 +224,11 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     getStat: async (token: string, pointId?: string | number | null) => {
+      if (!canRunProtectedRequest(token)) {
+        set({ phones: null, token: '' });
+        return;
+      }
+
       const settings = useSettingsStore.getState();
       const settingsPointId = settings.point_id;
       const fallbackPointId = settings.points.find((point) => point.id > 0)?.id ?? null;

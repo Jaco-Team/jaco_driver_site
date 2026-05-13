@@ -1,9 +1,9 @@
 'use client';
 
-import { type ReactElement, type ReactNode, useEffect } from 'react';
+import { type ReactElement, type ReactNode } from 'react';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import Backdrop from '@mui/material/Backdrop';
@@ -36,19 +36,16 @@ import Typography from '@mui/material/Typography';
 import AppBar from '@mui/material/AppBar';
 
 import AlertOrder from '@/components/AlertOrder';
-import { log, logTel } from '@/components/analytics';
-import { useAuthStore, useSession } from '@/features/auth/model/auth.store';
-import { useSettingsStore } from '@/entities/settings';
+import { logTel } from '@/components/analytics';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { OrderCard } from '@/widgets/order/ui/components/OrderCard';
 import PayModel from '@/components/PayModel';
 import { roboto } from '@/shared/config/fonts';
 import { formatPhoneNumber } from '@/shared/lib/formatters/formatPhoneNumber';
-import { logoutWeb } from '@/features/auth/api/auth.api';
-import { devLog } from '@/shared/lib/devLog';
 import { appPalette } from '@/shared/styles/appPalette';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { useAppHeader } from '../model/useAppHeader';
 
 type NavigationItem = {
   href: string;
@@ -670,121 +667,16 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
 }
 
 export function AppHeader() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const session = useSession();
-
-  const getMySetting = useSettingsStore((state) => state.getMySetting);
-
-  const [
-    activePageRU,
-    setOpenMenu,
-    getStat,
-    checkMyPos,
+  const {
+    pathname,
+    pageTitle,
     globalFontSize,
-    applySettings,
-    getMyAvgTime,
-  ] = useHeaderStore((state) => [
-    state.activePageRU,
-    state.setOpenMenu,
-    state.getStat,
-    state.checkMyPos,
-    state.globalFontSize,
-    state.applySettings,
-    state.getMyAvgTime,
-  ]);
-
-  const [myCurrentLocation, showModalTypeDop, getOrders] = useOrdersStore((state) => [
-    state.MyCurrentLocation,
-    state.showModalTypeDop,
-    state.getOrders,
-  ]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-      window.location.replace(
-        `https:${window.location.href.substring(window.location.protocol.length)}`
-      );
-    }
-  }, []);
-
-  useEffect(() => {
-    if (session?.isAuth !== true) {
-      return;
-    }
-
-    void (async () => {
-      let pointId: string | number | null | undefined;
-
-      try {
-        const settings = await getMySetting(session.token ?? '');
-        applySettings(settings);
-        pointId = settings?.point_id;
-      } catch (error) {
-        devLog('header_settings_load_failed', 'Header settings load failed', error);
-      }
-
-      await Promise.allSettled([
-        getStat(session.token ?? '', pointId),
-        getMyAvgTime(session.token ?? ''),
-        Promise.resolve(myCurrentLocation()),
-      ]);
-    })();
-  }, [
-    applySettings,
-    getMyAvgTime,
-    getMySetting,
-    getStat,
-    myCurrentLocation,
-    session?.isAuth,
-    session?.token,
-  ]);
-
-  useEffect(() => {
-    if (session?.isAuth !== true) {
-      return;
-    }
-
-    checkMyPos();
-
-    const intervalId = window.setInterval(() => {
-      checkMyPos();
-      getMyAvgTime(session.token ?? '');
-    }, 120 * 1000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [session?.isAuth, session?.token]);
-
-  const pageTitle = activePageRU || routeTitles[pathname] || '';
-
-  const handleLogout = () => {
-    void logoutWeb().catch((error) => {
-      devLog('logout_request_failed', 'Logout request failed', error);
-    });
-
-    useAuthStore.getState().setUnauthorized();
-    useOrdersStore.setState({ token: '' });
-    useHeaderStore.setState({ token: '', phones: null });
-
-    let pushed = false;
-    const go = () => {
-      if (pushed) {
-        return;
-      }
-
-      pushed = true;
-      router.push('/auth', { scroll: false });
-    };
-
-    log('logout', 'Выход из аккаунта', undefined, { callback: go });
-    setTimeout(go, 200);
-  };
+    setOpenMenu,
+    showModalTypeDop,
+    getOrders,
+    isOrdersActionsVisible,
+    handleLogout,
+  } = useAppHeader(routeTitles);
 
   return (
     <Box>
@@ -808,7 +700,7 @@ export function AppHeader() {
           >
             {pageTitle}
           </Typography>
-          {(pathname === '/list_orders' || pathname === '/map_orders') && (
+          {isOrdersActionsVisible && (
             <div>
               <Button
                 className="noselect"

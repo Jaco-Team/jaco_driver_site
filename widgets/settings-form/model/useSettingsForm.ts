@@ -9,6 +9,7 @@ import {
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useSession } from '@/features/auth/model/auth.store';
 import type { SnackbarState } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
+import type { UseSettingsFormReturn } from './useSettingsForm.type';
 
 const initialSnackbarState: SnackbarState = {
   open: false,
@@ -18,7 +19,7 @@ const initialSnackbarState: SnackbarState = {
   message: '',
 };
 
-export const useSettingsForm = () => {
+export const useSettingsForm = (): UseSettingsFormReturn => {
   const session = useSession();
   const [saveMySetting, getMySetting, isSaving, pointId, points, setPointId] = useSettingsStore(
     (state) => [

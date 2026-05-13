@@ -1,67 +1,21 @@
-import { useEffect, useState } from 'react';
-
 import Meta from '@/components/meta';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
 import Image from 'next/image';
-
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 
-import { useAuthStore } from '@/features/auth/model/auth.store';
-import { redirectToSsoLogin } from '@/features/auth/api/auth.api';
 import { log } from '@/components/analytics';
 
 import MyTextInput from '@/shared/ui/MyTextInput';
 import PasswordInput from '@/shared/ui/PasswordInput';
 import { roboto } from '@/shared/ui/Font';
 
+import { useAuthPage } from '../model/useAuthPage';
+
 export default function AuthPage() {
-  const router = useRouter();
-
-  const [loginErr, login, setLoginErr] = useAuthStore((state) => [
-    state.loginErr,
-    state.login,
-    state.setLoginErr,
-  ]);
-
-  const [myLogin, setMyLogin] = useState('');
-  const [myPWD, setMyPWD] = useState('');
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const error = params.get('error');
-
-    if (error === 'sso_failed') {
-      setLoginErr('Не удалось войти через SSO. Попробуйте еще раз.');
-    }
-  }, [setLoginErr]);
-
-  async function loginFN() {
-    if (myLogin.length === 0 || myPWD.length === 0) {
-      return;
-    }
-
-    const res = await login(myLogin, myPWD);
-
-    if (res.st === true) {
-      log('auth_login', 'Успешная авторизация');
-      router.push('/list_orders', { scroll: false });
-    } else {
-      log('auth_login_fail', 'Ошибка авторизации');
-    }
-  }
-
-  function loginWithSso() {
-    log('auth_sso_click', 'Переход к SSO авторизации');
-    redirectToSsoLogin();
-  }
+  const { loginWithSso, loginFN, myLogin, setMyLogin, myPWD, setMyPWD, loginErr, router } =
+    useAuthPage();
 
   return (
     <Meta title="Авторизация">

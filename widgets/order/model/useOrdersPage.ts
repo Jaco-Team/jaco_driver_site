@@ -4,11 +4,7 @@ import { useSession } from '@/features/auth/model/auth.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { devLog } from '@/shared/lib/devLog';
-
-interface UseOrdersPageReturn {
-  isLoading: boolean;
-  isAuth: boolean | 'load';
-}
+import type { UseOrdersPageReturn } from './useOrdersPage.type';
 
 export const useOrdersPage = (): UseOrdersPageReturn => {
   const router = useRouter();
