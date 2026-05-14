@@ -34,9 +34,9 @@ export const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
             justifyContent: 'space-between',
           }}
         >
-          <span style={{ color: '#000', fontSize: '10px' }}>Ая</span>
+          <span style={{ color: '#000', fontSize: '0.625rem' }}>Ая</span>
           <span style={{ color: '#000', fontSize: value }}>Ая</span>
-          <span style={{ color: '#000', fontSize: '40px' }}>Ая</span>
+          <span style={{ color: '#000', fontSize: '2.5rem' }}>Ая</span>
         </div>
         <Slider
           size="medium"

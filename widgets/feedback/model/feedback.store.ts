@@ -1,6 +1,6 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
-import { FeedbackStore, SnackbarState } from '@/entities/feedback/model/types';
+import { Feedback, FeedbackStore, SnackbarState } from '@/entities/feedback/model/types';
 import { getFeedbacks, saveFeedbacks } from '@/entities/feedback/api/feedback.api';
 
 const initialSnackbar: SnackbarState = {
@@ -10,6 +10,20 @@ const initialSnackbar: SnackbarState = {
   severity: 'success',
   message: '',
 };
+
+function filterFeedbackList(feedbacks: Feedback[], search: string, status: number): Feedback[] {
+  const searchValue = search.trim().toLowerCase();
+
+  return feedbacks.filter((item) => {
+    const title = String(item.title ?? '').toLowerCase();
+    const description = String(item.description ?? '').toLowerCase();
+    const matchesSearch =
+      searchValue.length === 0 || title.includes(searchValue) || description.includes(searchValue);
+    const matchesStatus = status === 0 || item.status === status;
+
+    return matchesSearch && matchesStatus;
+  });
+}
 
 export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
   (set, get) => ({
@@ -34,11 +48,7 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
       const { feedbacksAll, status } = get();
       set({
         search,
-        feedbacks: feedbacksAll.filter(
-          (u) =>
-            (u.title.includes(search) || u.description.includes(search)) &&
-            (u.status === status || status === 0)
-        ),
+        feedbacks: filterFeedbackList(feedbacksAll, search, status),
       });
     },
 
@@ -63,9 +73,9 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
     },
 
     changeStatus: (status) => {
-      const { feedbacksAll } = get();
+      const { feedbacksAll, search } = get();
       set({
-        feedbacks: status === 0 ? feedbacksAll : feedbacksAll.filter((k) => k.status === status),
+        feedbacks: filterFeedbackList(feedbacksAll, search, status),
         status,
       });
     },
@@ -74,8 +84,9 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
       set({ isLoad: true });
       try {
         const res = await getFeedbacks();
+        const { search, status } = get();
         set({
-          feedbacks: res.data,
+          feedbacks: filterFeedbackList(res.data, search, status),
           feedbacksAll: res.data,
           isLoad: false,
         });
@@ -141,8 +152,7 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
           return;
         }
 
-        const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-        const invalidTypes = img.filter((file) => !allowedTypes.includes(file.type));
+        const invalidTypes = img.filter((file) => !file.type.toLowerCase().startsWith('image/'));
 
         if (invalidTypes.length > 0) {
           set({
@@ -197,8 +207,9 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
 
         // Перезагружаем список
         const res2 = await getFeedbacks();
+        const { search, status } = get();
         set({
-          feedbacks: res2.data,
+          feedbacks: filterFeedbackList(res2.data, search, status),
           feedbacksAll: res2.data,
         });
       } catch (error: any) {

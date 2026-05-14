@@ -47,6 +47,10 @@ interface HeaderActions {
 
 type HeaderStore = HeaderState & HeaderActions;
 
+const DEFAULT_GLOBAL_FONT_SIZE = 16;
+const MIN_GLOBAL_FONT_SIZE = 10;
+const MAX_GLOBAL_FONT_SIZE = 40;
+
 let avgTimePromise: Promise<string> | null = null;
 let pointPhonesPromise: Promise<PointPhonesPayload | null> | null = null;
 let pointPhonesKey = '';
@@ -94,6 +98,22 @@ function normalizePointId(value: SettingsData['point_id']): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+function normalizeGlobalFontSize(
+  value: SettingsData['fontSize'] | number | string | null | undefined
+): number {
+  if (value === undefined || value === null || `${value}`.trim() === '') {
+    return DEFAULT_GLOBAL_FONT_SIZE;
+  }
+
+  const parsed = parseInt(`${value}`, 10);
+
+  if (Number.isNaN(parsed)) {
+    return DEFAULT_GLOBAL_FONT_SIZE;
+  }
+
+  return Math.min(MAX_GLOBAL_FONT_SIZE, Math.max(MIN_GLOBAL_FONT_SIZE, parsed));
+}
+
 export const useHeaderStore = createWithEqualityFn<HeaderStore>(
   (set, get) => ({
     isOpenMenu: false,
@@ -106,7 +126,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     is_need_avg_time: false,
     is_need_page_stat: false,
     night_map: false,
-    globalFontSize: 16,
+    globalFontSize: DEFAULT_GLOBAL_FONT_SIZE,
     theme: 'white',
     mapScale: '1',
     point: null,
@@ -133,8 +153,8 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
           ? normalizeBoolLike(settings.is_scaleMap)
           : currentState.is_scaleMap,
         globalFontSize: hasField('fontSize')
-          ? parseInt(String(settings.fontSize ?? 16), 10)
-          : currentState.globalFontSize,
+          ? normalizeGlobalFontSize(settings.fontSize)
+          : DEFAULT_GLOBAL_FONT_SIZE,
         theme: hasField('theme') ? `${settings.theme ?? 'white'}` : currentState.theme,
         mapScale: hasField('mapScale')
           ? `${parseFloat(String(settings.mapScale ?? 1))}`
@@ -143,7 +163,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     setGlobalFontSize: (fontSize: number) => {
-      set({ globalFontSize: parseInt(String(fontSize)) });
+      set({ globalFontSize: normalizeGlobalFontSize(fontSize) });
     },
 
     setTheme: (theme: string) => {

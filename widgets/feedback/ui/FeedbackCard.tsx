@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
+import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
 import { Feedback, statusArr } from '@/entities/feedback/model/types';
 
 interface FeedbackCardProps {
@@ -8,75 +9,107 @@ interface FeedbackCardProps {
 }
 
 export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onClick }) => {
-  const getStatusColor = (status: number) => {
+  const normalizedTitle = String(feedback.title ?? '').trim();
+  const normalizedDescription = (feedback.description || '').trim();
+  const isCompactCard = normalizedTitle.length <= 24 && normalizedDescription.length <= 40;
+
+  const getStatusColor = (status: number): string => {
     switch (status) {
       case 1:
         return '#42AAFF';
       case 2:
-        return '#F2F2F2';
+        return '#ffeccf';
       case 3:
-        return '#f5f5f5';
+        return '#eceff3';
       case 4:
-        return 'green';
+        return '#dff6df';
       default:
-        return '#f5f5f5';
+        return '#eceff3';
     }
   };
 
-  const getStatusTextColor = (status: number) => {
-    return status === 3 || status === 2 ? 'black' : 'white';
+  const getStatusTextColor = (status: number): string => {
+    if (status === 1) {
+      return '#ffffff';
+    }
+
+    if (status === 4) {
+      return '#1f6b2a';
+    }
+
+    return '#253343';
   };
+
+  const createdAt =
+    feedback.date_time_create?.replace(/^(\d{4})-(\d{2})-(\d{2}).*$/, '$3.$2.$1') || '—';
 
   return (
     <Box
       onClick={() => onClick(feedback)}
       sx={{
         bgcolor: 'background.paper',
-        borderRadius: 2,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        transition: 'transform 0.2s, boxShadow 0.2s',
-        height: '100%',
+        borderRadius: 4,
+        border: '1px solid rgba(66, 98, 125, 0.12)',
+        boxShadow: '0 12px 24px rgba(31, 43, 54, 0.08)',
+        transition: 'transform 0.2s, boxShadow 0.2s, border-color 0.2s',
+        minHeight: isCompactCard ? { xs: 172, sm: 184 } : { xs: 198, sm: 216 },
+        maxHeight: { xs: 360, sm: 392 },
+        height: 'auto',
         display: 'flex',
         flexDirection: 'column',
         cursor: 'pointer',
+        overflow: 'hidden',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          transform: 'translateY(-3px)',
+          boxShadow: '0 16px 28px rgba(31, 43, 54, 0.13)',
+          borderColor: 'rgba(66, 98, 125, 0.25)',
         },
         '&:active': {
           transform: 'scale(0.98)',
         },
       }}
     >
-      <Box sx={{ p: 2 }}>
+      <Box
+        sx={{
+          p: '16px 16px 8px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+        }}
+      >
         <Typography
-          variant="h8"
+          component="h3"
           sx={{
-            fontWeight: 600,
-            mb: 1.5,
+            fontWeight: 800,
+            color: '#171b22',
+            mb: 1.15,
+            fontSize: '1.34rem',
+            lineHeight: 1.22,
             overflow: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
             textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
           }}
         >
-          {feedback.title}
+          {normalizedTitle || 'Без заголовка'}
         </Typography>
 
         <Typography
           sx={{
             display: '-webkit-box',
-            WebkitLineClamp: 2,
+            WebkitLineClamp: 4,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            mb: 2,
-            color: 'text.secondary',
-            fontSize: '0.875rem',
-            lineHeight: 1.5,
-            minHeight: '2.5em',
+            mb: 1.25,
+            color: '#5a6470',
+            fontSize: '0.98rem',
+            lineHeight: 1.45,
+            overflowWrap: 'anywhere',
           }}
         >
-          {feedback.description || 'Нет описания'}
+          {normalizedDescription || 'Нет описания'}
         </Typography>
 
         <Box
@@ -84,9 +117,12 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onClick })
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            pt: 1,
+            gap: 1,
+            pt: 0.8,
+            mt: 'auto',
+            minHeight: 40,
             borderTop: '1px solid',
-            borderColor: 'divider',
+            borderColor: 'rgba(66, 98, 125, 0.2)',
           }}
         >
           <Chip
@@ -95,11 +131,34 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onClick })
             sx={{
               backgroundColor: getStatusColor(feedback.status),
               color: getStatusTextColor(feedback.status),
+              borderRadius: '999px',
+              fontWeight: 700,
+              height: 30,
+              px: 0.35,
+              fontSize: '0.86rem',
+              '& .MuiChip-label': {
+                display: 'inline-flex',
+                alignItems: 'center',
+                lineHeight: 1,
+              },
             }}
           />
-          <Typography variant="caption" color="text.secondary">
-            {feedback.date_time_create?.replace(/^(\d{4})-(\d{2})-(\d{2}).*$/, '$3.$2.$1') || '—'}
-          </Typography>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.55,
+              color: '#6e7884',
+              minHeight: 30,
+            }}
+          >
+            <CalendarTodayRoundedIcon sx={{ fontSize: '0.9rem' }} />
+            <Typography
+              sx={{ fontSize: '0.9rem', color: '#66707b', fontWeight: 500, lineHeight: 1 }}
+            >
+              {createdAt}
+            </Typography>
+          </Box>
         </Box>
       </Box>
     </Box>

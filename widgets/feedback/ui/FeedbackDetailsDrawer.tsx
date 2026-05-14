@@ -1,5 +1,5 @@
 import React from 'react';
-import { SwipeableDrawer, Box, IconButton, Typography, Divider, Chip } from '@mui/material';
+import { SwipeableDrawer, Box, IconButton, Typography, Divider, Chip, Dialog } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Feedback, statusArr } from '@/entities/feedback/model/types';
@@ -15,6 +15,14 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
   feedback,
   onClose,
 }) => {
+  const [isImageViewerOpen, setImageViewerOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!open) {
+      setImageViewerOpen(false);
+    }
+  }, [open]);
+
   const getStatusColor = (status: number) => {
     switch (status) {
       case 1:
@@ -105,7 +113,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <AccessTimeIcon sx={{ fontSize: 16, color: '#666' }} />
+            <AccessTimeIcon sx={{ fontSize: '1rem', color: '#666' }} />
             <Typography variant="body2" color="text.secondary">
               {feedback.date_time_create?.replace(/^(\d{4})-(\d{2})-(\d{2}).*$/, '$3.$2.$1') || '—'}
             </Typography>
@@ -163,16 +171,30 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             >
               Изображение
             </Typography>
-            <div
-              style={{
-                backgroundImage: `url(${feedback.link})`,
+            <Box
+              role="button"
+              tabIndex={0}
+              onClick={() => setImageViewerOpen(true)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setImageViewerOpen(true);
+                }
+              }}
+              sx={{
                 width: '100%',
-                maxWidth: '500px',
-                height: '350px',
+                maxWidth: 500,
+                height: 350,
+                borderRadius: 2,
+                border: '1px solid rgba(66, 98, 125, 0.2)',
+                backgroundImage: `url(${feedback.link})`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                cursor: 'zoom-in',
+                outline: 'none',
               }}
-            ></div>
+            />
           </>
         ) : null}
 
@@ -196,7 +218,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             padding: '12px',
             borderRadius: 2,
             fontWeight: '500',
-            fontSize: '16px',
+            fontSize: '1rem',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
@@ -204,6 +226,63 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
           {feedback.answer || 'Нет ответа'}
         </Typography>
       </Box>
+
+      <Dialog
+        fullScreen
+        open={isImageViewerOpen}
+        onClose={() => setImageViewerOpen(false)}
+        sx={{
+          '& .MuiDialog-paper': {
+            backgroundColor: 'rgba(8, 10, 16, 0.96)',
+          },
+        }}
+      >
+        <IconButton
+          aria-label="Закрыть изображение"
+          onClick={() => setImageViewerOpen(false)}
+          sx={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            color: '#fff',
+            zIndex: 2,
+            bgcolor: 'rgba(255, 255, 255, 0.14)',
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.24)',
+            },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+
+        <Box
+          onClick={() => setImageViewerOpen(false)}
+          sx={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 2,
+            boxSizing: 'border-box',
+            cursor: 'zoom-out',
+          }}
+        >
+          <Box
+            component="img"
+            src={feedback.link ?? ''}
+            alt="Изображение предложения"
+            onClick={(event) => event.stopPropagation()}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              userSelect: 'none',
+              WebkitUserDrag: 'none',
+            }}
+          />
+        </Box>
+      </Dialog>
     </SwipeableDrawer>
   );
 };

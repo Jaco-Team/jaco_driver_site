@@ -19,6 +19,11 @@ const initialSnackbarState: SnackbarState = {
   message: '',
 };
 
+function normalizeFontSize(value: unknown): number {
+  const parsed = parseInt(String(value ?? ''), 10);
+  return Number.isNaN(parsed) ? 16 : parsed;
+}
+
 export const useSettingsForm = (): UseSettingsFormReturn => {
   const session = useSession();
   const [saveMySetting, getMySetting, isSaving, pointId, points, setPointId] = useSettingsStore(
@@ -49,7 +54,7 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
   const [isScaleMap, setIsScaleMap] = useState<boolean>(false);
   const [color, setColor] = useState<string>('#000000');
   const [groupTypeTheme, setGroupTypeTheme] = useState<ThemeType>('white');
-  const [fontSize, setFontSize] = useState<number>(10);
+  const [fontSize, setFontSize] = useState<number>(16);
   const [mapScale, setMapScale] = useState<number>(1);
   const [snackbarState, setSnackbarState] = useState<SnackbarState>(initialSnackbarState);
 
@@ -73,7 +78,7 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
       setTypeShowDel((res.type_show_del as TypeShowDel) ?? 'min');
       setGroupTypeTime((res.type_data_map as TypeDataMap) ?? 'norm');
       setGroupTypeTheme((res.theme as ThemeType) ?? 'white');
-      setFontSize(parseInt(String(res.fontSize ?? 16)));
+      setFontSize(normalizeFontSize(res.fontSize));
       setMapScale(parseFloat(String(res.mapScale ?? 1)));
       setIsLoad(true);
     };

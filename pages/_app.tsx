@@ -25,6 +25,7 @@ import { appPalette } from '@/shared/styles/appPalette';
 import { devLog } from '@/shared/lib/devLog';
 import YandexMetrika from '@/components/YandexMetrika';
 import { useAuthStore } from '@/features/auth/model/auth.store';
+import { useHeaderStore } from '@/features/header/model/header.store';
 
 const theme = createTheme({
   palette: {
@@ -49,6 +50,8 @@ const theme = createTheme({
 
 const clientEmotionCache = createEmotionCache({ key: 'css' });
 const PUBLIC_ROUTES = new Set(['/auth', '/auth/callback', '/registration', '/initial']);
+const EXCLUDED_GLOBAL_FONT_ROUTES = new Set(['/list_orders', '/map_orders']);
+const DEFAULT_GLOBAL_FONT_SIZE = 16;
 
 export function reportWebVitals(metric: NextWebVitalsMetric) {
   devLog('web_vitals', 'Next web vitals', metric);
@@ -62,6 +65,14 @@ function MyApp(props: MyAppProps) {
     session?: unknown;
   };
   const router = useRouter();
+  const globalFontSize = useHeaderStore((state) => state.globalFontSize);
+  const normalizedGlobalFontSize =
+    Number.isFinite(globalFontSize) && globalFontSize > 0
+      ? globalFontSize
+      : DEFAULT_GLOBAL_FONT_SIZE;
+  const appFontSize = EXCLUDED_GLOBAL_FONT_ROUTES.has(router.pathname)
+    ? DEFAULT_GLOBAL_FONT_SIZE
+    : normalizedGlobalFontSize;
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -108,6 +119,18 @@ function MyApp(props: MyAppProps) {
 
     void useAuthStore.getState().refreshSession();
   }, [router.pathname]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.documentElement.style.fontSize = `${appFontSize}px`;
+
+    return () => {
+      document.documentElement.style.fontSize = `${DEFAULT_GLOBAL_FONT_SIZE}px`;
+    };
+  }, [appFontSize]);
 
   return (
     <AppCacheProvider emotionCache={emotionCache}>

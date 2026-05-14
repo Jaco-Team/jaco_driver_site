@@ -1,4 +1,4 @@
-@use "./settings" as *;
+@use './settings' as *;
 
 .initial {
   background-color: $colorMain;
@@ -11,10 +11,10 @@
     align-items: center;
     justify-content: space-evenly;
 
-    & span{
+    & span {
       width: 80%;
       color: #fff;
-      font-size: 30px;
+      font-size: 1.875rem;
       font-style: normal;
       font-weight: 700;
       text-align: center;

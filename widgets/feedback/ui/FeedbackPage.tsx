@@ -2,18 +2,26 @@ import React from 'react';
 import { roboto } from '@/shared/ui/Font';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
-import { Box, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import Button from '@mui/material/Button';
+import { Box, Fab } from '@mui/material';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { CreateFeedbackDialog } from '@/widgets/feedback/ui/CreateFeedbackDialog';
 import { FeedbackFilters } from '@/widgets/feedback/ui/FeedbackFilters';
 import { FeedbackCard } from '@/widgets/feedback/ui/FeedbackCard';
 import { FeedbackDetailsDrawer } from '@/widgets/feedback/ui/FeedbackDetailsDrawer';
 import CircularProgress from '@mui/material/CircularProgress';
 import { SnackbarNotification } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
+import { useHeaderStore } from '@/features/header/model/header.store';
 import { useFeedbackPage } from '../model/useFeedbackPage';
 
+const DEFAULT_GLOBAL_FONT_SIZE = 16;
+
 const FeedbackPage: React.FC = () => {
+  const globalFontSize = useHeaderStore((state) => state.globalFontSize);
+  const normalizedGlobalFontSize =
+    Number.isFinite(globalFontSize) && globalFontSize > 0
+      ? globalFontSize
+      : DEFAULT_GLOBAL_FONT_SIZE;
+
   const {
     addModal,
     setAddModal,
@@ -45,34 +53,61 @@ const FeedbackPage: React.FC = () => {
     <>
       <Grid
         container
-        spacing={3}
+        spacing={2.5}
         className={'list ' + roboto.variable}
-        style={{ display: 'flex', position: 'relative' }}
+        sx={{
+          display: 'flex',
+          position: 'relative',
+          alignContent: 'flex-start',
+          paddingTop: 1,
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 120px)',
+          minHeight: 'calc(100vh - 64px)',
+        }}
       >
         <CreateFeedbackDialog open={addModal} onClose={() => setAddModal(false)} />
 
-        <Button
+        <Fab
           onClick={() => setAddModal(true)}
           sx={{
             backgroundColor: '#cc0033',
-            color: 'white',
-            boxShadow: '0 20px 36px rgba(166, 0, 42, 0.28)',
-            borderRadius: '50%',
+            color: '#ffffff',
             position: 'fixed',
-            right: '12px',
-            bottom: '10px',
-            padding: '20px',
+            right: 14,
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            boxShadow: '0 22px 34px rgba(146, 0, 36, 0.32)',
             zIndex: 1000,
             '&:hover': {
-              backgroundColor: 'red',
-              boxShadow: '0 20px 16px rgba(166, 0, 42, 0.28)',
+              backgroundColor: '#b4002d',
+              boxShadow: '0 24px 36px rgba(146, 0, 36, 0.36)',
             },
           }}
+          aria-label="Создать предложение"
         >
-          <CloseIcon sx={{ rotate: '45deg' }} />
-        </Button>
+          <AddRoundedIcon sx={{ fontSize: 38 }} />
+        </Fab>
 
         <FeedbackFilters />
+
+        <Grid size={{ xs: 12 }} sx={{ mt: -0.25 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 0.5,
+            }}
+          >
+            <Typography sx={{ color: '#5e6874', fontWeight: 600, fontSize: '0.98rem' }}>
+              Лента предложений
+            </Typography>
+            <Typography sx={{ color: '#7a8591', fontWeight: 500, fontSize: '0.92rem' }}>
+              Всего: {feedbacks?.length ?? 0}
+            </Typography>
+          </Box>
+        </Grid>
 
         {feedbacks?.length > 0 ? (
           feedbacks.map((feedback, index) => (
@@ -82,7 +117,24 @@ const FeedbackPage: React.FC = () => {
           ))
         ) : (
           <Grid size={{ xs: 12 }}>
-            <Typography align="center">Нет отзывов</Typography>
+            <Box
+              sx={{
+                borderRadius: '24px',
+                border: '1px dashed rgba(66, 98, 125, 0.32)',
+                backgroundColor: '#ffffff',
+                py: 5,
+                px: 2,
+                textAlign: 'center',
+                color: '#4f5c68',
+              }}
+            >
+              <Typography sx={{ fontSize: '1.2rem', fontWeight: 700, mb: 0.6 }}>
+                Ничего не найдено
+              </Typography>
+              <Typography sx={{ fontSize: '1rem', color: '#768391' }}>
+                Попробуйте изменить фильтр или текст поиска
+              </Typography>
+            </Box>
           </Grid>
         )}
       </Grid>
@@ -96,7 +148,7 @@ const FeedbackPage: React.FC = () => {
       <SnackbarNotification
         state={snackbar}
         onClose={handleCloseSnackbar}
-        fontSize={14}
+        fontSize={normalizedGlobalFontSize}
         autoHideDuration={5000}
       />
     </>
