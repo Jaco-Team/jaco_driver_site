@@ -4,32 +4,15 @@ import TextareaAutosize from '@mui/material/TextareaAutosize';
 import Typography from '@mui/material/Typography';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 
-import { GraphErrorModal } from '@/entities/graph/model/types';
 import { resolveGraphErrorImageUrl } from '@/shared/api/routes';
 import { appPalette } from '@/shared/styles/appPalette';
+import type {
+  GraphAppealBlockProps,
+  GraphErrorDrawerProps,
+  GraphErrorFieldProps,
+} from '../model/GraphScreen.type';
 
-interface GraphErrorDrawerProps {
-  open: boolean;
-  errorModal: GraphErrorModal;
-  globalFontSize: number;
-  fontClassName: string;
-  appealText: string;
-  isSubmittingAppeal: boolean;
-  onChangeAppealText: (value: string) => void;
-  onClose: () => void;
-  onSubmitOrderAppeal: () => void;
-  onSubmitCameraAppeal: () => void;
-}
-
-function GraphErrorField({
-  label,
-  value,
-  globalFontSize,
-}: {
-  label: string;
-  value: string | number | undefined;
-  globalFontSize: number;
-}) {
+function GraphErrorField({ label, value, globalFontSize }: GraphErrorFieldProps) {
   return (
     <div
       style={{
@@ -63,16 +46,7 @@ function GraphAppealBlock({
   isSubmittingAppeal,
   onChangeAppealText,
   onSubmit,
-}: {
-  title: string;
-  text: string | undefined;
-  canEdit: boolean;
-  globalFontSize: number;
-  appealText: string;
-  isSubmittingAppeal: boolean;
-  onChangeAppealText: (value: string) => void;
-  onSubmit: () => void;
-}) {
+}: GraphAppealBlockProps) {
   if (!text || text.length === 0) {
     if (!canEdit) {
       return null;

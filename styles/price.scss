@@ -140,6 +140,65 @@
     margin-top: 24px;
   }
 
+  & .price__segmentedRangeControl {
+    width: auto;
+    // margin-left: 6px;
+    // margin-right: 6px;
+    border: 1px solid rgba(66, 98, 125, 0.22);
+    border-radius: 14px;
+    background: #ffffff;
+    min-height: 58px;
+    padding: 6px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 2px;
+  }
+
+  & .price__segmentButton {
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    min-height: 44px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    min-width: 0;
+  }
+
+  & .price__segmentButton--end {
+    justify-content: flex-end;
+    padding-right: 4px;
+
+    & .price__segmentValue {
+      text-align: right;
+    }
+  }
+
+  & .price__segmentLabel {
+    @include font_custom(0.8rem, 800, $colorTextMuted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+
+  & .price__segmentValue {
+    @include font_custom(0.98rem, 700, $colorSecondaryDeep);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  & .price__segmentDivider {
+    @include font_custom(0.78rem, 700, $colorTextMuted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
   & .price__heroSubmit {
     margin-top: 18px;
   }
@@ -358,6 +417,19 @@
       margin-top: 20px;
     }
 
+    & .price__segmentedRangeControl {
+      min-height: 54px;
+    }
+
+    & .price__segmentButton {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+
+    & .price__segmentButton--end {
+      padding-right: 4px;
+    }
+
     & .price__dateLauncher {
       min-height: 74px;
       padding: 16px 18px;
@@ -397,6 +469,72 @@
     & .price__heroTitle {
       font-size: 2rem;
     }
+  }
+}
+
+.price__pickerPaper {
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 24%);
+  box-shadow: 0 -20px 44px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  max-height: calc(100dvh - 92px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.price__pickerSheet {
+  padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 14px);
+}
+
+.price__pickerHandle {
+  width: 68px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(31, 43, 54, 0.16);
+  margin: 0 auto 14px;
+}
+
+.price__pickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 8px 6px;
+}
+
+.price__pickerTitle {
+  margin: 0;
+  @include font_custom(1.2rem, 800, $colorSecondaryDeep);
+  line-height: 1.2;
+  text-align: center;
+  width: 100%;
+}
+
+.price__pickerCalendar {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+
+  & .MuiDateCalendar-root {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    max-width: 340px;
+  }
+}
+
+@media (max-width: 600px) {
+  .price__pickerSheet {
+    padding: 8px 10px calc(env(safe-area-inset-bottom, 0px) + 12px);
+  }
+
+  .price__pickerHandle {
+    margin-bottom: 12px;
+  }
+
+  .price__pickerHeader {
+    padding-left: 8px;
+    padding-right: 8px;
   }
 }
 

@@ -1,15 +1,5 @@
-import { GraphMonthItem } from '@/entities/graph/model/types';
 import { SelectionDrawer } from '@/shared/ui/SelectionDrawer';
-
-interface GraphMonthPickerDrawerProps {
-  open: boolean;
-  monthList: GraphMonthItem[];
-  globalFontSize: number;
-  fontClassName: string;
-  onOpen: () => void;
-  onClose: () => void;
-  onSelectMonth: (item: GraphMonthItem) => void;
-}
+import type { GraphMonthPickerDrawerProps } from '../model/GraphScreen.type';
 
 export function GraphMonthPickerDrawer({
   open,

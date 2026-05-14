@@ -6,51 +6,18 @@ import {
   submitGraphCameraAppeal as submitGraphCameraAppealRequest,
   submitGraphOrderAppeal as submitGraphOrderAppealRequest,
 } from '@/entities/graph/api/graph.api';
-import type { ApiResponse } from '@/shared/api/types';
 import {
   normalizeGraphCameraError,
   normalizeGraphOrderError,
   normalizeGraphResponse,
 } from '@/entities/graph/model/graph.utils';
 import { useSettingsStore } from '@/entities/settings';
-import { GraphCameraError, GraphErrorModal, GraphOrderError } from '@/entities/graph/model/types';
 import { log } from '@/components/analytics';
-
-interface GraphStoreState {
-  isMonthDrawerOpen: boolean;
-  errorModal: GraphErrorModal;
-  alertText: string;
-  isAlertOpen: boolean;
-  appealText: string;
-  isSubmittingAppeal: boolean;
-  selectedPointId: string;
-  monthList: ReturnType<typeof normalizeGraphResponse>['monthList'];
-  dates: ReturnType<typeof normalizeGraphResponse>['dates'];
-  users: ReturnType<typeof normalizeGraphResponse>['users'];
-  currentUserId: string;
-  currentUserName: string;
-  errOrders: GraphOrderError[];
-  errCam: GraphCameraError[];
-  chooseDate: string;
-}
-
-interface GraphStoreActions {
-  setMonthDrawerOpen: (open: boolean) => void;
-  setSelectedPointId: (value: string) => void;
-  setAppealText: (value: string) => void;
-  closeAlert: () => void;
-  closeErrorModal: () => void;
-  openOrderErrorModal: (item: GraphOrderError) => void;
-  openCameraErrorModal: (item: GraphCameraError) => void;
-  loadGraph: (date: string, pointId?: string) => Promise<void>;
-  submitOrderAppeal: () => Promise<ApiResponse>;
-  submitCameraAppeal: () => Promise<ApiResponse>;
-}
-
-type GraphStore = GraphStoreState & GraphStoreActions;
+import type { GraphStore, GraphStoreState } from './graph.store.type';
 
 let graphLoadPromise: Promise<void> | null = null;
 let graphLoadKey = '';
+let graphLoadPendingCount = 0;
 
 const initialGraphState = {
   selectedPointId: '',
@@ -107,6 +74,7 @@ async function ensureSettingsLoaded(): Promise<void> {
 
 export const useGraphStore = createWithEqualityFn<GraphStore>(
   (set, get) => ({
+    isGraphLoading: false,
     isMonthDrawerOpen: false,
     errorModal: null,
     alertText: '',
@@ -165,6 +133,11 @@ export const useGraphStore = createWithEqualityFn<GraphStore>(
         return graphLoadPromise;
       }
 
+      graphLoadPendingCount += 1;
+      if (graphLoadPendingCount === 1) {
+        set({ isGraphLoading: true });
+      }
+
       graphLoadKey = nextKey;
       graphLoadPromise = (async () => {
         const response = await fetchGraph(date, nextPointId || undefined);
@@ -180,6 +153,10 @@ export const useGraphStore = createWithEqualityFn<GraphStore>(
       } finally {
         graphLoadPromise = null;
         graphLoadKey = '';
+        graphLoadPendingCount = Math.max(0, graphLoadPendingCount - 1);
+        if (graphLoadPendingCount === 0) {
+          set({ isGraphLoading: false });
+        }
       }
     },
 

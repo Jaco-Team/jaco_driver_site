@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -8,22 +6,10 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import { GraphCameraError, GraphOrderError } from '@/entities/graph/model/types';
 import { EmptyTableRow, GraphSectionHeader } from '@/widgets/graph-screen/ui/GraphSectionHeader';
+import type { GraphIssueItem, GraphIssuesCardProps } from '../model/GraphScreen.type';
 
-interface GraphIssuesCardProps<TItem extends GraphOrderError | GraphCameraError> {
-  title: string;
-  icon: ReactNode;
-  emptyText: string;
-  dateColumnTitle: string;
-  items: TItem[];
-  globalFontSize: number;
-  getDate: (item: TItem) => string | number | undefined;
-  getError: (item: TItem) => string | number | undefined;
-  onOpen: (item: TItem) => void;
-}
-
-export function GraphIssuesCard<TItem extends GraphOrderError | GraphCameraError>({
+export function GraphIssuesCard<TItem extends GraphIssueItem>({
   title,
   icon,
   emptyText,

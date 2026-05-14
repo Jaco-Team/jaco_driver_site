@@ -7,48 +7,12 @@ import QueryStatsRoundedIcon from '@mui/icons-material/QueryStatsRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 
-import {
-  GraphCameraError,
-  GraphErrorModal,
-  GraphMonthItem,
-  GraphOrderError,
-  GraphScheduleRow,
-} from '@/entities/graph/model/types';
 import { GraphAlertDialog } from '@/widgets/graph-screen/ui/GraphAlertDialog';
 import { GraphErrorDrawer } from '@/widgets/graph-screen/ui/GraphErrorDrawer';
 import { GraphIssuesCard } from '@/widgets/graph-screen/ui/GraphIssuesCard';
 import { GraphMonthPickerDrawer } from '@/widgets/graph-screen/ui/GraphMonthPickerDrawer';
 import { GraphScheduleCard } from '@/widgets/graph-screen/ui/GraphScheduleCard';
-
-interface GraphScreenViewProps {
-  globalFontSize: number;
-  fontClassName: string;
-  month: string;
-  monthList: GraphMonthItem[];
-  dates: Array<{ day: number | string; dow: string }>;
-  users: GraphScheduleRow[];
-  currentUserId: string;
-  currentUserName: string;
-  chooseDate: string;
-  errOrders: GraphOrderError[];
-  errCam: GraphCameraError[];
-  isMonthDrawerOpen: boolean;
-  errorModal: GraphErrorModal;
-  alertText: string;
-  isAlertOpen: boolean;
-  appealText: string;
-  isSubmittingAppeal: boolean;
-  onOpenMonthDrawer: () => void;
-  onCloseMonthDrawer: () => void;
-  onSelectMonth: (item: GraphMonthItem) => void;
-  onOpenOrderError: (item: GraphOrderError) => void;
-  onOpenCameraError: (item: GraphCameraError) => void;
-  onCloseErrorModal: () => void;
-  onChangeAppealText: (value: string) => void;
-  onSubmitOrderAppeal: () => void;
-  onSubmitCameraAppeal: () => void;
-  onCloseAlert: () => void;
-}
+import type { GraphScreenViewProps } from '../model/GraphScreen.type';
 
 export function GraphScreenView({
   globalFontSize,

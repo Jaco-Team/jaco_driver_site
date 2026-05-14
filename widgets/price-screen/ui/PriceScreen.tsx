@@ -1,13 +1,7 @@
 import Backdrop from '@mui/material/Backdrop';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
 import Grid from '@mui/material/Grid';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
+import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -16,7 +10,6 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { roboto } from '@/shared/ui/Font';
 import { usePriceScreen } from '../model/usePriceScreen';
 
-import { DateLauncher } from './DateLauncher';
 import { MetricRow } from './MetricRow';
 
 export default function PricePage() {
@@ -31,15 +24,13 @@ export default function PricePage() {
     settlementRows,
     activePicker,
     activePickerTitle,
-    draftDate,
-    setDraftDate,
+    pickerValue,
     pickerMinDate,
     pickerMaxDate,
-    pickerFullScreen,
     openStartPicker,
     openEndPicker,
     closePicker,
-    applyDraftDate,
+    selectPickerDate,
   } = usePriceScreen();
 
   return (
@@ -58,20 +49,25 @@ export default function PricePage() {
                 </div>
               </div>
 
-              <div className="price__heroActions">
-                <DateLauncher
-                  label="Дата от"
-                  value={startDateLabel}
-                  globalFontSize={globalFontSize}
-                  onClick={openStartPicker}
-                />
+              <div className="price__segmentedRangeControl">
+                <button type="button" className="price__segmentButton" onClick={openStartPicker}>
+                  <span className="price__segmentLabel">С</span>
+                  <span className="price__segmentValue" style={{ fontSize: globalFontSize }}>
+                    {startDateLabel}
+                  </span>
+                </button>
 
-                <DateLauncher
-                  label="Дата до"
-                  value={endDateLabel}
-                  globalFontSize={globalFontSize}
+                <span className="price__segmentDivider">по</span>
+
+                <button
+                  type="button"
+                  className="price__segmentButton price__segmentButton--end"
                   onClick={openEndPicker}
-                />
+                >
+                  <span className="price__segmentValue" style={{ fontSize: globalFontSize }}>
+                    {endDateLabel}
+                  </span>
+                </button>
               </div>
             </section>
           </div>
@@ -121,44 +117,31 @@ export default function PricePage() {
         </Grid>
       </Grid>
 
-      <Dialog
+      <SwipeableDrawer
+        anchor="bottom"
         open={Boolean(activePicker)}
         onClose={closePicker}
-        fullWidth
-        maxWidth="xs"
-        fullScreen={pickerFullScreen}
-        className="price__pickerDialog"
+        onOpen={() => undefined}
+        className="price__pickerDrawer"
+        PaperProps={{ className: 'price__pickerPaper' }}
       >
-        <DialogTitle>
-          {activePickerTitle}
-          {pickerFullScreen ? (
-            <IconButton
-              aria-label="Закрыть"
-              className="price__pickerClose"
-              onClick={closePicker}
-              size="small"
-            >
-              <CloseIcon />
-            </IconButton>
-          ) : null}
-        </DialogTitle>
+        <div className="price__pickerSheet">
+          <div className="price__pickerHandle" />
 
-        <DialogContent>
-          <DateCalendar
-            value={draftDate}
-            onChange={(value) => value && setDraftDate(value)}
-            minDate={pickerMinDate}
-            maxDate={pickerMaxDate}
-          />
-        </DialogContent>
+          <div className="price__pickerHeader">
+            <h3 className="price__pickerTitle">{activePickerTitle}</h3>
+          </div>
 
-        <DialogActions>
-          <Button onClick={closePicker}>Отмена</Button>
-          <Button variant="contained" onClick={applyDraftDate}>
-            Готово
-          </Button>
-        </DialogActions>
-      </Dialog>
+          <div className="price__pickerCalendar">
+            <DateCalendar
+              value={pickerValue}
+              onChange={selectPickerDate}
+              minDate={pickerMinDate}
+              maxDate={pickerMaxDate}
+            />
+          </div>
+        </div>
+      </SwipeableDrawer>
     </LocalizationProvider>
   );
 }

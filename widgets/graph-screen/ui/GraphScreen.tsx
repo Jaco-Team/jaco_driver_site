@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 
 import dayjs from 'dayjs';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { useSession } from '@/features/auth/model/auth.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
@@ -15,6 +17,7 @@ export default function GraphScreen() {
   const session = useSession();
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
   const {
+    isGraphLoading,
     isMonthDrawerOpen,
     errorModal,
     alertText,
@@ -39,6 +42,7 @@ export default function GraphScreen() {
     submitOrderAppeal,
     submitCameraAppeal,
   } = useGraphStore((state) => ({
+    isGraphLoading: state.isGraphLoading,
     isMonthDrawerOpen: state.isMonthDrawerOpen,
     errorModal: state.errorModal,
     alertText: state.alertText,
@@ -119,38 +123,44 @@ export default function GraphScreen() {
   };
 
   return (
-    <GraphScreenView
-      globalFontSize={globalFontSize}
-      fontClassName={roboto.variable}
-      month={month}
-      monthList={monthList}
-      dates={dates}
-      users={users}
-      currentUserId={currentUserId}
-      currentUserName={currentUserName}
-      chooseDate={chooseDate}
-      errOrders={errOrders}
-      errCam={errCam}
-      isMonthDrawerOpen={isMonthDrawerOpen}
-      errorModal={errorModal}
-      alertText={alertText}
-      isAlertOpen={isAlertOpen}
-      appealText={appealText}
-      isSubmittingAppeal={isSubmittingAppeal}
-      onOpenMonthDrawer={handleOpenMonthDrawer}
-      onCloseMonthDrawer={handleCloseMonthDrawer}
-      onSelectMonth={handleSelectMonth}
-      onOpenOrderError={handleOpenOrderError}
-      onOpenCameraError={handleOpenCameraError}
-      onCloseErrorModal={handleCloseErrorModal}
-      onChangeAppealText={setAppealText}
-      onSubmitOrderAppeal={() => {
-        void submitOrderAppeal();
-      }}
-      onSubmitCameraAppeal={() => {
-        void submitCameraAppeal();
-      }}
-      onCloseAlert={closeAlert}
-    />
+    <>
+      <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isGraphLoading}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
+      <GraphScreenView
+        globalFontSize={globalFontSize}
+        fontClassName={roboto.variable}
+        month={month}
+        monthList={monthList}
+        dates={dates}
+        users={users}
+        currentUserId={currentUserId}
+        currentUserName={currentUserName}
+        chooseDate={chooseDate}
+        errOrders={errOrders}
+        errCam={errCam}
+        isMonthDrawerOpen={isMonthDrawerOpen}
+        errorModal={errorModal}
+        alertText={alertText}
+        isAlertOpen={isAlertOpen}
+        appealText={appealText}
+        isSubmittingAppeal={isSubmittingAppeal}
+        onOpenMonthDrawer={handleOpenMonthDrawer}
+        onCloseMonthDrawer={handleCloseMonthDrawer}
+        onSelectMonth={handleSelectMonth}
+        onOpenOrderError={handleOpenOrderError}
+        onOpenCameraError={handleOpenCameraError}
+        onCloseErrorModal={handleCloseErrorModal}
+        onChangeAppealText={setAppealText}
+        onSubmitOrderAppeal={() => {
+          void submitOrderAppeal();
+        }}
+        onSubmitCameraAppeal={() => {
+          void submitCameraAppeal();
+        }}
+        onCloseAlert={closeAlert}
+      />
+    </>
   );
 }

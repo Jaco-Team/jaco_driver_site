@@ -26,15 +26,13 @@ export interface UsePriceScreenResult {
   settlementRows: PriceMetricRowData[];
   activePicker: ActivePricePicker;
   activePickerTitle: string;
-  draftDate: Dayjs;
-  setDraftDate: (value: Dayjs) => void;
+  pickerValue: Dayjs;
   pickerMinDate: Dayjs;
   pickerMaxDate: Dayjs;
-  pickerFullScreen: boolean;
   openStartPicker: () => void;
   openEndPicker: () => void;
   closePicker: () => void;
-  applyDraftDate: () => void;
+  selectPickerDate: (value: Dayjs | null) => void;
 }
 
 export type MetricRowProps = {

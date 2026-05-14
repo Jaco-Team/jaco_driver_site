@@ -1,9 +1,8 @@
-import type { ReactNode } from 'react';
-
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
+import type { EmptyTableRowProps, GraphSectionHeaderProps } from '../model/GraphScreen.type';
 
-export function GraphSectionHeader({ icon, title }: { icon: ReactNode; title: string }) {
+export function GraphSectionHeader({ icon, title }: GraphSectionHeaderProps) {
   return (
     <div className="graph__cardHeader">
       <div className="graph__cardHeaderMain">
@@ -17,7 +16,7 @@ export function GraphSectionHeader({ icon, title }: { icon: ReactNode; title: st
   );
 }
 
-export function EmptyTableRow({ colSpan, text }: { colSpan: number; text: string }) {
+export function EmptyTableRow({ colSpan, text }: EmptyTableRowProps) {
   return (
     <TableRow>
       <TableCell colSpan={colSpan} className="graph__emptyCell">

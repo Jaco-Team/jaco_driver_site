@@ -5,7 +5,6 @@ import 'dayjs/locale/ru';
 import { useSession } from '@/features/auth/model/auth.store';
 import { usePriceStore } from '@/entities/price';
 import { useHeaderStore } from '@/features/header/model/header.store';
-import { useFullscreen } from '@/shared/lib/useFullscreen';
 import { devLog } from '@/shared/lib/devLog';
 import { log } from '@/components/analytics';
 import type {
@@ -21,10 +20,9 @@ const UI_DATE_FORMAT = 'D MMMM YYYY';
 export function usePriceScreen(): UsePriceScreenResult {
   const session = useSession();
 
-  const [startDate, setStartDate] = useState(dayjs().startOf('day').subtract(7, 'day'));
+  const [startDate, setStartDate] = useState(dayjs().startOf('day'));
   const [endDate, setEndDate] = useState(dayjs().startOf('day'));
   const [activePicker, setActivePicker] = useState<ActivePricePicker>(null);
-  const [draftDate, setDraftDate] = useState(dayjs().startOf('day'));
 
   const [statPrice, giveHistory, isStatLoading, getStatBetween] = usePriceStore((state) => [
     state.statPrice,
@@ -33,7 +31,6 @@ export function usePriceScreen(): UsePriceScreenResult {
     state.getStatBetween,
   ]);
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
-  const pickerFullScreen = useFullscreen('xs');
 
   const formatPrice = useCallback(
     (price?: number | string | null) => PRICE_NUMBER_FORMATTER.format(Number(price ?? 0)),
@@ -61,19 +58,15 @@ export function usePriceScreen(): UsePriceScreenResult {
     });
   }, [endDateApi, getStatBetween, session?.isAuth, startDateApi]);
 
-  const openPicker = useCallback(
-    (type: Exclude<ActivePricePicker, null>) => {
-      setDraftDate(type === 'start' ? startDate : endDate);
-      setActivePicker(type);
+  const openPicker = useCallback((type: Exclude<ActivePricePicker, null>) => {
+    setActivePicker(type);
 
-      if (type === 'start') {
-        log('price_start_calendar_open', 'Открытие календаря (Расчет): Дата от');
-      } else {
-        log('price_end_calendar_open', 'Открытие календаря (Расчет): Дата до');
-      }
-    },
-    [endDate, startDate]
-  );
+    if (type === 'start') {
+      log('price_start_calendar_open', 'Открытие календаря (Расчет): Дата от');
+    } else {
+      log('price_end_calendar_open', 'Открытие календаря (Расчет): Дата до');
+    }
+  }, []);
 
   const openStartPicker = useCallback(() => {
     openPicker('start');
@@ -95,24 +88,26 @@ export function usePriceScreen(): UsePriceScreenResult {
     setActivePicker(null);
   }, [activePicker]);
 
-  const applyDraftDate = useCallback(() => {
-    if (!activePicker) {
-      closePicker();
-      return;
-    }
-
-    const normalizedDate = dayjs(draftDate).startOf('day');
-
-    if (activePicker === 'start') {
-      if (!normalizedDate.isSame(startDate, 'day')) {
-        setStartDate(normalizedDate);
+  const selectPickerDate = useCallback(
+    (value: Dayjs | null) => {
+      if (!value || !activePicker) {
+        return;
       }
-    } else if (!normalizedDate.isSame(endDate, 'day')) {
-      setEndDate(normalizedDate);
-    }
 
-    closePicker();
-  }, [activePicker, closePicker, draftDate, endDate, startDate]);
+      const normalizedDate = dayjs(value).startOf('day');
+
+      if (activePicker === 'start') {
+        if (!normalizedDate.isSame(startDate, 'day')) {
+          setStartDate(normalizedDate);
+        }
+      } else if (!normalizedDate.isSame(endDate, 'day')) {
+        setEndDate(normalizedDate);
+      }
+
+      closePicker();
+    },
+    [activePicker, closePicker, endDate, startDate]
+  );
 
   const summaryRows = useMemo<PriceMetricRowData[]>(
     () => [
@@ -193,6 +188,10 @@ export function usePriceScreen(): UsePriceScreenResult {
   const totalPriceFontSize = useMemo(() => Math.max(globalFontSize * 2.6, 48), [globalFontSize]);
   const startDateLabel = useMemo(() => formatDate(startDate), [formatDate, startDate]);
   const endDateLabel = useMemo(() => formatDate(endDate), [endDate, formatDate]);
+  const pickerValue = useMemo(
+    () => (activePicker === 'start' ? startDate : endDate),
+    [activePicker, endDate, startDate]
+  );
   const activePickerTitle = useMemo(() => {
     if (activePicker === 'start') {
       return 'Дата от';
@@ -218,14 +217,12 @@ export function usePriceScreen(): UsePriceScreenResult {
     settlementRows,
     activePicker,
     activePickerTitle,
-    draftDate,
-    setDraftDate,
+    pickerValue,
     pickerMinDate,
     pickerMaxDate,
-    pickerFullScreen,
     openStartPicker,
     openEndPicker,
     closePicker,
-    applyDraftDate,
+    selectPickerDate,
   };
 }

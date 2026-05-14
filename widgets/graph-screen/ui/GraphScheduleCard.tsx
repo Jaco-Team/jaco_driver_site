@@ -7,18 +7,8 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
 import { isCurrentUserRow, isTodayColumn, isWeekend } from '@/entities/graph/model/graph.utils';
-import { GraphScheduleRow } from '@/entities/graph/model/types';
 import { EmptyTableRow, GraphSectionHeader } from '@/widgets/graph-screen/ui/GraphSectionHeader';
-
-interface GraphScheduleCardProps {
-  globalFontSize: number;
-  dates: Array<{ day: number | string; dow: string }>;
-  users: GraphScheduleRow[];
-  currentUserId: string;
-  currentUserName: string;
-  chooseDate: string;
-  icon: React.ReactNode;
-}
+import type { GraphScheduleCardProps } from '../model/GraphScreen.type';
 
 export function GraphScheduleCard({
   globalFontSize,
