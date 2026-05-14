@@ -125,12 +125,17 @@
 - Active status chip must stay fully red (`#CC0033`) with white text in all interactive states (default, hover, active, focus); avoid gray fill for active state.
 - Search input should be compact, with left search icon, clear placeholder, and optional clear button when text is not empty.
 - Keep the add-action FAB fully circular and visually strong above list content.
+- Feedback bottom-sheet modals (create/details) should use one shared style language:
+  - same top radius, handle style, border and shadow tone
+  - same chip style (active red, neutral cool-gray)
+  - same section heading hierarchy and spacing rhythm
 - Feedback cards should use compact vertical rhythm:
   - dynamic height with sensible min/max bounds
   - less empty space for short text entries
   - compact footer row with centered vertical alignment
 - Card footer should remain minimal and scannable: status chip on the left, date on the right, both vertically centered.
 - Keep card inner padding around `16px 16px 8px 16px` unless a specific screen variant requires another spacing scale.
+- Modal typography should be based on `globalFontSize` (with safe UI clamping for layout stability), not hardcoded oversized values.
 - Preserve extra bottom list inset so the last card is not blocked by the floating action button.
 
 ### Tables

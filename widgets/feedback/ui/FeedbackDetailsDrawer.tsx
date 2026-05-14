@@ -3,6 +3,7 @@ import { SwipeableDrawer, Box, IconButton, Typography, Divider, Chip, Dialog } f
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Feedback, statusArr } from '@/entities/feedback/model/types';
+import { useHeaderStore } from '@/features/header/model/header.store';
 
 interface FeedbackDetailsDrawerProps {
   open: boolean;
@@ -10,12 +11,25 @@ interface FeedbackDetailsDrawerProps {
   onClose: () => void;
 }
 
+const DEFAULT_GLOBAL_FONT_SIZE = 16;
+
 export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
   open,
   feedback,
   onClose,
 }) => {
   const [isImageViewerOpen, setImageViewerOpen] = React.useState(false);
+  const globalFontSize = useHeaderStore((state) => state.globalFontSize);
+  const normalizedGlobalFontSize =
+    Number.isFinite(globalFontSize) && globalFontSize > 0
+      ? globalFontSize
+      : DEFAULT_GLOBAL_FONT_SIZE;
+  const modalBaseFontSize = Math.min(Math.max(normalizedGlobalFontSize, 14), 20);
+  const modalTitleFontSize = modalBaseFontSize * 1.42;
+  const sectionTitleFontSize = modalBaseFontSize * 1.08;
+  const bodyFontSize = modalBaseFontSize;
+  const metaFontSize = Math.max(modalBaseFontSize * 0.94, 14);
+  const chipFontSize = Math.max(modalBaseFontSize * 0.98, 14);
 
   React.useEffect(() => {
     if (!open) {
@@ -28,18 +42,26 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
       case 1:
         return '#42AAFF';
       case 2:
-        return '#F2F2F2';
+        return '#ffeccf';
       case 3:
-        return '#f5f5f5';
+        return '#eceff3';
       case 4:
-        return 'green';
+        return '#dff6df';
       default:
-        return '#f5f5f5';
+        return '#eceff3';
     }
   };
 
   const getStatusTextColor = (status: number) => {
-    return status === 3 || status === 2 ? 'black' : 'white';
+    if (status === 1) {
+      return '#ffffff';
+    }
+
+    if (status === 4) {
+      return '#1f6b2a';
+    }
+
+    return '#253343';
   };
 
   if (!feedback) return null;
@@ -55,11 +77,14 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
       ModalProps={{
         keepMounted: true,
       }}
-      sx={{
-        '& .MuiDrawer-paper': {
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          maxHeight: '85vh',
+      PaperProps={{
+        sx: {
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 28,
+          maxHeight: '86vh',
+          border: '1px solid rgba(66, 98, 125, 0.14)',
+          boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+          overflow: 'hidden',
         },
       }}
     >
@@ -68,7 +93,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
           width: '100%',
           display: 'flex',
           justifyContent: 'center',
-          pt: 1.5,
+          pt: 1.15,
           pb: 1,
           cursor: 'pointer',
         }}
@@ -76,31 +101,20 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
       >
         <Box
           sx={{
-            width: 40,
-            height: 4,
-            bgcolor: '#ddd',
-            borderRadius: 2,
+            width: 62,
+            height: 6,
+            borderRadius: 999,
+            backgroundColor: 'rgba(31, 43, 54, 0.2)',
           }}
         />
       </Box>
 
-      <IconButton
-        onClick={onClose}
-        sx={{
-          position: 'absolute',
-          right: 8,
-          top: 8,
-          zIndex: 1,
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
-
-      <Box sx={{ p: 3, pt: 0, overflowY: 'auto', maxHeight: 'calc(85vh - 60px)' }}>
+      <Box sx={{ p: 2.5, pt: 0.4, overflowY: 'auto', maxHeight: 'calc(86vh - 54px)' }}>
         <Typography
-          variant="h6"
           sx={{
-            fontWeight: 700,
+            fontWeight: 800,
+            fontSize: modalTitleFontSize,
+            color: '#1f2b36',
             mb: 2,
             pr: 4,
             wordBreak: 'break-word',
@@ -109,12 +123,12 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
           {feedback.title}
         </Typography>
 
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ mb: 1.8 }} />
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.8, flexWrap: 'wrap' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <AccessTimeIcon sx={{ fontSize: '1rem', color: '#666' }} />
-            <Typography variant="body2" color="text.secondary">
+            <AccessTimeIcon sx={{ fontSize: metaFontSize, color: '#6e7884' }} />
+            <Typography sx={{ fontSize: metaFontSize, color: '#66707b', lineHeight: 1 }}>
               {feedback.date_time_create?.replace(/^(\d{4})-(\d{2})-(\d{2}).*$/, '$3.$2.$1') || '—'}
             </Typography>
           </Box>
@@ -124,23 +138,35 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             sx={{
               backgroundColor: getStatusColor(feedback.status),
               color: getStatusTextColor(feedback.status),
+              borderRadius: '999px',
+              fontWeight: 700,
+              height: 32,
+              px: 0.35,
+              fontSize: chipFontSize,
             }}
           />
           <Chip
             label={feedback.type}
             size="small"
             sx={{
-              backgroundColor: '#f5f5f5',
-              color: 'black',
+              backgroundColor: '#f0f2f5',
+              color: '#253343',
+              borderRadius: '999px',
+              fontWeight: 600,
+              height: 32,
+              px: 0.35,
+              fontSize: chipFontSize,
             }}
           />
         </Box>
 
         <Typography
           sx={{
-            mb: 1,
-            lineHeight: 1.6,
-            color: '#767070',
+            mb: 0.65,
+            fontWeight: 700,
+            fontSize: sectionTitleFontSize,
+            lineHeight: 1.3,
+            color: '#253343',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
@@ -149,9 +175,10 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
         </Typography>
         <Typography
           sx={{
-            mb: 1,
-            lineHeight: 1.6,
-            color: '#333',
+            mb: 1.4,
+            fontSize: bodyFontSize,
+            lineHeight: 1.45,
+            color: '#5a6470',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
@@ -162,9 +189,11 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
           <>
             <Typography
               sx={{
-                mb: 1,
-                lineHeight: 1.6,
-                color: '#767070',
+                mb: 0.65,
+                fontWeight: 700,
+                fontSize: sectionTitleFontSize,
+                lineHeight: 1.3,
+                color: '#253343',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
               }}
@@ -184,8 +213,9 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
               sx={{
                 width: '100%',
                 maxWidth: 500,
-                height: 350,
-                borderRadius: 2,
+                minHeight: 220,
+                height: 320,
+                borderRadius: '16px',
                 border: '1px solid rgba(66, 98, 125, 0.2)',
                 backgroundImage: `url(${feedback.link})`,
                 backgroundSize: 'contain',
@@ -200,9 +230,11 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
 
         <Typography
           sx={{
-            mb: 1,
-            lineHeight: 1.6,
-            color: '#767070',
+            mb: 0.65,
+            fontWeight: 700,
+            fontSize: sectionTitleFontSize,
+            lineHeight: 1.3,
+            color: '#253343',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
@@ -211,14 +243,15 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
         </Typography>
         <Typography
           sx={{
-            mb: 5,
-            lineHeight: 1.6,
-            color: '#333',
+            mb: 1.2,
+            fontSize: bodyFontSize,
+            lineHeight: 1.45,
+            color: '#5a6470',
             backgroundColor: '#f5f5f5',
-            padding: '12px',
-            borderRadius: 2,
+            padding: '12px 14px',
+            borderRadius: '16px',
             fontWeight: '500',
-            fontSize: '1rem',
+            border: '1px solid rgba(66, 98, 125, 0.1)',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
