@@ -5,8 +5,26 @@ interface SectionTitleProps {
   fontSize?: number;
 }
 
-export const SectionTitle: React.FC<SectionTitleProps> = ({ title, fontSize = 14 }) => (
-  <Typography variant="subtitle1" color="textPrimary" fontSize={fontSize} gutterBottom>
-    {title}
-  </Typography>
-);
+function clampSize(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+export const SectionTitle: React.FC<SectionTitleProps> = ({ title, fontSize = 14 }) => {
+  const baseSize = Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 14;
+  const titleSize = clampSize(baseSize + 2, 16, 28);
+
+  return (
+    <Typography
+      component="h2"
+      sx={{
+        color: '#1f2b36',
+        fontSize: titleSize,
+        fontWeight: 700,
+        lineHeight: 1.2,
+        mb: 1.4,
+      }}
+    >
+      {title}
+    </Typography>
+  );
+};

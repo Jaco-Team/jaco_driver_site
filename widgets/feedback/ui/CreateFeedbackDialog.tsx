@@ -13,30 +13,30 @@ import {
 
 import { useFeedbackStore } from '@/widgets/feedback/model/feedback.store';
 import { feedbackTypes } from '@/entities/feedback/model/types';
-import { useHeaderStore } from '@/features/header/model/header.store';
+import { clampFeedbackFontSize } from '@/widgets/feedback/model/feedbackTypography';
 
 interface CreateFeedbackDialogProps {
   open: boolean;
   onClose: () => void;
+  globalFontSize: number;
 }
 
-const DEFAULT_GLOBAL_FONT_SIZE = 16;
-
-export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({ open, onClose }) => {
+export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
+  open,
+  onClose,
+  globalFontSize,
+}) => {
   const { type, title, description, img, is_need_notification, setForm, saveFeedbacks, isLoad } =
     useFeedbackStore();
-  const globalFontSize = useHeaderStore((state) => state.globalFontSize);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const normalizedGlobalFontSize =
-    Number.isFinite(globalFontSize) && globalFontSize > 0
-      ? globalFontSize
-      : DEFAULT_GLOBAL_FONT_SIZE;
-  const modalBaseFontSize = Math.min(Math.max(normalizedGlobalFontSize, 14), 20);
-  const modalTitleFontSize = modalBaseFontSize * 1.42;
-  const sectionTitleFontSize = modalBaseFontSize * 1.08;
+  const modalBaseFontSize = clampFeedbackFontSize(globalFontSize, 14, 20);
+  const modalTitleFontSize = clampFeedbackFontSize(modalBaseFontSize + 6, 20, 30);
+  const sectionTitleFontSize = clampFeedbackFontSize(modalBaseFontSize + 1, 15, 24);
   const bodyFontSize = modalBaseFontSize;
-  const helperFontSize = Math.max(modalBaseFontSize * 0.95, 14);
-  const chipFontSize = Math.max(modalBaseFontSize * 0.98, 14);
+  const helperFontSize = clampFeedbackFontSize(modalBaseFontSize - 1, 13, 18);
+  const chipFontSize = clampFeedbackFontSize(modalBaseFontSize - 1, 13, 19);
+  const checkboxIconFontSize = clampFeedbackFontSize(modalBaseFontSize + 7, 20, 30);
+  const actionFontSize = clampFeedbackFontSize(modalBaseFontSize + 2, 15, 24);
 
   const handleSave = async () => {
     await saveFeedbacks();
@@ -272,7 +272,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({ open
               onChange={(event) => setForm('is_need_notification', event.target.checked)}
               sx={{
                 '& .MuiSvgIcon-root': {
-                  fontSize: modalBaseFontSize * 1.45,
+                  fontSize: checkboxIconFontSize,
                 },
               }}
             />
@@ -296,7 +296,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({ open
             minHeight: 54,
             borderRadius: '16px',
             textTransform: 'none',
-            fontSize: modalBaseFontSize * 1.1,
+            fontSize: actionFontSize,
             fontWeight: 700,
             boxShadow: '0 12px 24px rgba(146, 0, 36, 0.28)',
             '&:hover': {

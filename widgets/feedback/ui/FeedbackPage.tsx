@@ -12,15 +12,19 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { SnackbarNotification } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useFeedbackPage } from '../model/useFeedbackPage';
-
-const DEFAULT_GLOBAL_FONT_SIZE = 16;
+import {
+  clampFeedbackFontSize,
+  normalizeFeedbackFontSize,
+} from '@/widgets/feedback/model/feedbackTypography';
 
 const FeedbackPage: React.FC = () => {
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
-  const normalizedGlobalFontSize =
-    Number.isFinite(globalFontSize) && globalFontSize > 0
-      ? globalFontSize
-      : DEFAULT_GLOBAL_FONT_SIZE;
+  const normalizedGlobalFontSize = normalizeFeedbackFontSize(globalFontSize);
+  const listTitleFontSize = clampFeedbackFontSize(normalizedGlobalFontSize + 1, 14, 24);
+  const listMetaFontSize = clampFeedbackFontSize(normalizedGlobalFontSize - 1, 12, 20);
+  const emptyTitleFontSize = clampFeedbackFontSize(normalizedGlobalFontSize + 3, 16, 28);
+  const emptyTextFontSize = clampFeedbackFontSize(normalizedGlobalFontSize, 14, 24);
+  const createFabIconFontSize = clampFeedbackFontSize(normalizedGlobalFontSize + 22, 30, 44);
 
   const {
     addModal,
@@ -64,7 +68,11 @@ const FeedbackPage: React.FC = () => {
           minHeight: 'calc(100vh - 64px)',
         }}
       >
-        <CreateFeedbackDialog open={addModal} onClose={() => setAddModal(false)} />
+        <CreateFeedbackDialog
+          open={addModal}
+          onClose={() => setAddModal(false)}
+          globalFontSize={normalizedGlobalFontSize}
+        />
 
         <Fab
           onClick={() => setAddModal(true)}
@@ -86,10 +94,10 @@ const FeedbackPage: React.FC = () => {
           }}
           aria-label="Создать предложение"
         >
-          <AddRoundedIcon sx={{ fontSize: 38 }} />
+          <AddRoundedIcon sx={{ fontSize: createFabIconFontSize }} />
         </Fab>
 
-        <FeedbackFilters />
+        <FeedbackFilters globalFontSize={normalizedGlobalFontSize} />
 
         <Grid size={{ xs: 12 }} sx={{ mt: -0.25 }}>
           <Box
@@ -100,10 +108,10 @@ const FeedbackPage: React.FC = () => {
               px: 0.5,
             }}
           >
-            <Typography sx={{ color: '#5e6874', fontWeight: 600, fontSize: '0.98rem' }}>
+            <Typography sx={{ color: '#5e6874', fontWeight: 600, fontSize: listTitleFontSize }}>
               Лента предложений
             </Typography>
-            <Typography sx={{ color: '#7a8591', fontWeight: 500, fontSize: '0.92rem' }}>
+            <Typography sx={{ color: '#7a8591', fontWeight: 500, fontSize: listMetaFontSize }}>
               Всего: {feedbacks?.length ?? 0}
             </Typography>
           </Box>
@@ -112,7 +120,11 @@ const FeedbackPage: React.FC = () => {
         {feedbacks?.length > 0 ? (
           feedbacks.map((feedback, index) => (
             <Grid key={feedback.id || index} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-              <FeedbackCard feedback={feedback} onClick={handleCardClick} />
+              <FeedbackCard
+                feedback={feedback}
+                onClick={handleCardClick}
+                globalFontSize={normalizedGlobalFontSize}
+              />
             </Grid>
           ))
         ) : (
@@ -128,10 +140,10 @@ const FeedbackPage: React.FC = () => {
                 color: '#4f5c68',
               }}
             >
-              <Typography sx={{ fontSize: '1.2rem', fontWeight: 700, mb: 0.6 }}>
+              <Typography sx={{ fontSize: emptyTitleFontSize, fontWeight: 700, mb: 0.6 }}>
                 Ничего не найдено
               </Typography>
-              <Typography sx={{ fontSize: '1rem', color: '#768391' }}>
+              <Typography sx={{ fontSize: emptyTextFontSize, color: '#768391' }}>
                 Попробуйте изменить фильтр или текст поиска
               </Typography>
             </Box>
@@ -143,6 +155,7 @@ const FeedbackPage: React.FC = () => {
         open={bottomSheetOpen}
         feedback={selectedFeedback}
         onClose={handleCloseDrawer}
+        globalFontSize={normalizedGlobalFontSize}
       />
 
       <SnackbarNotification

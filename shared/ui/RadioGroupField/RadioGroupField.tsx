@@ -25,22 +25,56 @@ export const RadioGroupField: React.FC<RadioGroupFieldProps> = ({
   options,
   fontSize = 14,
 }) => {
+  const baseFontSize = Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 14;
+  const labelFontSize = Math.min(Math.max(baseFontSize + 1, 15), 24);
+  const optionFontSize = Math.min(Math.max(baseFontSize, 14), 22);
+
   return (
-    <FormControl component="fieldset">
-      <FormLabel component="legend" style={{ fontSize, color: 'rgba(0, 0, 0, 0.8)' }}>
+    <FormControl component="fieldset" sx={{ width: '100%' }}>
+      <FormLabel
+        component="legend"
+        sx={{
+          fontSize: labelFontSize,
+          color: '#1f2b36',
+          fontWeight: 700,
+          lineHeight: 1.2,
+          mb: 0.65,
+          '&.Mui-focused': {
+            color: '#1f2b36',
+          },
+        }}
+      >
         {label}
       </FormLabel>
-      <RadioGroup value={value} onChange={(_, data) => onChange(data)}>
+      <RadioGroup value={value} onChange={(_, data) => onChange(data)} sx={{ gap: 0.4 }}>
         {options.map((option) => (
           <FormControlLabel
             key={String(option.value)}
             value={option.value}
-            control={<Radio />}
+            control={
+              <Radio
+                sx={{
+                  color: 'rgba(66, 98, 125, 0.45)',
+                  '&.Mui-checked': {
+                    color: '#cc0033',
+                  },
+                }}
+              />
+            }
             label={option.label}
             sx={{
-              '& .MuiFormControlLabel-label': { fontSize },
-              '& .MuiButtonBase-root.MuiRadio-root.Mui-checked .MuiSvgIcon-root': {
-                color: '#CC0033',
+              marginLeft: 0,
+              marginRight: 0,
+              py: 0.3,
+              borderRadius: '12px',
+              transition: 'background-color 0.18s ease',
+              '&:hover': {
+                backgroundColor: 'rgba(66, 98, 125, 0.06)',
+              },
+              '& .MuiFormControlLabel-label': {
+                fontSize: optionFontSize,
+                color: '#2b3744',
+                lineHeight: 1.32,
               },
             }}
           />

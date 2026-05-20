@@ -90,6 +90,30 @@
 - Avoid unnecessary helper text if the screen already explains itself.
 - Remove duplicate headings and redundant explanations when the UI is self-evident.
 
+## Typography And Scale Rules
+
+- UI typography should be derived from `globalFontSize` from `features/header/model/header.store`.
+- For emphasis, use additive offsets from base size (`+1`, `+2`, `-1`, `-2`) instead of multiplicative scaling.
+- Clamp text sizes to safe mobile ranges to prevent layout jumps on extreme settings.
+- Avoid hardcoded `rem` or fixed pixel font sizes for user-facing text in screen widgets unless there is a strict technical exception.
+- Keep hierarchy predictable:
+  - page/sheet title: base `+4...+6`
+  - section title: base `+1...+2`
+  - body text: base `+0`
+  - helper/meta text: base `-1...-2`
+- Keep line-height practical for scanning:
+  - titles around `1.2`
+  - body around `1.4-1.5`
+
+## Mobile Interaction Rules
+
+- Primary tap targets should generally be at least `44x44` logical pixels.
+- Fixed elements (FAB, sticky actions, bottom bars) should respect `env(safe-area-inset-bottom)` and should not block final list items.
+- Bottom-sheet style should stay consistent across screens:
+  - same top radius and drag handle language
+  - similar border/shadow tone
+  - consistent inner spacing rhythm
+
 ## Page-Specific UI Rules
 
 ### Left Menu

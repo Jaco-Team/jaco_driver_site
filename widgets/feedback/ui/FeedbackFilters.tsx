@@ -3,6 +3,11 @@ import { Grid, Chip, Typography, Box, InputBase, IconButton } from '@mui/materia
 import { useFeedbackStore } from '@/widgets/feedback/model/feedback.store';
 import { statusArr } from '@/entities/feedback/model/types';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { clampFeedbackFontSize } from '@/widgets/feedback/model/feedbackTypography';
+
+interface FeedbackFiltersProps {
+  globalFontSize: number;
+}
 
 const SearchIcon = () => (
   <svg
@@ -21,9 +26,13 @@ const SearchIcon = () => (
   </svg>
 );
 
-export const FeedbackFilters: React.FC = () => {
+export const FeedbackFilters: React.FC<FeedbackFiltersProps> = ({ globalFontSize }) => {
   const { search, setSearch, status, changeStatus } = useFeedbackStore();
   const activeStatusLabel = statusArr.find((item) => item.id === status)?.name ?? 'Все';
+  const sectionTitleFontSize = clampFeedbackFontSize(globalFontSize + 2, 16, 26);
+  const sectionMetaFontSize = clampFeedbackFontSize(globalFontSize - 1, 12, 20);
+  const chipFontSize = clampFeedbackFontSize(globalFontSize - 1, 12, 19);
+  const searchInputFontSize = clampFeedbackFontSize(globalFontSize, 14, 22);
 
   return (
     <Grid size={{ xs: 12 }} sx={{ mt: 1.5 }}>
@@ -46,10 +55,10 @@ export const FeedbackFilters: React.FC = () => {
             mb: 1.25,
           }}
         >
-          <Typography sx={{ fontWeight: 700, color: '#1f2b36', fontSize: '1.1rem' }}>
+          <Typography sx={{ fontWeight: 700, color: '#1f2b36', fontSize: sectionTitleFontSize }}>
             Статус
           </Typography>
-          <Typography sx={{ fontWeight: 500, color: '#6f7f8d', fontSize: '0.9rem' }}>
+          <Typography sx={{ fontWeight: 500, color: '#6f7f8d', fontSize: sectionMetaFontSize }}>
             Выбрано: {activeStatusLabel}
           </Typography>
         </Box>
@@ -76,6 +85,7 @@ export const FeedbackFilters: React.FC = () => {
                 fontWeight: 600,
                 height: 40,
                 flex: '0 0 auto',
+                fontSize: chipFontSize,
                 border: status === u.id ? '1px solid #cc0033' : '1px solid #e0e4e9',
                 backgroundColor: status === u.id ? '#cc0033 !important' : '#ffffff',
                 color: status === u.id ? '#ffffff' : '#253343',
@@ -137,7 +147,7 @@ export const FeedbackFilters: React.FC = () => {
               color: '#1f2b36',
               '& input': {
                 py: 1.1,
-                fontSize: '1rem',
+                fontSize: searchInputFontSize,
               },
               '& input::placeholder': {
                 color: '#8a94a0',

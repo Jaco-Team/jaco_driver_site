@@ -3,33 +3,28 @@ import { SwipeableDrawer, Box, IconButton, Typography, Divider, Chip, Dialog } f
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Feedback, statusArr } from '@/entities/feedback/model/types';
-import { useHeaderStore } from '@/features/header/model/header.store';
+import { clampFeedbackFontSize } from '@/widgets/feedback/model/feedbackTypography';
 
 interface FeedbackDetailsDrawerProps {
   open: boolean;
   feedback: Feedback | null;
   onClose: () => void;
+  globalFontSize: number;
 }
-
-const DEFAULT_GLOBAL_FONT_SIZE = 16;
 
 export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
   open,
   feedback,
   onClose,
+  globalFontSize,
 }) => {
   const [isImageViewerOpen, setImageViewerOpen] = React.useState(false);
-  const globalFontSize = useHeaderStore((state) => state.globalFontSize);
-  const normalizedGlobalFontSize =
-    Number.isFinite(globalFontSize) && globalFontSize > 0
-      ? globalFontSize
-      : DEFAULT_GLOBAL_FONT_SIZE;
-  const modalBaseFontSize = Math.min(Math.max(normalizedGlobalFontSize, 14), 20);
-  const modalTitleFontSize = modalBaseFontSize * 1.42;
-  const sectionTitleFontSize = modalBaseFontSize * 1.08;
+  const modalBaseFontSize = clampFeedbackFontSize(globalFontSize, 14, 20);
+  const modalTitleFontSize = clampFeedbackFontSize(modalBaseFontSize + 6, 20, 30);
+  const sectionTitleFontSize = clampFeedbackFontSize(modalBaseFontSize + 1, 15, 24);
   const bodyFontSize = modalBaseFontSize;
-  const metaFontSize = Math.max(modalBaseFontSize * 0.94, 14);
-  const chipFontSize = Math.max(modalBaseFontSize * 0.98, 14);
+  const metaFontSize = clampFeedbackFontSize(modalBaseFontSize - 1, 13, 18);
+  const chipFontSize = clampFeedbackFontSize(modalBaseFontSize - 1, 13, 19);
 
   React.useEffect(() => {
     if (!open) {

@@ -2,6 +2,8 @@ import React from 'react';
 import Grid from '@mui/material/Grid';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import { Location, PlacemarkIcon } from '@/shared/ui/Icons';
 
 import { useSettingsForm } from '../model/useSettingsForm';
@@ -70,6 +72,11 @@ export const SettingsForm: React.FC = () => {
   const mapOptions = [
     { label: 'Темная тема', value: nightMap, onChange: setNightMap },
     { label: 'Ползунок масштабирования карты', value: isScaleMap, onChange: setIsScaleMap },
+    {
+      label: 'При взятии, отмене заказа, центрировать карту',
+      value: centeredMap,
+      onChange: setCenteredMap,
+    },
   ];
 
   const pointOptions: Point[] = [
@@ -79,22 +86,43 @@ export const SettingsForm: React.FC = () => {
   const fallbackPointOption = null;
   const currentPoint =
     pointOptions.find((p) => String(p.id) === String(pointId ?? '')) || fallbackPointOption;
+  const normalizedGlobalFontSize =
+    Number.isFinite(globalFontSize) && globalFontSize > 0 ? globalFontSize : 16;
+  const introTitleFontSize = Math.min(Math.max(normalizedGlobalFontSize + 4, 18), 32);
+  const introTextFontSize = Math.min(Math.max(normalizedGlobalFontSize, 14), 24);
+
+  const getMarkerClassName = (): string => 'settingsPreviewMarker';
+
+  const getMarkerYaClassName = (): string => 'settingsPreviewMarkerYa';
+
+  const getTokenClassName = (variant: string): string => `settingsToken settingsToken--${variant}`;
 
   return (
     <>
-      <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isSaving as boolean}>
+      <Backdrop sx={{ zIndex: 9999, color: '#fff' }} open={isSaving as boolean}>
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      <Grid container spacing={3} className="price">
+      <Grid container spacing={2.2} className="settingsPage">
         <SnackbarNotification
           state={snackbarState}
           onClose={closeSnackbar}
           fontSize={globalFontSize}
         />
 
+        <Grid size={{ xs: 12 }}>
+          <Box className="settingsPage__intro">
+            <Typography className="settingsPage__introTitle" sx={{ fontSize: introTitleFontSize }}>
+              Настройки приложения
+            </Typography>
+            <Typography className="settingsPage__introText" sx={{ fontSize: introTextFontSize }}>
+              Настройте отображение карты и интерфейса под свой рабочий ритм.
+            </Typography>
+          </Box>
+        </Grid>
+
         {pointOptions.length > 0 ? (
-          <SettingsSection marginTop={10} padding={20}>
+          <SettingsSection marginTop={0} padding={20}>
             <SectionTitle title="Точка" fontSize={globalFontSize} />
             <AutocompleteField<Point>
               options={pointOptions}
@@ -112,18 +140,31 @@ export const SettingsForm: React.FC = () => {
           title="Формат данных на карте"
           fontSize={globalFontSize}
           previewClassName="settings_preview settings_preview--map"
+          previewHeight={170}
         >
-          <div className="location" onClick={() => setGroupTypeTime('norm')}>
+          <div
+            className={getMarkerClassName()}
+            onClick={() => setGroupTypeTime('norm')}
+            style={{ top: '15%' }}
+          >
             <Location fill={groupTypeTime === 'norm' ? 'red' : 'blue'} />
-            <span className="span_text_white_border">21:46 (53 мин.)</span>
+            <span className={getTokenClassName('whiteBorder')}>21:46 (53 мин.)</span>
           </div>
-          <div className="location" style={{ top: '40%' }} onClick={() => setGroupTypeTime('full')}>
+          <div
+            className={getMarkerClassName()}
+            style={{ top: '45%' }}
+            onClick={() => setGroupTypeTime('full')}
+          >
             <Location fill={groupTypeTime === 'full' ? 'red' : 'blue'} />
-            <span className="span_text_white_border">21:46 - 22:16 (53 мин.)</span>
+            <span className={getTokenClassName('whiteBorder')}>21:46 - 22:16 (53 мин.)</span>
           </div>
-          <div className="location" style={{ top: '60%' }} onClick={() => setGroupTypeTime('min')}>
+          <div
+            className={getMarkerClassName()}
+            style={{ top: '75%' }}
+            onClick={() => setGroupTypeTime('min')}
+          >
             <Location fill={groupTypeTime === 'min' ? 'red' : 'blue'} />
-            <span className="span_text_white_border">53 мин.</span>
+            <span className={getTokenClassName('whiteBorder')}>53 мин.</span>
           </div>
         </SettingsSectionWithPreview>
 
@@ -133,44 +174,52 @@ export const SettingsForm: React.FC = () => {
           previewClassName="settings_preview settings_preview--map-2"
         >
           <div
-            className="location_ya"
-            style={{ top: 80 }}
+            className={getMarkerYaClassName()}
+            style={{ top: '7%' }}
             onClick={() => setGroupTypeTheme('classic')}
           >
             <PlacemarkIcon fill={groupTypeTheme === 'classic' ? 'red' : 'blue'} />
-            <span>Классический яндекс</span>
+            <span className={getTokenClassName('ya')}>Классический яндекс</span>
           </div>
           <div
-            className="location"
-            style={{ top: 140 }}
+            className={getMarkerClassName()}
+            style={{ top: '22%' }}
             onClick={() => setGroupTypeTheme('transparent')}
           >
             <Location fill={groupTypeTheme === 'transparent' ? 'red' : 'blue'} />
-            <span className="span_text_transparent">21:46 (53 мин.)</span>
+            <span className={getTokenClassName('transparent')}>21:46 (53 мин.)</span>
           </div>
           <div
-            className="location"
-            style={{ top: 200 }}
+            className={getMarkerClassName()}
+            style={{ top: '37%' }}
             onClick={() => setGroupTypeTheme('transparent_white')}
           >
             <Location fill={groupTypeTheme === 'transparent_white' ? 'red' : 'blue'} />
-            <span className="span_text_transparent_white">21:46 (53 мин.)</span>
-          </div>
-          <div className="location" style={{ top: 260 }} onClick={() => setGroupTypeTheme('white')}>
-            <Location fill={groupTypeTheme === 'white' ? 'red' : 'blue'} />
-            <span className="span_text_white">21:46 (53 мин.)</span>
+            <span className={getTokenClassName('transparentWhite')}>21:46 (53 мин.)</span>
           </div>
           <div
-            className="location"
-            style={{ top: 325 }}
+            className={getMarkerClassName()}
+            style={{ top: '52%' }}
+            onClick={() => setGroupTypeTheme('white')}
+          >
+            <Location fill={groupTypeTheme === 'white' ? 'red' : 'blue'} />
+            <span className={getTokenClassName('white')}>21:46 (53 мин.)</span>
+          </div>
+          <div
+            className={getMarkerClassName()}
+            style={{ top: '67%' }}
             onClick={() => setGroupTypeTheme('white_border')}
           >
             <Location fill={groupTypeTheme === 'white_border' ? 'red' : 'blue'} />
-            <span className="span_text_white_border">21:46 (53 мин.)</span>
+            <span className={getTokenClassName('whiteBorder')}>21:46 (53 мин.)</span>
           </div>
-          <div className="location" style={{ top: 385 }} onClick={() => setGroupTypeTheme('black')}>
+          <div
+            className={getMarkerClassName()}
+            style={{ top: '82%' }}
+            onClick={() => setGroupTypeTheme('black')}
+          >
             <Location fill={groupTypeTheme === 'black' ? 'red' : 'blue'} />
-            <span className="span_text_black">21:46 (53 мин.)</span>
+            <span className={getTokenClassName('black')}>21:46 (53 мин.)</span>
           </div>
         </SettingsSectionWithPreview>
 
@@ -185,26 +234,17 @@ export const SettingsForm: React.FC = () => {
         </SettingsSection>
 
         <SettingsSection>
-          <CheckboxField
-            options={[
-              {
-                label: 'При взятии, отмене заказа, центрировать карту',
-                value: centeredMap,
-                onChange: setCenteredMap,
-              },
-            ]}
-            fontSize={globalFontSize}
-          />
-        </SettingsSection>
-
-        <SettingsSection>
           <SectionTitle title="Карта" fontSize={globalFontSize} />
           <CheckboxField options={mapOptions} fontSize={globalFontSize} />
         </SettingsSection>
 
-        <FontSizeSlider value={fontSize} onChange={setFontSize} fontSize={globalFontSize} />
+        <SettingsSection>
+          <FontSizeSlider value={fontSize} onChange={setFontSize} fontSize={globalFontSize} />
+        </SettingsSection>
 
-        <MapScaleSlider value={mapScale} onChange={setMapScale} fontSize={globalFontSize} />
+        <SettingsSection>
+          <MapScaleSlider value={mapScale} onChange={setMapScale} fontSize={globalFontSize} />
+        </SettingsSection>
 
         <SettingsSection>
           <RadioGroupField
@@ -216,7 +256,9 @@ export const SettingsForm: React.FC = () => {
           />
         </SettingsSection>
 
-        <ColorPicker color={color} onChange={setColor} fontSize={globalFontSize} />
+        <SettingsSection>
+          <ColorPicker color={color} onChange={setColor} fontSize={globalFontSize} />
+        </SettingsSection>
 
         <SaveButton onClick={handleSave} isSaving={isSaving} fontSize={globalFontSize} />
       </Grid>

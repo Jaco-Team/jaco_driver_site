@@ -2,16 +2,26 @@ import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
 import { Feedback, statusArr } from '@/entities/feedback/model/types';
+import { clampFeedbackFontSize } from '@/widgets/feedback/model/feedbackTypography';
 
 interface FeedbackCardProps {
   feedback: Feedback;
   onClick: (feedback: Feedback) => void;
+  globalFontSize: number;
 }
 
-export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onClick }) => {
+export const FeedbackCard: React.FC<FeedbackCardProps> = ({
+  feedback,
+  onClick,
+  globalFontSize,
+}) => {
   const normalizedTitle = String(feedback.title ?? '').trim();
   const normalizedDescription = (feedback.description || '').trim();
   const isCompactCard = normalizedTitle.length <= 24 && normalizedDescription.length <= 40;
+  const titleFontSize = clampFeedbackFontSize(globalFontSize + 5, 18, 30);
+  const descriptionFontSize = clampFeedbackFontSize(globalFontSize, 14, 24);
+  const footerFontSize = clampFeedbackFontSize(globalFontSize - 2, 12, 20);
+  const chipFontSize = clampFeedbackFontSize(globalFontSize - 2, 12, 19);
 
   const getStatusColor = (status: number): string => {
     switch (status) {
@@ -83,7 +93,7 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onClick })
             fontWeight: 800,
             color: '#171b22',
             mb: 1.15,
-            fontSize: '1.34rem',
+            fontSize: titleFontSize,
             lineHeight: 1.22,
             overflow: 'hidden',
             display: '-webkit-box',
@@ -104,7 +114,7 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onClick })
             textOverflow: 'ellipsis',
             mb: 1.25,
             color: '#5a6470',
-            fontSize: '0.98rem',
+            fontSize: descriptionFontSize,
             lineHeight: 1.45,
             overflowWrap: 'anywhere',
           }}
@@ -135,7 +145,7 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onClick })
               fontWeight: 700,
               height: 30,
               px: 0.35,
-              fontSize: '0.86rem',
+              fontSize: chipFontSize,
               '& .MuiChip-label': {
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -152,9 +162,9 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onClick })
               minHeight: 30,
             }}
           >
-            <CalendarTodayRoundedIcon sx={{ fontSize: '0.9rem' }} />
+            <CalendarTodayRoundedIcon sx={{ fontSize: footerFontSize }} />
             <Typography
-              sx={{ fontSize: '0.9rem', color: '#66707b', fontWeight: 500, lineHeight: 1 }}
+              sx={{ fontSize: footerFontSize, color: '#66707b', fontWeight: 500, lineHeight: 1 }}
             >
               {createdAt}
             </Typography>

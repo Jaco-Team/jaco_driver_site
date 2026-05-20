@@ -1,169 +1,279 @@
 @use './settings' as *;
 
-.container_paper {
-  padding: 20px;
-  position: relative;
-
-  .settings_preview {
-    width: 100%;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-  }
-
-  .settings_preview--map {
-    background-image: url('/map.png');
-  }
-
-  .settings_preview--map-2 {
-    background-image: url('/map_2.png');
-  }
-
-  .location {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 20%;
-    left: 15%;
-
-    & svg {
-      width: 24px;
-      height: 24px;
-    }
-
-    .span_text_classic {
-      white-space: nowrap;
-      background-color: #fff;
-      margin-left: 5px;
-      border-radius: 6px;
-      padding-left: 10px;
-      padding-right: 10px;
-      color: #000;
-      font-size: 1rem;
-    }
-
-    .span_text_transparent {
-      white-space: nowrap;
-      background-color: transparent;
-      margin-left: 5px;
-      border-radius: 6px;
-      padding-left: 10px;
-      padding-right: 10px;
-      color: #000;
-      font-size: 1rem;
-    }
-
-    .span_text_transparent_white {
-      white-space: nowrap;
-      background-color: transparent;
-      margin-left: 5px;
-      border-radius: 6px;
-      padding-left: 10px;
-      padding-right: 10px;
-      color: #fff;
-      font-size: 1rem;
-      @media (prefers-color-scheme: dark) {
-        color: #000;
-      }
-    }
-
-    .span_text_white {
-      white-space: nowrap;
-      background-color: #fff;
-      margin-left: 5px;
-      border-radius: 6px;
-      padding-left: 10px;
-      padding-right: 10px;
-      padding-top: 2px;
-      padding-bottom: 2px;
-      color: #000;
-      font-size: 1rem;
-    }
-
-    .span_text_white_border {
-      white-space: nowrap;
-      background-color: #fff;
-      margin-left: 5px;
-      border-radius: 6px;
-      padding-left: 10px;
-      padding-right: 10px;
-      padding-top: 2px;
-      padding-bottom: 2px;
-      color: #000;
-      font-size: 1rem;
-      border: 1px solid #000;
-    }
-
-    .span_text_black {
-      white-space: nowrap;
-      background-color: #000;
-      margin-left: 5px;
-      border-radius: 6px;
-      padding-left: 10px;
-      padding-right: 10px;
-      padding-top: 2px;
-      padding-bottom: 2px;
-      color: #fff;
-      font-size: 1rem;
-      border: 1px solid #000;
-    }
-  }
-
-  .location_ya {
-    display: flex;
-    position: absolute;
-    top: 20%;
-    left: 13%;
-
-    & svg {
-      width: 34px;
-      height: 34px;
-      position: absolute;
-      left: 0;
-    }
-
-    & span {
-      white-space: nowrap;
-      background-color: #fff;
-      text-align: center;
-      border-radius: 10px;
-      padding-left: 35px;
-      padding-right: 10px;
-      padding-top: 1px;
-      height: 21px;
-      color: #000;
-      font-size: 1rem;
-      margin: 0;
-      margin-left: 5px;
-    }
-  }
+.settingsPage {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 6px 14px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  margin-top: 64px !important;
 }
 
-.container_paper_picker {
+.settingsPage__intro {
+  border-radius: 24px;
+  border: 1px solid rgba(66, 98, 125, 0.18);
+  background: linear-gradient(180deg, #ffffff 0%, #f4f7fa 100%);
+  box-shadow: 0 14px 30px rgba(31, 43, 54, 0.08);
+  padding: 18px 18px 16px;
+}
+
+.settingsPage__introTitle {
+  margin: 0;
+  color: #1f2b36;
+  font-weight: 800;
+  line-height: 1.16;
+}
+
+.settingsPage__introText {
+  margin: 8px 0 0;
+  color: #5f6d7a;
+  line-height: 1.35;
+}
+
+.settingsCard {
+  position: relative;
+  overflow: visible;
   padding: 20px;
+  box-sizing: border-box;
+}
+
+.settingsCard .MuiSlider-root {
+  color: #42627d;
+}
+
+.settingsCard .MuiSlider-thumb {
+  box-shadow: 0 0 0 4px rgba(66, 98, 125, 0.14);
+}
+
+.settingsCard--picker {
   display: flex;
   align-items: center;
   flex-direction: column;
-  justify-content: center;
+}
 
-  .container_picker {
-    padding-left: 20px;
-    padding-bottom: 20px;
-    & div {
-      justify-content: center;
-    }
+.settingsCard--action {
+  background: #ffffff;
+}
+
+.settingsScalePreview {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 16px;
+  border: 1px solid rgba(66, 98, 125, 0.18);
+  background: #f7f9fb;
+  padding: 12px 14px 10px;
+  margin-bottom: 8px;
+  min-height: 92px;
+}
+
+.settingsScalePreview__item {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.settingsScalePreview__caption {
+  color: #6f7f8d;
+  font-size: 0.83rem;
+  line-height: 1;
+}
+
+.settingsColorPreview {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settingsColorPicker {
+  width: 100%;
+  padding-bottom: 8px;
+}
+
+.settingsColorPicker > div {
+  justify-content: center;
+}
+
+.settingsPreviewSurface {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: 20px;
+  border: 1px solid rgba(66, 98, 125, 0.2);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.settingsPreviewLayer {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+}
+
+.settings_preview--map {
+  // background-image: url('/map.png');
+  background-color: #e5e5e5;
+}
+
+.settings_preview--map-2 {
+  // background-image: url('/map_2.png');
+  background-color: #e5e5e5;
+}
+
+.settingsPreviewMarker,
+.settingsPreviewMarkerYa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  cursor: pointer;
+  width: fit-content;
+  max-width: 88%;
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease;
+}
+
+.settingsPreviewMarker {
+  top: 20%;
+  left: 14%;
+}
+
+.settingsPreviewMarkerYa {
+  top: 20%;
+  left: 12%;
+}
+
+.settingsPreviewMarker svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.settingsPreviewMarkerYa svg {
+  width: 34px;
+  height: 34px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-shrink: 0;
+}
+
+.settingsPreviewMarkerYa .settingsToken {
+  margin-left: 5px;
+  padding-left: 34px;
+}
+
+.settingsPreviewMarker:hover,
+.settingsPreviewMarkerYa:hover {
+  transform: translateY(-1px);
+}
+
+.settingsToken {
+  white-space: nowrap;
+  margin-left: 6px;
+  border-radius: 10px;
+  padding: 3px 10px;
+  font-size: 1rem;
+  line-height: 1.24;
+  border: 1px solid transparent;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.settingsToken--transparent {
+  background-color: transparent;
+  color: #1f2b36;
+}
+
+.settingsToken--transparentWhite {
+  background-color: transparent;
+  color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settingsToken--transparentWhite {
+    color: #1f2b36;
   }
 }
 
-.MuiSlider-root {
-  .MuiSlider-rail {
-    color: #0288d1 !important;
+.settingsToken--white {
+  background-color: #ffffff;
+  color: #1f2b36;
+}
+
+.settingsToken--whiteBorder {
+  background-color: #ffffff;
+  color: #1f2b36;
+  border-color: rgba(0, 0, 0, 0.65);
+}
+
+.settingsToken--black {
+  background-color: #000000;
+  color: #ffffff;
+  border-color: #000000;
+}
+
+.settingsToken--ya {
+  background-color: #ffffff;
+  color: #1f2b36;
+  border-radius: 12px;
+}
+
+@media (max-width: 700px) {
+  .settingsPage {
+    padding-left: 12px;
+    padding-right: 12px;
   }
-  .MuiSlider-track {
-    color: #0288d1 !important;
+
+  .settingsPage__intro {
+    border-radius: 20px;
+    padding: 16px 16px 14px;
   }
-  .MuiSlider-thumb {
-    color: #0288d1 !important;
+
+  .settingsCard {
+    padding: 16px;
+  }
+
+  .settingsScalePreview {
+    min-height: 86px;
+    padding: 10px 10px 8px;
+  }
+
+  .settingsScalePreview__caption {
+    font-size: 0.77rem;
+  }
+
+  .settingsPreviewMarker {
+    left: 10%;
+    max-width: 86%;
+  }
+
+  .settingsPreviewMarkerYa {
+    left: 9%;
+    max-width: 86%;
+  }
+
+  .settingsToken {
+    padding-left: 9px;
+    padding-right: 9px;
+    font-size: 0.92rem;
+  }
+
+  .settingsPreviewMarkerYa .settingsToken {
+    padding-left: 32px;
   }
 }
