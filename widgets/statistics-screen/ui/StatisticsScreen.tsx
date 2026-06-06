@@ -6,14 +6,10 @@ import Snackbar from '@mui/material/Snackbar';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import QueryStatsRoundedIcon from '@mui/icons-material/QueryStatsRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import SummarizeRoundedIcon from '@mui/icons-material/SummarizeRounded';
-import CloseIcon from '@mui/icons-material/Close';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -23,15 +19,7 @@ import type { StatisticsSummaryRow } from '@/entities/statistics';
 
 import Meta from '@/components/meta';
 import { roboto } from '@/shared/ui/Font';
-import { IconButton } from '@mui/material';
 import { useStatisticsScreen } from '../model/useStatisticsScreen';
-
-type DateLauncherProps = {
-  label: string;
-  value: string;
-  onClick: () => void;
-  globalFontSize: number;
-};
 
 type MetricRowProps = {
   label: string;
@@ -54,19 +42,6 @@ type CourierCardProps = {
   icon: ReactNode;
   description?: string | null;
 };
-
-function DateLauncher({ label, value, onClick, globalFontSize }: DateLauncherProps) {
-  return (
-    <button type="button" className="price__dateLauncher" onClick={onClick}>
-      <span className="price__dateLauncherLabel" style={{ fontSize: globalFontSize }}>
-        {label}
-      </span>
-      <span className="price__dateLauncherValue" style={{ fontSize: globalFontSize }}>
-        {value}
-      </span>
-    </button>
-  );
-}
 
 function MetricRow({
   label,
@@ -170,15 +145,14 @@ export default function StatisticsPage() {
     dateEndLabel,
     displayRows,
     activePicker,
-    draftDate,
+    activePickerTitle,
+    pickerValue,
     pickerMinDate,
     pickerMaxDate,
-    pickerFullScreen,
     isSummaryRow,
-    setDraftDate,
     openPicker,
     closePicker,
-    applyDraftDate,
+    selectPickerDate,
     getStat,
     closeSnackbar,
   } = useStatisticsScreen();
@@ -222,27 +196,36 @@ export default function StatisticsPage() {
         >
           <Grid size={12}>
             <div className="price__content">
-              <section className="price__hero">
+              <section className="price__hero price__hero--minimal">
                 <div className="price__heroTop">
                   <div className="price__heroMain">
                     <h1 className="price__heroTitle">Статистика времени</h1>
                   </div>
                 </div>
 
-                <div className="price__heroActions">
-                  <DateLauncher
-                    label="Дата от"
-                    value={dateStartLabel}
-                    globalFontSize={globalFontSize}
+                <div className="price__segmentedRangeControl">
+                  <button
+                    type="button"
+                    className="price__segmentButton"
                     onClick={() => openPicker('start')}
-                  />
+                  >
+                    <span className="price__segmentLabel">С</span>
+                    <span className="price__segmentValue" style={{ fontSize: globalFontSize }}>
+                      {dateStartLabel}
+                    </span>
+                  </button>
 
-                  <DateLauncher
-                    label="Дата до"
-                    value={dateEndLabel}
-                    globalFontSize={globalFontSize}
+                  <span className="price__segmentDivider">по</span>
+
+                  <button
+                    type="button"
+                    className="price__segmentButton price__segmentButton--end"
                     onClick={() => openPicker('end')}
-                  />
+                  >
+                    <span className="price__segmentValue" style={{ fontSize: globalFontSize }}>
+                      {dateEndLabel}
+                    </span>
+                  </button>
                 </div>
 
                 <Button
@@ -295,44 +278,31 @@ export default function StatisticsPage() {
           )}
         </Grid>
 
-        <Dialog
+        <SwipeableDrawer
+          anchor="bottom"
           open={Boolean(activePicker)}
           onClose={closePicker}
-          fullWidth
-          maxWidth="xs"
-          fullScreen={pickerFullScreen}
-          className="price__pickerDialog"
+          onOpen={() => undefined}
+          className="price__pickerDrawer"
+          PaperProps={{ className: 'price__pickerPaper' }}
         >
-          <DialogTitle>
-            {activePicker === 'start' ? 'Дата от' : 'Дата до'}
-            {pickerFullScreen ? (
-              <IconButton
-                aria-label="Закрыть"
-                className="price__pickerClose"
-                onClick={closePicker}
-                size="small"
-              >
-                <CloseIcon />
-              </IconButton>
-            ) : null}
-          </DialogTitle>
+          <div className="price__pickerSheet">
+            <div className="price__pickerHandle" />
 
-          <DialogContent>
-            <DateCalendar
-              value={draftDate}
-              onChange={(value) => value && setDraftDate(value.startOf('day'))}
-              minDate={pickerMinDate}
-              maxDate={pickerMaxDate}
-            />
-          </DialogContent>
+            <div className="price__pickerHeader">
+              <h3 className="price__pickerTitle">{activePickerTitle}</h3>
+            </div>
 
-          <DialogActions>
-            <Button onClick={closePicker}>Отмена</Button>
-            <Button variant="contained" onClick={applyDraftDate}>
-              Готово
-            </Button>
-          </DialogActions>
-        </Dialog>
+            <div className="price__pickerCalendar">
+              <DateCalendar
+                value={pickerValue}
+                onChange={selectPickerDate}
+                minDate={pickerMinDate}
+                maxDate={pickerMaxDate}
+              />
+            </div>
+          </div>
+        </SwipeableDrawer>
       </LocalizationProvider>
     </Meta>
   );

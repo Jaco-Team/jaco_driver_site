@@ -16,15 +16,14 @@ export interface UseStatisticsScreenResult {
   dateEndLabel: string;
   displayRows: StatisticsSummaryRow[];
   activePicker: ActiveStatisticsPicker;
-  draftDate: Dayjs;
+  activePickerTitle: string;
+  pickerValue: Dayjs;
   pickerMinDate: Dayjs;
   pickerMaxDate: Dayjs;
-  pickerFullScreen: boolean;
   isSummaryRow: (row: StatisticsSummaryRow) => boolean;
-  setDraftDate: (value: Dayjs) => void;
   openPicker: (type: Exclude<ActiveStatisticsPicker, null>) => void;
   closePicker: () => void;
-  applyDraftDate: () => void;
+  selectPickerDate: (value: Dayjs | null) => void;
   getStat: () => void;
   closeSnackbar: () => void;
 }

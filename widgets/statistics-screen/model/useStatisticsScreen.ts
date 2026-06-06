@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import dayjs, { type Dayjs } from 'dayjs';
 import 'dayjs/locale/ru';
@@ -6,7 +6,6 @@ import 'dayjs/locale/ru';
 import { useStatisticsStore, type StatisticsSummaryRow } from '@/entities/statistics';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useSession } from '@/features/auth/model/auth.store';
-import { useFullscreen } from '@/shared/lib/useFullscreen';
 import { log } from '@/components/analytics';
 import type { ActiveStatisticsPicker, UseStatisticsScreenResult } from './useStatisticsScreen.type';
 
@@ -114,7 +113,6 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
   const [dateStart, setDateStart] = useState(initialStartDate);
   const [dateEnd, setDateEnd] = useState(initialEndDate);
   const [activePicker, setActivePicker] = useState<ActiveStatisticsPicker>(null);
-  const [draftDate, setDraftDate] = useState(initialEndDate);
   const [snackbar, setSnackbar] = useState<StatisticsSnackbarState>({
     open: false,
     vertical: 'top',
@@ -129,7 +127,6 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
     state.isLoad,
   ]);
   const [globalFontSize] = useHeaderStore((state) => [state.globalFontSize]);
-  const pickerFullScreen = useFullscreen('xs');
 
   const isSummaryRow = (row: StatisticsSummaryRow) =>
     !row?.driver_id && !row?.user_id && !row?.name;
@@ -155,9 +152,11 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
 
   const formatDate = (date: Dayjs) => dayjs(date).locale('ru').format('D MMMM YYYY');
 
-  const showSnackbar = (text: string) =>
-    setSnackbar((prev) => ({ ...prev, open: true, message: text }));
-  const closeSnackbar = () => setSnackbar((prev) => ({ ...prev, open: false }));
+  const showSnackbar = useCallback(
+    (text: string) => setSnackbar((prev) => ({ ...prev, open: true, message: text })),
+    []
+  );
+  const closeSnackbar = useCallback(() => setSnackbar((prev) => ({ ...prev, open: false })), []);
 
   useEffect(() => {
     if (session?.isAuth !== true) {
@@ -167,8 +166,7 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
     void getStatistics(fmt(initialStartDate), fmt(initialEndDate));
   }, [getStatistics, initialEndDate, initialStartDate, session?.isAuth]);
 
-  const openPicker = (type: Exclude<ActiveStatisticsPicker, null>) => {
-    setDraftDate(type === 'start' ? dateStart : dateEnd);
+  const openPicker = useCallback((type: Exclude<ActiveStatisticsPicker, null>) => {
     setActivePicker(type);
 
     if (type === 'start') {
@@ -176,9 +174,9 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
     } else {
       log('statistics_calendar_end_open', 'Открытие календаря (Статистика времени): Дата до');
     }
-  };
+  }, []);
 
-  const closePicker = () => {
+  const closePicker = useCallback(() => {
     if (activePicker === 'start') {
       log('statistics_calendar_start_close', 'Закрытие календаря (Статистика времени): Дата от');
     }
@@ -188,44 +186,46 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
     }
 
     setActivePicker(null);
-  };
+  }, [activePicker]);
 
-  const applyDraftDate = () => {
-    if (!draftDate || !activePicker) {
+  const selectPickerDate = useCallback(
+    (value: Dayjs | null) => {
+      if (!value || !activePicker) {
+        return;
+      }
+
+      const picked = dayjs(value).startOf('day');
+      const normalizedRange =
+        activePicker === 'start'
+          ? normalizeRangeWithReasons(picked, dateEnd || picked)
+          : normalizeRangeWithReasons(dateStart || picked, picked);
+
+      log('statistics_date_selected', 'Выбор даты (Статистика времени)');
+
+      setDateStart(normalizedRange.s);
+      setDateEnd(normalizedRange.e);
+
+      const normalizedMessage = reasonsToMessage(
+        normalizedRange.reasons,
+        normalizedRange.s,
+        normalizedRange.e,
+        normalizedRange.minDate
+      );
+
+      if (normalizedMessage) {
+        showSnackbar(normalizedMessage);
+      }
+
+      if (session?.isAuth === true) {
+        void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e));
+      }
+
       closePicker();
-      return;
-    }
+    },
+    [activePicker, closePicker, dateEnd, dateStart, getStatistics, session?.isAuth, showSnackbar]
+  );
 
-    const picked = dayjs(draftDate).startOf('day');
-    const normalizedRange =
-      activePicker === 'start'
-        ? normalizeRangeWithReasons(picked, dateEnd || picked)
-        : normalizeRangeWithReasons(dateStart || picked, picked);
-
-    log('statistics_date_selected', 'Выбор даты (Статистика времени)');
-
-    setDateStart(normalizedRange.s);
-    setDateEnd(normalizedRange.e);
-
-    const normalizedMessage = reasonsToMessage(
-      normalizedRange.reasons,
-      normalizedRange.s,
-      normalizedRange.e,
-      normalizedRange.minDate
-    );
-
-    if (normalizedMessage) {
-      showSnackbar(normalizedMessage);
-    }
-
-    if (session?.isAuth === true) {
-      void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e));
-    }
-
-    closePicker();
-  };
-
-  const getStat = () => {
+  const getStat = useCallback(() => {
     if (!dateStart || !dateEnd) {
       showSnackbar('Необходимо указать обе даты');
       return;
@@ -251,10 +251,25 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
     if (session?.isAuth === true) {
       void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e));
     }
-  };
+  }, [dateEnd, dateStart, getStatistics, session?.isAuth, showSnackbar]);
 
   const pickerMinDate = activePicker === 'start' ? startMinAllowed : endMinAllowed;
   const pickerMaxDate = activePicker === 'start' ? startMaxAllowed : endMaxAllowed;
+  const pickerValue = useMemo(
+    () => (activePicker === 'start' ? dateStart : dateEnd),
+    [activePicker, dateEnd, dateStart]
+  );
+  const activePickerTitle = useMemo(() => {
+    if (activePicker === 'start') {
+      return 'Дата от';
+    }
+
+    if (activePicker === 'end') {
+      return 'Дата до';
+    }
+
+    return '';
+  }, [activePicker]);
 
   return {
     isLoad,
@@ -269,15 +284,14 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
     dateEndLabel: formatDate(dateEnd),
     displayRows,
     activePicker,
-    draftDate,
+    activePickerTitle,
+    pickerValue,
     pickerMinDate,
     pickerMaxDate,
-    pickerFullScreen,
     isSummaryRow,
-    setDraftDate,
     openPicker,
     closePicker,
-    applyDraftDate,
+    selectPickerDate,
     getStat,
     closeSnackbar,
   };

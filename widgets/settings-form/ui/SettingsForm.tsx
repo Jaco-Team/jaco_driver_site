@@ -80,7 +80,7 @@ export const SettingsForm: React.FC = () => {
   ];
 
   const pointOptions: Point[] = [
-    { id: -1, city_id: -1, base: '', name: 'Все точки' },
+    { id: -1, city_id: -1, base: '', name: 'Все кафе' },
     ...points.filter((p) => p.id !== -1),
   ];
   const fallbackPointOption = null;
@@ -123,14 +123,14 @@ export const SettingsForm: React.FC = () => {
 
         {pointOptions.length > 0 ? (
           <SettingsSection marginTop={0} padding={20}>
-            <SectionTitle title="Точка" fontSize={globalFontSize} />
+            <SectionTitle title="Кафе" fontSize={globalFontSize} />
             <AutocompleteField<Point>
               options={pointOptions}
               value={currentPoint}
               onChange={(newValue: Point | null) => {
                 setPointId(newValue?.id ?? null);
               }}
-              placeholder="Выберите точку"
+              placeholder="Выберите кафе"
               fontSize={globalFontSize}
             />
           </SettingsSection>
