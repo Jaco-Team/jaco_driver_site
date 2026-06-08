@@ -55,8 +55,7 @@ interface SettingsActions {
     theme: string,
     mapScale: number,
     night_map: boolean,
-    is_scaleMap: boolean,
-    point_id: number | null
+    is_scaleMap: boolean
   ) => Promise<{ st: boolean; text?: string; data?: any; status?: number; errors?: any }>;
   getMySetting: (token: string) => Promise<SettingsResponse>;
   setPointId: (id: number | null) => void;
@@ -110,8 +109,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       theme: string,
       mapScale: number,
       night_map: boolean,
-      is_scaleMap: boolean,
-      point_id: number | null
+      is_scaleMap: boolean
     ) => {
       if (get().isClick === false) {
         set({ isClick: true });
@@ -130,7 +128,6 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         mapScale,
         night_map,
         is_scaleMap,
-        point_id,
       });
 
       try {
@@ -140,11 +137,13 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         >(apiRoutes.settings.save, data);
         log('settings_save_success', 'Успешное сохранение настроек');
         const savedSettings = response?.settings ?? response?.data;
-        const savedPointId = normalizePointId(savedSettings?.point_id ?? data.point_id);
+        const currentPointId = get().pointId;
         set({
-          settings: savedSettings ? (savedSettings as SettingsResponse) : get().settings,
-          pointId: savedPointId,
-          point_id: savedPointId,
+          settings: savedSettings
+            ? ({ ...savedSettings, point_id: currentPointId } as SettingsResponse)
+            : get().settings,
+          pointId: currentPointId,
+          point_id: currentPointId,
           cityId: normalizeIdString(
             hasCityId(savedSettings) ? savedSettings.city_id : get().cityId
           ),

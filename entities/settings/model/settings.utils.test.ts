@@ -186,7 +186,6 @@ describe('settings.utils', () => {
         mapScale: 1.5,
         night_map: false,
         is_scaleMap: true,
-        point_id: 123,
       };
 
       const result = buildSaveSettingsPayload(params);
@@ -201,7 +200,6 @@ describe('settings.utils', () => {
         color: '#FF0000',
         fontSize: 14,
         theme: 'dark',
-        point_id: 123,
         mapScale: 1.5,
       });
     });

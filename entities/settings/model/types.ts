@@ -54,5 +54,4 @@ export interface SaveSettingsPayload {
   fontSize: number;
   theme: string;
   mapScale: number;
-  point_id: number | null;
 }

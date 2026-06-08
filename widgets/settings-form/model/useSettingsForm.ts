@@ -100,8 +100,7 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
       groupTypeTheme,
       mapScale,
       nightMap,
-      isScaleMap,
-      pointId
+      isScaleMap
     );
 
     if (result?.st) {
