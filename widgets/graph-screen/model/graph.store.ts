@@ -31,6 +31,16 @@ const initialGraphState = {
   chooseDate: '',
 };
 
+function normalizePointId(value?: string | number | null): string {
+  if (value === undefined || value === null || `${value}`.trim() === '') {
+    return '';
+  }
+
+  const parsed = typeof value === 'number' ? value : parseInt(`${value}`, 10);
+
+  return Number.isFinite(parsed) && parsed > 0 ? `${parsed}` : '';
+}
+
 function closeModalState(): Pick<GraphStoreState, 'errorModal' | 'appealText'> {
   return {
     errorModal: null,
@@ -38,26 +48,14 @@ function closeModalState(): Pick<GraphStoreState, 'errorModal' | 'appealText'> {
   };
 }
 
-function resolveGraphPointId(explicitPointId: string | undefined, selectedPointId: string): string {
-  if (explicitPointId !== undefined) {
-    return explicitPointId;
+function resolveGraphPointId(explicitPointId?: string | number | null): string {
+  const explicit = normalizePointId(explicitPointId);
+
+  if (explicit) {
+    return explicit;
   }
 
-  if (selectedPointId !== '') {
-    return selectedPointId;
-  }
-
-  const settingsPointId = useSettingsStore.getState().point_id;
-
-  if (
-    settingsPointId === null ||
-    settingsPointId === undefined ||
-    `${settingsPointId}`.trim() === ''
-  ) {
-    return '';
-  }
-
-  return `${settingsPointId}`.trim();
+  return normalizePointId(useSettingsStore.getState().point_id);
 }
 
 async function ensureSettingsLoaded(): Promise<void> {
@@ -126,7 +124,7 @@ export const useGraphStore = createWithEqualityFn<GraphStore>(
     loadGraph: async (date, pointId) => {
       await ensureSettingsLoaded();
 
-      const nextPointId = resolveGraphPointId(pointId, get().selectedPointId);
+      const nextPointId = resolveGraphPointId(pointId);
       const nextKey = `${date}:${nextPointId}`;
 
       if (graphLoadPromise && graphLoadKey === nextKey) {

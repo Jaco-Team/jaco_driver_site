@@ -27,7 +27,12 @@ export default function PayModel() {
 
   return (
     <>
-      {payData ? <Script src="./qr.nspk.ru_js_index-NF27QMF3.js" /> : null}
+      {payData ? (
+        <>
+          <Script src="https://yookassa.ru/checkout-widget/v1/checkout-widget.js" />
+          <Script src="/qr.nspk.ru_js_index-NF27QMF3.js" />
+        </>
+      ) : null}
 
       <SwipeableDrawer
         anchor="bottom"

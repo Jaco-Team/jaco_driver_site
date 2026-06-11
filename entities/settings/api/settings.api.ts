@@ -17,20 +17,43 @@ export async function fetchDriverSettings(): Promise<DriverSettingsPayload> {
   return {};
 }
 
-export async function fetchDriverAverageTime(): Promise<string> {
-  const data = await connector.rest.get<{ text?: string | number }>(apiRoutes.settings.avgTime);
+function normalizePointId(value?: string | number | null): number | null {
+  if (value === undefined || value === null || `${value}`.trim() === '') {
+    return null;
+  }
+
+  const parsed = typeof value === 'number' ? value : parseInt(`${value}`, 10);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+export async function fetchDriverAverageTime(pointId?: string | number | null): Promise<string> {
+  const normalizedPointId = normalizePointId(pointId);
+  const payload: { point_id?: number } = {};
+
+  if (normalizedPointId !== null) {
+    payload.point_id = normalizedPointId;
+  }
+
+  const data = await connector.rest.post<{ text?: string | number }, typeof payload>(
+    apiRoutes.settings.avgTime,
+    payload
+  );
+
   return `${data?.text ?? '00:00:00'}`;
 }
 
 export async function fetchPointPhones(
   pointId?: string | number | null
 ): Promise<PointPhonesPayload | null> {
-  if (pointId === undefined || pointId === null || `${pointId}`.trim() === '') {
+  const normalizedPointId = normalizePointId(pointId);
+
+  if (normalizedPointId === null) {
     return null;
   }
 
   const payload = {
-    point_id: typeof pointId === 'number' ? pointId : parseInt(`${pointId}`, 10),
+    point_id: normalizedPointId,
   };
 
   const data = await connector.rest.post<{ phone?: PointPhonesPayload }, typeof payload>(

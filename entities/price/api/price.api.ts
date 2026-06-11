@@ -25,12 +25,36 @@ type PriceBetweenResponse = {
   give_hist: PriceGiveHistoryRow[];
 };
 
+type PriceBetweenRequest = {
+  dateStart: string;
+  dateEnd: string;
+  point_id?: number;
+};
+
+function normalizePointId(value?: string | number | null): number | null {
+  if (value === undefined || value === null || `${value}`.trim() === '') {
+    return null;
+  }
+
+  const parsed = typeof value === 'number' ? value : parseInt(`${value}`, 10);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 export async function fetchPriceBetween(
   dateStart: string,
-  dateEnd: string
+  dateEnd: string,
+  pointId?: string | number | null
 ): Promise<PriceBetweenResponse> {
-  return connector.rest.post<PriceBetweenResponse, { dateStart: string; dateEnd: string }>(
+  const payload: PriceBetweenRequest = { dateStart, dateEnd };
+  const normalizedPointId = normalizePointId(pointId);
+
+  if (normalizedPointId !== null) {
+    payload.point_id = normalizedPointId;
+  }
+
+  return connector.rest.post<PriceBetweenResponse, PriceBetweenRequest>(
     apiRoutes.price.between,
-    { dateStart, dateEnd }
+    payload
   );
 }

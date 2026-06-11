@@ -27,11 +27,19 @@ function normalizePointId(value: unknown): number | null {
 
   const parsed = parseInt(String(value), 10);
 
-  return Number.isNaN(parsed) ? null : parsed;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
 function hasCityId(value: unknown): value is { city_id?: number | string } {
   return Boolean(value && typeof value === 'object' && 'city_id' in value);
+}
+
+function hasPoint(points: Point[], pointId: number | null): boolean {
+  if (pointId === null) {
+    return false;
+  }
+
+  return points.some((point) => normalizePointId(point.id) === pointId);
 }
 
 interface SettingsState {
@@ -64,6 +72,7 @@ interface SettingsActions {
 type SettingsStore = SettingsState & SettingsActions;
 
 let settingsFetchPromise: Promise<SettingsResponse> | null = null;
+const SETTINGS_POINT_ID_STORAGE_KEY = 'jaco_driver_selected_cafe_id';
 
 function normalizeSettingsPayload(payload: DriverSettingsPayload): {
   settings: SettingsResponse;
@@ -73,7 +82,15 @@ function normalizeSettingsPayload(payload: DriverSettingsPayload): {
 } {
   const settings = unwrapSettingsPayload(payload);
   const points = Array.isArray(payload?.all_points) ? payload.all_points : [];
-  const pointId = normalizePointId(settings?.point_id);
+  const storedPointId = readStoredPointId();
+  const isStoredPointAvailable =
+    storedPointId !== null && (points.length === 0 || hasPoint(points, storedPointId));
+  const pointId = isStoredPointAvailable ? storedPointId : normalizePointId(settings?.point_id);
+
+  if (storedPointId !== null && !isStoredPointAvailable && points.length > 0) {
+    writeStoredPointId(null);
+  }
+
   const normalizedSettings = {
     ...settings,
     point_id: pointId,
@@ -89,14 +106,50 @@ function normalizeSettingsPayload(payload: DriverSettingsPayload): {
   };
 }
 
+function readStoredPointId(): number | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return normalizePointId(window.localStorage.getItem(SETTINGS_POINT_ID_STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredPointId(id: number | null): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    if (id === null) {
+      window.localStorage.removeItem(SETTINGS_POINT_ID_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(SETTINGS_POINT_ID_STORAGE_KEY, String(id));
+  } catch {}
+}
+
+function mergePointIdIntoSettings(
+  settings: SettingsResponse | null,
+  pointId: number | null
+): SettingsResponse | null {
+  return settings ? ({ ...settings, point_id: pointId } as SettingsResponse) : settings;
+}
+
+const initialPointId = readStoredPointId();
+
 export const useSettingsStore = createWithEqualityFn<SettingsStore>(
   (set, get) => ({
     isClick: false,
     settings: null,
-    pointId: null,
+    pointId: initialPointId,
     cityId: '',
     points: [],
-    point_id: null,
+    point_id: initialPointId,
 
     saveMySetting: async (
       token: string | undefined,
@@ -173,7 +226,14 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
     },
 
     setPointId: (id: number | null) => {
-      set({ pointId: id, point_id: id });
+      const nextPointId = normalizePointId(id);
+
+      writeStoredPointId(nextPointId);
+      set((state) => ({
+        pointId: nextPointId,
+        point_id: nextPointId,
+        settings: mergePointIdIntoSettings(state.settings, nextPointId),
+      }));
     },
 
     getMySetting: async (_token: string) => {

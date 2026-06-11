@@ -4,6 +4,7 @@ import {
   fetchStatisticsShowData,
   type StatisticsSummaryRow,
 } from '@/entities/statistics/api/statistics.api';
+import { useSettingsStore } from '@/entities/settings';
 
 interface StatisticsState {
   svod: StatisticsSummaryRow[];
@@ -12,7 +13,7 @@ interface StatisticsState {
 }
 
 interface StatisticsActions {
-  getStatistics: (dateStart: string, dateEnd: string) => Promise<void>;
+  getStatistics: (dateStart: string, dateEnd: string, pointId?: number | null) => Promise<void>;
 }
 
 type StatisticsStore = StatisticsState & StatisticsActions;
@@ -22,21 +23,30 @@ const statisticsRequests = new Map<
   Promise<Awaited<ReturnType<typeof fetchStatisticsShowData>>>
 >();
 
+function normalizePointId(value?: number | null): number | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
 export const useStatisticsStore = createWithEqualityFn<StatisticsStore>(
   (set) => ({
     svod: [],
     currentUserId: '',
     isLoad: false,
 
-    getStatistics: async (dateStart, dateEnd) => {
+    getStatistics: async (dateStart, dateEnd, pointId) => {
       set({ isLoad: true });
 
       try {
-        const requestKey = `${dateStart}:${dateEnd}`;
+        const selectedPointId = normalizePointId(pointId ?? useSettingsStore.getState().pointId);
+        const requestKey = `${dateStart}:${dateEnd}:${selectedPointId ?? 'all'}`;
         let request = statisticsRequests.get(requestKey);
 
         if (!request) {
-          request = fetchStatisticsShowData(dateStart, dateEnd).finally(() => {
+          request = fetchStatisticsShowData(dateStart, dateEnd, selectedPointId).finally(() => {
             statisticsRequests.delete(requestKey);
           });
           statisticsRequests.set(requestKey, request);

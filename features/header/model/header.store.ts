@@ -34,7 +34,7 @@ interface HeaderActions {
   setTheme: (theme: string) => void;
   setGlobalMapScale: (mapScale: string) => void;
   getMyFontSize: (token: string) => Promise<void>;
-  getMyAvgTime: (token: string) => Promise<void>;
+  getMyAvgTime: (token: string, pointId?: string | number | null) => Promise<void>;
   setActivePageRU: (activePageRU: string) => void;
   getSettings: (token: string) => Promise<void>;
   check_pos: (func: (lat: number, lng: number) => void) => Promise<void>;
@@ -52,8 +52,9 @@ const MIN_GLOBAL_FONT_SIZE = 10;
 const MAX_GLOBAL_FONT_SIZE = 40;
 
 let avgTimePromise: Promise<string> | null = null;
-let pointPhonesPromise: Promise<PointPhonesPayload | null> | null = null;
-let pointPhonesKey = '';
+let avgTimeKey = '';
+const pointPhonesCache = new Map<string, PointPhonesPayload | null>();
+const pointPhonesRequests = new Map<string, Promise<PointPhonesPayload | null>>();
 
 function canRunProtectedRequest(token: string): boolean {
   const session = useAuthStore.getState().session;
@@ -89,13 +90,13 @@ function normalizeBoolLike(value: any): boolean {
   return false;
 }
 
-function normalizePointId(value: SettingsData['point_id']): number | null {
+function normalizePointId(value: SettingsData['point_id'] | null): number | null {
   if (value === undefined || value === null || `${value}`.trim() === '') {
     return null;
   }
 
   const parsed = parseInt(`${value}`, 10);
-  return Number.isNaN(parsed) ? null : parsed;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
 function normalizeGlobalFontSize(
@@ -178,14 +179,20 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
       await get().getSettings(token);
     },
 
-    getMyAvgTime: async (token: string) => {
+    getMyAvgTime: async (token: string, pointId?: string | number | null) => {
       if (!canRunProtectedRequest(token)) {
         return;
       }
 
-      if (!avgTimePromise) {
-        avgTimePromise = fetchDriverAverageTime().finally(() => {
+      const settingsPointId = useSettingsStore.getState().point_id;
+      const resolvedPointId = normalizePointId(pointId ?? settingsPointId);
+      const nextAvgTimeKey = `${resolvedPointId ?? 'all'}`;
+
+      if (!avgTimePromise || avgTimeKey !== nextAvgTimeKey) {
+        avgTimeKey = nextAvgTimeKey;
+        avgTimePromise = fetchDriverAverageTime(resolvedPointId).finally(() => {
           avgTimePromise = null;
+          avgTimeKey = '';
         });
       }
 
@@ -253,30 +260,42 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
       const settingsPointId = settings.point_id;
       const fallbackPointId = settings.points.find((point) => point.id > 0)?.id ?? null;
       const resolvedPointId =
-        pointId !== undefined && pointId !== null && `${pointId}`.trim() !== ''
-          ? pointId
-          : settingsPointId !== undefined &&
-              settingsPointId !== null &&
-              `${settingsPointId}`.trim() !== ''
-            ? settingsPointId
+        settingsPointId !== undefined &&
+        settingsPointId !== null &&
+        `${settingsPointId}`.trim() !== ''
+          ? settingsPointId
+          : pointId !== undefined && pointId !== null && `${pointId}`.trim() !== ''
+            ? pointId
             : fallbackPointId;
+      const normalizedPointId = normalizePointId(resolvedPointId);
 
-      if (!resolvedPointId) {
+      if (!normalizedPointId) {
         set({ phones: null, token });
         return;
       }
 
-      const nextPointPhonesKey = `${resolvedPointId}`;
+      const pointPhonesKey = `${normalizedPointId}`;
 
-      if (!pointPhonesPromise || pointPhonesKey !== nextPointPhonesKey) {
-        pointPhonesKey = nextPointPhonesKey;
-        pointPhonesPromise = fetchPointPhones(resolvedPointId).finally(() => {
-          pointPhonesPromise = null;
-          pointPhonesKey = '';
-        });
+      if (pointPhonesCache.has(pointPhonesKey)) {
+        set({ phones: pointPhonesCache.get(pointPhonesKey) ?? null, token });
+        return;
       }
 
-      const phones = await pointPhonesPromise;
+      let pointPhonesRequest = pointPhonesRequests.get(pointPhonesKey);
+
+      if (!pointPhonesRequest) {
+        pointPhonesRequest = fetchPointPhones(normalizedPointId)
+          .then((phones) => {
+            pointPhonesCache.set(pointPhonesKey, phones);
+            return phones;
+          })
+          .finally(() => {
+            pointPhonesRequests.delete(pointPhonesKey);
+          });
+        pointPhonesRequests.set(pointPhonesKey, pointPhonesRequest);
+      }
+
+      const phones = await pointPhonesRequest;
       set({ phones, token });
     },
   }),

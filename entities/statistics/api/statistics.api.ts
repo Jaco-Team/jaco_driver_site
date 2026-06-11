@@ -33,15 +33,39 @@ export type StatisticsShowDataResponse = {
   user_id?: StatMetric;
 };
 
+type StatisticsShowDataRequest = {
+  date_start: string;
+  date_end: string;
+  point_id?: number;
+};
+
+function normalizePointId(value?: string | number | null): number | null {
+  if (value === undefined || value === null || `${value}`.trim() === '') {
+    return null;
+  }
+
+  const parsed = typeof value === 'number' ? value : parseInt(`${value}`, 10);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 export async function fetchStatisticsShowData(
   dateStart: string,
-  dateEnd: string
+  dateEnd: string,
+  pointId?: string | number | null
 ): Promise<StatisticsShowDataResponse> {
-  return connector.rest.post<StatisticsShowDataResponse, { date_start: string; date_end: string }>(
+  const payload: StatisticsShowDataRequest = {
+    date_start: dateStart,
+    date_end: dateEnd,
+  };
+  const normalizedPointId = normalizePointId(pointId);
+
+  if (normalizedPointId !== null) {
+    payload.point_id = normalizedPointId;
+  }
+
+  return connector.rest.post<StatisticsShowDataResponse, StatisticsShowDataRequest>(
     apiRoutes.statistics.showData,
-    {
-      date_start: dateStart,
-      date_end: dateEnd,
-    }
+    payload
   );
 }

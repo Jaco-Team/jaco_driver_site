@@ -1,5 +1,5 @@
 import React from 'react';
-import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 interface OrderStatsProps {
@@ -12,28 +12,24 @@ export const OrderStats: React.FC<OrderStatsProps> = ({ limit, limitCount, globa
   const hasLimitCount = limitCount?.length > 0;
 
   return (
-    <Grid
-      size={12}
-      style={{
-        display: 'flex',
-        justifyContent: hasLimitCount ? 'space-between' : 'center',
-        maxWidth: '70%',
-      }}
-    >
-      <Typography
-        style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}
-        component="span"
-      >
-        {limit}
-      </Typography>
-      {hasLimitCount && (
+    <Box className="listStats">
+      {hasLimitCount ? (
         <Typography
+          className="listStats__count"
           style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}
           component="span"
         >
           {limitCount}
         </Typography>
-      )}
-    </Grid>
+      ) : null}
+
+      <Typography
+        className="listStats__limit"
+        style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}
+        component="span"
+      >
+        {limit}
+      </Typography>
+    </Box>
   );
 };

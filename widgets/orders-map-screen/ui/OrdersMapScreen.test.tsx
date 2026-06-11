@@ -64,6 +64,11 @@ vi.mock('@pbe/react-yandex-maps', () => ({
   Placemark: () => <div data-testid="placemark" />,
   TrafficControl: () => <div data-testid="traffic-control" />,
   ZoomControl: () => <div data-testid="zoom-control" />,
+  useYMaps: () => ({
+    templateLayoutFactory: {
+      createClass: vi.fn((template: string) => template),
+    },
+  }),
 }));
 
 vi.mock('@/features/header/model/header.store', () => ({
@@ -94,11 +99,6 @@ vi.mock('@/shared/ui/ErrorModal/ErrorModal', () => ({
 describe('OrdersMapScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (globalThis as any).ymaps = {
-      templateLayoutFactory: {
-        createClass: vi.fn((template: string) => template),
-      },
-    };
     mocks.orderState.type = { id: 1, text: 'Активные' };
   });
 

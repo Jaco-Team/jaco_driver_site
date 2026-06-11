@@ -41,6 +41,8 @@ interface AuthActions {
 
 type AuthStore = AuthState & AuthActions;
 
+const EXPLICIT_UNAUTHORIZED_STORAGE_KEY = 'jaco_driver_explicit_unauthorized';
+
 function sessionFromUser(user: User): AuthSession {
   return {
     isAuth: true,
@@ -55,6 +57,32 @@ function unauthorizedSession(): AuthSession {
     token: '',
     user: null,
   };
+}
+
+function readExplicitUnauthorized(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    return window.localStorage.getItem(EXPLICIT_UNAUTHORIZED_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setExplicitUnauthorized(value: boolean): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    if (value) {
+      window.localStorage.setItem(EXPLICIT_UNAUTHORIZED_STORAGE_KEY, '1');
+    } else {
+      window.localStorage.removeItem(EXPLICIT_UNAUTHORIZED_STORAGE_KEY);
+    }
+  } catch {}
 }
 
 function currentAuthResult(state: AuthStore, st: boolean | 'load', text?: string): AuthResult {
@@ -72,17 +100,21 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
     isSubmitting: false,
     isSessionRefreshing: false,
     loginErr: '',
-    session: { isAuth: 'load', token: '', user: null },
+    session: readExplicitUnauthorized()
+      ? unauthorizedSession()
+      : { isAuth: 'load', token: '', user: null },
 
     setLoginErr: (err: string) => {
       set({ loginErr: err });
     },
 
     setAuthenticated: (user: User) => {
+      setExplicitUnauthorized(false);
       set({ session: sessionFromUser(user) });
     },
 
     setUnauthorized: () => {
+      setExplicitUnauthorized(true);
       set({ session: unauthorizedSession() });
     },
 
@@ -103,6 +135,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
           text: '',
         };
 
+        setExplicitUnauthorized(false);
         set({
           isSubmitting: false,
           loginErr: '',
@@ -121,6 +154,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
           status: errorInfo.status,
         };
 
+        setExplicitUnauthorized(true);
         set({
           isSubmitting: false,
           loginErr: errorText,
@@ -176,6 +210,16 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
     },
 
     refreshSession: async () => {
+      if (get().session.isAuth === false || readExplicitUnauthorized()) {
+        const authData = unauthorizedSession();
+        set({ session: authData });
+        return {
+          st: false,
+          ...authData,
+          text: 'Не авторизован',
+        };
+      }
+
       if (get().isSessionRefreshing) {
         return currentAuthResult(get(), 'load');
       }
@@ -191,6 +235,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
           text: '',
         };
 
+        setExplicitUnauthorized(false);
         set({ session: authData });
 
         return result;
@@ -209,6 +254,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
           status,
         };
 
+        setExplicitUnauthorized(isUnauthorized);
         set({ session: authData });
 
         return result;

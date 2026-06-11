@@ -4,6 +4,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import 'dayjs/locale/ru';
 
 import { useStatisticsStore, type StatisticsSummaryRow } from '@/entities/statistics';
+import { useSettingsStore } from '@/entities/settings';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useSession } from '@/features/auth/model/auth.store';
 import { log } from '@/components/analytics';
@@ -127,6 +128,7 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
     state.isLoad,
   ]);
   const [globalFontSize] = useHeaderStore((state) => [state.globalFontSize]);
+  const pointId = useSettingsStore((state) => state.pointId);
 
   const isSummaryRow = (row: StatisticsSummaryRow) =>
     !row?.driver_id && !row?.user_id && !row?.name;
@@ -163,8 +165,8 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
       return;
     }
 
-    void getStatistics(fmt(initialStartDate), fmt(initialEndDate));
-  }, [getStatistics, initialEndDate, initialStartDate, session?.isAuth]);
+    void getStatistics(fmt(initialStartDate), fmt(initialEndDate), pointId);
+  }, [getStatistics, initialEndDate, initialStartDate, pointId, session?.isAuth]);
 
   const openPicker = useCallback((type: Exclude<ActiveStatisticsPicker, null>) => {
     setActivePicker(type);
@@ -217,12 +219,21 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
       }
 
       if (session?.isAuth === true) {
-        void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e));
+        void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e), pointId);
       }
 
       closePicker();
     },
-    [activePicker, closePicker, dateEnd, dateStart, getStatistics, session?.isAuth, showSnackbar]
+    [
+      activePicker,
+      closePicker,
+      dateEnd,
+      dateStart,
+      getStatistics,
+      pointId,
+      session?.isAuth,
+      showSnackbar,
+    ]
   );
 
   const getStat = useCallback(() => {
@@ -249,9 +260,9 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
     }
 
     if (session?.isAuth === true) {
-      void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e));
+      void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e), pointId);
     }
-  }, [dateEnd, dateStart, getStatistics, session?.isAuth, showSnackbar]);
+  }, [dateEnd, dateStart, getStatistics, pointId, session?.isAuth, showSnackbar]);
 
   const pickerMinDate = activePicker === 'start' ? startMinAllowed : endMinAllowed;
   const pickerMaxDate = activePicker === 'start' ? startMaxAllowed : endMaxAllowed;

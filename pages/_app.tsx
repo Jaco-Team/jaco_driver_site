@@ -20,7 +20,6 @@ import type { EmotionCache } from '@emotion/react';
 import { AppCacheProvider, createEmotionCache } from '@mui/material-nextjs/v16-pagesRouter';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-import * as Sentry from '@sentry/react';
 import { appPalette } from '@/shared/styles/appPalette';
 import { devLog } from '@/shared/lib/devLog';
 import YandexMetrika from '@/components/YandexMetrika';
@@ -78,14 +77,6 @@ function MyApp(props: MyAppProps) {
     if (typeof window === 'undefined') {
       return;
     }
-
-    Sentry.init({
-      dsn: 'https://0446c6db46dce5a0368f09bc573ad37d@o4505941569830912.ingest.sentry.io/4505946950008832',
-      integrations: [],
-      tracesSampleRate: 1.0,
-      replaysSessionSampleRate: 0.1,
-      replaysOnErrorSampleRate: 1.0,
-    });
 
     (window as any).Analytics = { log, hit };
 

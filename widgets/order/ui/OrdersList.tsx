@@ -47,7 +47,7 @@ export const OrdersList: React.FC<OrdersListProps> = memo(
     }
 
     return (
-      <Grid container spacing={2} className="list_orders" sx={{ mt: 0 }}>
+      <Grid container spacing={2.5} className="list_orders" sx={{ mt: 0 }}>
         {orders.map((item) => (
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={item.id}>
             <OrderCard

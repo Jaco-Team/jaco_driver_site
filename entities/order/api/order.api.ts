@@ -48,15 +48,18 @@ interface GetPayQrResponse extends ApiResponse {
 }
 
 interface GetOrdersRequest {
+  debug_limits?: 1;
+  debug_timing?: 1;
   point_id?: number;
   type_orders: number;
 }
 
 export async function fetchOrders(request: GetOrdersRequest): Promise<GetOrdersResponse> {
-  return connector.rest.post<GetOrdersResponse, GetOrdersRequest>(
-    apiRoutes.orders.getOrders,
-    request
-  );
+  return connector.rest.post<GetOrdersResponse, GetOrdersRequest>(apiRoutes.orders.getOrders, {
+    ...request,
+    debug_limits: 1,
+    debug_timing: 1,
+  });
 }
 
 export async function actionOrder(request: ActionOrderRequest): Promise<ApiResponse> {

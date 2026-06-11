@@ -4,6 +4,7 @@ import 'dayjs/locale/ru';
 
 import { useSession } from '@/features/auth/model/auth.store';
 import { usePriceStore } from '@/entities/price';
+import { useSettingsStore } from '@/entities/settings';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { devLog } from '@/shared/lib/devLog';
 import { log } from '@/components/analytics';
@@ -31,6 +32,7 @@ export function usePriceScreen(): UsePriceScreenResult {
     state.getStatBetween,
   ]);
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
+  const pointId = useSettingsStore((state) => state.pointId);
 
   const formatPrice = useCallback(
     (price?: number | string | null) => PRICE_NUMBER_FORMATTER.format(Number(price ?? 0)),
@@ -53,10 +55,10 @@ export function usePriceScreen(): UsePriceScreenResult {
       return;
     }
 
-    void getStatBetween(startDateApi, endDateApi).catch((error) => {
+    void getStatBetween(startDateApi, endDateApi, pointId).catch((error) => {
       devLog('price_stats_load_failed', 'Price stats load failed', error);
     });
-  }, [endDateApi, getStatBetween, session?.isAuth, startDateApi]);
+  }, [endDateApi, getStatBetween, pointId, session?.isAuth, startDateApi]);
 
   const openPicker = useCallback((type: Exclude<ActivePricePicker, null>) => {
     setActivePicker(type);

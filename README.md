@@ -133,6 +133,12 @@ pages/widgets/features
 ```text
 NEXT_PUBLIC_API_ORIGIN
 NEXT_PUBLIC_MEDIA_ORIGIN
+NEXT_PUBLIC_SENTRY_DSN
+NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE
+NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE
+NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE
+SENTRY_DSN
+SENTRY_TRACES_SAMPLE_RATE
 ```
 
 ### Контракты Auth API
@@ -164,6 +170,8 @@ Env-файлы:
 - [.env.example](./.env.example)
 - [.env.development](./.env.development)
 - [.env.production](./.env.production)
+
+Docker-запуск описан в [docs/docker.md](./docs/docker.md).
 
 Целевой путь:
 

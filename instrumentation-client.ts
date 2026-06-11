@@ -2,32 +2,53 @@
 // The config you add here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
+
+const FALLBACK_SENTRY_DSN =
+  'https://8ccd1c75a74531b0b0ec88d63f62e450@o4505941569830912.ingest.us.sentry.io/4508173486325760';
+
+function readSampleRate(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(1, Math.max(0, parsed));
+}
 
 export function register() {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   Sentry.init({
-    dsn: "https://8ccd1c75a74531b0b0ec88d63f62e450@o4505941569830912.ingest.us.sentry.io/4508173486325760",
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN || FALLBACK_SENTRY_DSN,
 
     // Add optional integrations for additional features
-    integrations: [
-      Sentry.replayIntegration(),
-    ],
+    integrations: [Sentry.replayIntegration()],
 
     // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-    tracesSampleRate: 1,
+    tracesSampleRate: readSampleRate(
+      process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE,
+      isProduction ? 0.1 : 1
+    ),
 
     // Define how likely Replay events are sampled.
     // This sets the sample rate to be 10%. You may want this to be 100% while
     // in development and sample at a lower rate in production
-    replaysSessionSampleRate: 0.1,
+    replaysSessionSampleRate: readSampleRate(
+      process.env.NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE,
+      isProduction ? 0.02 : 0.1
+    ),
 
     // Define how likely Replay events are sampled when an error occurs.
-    replaysOnErrorSampleRate: 1.0,
+    replaysOnErrorSampleRate: readSampleRate(
+      process.env.NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE,
+      1
+    ),
 
     // Setting this option to true will print useful information to the console while you're setting up Sentry.
     debug: false,
   });
 }
 
-export const onRouterTransitionStart =
-  Sentry.captureRouterTransitionStart;
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

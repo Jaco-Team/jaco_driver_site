@@ -24,11 +24,10 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.11",
     "@mui/material": "^7.3.11",
-    "@mui/material-nextjs": "^9.0.1",
+    "@mui/material-nextjs": "^9.1.0",
     "@mui/x-date-pickers": "^8.29.0",
     "@pbe/react-yandex-maps": "^1.2.5",
     "@sentry/nextjs": "^10.56.0",
-    "@sentry/react": "^10.56.0",
     "@uiw/color-convert": "^2.10.3",
     "@uiw/react-color-alpha": "^2.10.3",
     "@uiw/react-color-wheel": "^2.10.3",
@@ -60,6 +59,9 @@
     "prettier": "^3.8.3",
     "typescript": "^5.9.3",
     "vitest": "^4.1.8"
+  },
+  "overrides": {
+    "postcss": "8.5.15"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

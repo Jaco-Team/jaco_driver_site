@@ -20,6 +20,7 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
   const sessionToken = `${session?.token ?? ''}`.trim();
 
   const getMySetting = useSettingsStore((state) => state.getMySetting);
+  const selectedPointId = useSettingsStore((state) => state.pointId);
 
   const [
     activePageRU,
@@ -75,7 +76,7 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
 
       await Promise.allSettled([
         getStat(sessionToken, pointId),
-        getMyAvgTime(sessionToken),
+        getMyAvgTime(sessionToken, pointId),
         Promise.resolve(myCurrentLocation()),
       ]);
     })();
@@ -88,6 +89,20 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
     session?.isAuth,
     sessionToken,
   ]);
+
+  useEffect(() => {
+    if (session?.isAuth !== true) {
+      return;
+    }
+
+    void getStat(sessionToken, selectedPointId).catch((error) => {
+      devLog('header_point_phones_load_failed', 'Header point phones load failed', error);
+    });
+
+    void getMyAvgTime(sessionToken, selectedPointId).catch((error) => {
+      devLog('header_avg_time_load_failed', 'Header average time load failed', error);
+    });
+  }, [getMyAvgTime, getStat, selectedPointId, session?.isAuth, sessionToken]);
 
   useEffect(() => {
     if (session?.isAuth !== true) {

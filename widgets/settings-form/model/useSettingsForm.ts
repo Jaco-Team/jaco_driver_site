@@ -86,7 +86,7 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     if (!isLoad) {
       void fetchData();
     }
-  }, [getMySetting, isLoad, session?.isAuth, session?.token]);
+  }, [getMySetting, isLoad, session?.isAuth, session?.token, setPointId]);
 
   const handleSave = async (): Promise<void> => {
     const result = await saveMySetting(

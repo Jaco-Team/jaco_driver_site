@@ -2,8 +2,8 @@
 
 .list_orders {
   margin: 0 !important;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 0;
+  padding-right: 0;
   padding-bottom: 64px;
   width: 100% !important;
 }
@@ -23,11 +23,47 @@
     width: 100%;
   }
 
-  & > div:first-child {
-    display: flex;
-    justify-content: space-between;
-    & > button {
-      @include font_custom(1rem, 500, $colorMain);
-    }
+  &__summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+  }
+
+  &__statusButton {
+    grid-column: 1;
+    justify-self: start;
+    flex: 0 1 auto;
+    min-width: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    justify-content: flex-start !important;
+    color: $colorMain !important;
+    text-align: left;
+    white-space: nowrap;
+    @include font_custom(1rem, 500, $colorMain);
+  }
+}
+
+.listStats {
+  display: contents;
+
+  & > span {
+    line-height: 1.2;
+  }
+
+  &__count {
+    grid-column: 2;
+    justify-self: center;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  &__limit {
+    grid-column: 3;
+    justify-self: end;
+    text-align: right;
+    white-space: nowrap;
   }
 }

@@ -25,7 +25,7 @@ export interface GraphStoreActions {
   closeErrorModal: () => void;
   openOrderErrorModal: (item: GraphOrderError) => void;
   openCameraErrorModal: (item: GraphCameraError) => void;
-  loadGraph: (date: string, pointId?: string) => Promise<void>;
+  loadGraph: (date: string, pointId?: string | number | null) => Promise<void>;
   submitOrderAppeal: () => Promise<ApiResponse>;
   submitCameraAppeal: () => Promise<ApiResponse>;
 }

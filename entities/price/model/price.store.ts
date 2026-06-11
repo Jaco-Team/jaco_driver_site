@@ -2,6 +2,7 @@ import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import { fetchPriceBetween } from '@/entities/price/api/price.api';
 import type { PriceGiveHistoryRow, PriceStat } from '@/entities/price/api/price.api';
+import { useSettingsStore } from '@/entities/settings';
 
 interface PriceState {
   statPrice: PriceStat | null;
@@ -10,7 +11,7 @@ interface PriceState {
 }
 
 interface PriceActions {
-  getStatBetween: (dateStart: string, dateEnd: string) => Promise<void>;
+  getStatBetween: (dateStart: string, dateEnd: string, pointId?: number | null) => Promise<void>;
 }
 
 type PriceStore = PriceState & PriceActions;
@@ -21,20 +22,29 @@ const priceBetweenRequests = new Map<
 >();
 let latestPriceRequestKey = '';
 
+function normalizePointId(value?: number | null): number | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
 export const usePriceStore = createWithEqualityFn<PriceStore>(
   (set) => ({
     statPrice: null,
     give_hist: [],
     isStatLoading: false,
 
-    getStatBetween: async (dateStart, dateEnd) => {
-      const requestKey = `${dateStart}:${dateEnd}`;
+    getStatBetween: async (dateStart, dateEnd, pointId) => {
+      const selectedPointId = normalizePointId(pointId ?? useSettingsStore.getState().pointId);
+      const requestKey = `${dateStart}:${dateEnd}:${selectedPointId ?? 'all'}`;
       latestPriceRequestKey = requestKey;
       set({ isStatLoading: true });
       let request = priceBetweenRequests.get(requestKey);
 
       if (!request) {
-        request = fetchPriceBetween(dateStart, dateEnd).finally(() => {
+        request = fetchPriceBetween(dateStart, dateEnd, selectedPointId).finally(() => {
           priceBetweenRequests.delete(requestKey);
         });
         priceBetweenRequests.set(requestKey, request);

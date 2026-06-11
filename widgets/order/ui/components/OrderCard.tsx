@@ -37,7 +37,6 @@ const StyledCard = styled(Card, {
   boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
   backgroundColor: isDeleted ? '#d95030' : '#fff',
   padding: 16,
-  marginBottom: 16,
   transition: 'all 0.3s ease',
   '&:hover': {
     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.12)',

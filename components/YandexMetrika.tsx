@@ -1,4 +1,17 @@
+import { useCallback, useEffect } from 'react';
 import Script from 'next/script';
+
+type YandexMetrikaFunction = {
+  (id: number | string, method: string, ...args: unknown[]): void;
+  a?: unknown[];
+  l?: number;
+};
+
+type YandexMetrikaWindow = Window & {
+  ym?: YandexMetrikaFunction;
+  __ymIds?: Array<number | string>;
+  __ymInitializedIds?: Array<number | string>;
+};
 
 type YandexMetrikaProps = {
   yid: number | string;
@@ -15,35 +28,54 @@ export default function YandexMetrika({
   accurateTrackBounce = true,
   webvisor = false,
 }: YandexMetrikaProps) {
-  const init = `
-    (function(m,e,t,r,i,k,a){
-      m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-      m[i].l=1*new Date();
-      k=e.createElement(t),a=e.getElementsByTagName(t)[0];
-      k.async=1;k.src=r;a.parentNode.insertBefore(k,a)
-    })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+  const initCounter = useCallback(() => {
+    const analyticsWindow = window as YandexMetrikaWindow;
 
-    ym(${yid}, "init", {
-      clickmap:${clickmap},
-      trackLinks:${trackLinks},
-      accurateTrackBounce:${accurateTrackBounce},
-      webvisor:${webvisor},
-      defer:true
-    });
+    if (typeof analyticsWindow.ym !== 'function') {
+      return;
+    }
 
-    // запоминаем ID счётчика, чтобы обёртка могла слать события во все активные
-    (function(w){
-      w.__ymIds = w.__ymIds || [];
-      if (w.__ymIds.indexOf(${yid}) === -1) w.__ymIds.push(${yid});
-    })(window);
-  `;
+    analyticsWindow.__ymIds = analyticsWindow.__ymIds || [];
+    analyticsWindow.__ymInitializedIds = analyticsWindow.__ymInitializedIds || [];
+
+    if (!analyticsWindow.__ymInitializedIds.includes(yid)) {
+      analyticsWindow.ym(yid, 'init', {
+        clickmap,
+        trackLinks,
+        accurateTrackBounce,
+        webvisor,
+        defer: true,
+      });
+      analyticsWindow.__ymInitializedIds.push(yid);
+    }
+
+    if (!analyticsWindow.__ymIds.includes(yid)) {
+      analyticsWindow.__ymIds.push(yid);
+    }
+  }, [accurateTrackBounce, clickmap, trackLinks, webvisor, yid]);
+
+  useEffect(() => {
+    const analyticsWindow = window as YandexMetrikaWindow;
+
+    if (typeof analyticsWindow.ym !== 'function') {
+      const queuedYm: YandexMetrikaFunction = (...args) => {
+        queuedYm.a = queuedYm.a || [];
+        queuedYm.a.push(args);
+      };
+      queuedYm.l = Date.now();
+      analyticsWindow.ym = queuedYm;
+    }
+    initCounter();
+  }, [initCounter]);
 
   return (
     <>
       <Script
         id={`ym-loader-${yid}`} // уникальный id скрипта
+        src="https://mc.yandex.ru/metrika/tag.js"
         strategy="afterInteractive"
-        dangerouslySetInnerHTML={{ __html: init }}
+        onLoad={initCounter}
+        onReady={initCounter}
       />
       <noscript>
         <div>

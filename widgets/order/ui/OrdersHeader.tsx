@@ -37,13 +37,18 @@ export const OrdersHeader: React.FC<OrdersHeaderProps> = ({
         globalFontSize={globalFontSize}
       />
 
-      <Grid size={12}>
-        <Button variant="text" onClick={handleFilterClick} style={{ fontSize: globalFontSize }}>
+      <Grid size={12} className="list__summary">
+        <Button
+          variant="text"
+          onClick={handleFilterClick}
+          className="list__statusButton"
+          style={{ fontSize: globalFontSize }}
+        >
           {typeText}
         </Button>
-      </Grid>
 
-      <OrderStats limit={limit} limitCount={limitCount} globalFontSize={globalFontSize} />
+        <OrderStats limit={limit} limitCount={limitCount} globalFontSize={globalFontSize} />
+      </Grid>
     </>
   );
 };
