@@ -8,6 +8,7 @@ import {
   sendPasswordRecoveryCode as requestPasswordRecoveryCodeApi,
 } from '@/features/auth/api/auth.api';
 import { getApiErrorInfo, getAuthErrorMessage } from '@/shared/api/errors';
+import { clearAuthToken } from '@/shared/api/token';
 import type { ApiResponse, User } from '@/shared/api/types';
 
 export interface AuthSession {
@@ -115,6 +116,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
 
     setUnauthorized: () => {
       setExplicitUnauthorized(true);
+      clearAuthToken();
       set({ session: unauthorizedSession() });
     },
 

@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 
 import { apiConfig } from '@/shared/api/config';
+import { getAuthToken } from '@/shared/api/token';
 
 const BASE_HEADERS = {
   'X-Requested-With': 'XMLHttpRequest',
@@ -49,6 +50,13 @@ export async function ensureCsrfCookie(): Promise<void> {
 
 http.interceptors.request.use(
   async (config) => {
+    const authToken = getAuthToken();
+
+    if (authToken) {
+      config.headers = config.headers ?? {};
+      config.headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
     if (['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
       const csrfToken = getCsrfToken();
 
