@@ -4,6 +4,8 @@
 
 ## Production
 
+Локальный production-запуск с публикацией порта на хост:
+
 ```bash
 docker compose up --build app
 ```
@@ -18,6 +20,39 @@ http://localhost:3225
 
 ```bash
 APP_PORT=3000 docker compose up --build app
+```
+
+## Production вместе с backend/SSO
+
+На сервере frontend не должен открывать порт наружу. Входной точкой является Nginx
+из проекта `laravel-api-driver`, а frontend подключается к общей Docker-сети
+`jaco-prod` с алиасом `frontend`.
+
+Сначала в проекте `laravel-api-driver` поднимаются backend, SSO и Nginx:
+
+```bash
+docker compose --env-file .env.production -f compose.prod.yaml up -d --build
+```
+
+После этого в этом проекте запускается frontend:
+
+```bash
+docker compose --env-file .env.production -f compose.prod.yaml up -d --build
+```
+
+Production compose не публикует `3225` наружу. Nginx из backend-проекта будет
+проксировать домен frontend на контейнер:
+
+```text
+https://driver.example.ru -> frontend:3225
+```
+
+В `.env.production` для такой схемы укажи публичный API-домен:
+
+```dotenv
+NEXT_PUBLIC_API_ORIGIN=https://api-driver.example.ru
+NEXT_PUBLIC_LEGACY_API_ORIGIN=https://api-driver.example.ru
+NEXT_PUBLIC_MEDIA_ORIGIN=https://api-driver.example.ru
 ```
 
 ## Development

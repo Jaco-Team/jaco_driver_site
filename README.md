@@ -173,6 +173,29 @@ Env-файлы:
 
 Docker-запуск описан в [docs/docker.md](./docs/docker.md).
 
+### Production Docker с backend/SSO
+
+На боевом сервере этот frontend запускается после проекта `laravel-api-driver`.
+Backend-проект создаёт общую Docker-сеть `jaco-prod` и поднимает Nginx, который
+принимает HTTPS-трафик для frontend/API/SSO доменов.
+
+Для подключения frontend к этой схеме используй:
+
+```bash
+docker compose --env-file .env.production -f compose.prod.yaml up -d --build
+```
+
+В `.env.production` должны быть публичные URL backend:
+
+```dotenv
+NEXT_PUBLIC_API_ORIGIN=https://api-driver.example.ru
+NEXT_PUBLIC_LEGACY_API_ORIGIN=https://api-driver.example.ru
+NEXT_PUBLIC_MEDIA_ORIGIN=https://api-driver.example.ru
+```
+
+Порт `3225` наружу не открывается: Nginx из `laravel-api-driver` проксирует
+домен frontend на контейнер `frontend:3225` внутри сети `jaco-prod`.
+
 Целевой путь:
 
 - cookie session

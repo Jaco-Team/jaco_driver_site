@@ -1,0 +1,24 @@
+services:
+  frontend:
+    build:
+      context: .
+      target: runner
+    image: jaco/driver-site:prod
+    restart: unless-stopped
+    env_file:
+      - "${PROD_ENV_FILE:-.env.production}"
+    environment:
+      NODE_ENV: production
+      PORT: 3225
+      HOSTNAME: 0.0.0.0
+      NEXT_TELEMETRY_DISABLED: 1
+    expose:
+      - "3225"
+    networks:
+      jaco-prod:
+        aliases:
+          - frontend
+
+networks:
+  jaco-prod:
+    external: true
