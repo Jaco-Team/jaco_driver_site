@@ -27,7 +27,10 @@ jobs:
       - name: Build image
         run: |
           docker build \
+            --build-arg NEXT_PUBLIC_API_ORIGIN=https://apidriver.jacochef.ru \
             --build-arg NEXT_PUBLIC_API_URL=https://apidriver.jacochef.ru \
+            --build-arg NEXT_PUBLIC_LEGACY_API_ORIGIN=https://apidriver.jacochef.ru \
+            --build-arg NEXT_PUBLIC_MEDIA_ORIGIN=https://apidriver.jacochef.ru \
             --build-arg NEXT_PUBLIC_YANDEX_METRIKA_ID="${{ secrets.NEXT_PUBLIC_YANDEX_METRIKA_ID }}" \
             -t $IMAGE_NAME .
 
