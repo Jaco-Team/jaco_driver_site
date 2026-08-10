@@ -11,6 +11,14 @@ export async function getFeedbacks() {
   return connector.rest.get<FeedbackResponse>(apiRoutes.feedback.getFeedbacks);
 }
 
-export async function saveFeedbacks(req) {
-  return connector.rest.post(apiRoutes.feedback.saveFeedbacks, req);
+// правка 10.08.2026 исрпавления ошибки  неявный типа req 
+interface SaveFeedbackResponse {
+  message?: string;
+}
+
+export async function saveFeedbacks(req: FormData) {
+  return connector.rest.post<SaveFeedbackResponse, FormData>(
+    apiRoutes.feedback.saveFeedbacks,
+    req
+  );
 }
