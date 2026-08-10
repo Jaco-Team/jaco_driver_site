@@ -1,4 +1,4 @@
-const DEFAULT_API_ORIGIN = 'http://localhost:8080';
+const DEFAULT_API_ORIGIN = 'https://apidriver.jacochef.ru';
 
 function readEnv(key: string): string | undefined {
   const value = process.env[key];
