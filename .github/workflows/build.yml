@@ -1,9 +1,9 @@
-name: Build Frontend
+name: Build Frontend API Laravel
 
 on:
   push:
     branches:
-      - main
+      - api-laravel
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: ghcr.io/jaco-team/jaco-driver-frontend:main
+  IMAGE_NAME: ghcr.io/jaco-team/jaco-driver-frontend:api-laravel
 
 jobs:
   build:
@@ -28,6 +28,7 @@ jobs:
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_API_URL=https://apidriver.jacochef.ru \
+            --build-arg NEXT_PUBLIC_YANDEX_METRIKA_ID="${{ secrets.NEXT_PUBLIC_YANDEX_METRIKA_ID }}" \
             -t $IMAGE_NAME .
 
       - name: Push image
