@@ -1,8 +1,6 @@
 const DEFAULT_API_ORIGIN = 'https://apidriver.jacochef.ru';
 
-function readEnv(key: string): string | undefined {
-  const value = process.env[key];
-
+function trimEnv(value: string | undefined): string | undefined {
   if (typeof value !== 'string') {
     return undefined;
   }
@@ -23,13 +21,16 @@ export function joinUrl(base: string, path: string = ''): string {
 }
 
 function resolveApiOrigin(): string {
+  // Next.js inlines NEXT_PUBLIC_* into the client bundle only with static access.
   return normalizeBaseUrl(
-    readEnv('NEXT_PUBLIC_API_ORIGIN') ?? readEnv('NEXT_PUBLIC_API_URL') ?? DEFAULT_API_ORIGIN
+    trimEnv(process.env.NEXT_PUBLIC_API_ORIGIN) ??
+      trimEnv(process.env.NEXT_PUBLIC_API_URL) ??
+      DEFAULT_API_ORIGIN
   );
 }
 
 function resolveMediaOrigin(apiOrigin: string): string {
-  return normalizeBaseUrl(readEnv('NEXT_PUBLIC_MEDIA_ORIGIN') ?? apiOrigin);
+  return normalizeBaseUrl(trimEnv(process.env.NEXT_PUBLIC_MEDIA_ORIGIN) ?? apiOrigin);
 }
 
 const apiOrigin = resolveApiOrigin();

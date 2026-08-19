@@ -58,4 +58,16 @@ describe('order api adapter', () => {
     expect(normalized.del_orders[0].id).toBe(8);
     expect(normalized.driver_need_gps).toBe(true);
   });
+
+  it('reads cafe coordinates from lat/lon aliases', () => {
+    const normalized = normalizeOrdersResponse({
+      st: true,
+      home: {
+        lat: 53.531521,
+        lon: 49.312353,
+      },
+    });
+
+    expect(normalized.home?.center).toEqual([53.531521, 49.312353]);
+  });
 });

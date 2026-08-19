@@ -5,9 +5,7 @@ function normalizeAssetPath(value: string): string {
 }
 
 export const apiRoutes = {
-  csrfCookie: '/sanctum/csrf-cookie',
   auth: {
-    sessionLogin: '/api/v1/auth/session/login',
     tokenLogin: '/api/v1/auth/token/login',
     passwordRecoverySendCode: '/api/v1/auth/password/recovery/send-code',
     passwordRecoveryConfirmCode: '/api/v1/auth/password/recovery/confirm-code',

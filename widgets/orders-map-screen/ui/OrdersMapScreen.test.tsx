@@ -33,6 +33,8 @@ const mocks = vi.hoisted(() => ({
     ],
     type_dop: ['1', '2'],
     is_showModalTypeDop: false,
+    isClick: false,
+    is_load: false,
     getOrders: vi.fn(),
     showOrdersMap: vi.fn(),
     setType: vi.fn(),

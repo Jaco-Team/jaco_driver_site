@@ -35,6 +35,8 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
     actionCencelOrder: state.actionCencelOrder,
     actionGetOrder: state.actionGetOrder,
     actionFakeOrder: state.actionFakeOrder,
+    isClick: state.isClick,
+    is_load: state.is_load,
   }));
 
   const getHome = useCallback(() => {
@@ -45,7 +47,7 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
   }, [orders.home]);
 
   const handleConfirm = useCallback(() => {
-    if (!orders.order_finish_id) return;
+    if (!orders.order_finish_id || orders.isClick || orders.is_load) return;
 
     switch (orders.type_confirm) {
       case 'finish':

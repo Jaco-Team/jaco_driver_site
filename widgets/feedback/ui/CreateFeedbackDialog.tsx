@@ -26,7 +26,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
   onClose,
   globalFontSize,
 }) => {
-  const { type, title, description, img, is_need_notification, setForm, saveFeedbacks, isLoad } =
+  const { type, title, description, img, is_need_notification, setForm, saveFeedbacks, isSaving } =
     useFeedbackStore();
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const modalBaseFontSize = clampFeedbackFontSize(globalFontSize, 14, 20);
@@ -39,6 +39,10 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
   const actionFontSize = clampFeedbackFontSize(modalBaseFontSize + 2, 15, 24);
 
   const handleSave = async () => {
+    if (isSaving) {
+      return;
+    }
+
     await saveFeedbacks();
   };
 
@@ -70,18 +74,20 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
       onOpen={() => {}}
       disableSwipeToOpen={false}
       swipeAreaWidth={40}
-      ModalProps={{
-        keepMounted: true,
-      }}
-      PaperProps={{
-        sx: {
-          borderTopLeftRadius: 28,
-          borderTopRightRadius: 28,
-          maxHeight: '86vh',
-          background: '#ffffff',
-          overflow: 'hidden',
-          border: '1px solid rgba(66, 98, 125, 0.14)',
-          boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+      slotProps={{
+        root: {
+          keepMounted: true,
+        },
+        paper: {
+          sx: {
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            maxHeight: '86vh',
+            background: '#ffffff',
+            overflow: 'hidden',
+            border: '1px solid rgba(66, 98, 125, 0.14)',
+            boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+          },
         },
       }}
     >
@@ -140,7 +146,12 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
             <Chip
               key={feedbackType}
               label={feedbackType}
-              onClick={() => setForm('type', feedbackType)}
+              onClick={() => {
+                if (!isSaving) {
+                  setForm('type', feedbackType);
+                }
+              }}
+              disabled={isSaving}
               sx={{
                 height: 40,
                 borderRadius: 999,
@@ -169,6 +180,8 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
           placeholder="Введите заголовок"
           value={title}
           onChange={(event) => setForm('title', event.target.value)}
+          disabled={isSaving}
+          inputProps={{ maxLength: 255 }}
           sx={{
             mb: 2,
             '& .MuiOutlinedInput-root': {
@@ -198,6 +211,8 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
           placeholder="Расскажите о проблемах в работе приложения, предложите, как можно улучшить систему"
           value={description}
           onChange={(event) => setForm('description', event.target.value)}
+          disabled={isSaving}
+          inputProps={{ maxLength: 5000 }}
           sx={{
             mb: 2,
             '& .MuiOutlinedInput-root': {
@@ -270,6 +285,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
             <Checkbox
               checked={is_need_notification}
               onChange={(event) => setForm('is_need_notification', event.target.checked)}
+              disabled={isSaving}
               sx={{
                 '& .MuiSvgIcon-root': {
                   fontSize: checkboxIconFontSize,
@@ -291,20 +307,22 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
           fullWidth
           onClick={handleSave}
           variant="contained"
-          disabled={isLoad}
+          disabled={isSaving}
+          aria-busy={isSaving}
           sx={{
             minHeight: 54,
             borderRadius: '16px',
             textTransform: 'none',
             fontSize: actionFontSize,
             fontWeight: 700,
+            pointerEvents: isSaving ? 'none' : 'auto',
             boxShadow: '0 12px 24px rgba(146, 0, 36, 0.28)',
             '&:hover': {
               boxShadow: '0 14px 28px rgba(146, 0, 36, 0.33)',
             },
           }}
         >
-          {isLoad ? 'Отправка...' : 'Отправить'}
+          {isSaving ? 'Отправка...' : 'Отправить'}
         </Button>
       </Box>
     </SwipeableDrawer>

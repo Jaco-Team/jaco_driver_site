@@ -75,7 +75,13 @@ export default function AuthCallbackPage() {
 
   return (
     <Meta title="SSO авторизация">
-      <Grid container justifyContent="center" className={`auth ${roboto.variable}`}>
+      <Grid
+        container
+        className={`auth ${roboto.variable}`}
+        sx={{
+          justifyContent: 'center',
+        }}
+      >
         <Grid size={{ xs: 12, md: 8, lg: 5 }}>
           <section
             className="auth__panel auth__panel--solo"

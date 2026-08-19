@@ -8,6 +8,7 @@ import Box from '@mui/material/Box';
 interface OrdersListProps {
   orders: Order[];
   globalFontSize: number;
+  actionsDisabled?: boolean;
   onOrderAction?: (action: string, orderId: number) => void;
   onOrderPay?: (orderId: number) => void;
 }
@@ -20,14 +21,19 @@ const EmptyState: React.FC = () => (
       width: '100%',
     }}
   >
-    <Typography variant="body1" color="text.secondary">
+    <Typography
+      variant="body1"
+      sx={{
+        color: 'text.secondary',
+      }}
+    >
       Нет заказов для отображения
     </Typography>
   </Box>
 );
 
 export const OrdersList: React.FC<OrdersListProps> = memo(
-  ({ orders, globalFontSize, onOrderAction, onOrderPay }) => {
+  ({ orders, globalFontSize, actionsDisabled = false, onOrderAction, onOrderPay }) => {
     const handleAction = useCallback(
       (action: string, orderId: number) => {
         onOrderAction?.(action, orderId);
@@ -54,6 +60,7 @@ export const OrdersList: React.FC<OrdersListProps> = memo(
               item={item}
               is_map={false}
               globalFontSize={globalFontSize}
+              actionsDisabled={actionsDisabled}
               onAction={handleAction}
               onPay={handlePay}
             />

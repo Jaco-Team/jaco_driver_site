@@ -13,6 +13,7 @@ import {
 import { normalizeOrderRow, filterOrdersByTypes } from './order.utils';
 import { log } from '@/components/analytics';
 import { devLog } from '@/shared/lib/devLog';
+import { describeGeolocationError, readDriverPosition } from '@/shared/lib/geolocation';
 import { useSettingsStore } from '@/entities/settings';
 import {
   fetchOrders,
@@ -26,6 +27,22 @@ import {
 
 function getSelectedPointId(): number | null {
   return useSettingsStore.getState().pointId;
+}
+
+function isApiOk(st: unknown): boolean {
+  return st === true || st === 1 || st === '1';
+}
+
+function hasHomeMoved(current: HomeLocation | null, next: HomeLocation | null): boolean {
+  if (!next) {
+    return false;
+  }
+
+  if (!current) {
+    return true;
+  }
+
+  return current.center[0] !== next.center[0] || current.center[1] !== next.center[1];
 }
 
 interface OrdersStore {
@@ -91,11 +108,11 @@ interface OrdersStore {
   setType: (type: OrderType, pointId?: number) => void;
   setCloseMenu: () => void;
   setOpenMenu: () => void;
-  actionFinishOrder: (order_id: number, is_map?: boolean) => void;
-  actionCencelOrder: (order_id: number, is_map?: boolean) => void;
-  actionGetOrder: (order_id: number, is_map?: boolean) => void;
-  actionFakeOrder: (order_id: number, is_map?: boolean) => void;
-  actionPayOrder: (order_id: number, is_map?: boolean) => void;
+  actionFinishOrder: (order_id: number, is_map?: boolean) => Promise<void>;
+  actionCencelOrder: (order_id: number, is_map?: boolean) => Promise<void>;
+  actionGetOrder: (order_id: number, is_map?: boolean) => Promise<void>;
+  actionFakeOrder: (order_id: number, is_map?: boolean) => Promise<void>;
+  actionPayOrder: (order_id: number, is_map?: boolean) => Promise<void>;
   clearMap: () => void;
   renderMap: (home: any, orders: Order[]) => void;
   closeOrderMap: () => void;
@@ -122,8 +139,50 @@ interface OrdersStore {
   }) => Promise<void>;
 }
 
-export const useOrdersStore = createWithEqualityFn<OrdersStore>(
-  (set, get) => ({
+export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
+  const resolveDriverCoords = async (): Promise<{
+    latitude: string;
+    longitude: string;
+  } | null> => {
+    if (!get().driver_need_gps) {
+      return { latitude: '', longitude: '' };
+    }
+
+    const result = await readDriverPosition();
+
+    if (result.blocked) {
+      get().openErrOrder(result.message || 'Не удалось определить местоположение.');
+      return null;
+    }
+
+    return {
+      latitude: result.latitude,
+      longitude: result.longitude,
+    };
+  };
+
+  const runLockedOrderAction = async (fn: () => Promise<void>): Promise<void> => {
+    if (get().isClick) {
+      return;
+    }
+
+    set({ isClick: true, is_load: true });
+
+    try {
+      await fn();
+    } catch (err) {
+      devLog('orders_action_error', 'Order action error', err);
+      get().openErrOrder('Ошибка ' + err);
+    } finally {
+      set({ isClick: false, is_load: false });
+    }
+  };
+
+  const startOrderAction = () => {
+    get().setActiveConfirm(false);
+  };
+
+  return {
     orders: [],
     isOpenMenu: false,
     update_interval: 30,
@@ -254,14 +313,10 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
           del_orders: normalized.del_orders,
           driver_pay: normalized.driver_pay,
           driver_need_gps: normalized.driver_need_gps,
+          ...(hasHomeMoved(get().home, normalized.home) ? { home: normalized.home } : {}),
         });
 
         log('orders_fetch_success', 'Получение списка заказов');
-
-        const currentHome = get().home;
-        if (!currentHome && normalized.home) {
-          set({ home: normalized.home });
-        }
       } catch (err) {
         devLog('orders_fetch_error', 'Orders fetch error', err);
         log('orders_fetch_fail', 'Ошибка при получении списка заказов');
@@ -269,7 +324,10 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
       }
 
       setTimeout(() => {
-        set({ is_load: false, is_check: false });
+        set({
+          is_check: false,
+          ...(get().isClick ? {} : { is_load: false }),
+        });
       }, 300);
     },
 
@@ -294,33 +352,37 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         set({ is_load: true });
         log('driver_location', 'Показать текущее местоположение водителя на карте');
 
-        navigator.geolocation.getCurrentPosition(
-          ({ coords }) => {
-            const { latitude, longitude } = coords;
-            const now = new Date();
-            const min = now.getMinutes() < 10 ? `0${now.getMinutes()}` : `${now.getMinutes()}`;
+        const result = await readDriverPosition();
 
-            set({
-              location_driver: [latitude, longitude],
-              location_driver_time_text: `${now.getHours()}:${min}`,
-            });
+        if (result.blocked) {
+          get().openErrOrder(result.message || 'Не удалось определить местоположение.');
+          setTimeout(() => set({ is_load: false }), 300);
+          return;
+        }
 
-            setTimeout(() => set({ is_load: false }), 300);
+        if (!result.latitude || !result.longitude) {
+          setTimeout(() => set({ is_load: false }), 300);
+          return;
+        }
 
-            setTimeout(() => {
-              if (get().type_location === 'location') {
-                set({ type_location: 'none', location_driver: null });
-              }
-            }, 30000);
-          },
-          (error) => {
-            devLog('orders_geolocation_error', 'Geolocation error', error);
-            setTimeout(() => set({ is_load: false }), 300);
-          },
-          { enableHighAccuracy: true }
-        );
+        const now = new Date();
+        const min = now.getMinutes() < 10 ? `0${now.getMinutes()}` : `${now.getMinutes()}`;
+
+        set({
+          location_driver: [Number(result.latitude), Number(result.longitude)],
+          location_driver_time_text: `${now.getHours()}:${min}`,
+        });
+
+        setTimeout(() => set({ is_load: false }), 300);
+
+        setTimeout(() => {
+          if (get().type_location === 'location') {
+            set({ type_location: 'none', location_driver: null });
+          }
+        }, 30000);
       } catch (err) {
-        get().openErrOrder(`Произошла ошибка ${err}`);
+        const described = describeGeolocationError(err);
+        get().openErrOrder(described.text);
         setTimeout(() => set({ is_load: false, type_location: 'none' }), 300);
       }
     },
@@ -329,6 +391,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
       if (!get().driver_need_gps) return;
 
       try {
+        let blockedNoticeShown = false;
         const id_watch = navigator.geolocation.watchPosition(
           ({ coords }) => {
             const { latitude, longitude } = coords;
@@ -347,7 +410,13 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
             }, 100);
           },
           (error) => {
+            const described = describeGeolocationError(error);
             devLog('orders_watch_position_error', 'Watch position error', error);
+
+            if (!described.canContinue && !blockedNoticeShown) {
+              blockedNoticeShown = true;
+              get().openErrOrder(described.text);
+            }
           },
           {
             maximumAge: 10000,
@@ -388,16 +457,19 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
     setOpenMenu: () => set({ isOpenMenu: true }),
 
     checkPos: (callback: (coords: { latitude: string; longitude: string }) => void) => {
-      navigator.geolocation.getCurrentPosition(
-        ({ coords }) =>
-          callback({ latitude: `${coords.latitude}`, longitude: `${coords.longitude}` }),
-        ({ message }) => {
-          devLog('orders_geolocation_error', 'Geolocation error', message);
-          get().openErrOrder(`Не удалось определить местоположение. ${message}`);
+      void readDriverPosition().then((result) => {
+        if (result.blocked) {
+          devLog('orders_geolocation_error', 'Geolocation error', result.message);
+          get().openErrOrder(result.message || 'Не удалось определить местоположение.');
           set({ is_load: false });
-        },
-        { enableHighAccuracy: true }
-      );
+          return;
+        }
+
+        callback({
+          latitude: result.latitude,
+          longitude: result.longitude,
+        });
+      });
     },
 
     actionOrder: async ({ data, latitude, longitude }) => {
@@ -411,17 +483,15 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         latitude,
         longitude,
       });
-      const dataRes = res;
 
-      if (!dataRes?.st) {
-        get().openErrOrder(dataRes?.text || 'Ошибка');
-        setTimeout(() => set({ is_load: false }), 500);
-      } else {
-        get().closeOrderMap();
-        get().setShowPay(false);
-        get().getOrders();
-        setTimeout(() => set({ is_load: false }), 500);
+      if (!isApiOk(res?.st)) {
+        get().openErrOrder(res?.text || 'Ошибка');
+        return;
       }
+
+      get().closeOrderMap();
+      get().setShowPay(false);
+      await get().getOrders();
     },
 
     actionOrderFake: async ({ data, latitude, longitude }) => {
@@ -435,26 +505,24 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         latitude,
         longitude,
       });
-      const dataRes = res?.data;
+      const dataRes = res?.data ?? res;
 
-      if (!dataRes?.st) {
-        get().openErrOrder(dataRes?.text || 'Ошибка');
-        setTimeout(() => set({ is_load: false }), 500);
-      } else {
-        const now = new Date();
-        const min = now.getMinutes() < 10 ? `0${now.getMinutes()}` : `${now.getMinutes()}`;
-
-        set({
-          location_driver: [parseFloat(latitude), parseFloat(longitude)],
-          location_driver_time_text: `${now.getHours()}:${min}`,
-        });
-
-        get().closeOrderMap();
-        get().getOrders();
-
-        setTimeout(() => set({ is_load: false }), 500);
-        setTimeout(() => set({ location_driver: null }), 300000);
+      if (!isApiOk(dataRes?.st ?? res?.st)) {
+        get().openErrOrder(dataRes?.text || res?.text || 'Ошибка');
+        return;
       }
+
+      const now = new Date();
+      const min = now.getMinutes() < 10 ? `0${now.getMinutes()}` : `${now.getMinutes()}`;
+
+      set({
+        location_driver: [parseFloat(latitude), parseFloat(longitude)],
+        location_driver_time_text: `${now.getHours()}:${min}`,
+      });
+
+      get().closeOrderMap();
+      await get().getOrders();
+      setTimeout(() => set({ location_driver: null }), 300000);
     },
 
     actionPay: async ({ data, latitude, longitude }) => {
@@ -467,114 +535,99 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
         point_id: getSelectedPointId() ?? undefined,
       });
 
-      if (!res?.st) {
+      if (!isApiOk(res?.st)) {
         get().openErrOrder(res?.text || 'Ошибка');
-        setTimeout(() => set({ is_load: false }), 500);
-      } else {
-        if (res.pay) {
-          res.pay.check_data = { data: { order_id, is_map }, latitude, longitude };
-        }
-        get().openErrOrder('Заказ оплачен');
-        setTimeout(() => set({ is_load: false, showPay: true, payData: res.pay }), 500);
+        return;
       }
+
+      if (res.pay) {
+        res.pay.check_data = { data: { order_id, is_map }, latitude, longitude };
+      }
+
+      get().openErrOrder('Заказ оплачен');
+      set({ showPay: true, payData: res.pay });
     },
 
     actionFinishOrder: (order_id, is_map = false) => {
-      if (get().isClick) return;
-      set({ isClick: true, is_load: true });
+      return runLockedOrderAction(async () => {
+        log('confirm_finish', 'Заказ завершен');
+        startOrderAction();
 
-      log('confirm_finish', 'Заказ завершен');
+        const coords = await resolveDriverCoords();
+        if (!coords) return;
 
-      const finishHandler = ({ latitude, longitude }: { latitude: string; longitude: string }) => {
-        const data = { order_id, type: 3, is_map };
-        get().actionOrder({ latitude, longitude, data });
-      };
-
-      if (get().driver_need_gps) {
-        get().checkPos(finishHandler);
-      } else {
-        finishHandler({ latitude: '', longitude: '' });
-      }
-
-      setTimeout(() => {
-        get().setActiveConfirm(false);
-        set({ isClick: false });
-      }, 300);
+        await get().actionOrder({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          data: { order_id, type: 3, is_map },
+        });
+      });
     },
 
     actionCencelOrder: (order_id, is_map = false) => {
-      if (get().isClick) return;
-      set({ isClick: true, is_load: true });
+      return runLockedOrderAction(async () => {
+        log('confirm_cancel', 'Заказ отменен');
+        startOrderAction();
 
-      log('confirm_cancel', 'Заказ отменен');
+        const coords = await resolveDriverCoords();
+        if (!coords) return;
 
-      const cancelHandler = ({ latitude, longitude }: { latitude: string; longitude: string }) => {
-        const data = { order_id, type: 2, is_map };
-        get().actionOrder({ latitude, longitude, data });
-      };
-
-      if (get().driver_need_gps) {
-        get().checkPos(cancelHandler);
-      } else {
-        cancelHandler({ latitude: '', longitude: '' });
-      }
-
-      setTimeout(() => {
-        get().setActiveConfirm(false);
-        set({ isClick: false });
-      }, 300);
+        await get().actionOrder({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          data: { order_id, type: 2, is_map },
+        });
+      });
     },
 
     actionGetOrder: (order_id, is_map = false) => {
-      if (get().isClick) return;
-      set({ isClick: true, is_load: true });
+      return runLockedOrderAction(async () => {
+        log('confirm_approve', 'Взятие заказа');
+        startOrderAction();
 
-      log('confirm_approve', 'Взятие заказа');
+        const coords = await resolveDriverCoords();
+        if (!coords) return;
 
-      const getHandler = ({ latitude, longitude }: { latitude: string; longitude: string }) => {
-        const data = { order_id, type: 1, is_map };
-        get().actionOrder({ latitude, longitude, data });
-      };
-
-      if (get().driver_need_gps) {
-        get().checkPos(getHandler);
-      } else {
-        getHandler({ latitude: '', longitude: '' });
-      }
-
-      setTimeout(() => set({ isClick: false }), 300);
+        await get().actionOrder({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          data: { order_id, type: 1, is_map },
+        });
+      });
     },
 
     actionFakeOrder: (order_id, is_map = false) => {
-      if (get().isClick) return;
-      set({ isClick: true, is_load: true });
+      return runLockedOrderAction(async () => {
+        log('confirm_fake', 'Клиент не вышел на связь');
+        startOrderAction();
 
-      log('confirm_fake', 'Клиент не вышел на связь');
+        const coords = await resolveDriverCoords();
+        if (!coords) return;
 
-      const fakeHandler = ({ latitude, longitude }: { latitude: string; longitude: string }) => {
-        const data = { order_id, type: 1, is_map };
-        get().actionOrderFake({ latitude, longitude, data });
-      };
-
-      if (get().driver_need_gps) {
-        get().checkPos(fakeHandler);
-      } else {
-        fakeHandler({ latitude: '', longitude: '' });
-      }
-
-      setTimeout(() => {
-        get().setActiveConfirm(false);
-        set({ isClick: false });
-      }, 300);
+        await get().actionOrderFake({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          data: { order_id, type: 1, is_map },
+        });
+      });
     },
 
     actionPayOrder: (order_id, is_map = false) => {
-      if (get().isClick) return;
-      set({ isClick: true, is_load: true });
-      get().checkPos(({ latitude, longitude }) => {
-        get().actionPay({ latitude, longitude, data: { order_id, is_map } });
+      return runLockedOrderAction(async () => {
+        get().setActiveConfirm(false);
+
+        const result = await readDriverPosition();
+        if (result.blocked) {
+          get().openErrOrder(result.message || 'Не удалось определить местоположение.');
+          return;
+        }
+
+        await get().actionPay({
+          latitude: result.latitude,
+          longitude: result.longitude,
+          data: { order_id, is_map },
+        });
       });
-      setTimeout(() => set({ isClick: false }), 300);
     },
 
     clearMap: () => set({ map: null }),
@@ -594,10 +647,9 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>(
 
       const res = await apiCheckPayOrder(get().token, order_id, getSelectedPointId());
 
-      if (res?.st === true) {
-        get().actionOrder({ latitude, longitude, data: { order_id, type: 3, is_map } });
+      if (isApiOk(res?.st)) {
+        await get().actionOrder({ latitude, longitude, data: { order_id, type: 3, is_map } });
       }
     },
-  }),
-  shallow
-);
+  };
+}, shallow);

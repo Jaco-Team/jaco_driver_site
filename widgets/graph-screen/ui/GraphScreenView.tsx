@@ -56,8 +56,10 @@ export function GraphScreenView({
               <Grid
                 container
                 spacing={1.5}
-                justifyContent="flex-end"
                 className="graph__monthAction"
+                sx={{
+                  justifyContent: 'flex-end',
+                }}
               >
                 <Grid className="graph__monthActionItem">
                   <Button

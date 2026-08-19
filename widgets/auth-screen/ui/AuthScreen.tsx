@@ -19,7 +19,14 @@ export default function AuthPage() {
 
   return (
     <Meta title="Авторизация">
-      <Grid container spacing={3} justifyContent="center" className={'auth ' + roboto.variable}>
+      <Grid
+        container
+        spacing={3}
+        className={'auth ' + roboto.variable}
+        sx={{
+          justifyContent: 'center',
+        }}
+      >
         <Grid size={{ xs: 12, md: 8, lg: 5 }}>
           <section className="auth__panel auth__panel--solo">
             <div className="auth__logoBadge">

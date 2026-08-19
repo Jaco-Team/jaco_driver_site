@@ -42,11 +42,13 @@ const FeedbackPage: React.FC = () => {
   if (isLoad) {
     return (
       <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
         className={roboto.variable}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+        }}
       >
         <CircularProgress />
       </Box>

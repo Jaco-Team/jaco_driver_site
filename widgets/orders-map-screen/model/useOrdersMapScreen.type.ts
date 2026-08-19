@@ -37,6 +37,8 @@ export type OrdersMapOrdersState = Pick<
   | 'actionCencelOrder'
   | 'actionGetOrder'
   | 'actionFakeOrder'
+  | 'isClick'
+  | 'is_load'
 >;
 
 export interface UseOrdersMapScreenResult {

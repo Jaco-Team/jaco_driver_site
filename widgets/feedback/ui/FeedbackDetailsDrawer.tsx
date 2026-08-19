@@ -26,11 +26,9 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
   const metaFontSize = clampFeedbackFontSize(modalBaseFontSize - 1, 13, 18);
   const chipFontSize = clampFeedbackFontSize(modalBaseFontSize - 1, 13, 19);
 
-  React.useEffect(() => {
-    if (!open) {
-      setImageViewerOpen(false);
-    }
-  }, [open]);
+  if (!open && isImageViewerOpen) {
+    setImageViewerOpen(false);
+  }
 
   const getStatusColor = (status: number) => {
     switch (status) {
@@ -69,17 +67,19 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
       onOpen={() => {}}
       disableSwipeToOpen={false}
       swipeAreaWidth={40}
-      ModalProps={{
-        keepMounted: true,
-      }}
-      PaperProps={{
-        sx: {
-          borderTopLeftRadius: 28,
-          borderTopRightRadius: 28,
-          maxHeight: '86vh',
-          border: '1px solid rgba(66, 98, 125, 0.14)',
-          boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
-          overflow: 'hidden',
+      slotProps={{
+        root: {
+          keepMounted: true,
+        },
+        paper: {
+          sx: {
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            maxHeight: '86vh',
+            border: '1px solid rgba(66, 98, 125, 0.14)',
+            boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+            overflow: 'hidden',
+          },
         },
       }}
     >

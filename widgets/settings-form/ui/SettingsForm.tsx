@@ -22,6 +22,7 @@ import { ColorPicker } from '@/shared/ui/ColorPicker/ColorPicker';
 import { SaveButton } from '@/shared/ui/SaveButton/SaveButton';
 import type { Point } from '@/entities/point';
 import { TypeShowDel } from '@/entities/settings';
+import { useOrdersStore } from '@/entities/order/model/order.store';
 
 export const SettingsForm: React.FC = () => {
   const {
@@ -79,13 +80,18 @@ export const SettingsForm: React.FC = () => {
     },
   ];
 
-  const pointOptions: Point[] = [
-    { id: -1, city_id: -1, base: '', name: 'Все кафе' },
-    ...points.filter((p) => p.id !== -1),
-  ];
-  const fallbackPointOption = null;
-  const currentPoint =
-    pointOptions.find((p) => String(p.id) === String(pointId ?? '')) || fallbackPointOption;
+  const pointOptions = [...points]
+    .filter((point) => Number(point.id) > 0)
+    .sort((left, right) => {
+      const cityDiff = Number(left.city_id) - Number(right.city_id);
+
+      if (cityDiff !== 0) {
+        return cityDiff;
+      }
+
+      return Number(left.id) - Number(right.id);
+    });
+  const currentPoint = pointOptions.find((p) => String(p.id) === String(pointId ?? '')) ?? null;
   const normalizedGlobalFontSize =
     Number.isFinite(globalFontSize) && globalFontSize > 0 ? globalFontSize : 16;
   const introTitleFontSize = Math.min(Math.max(normalizedGlobalFontSize + 4, 18), 32);
@@ -129,6 +135,7 @@ export const SettingsForm: React.FC = () => {
               value={currentPoint}
               onChange={(newValue: Point | null) => {
                 setPointId(newValue?.id ?? null);
+                void useOrdersStore.getState().getOrders(true);
               }}
               placeholder="Выберите кафе"
               fontSize={globalFontSize}

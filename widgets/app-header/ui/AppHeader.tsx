@@ -39,12 +39,12 @@ import AlertOrder from '@/components/AlertOrder';
 import { logTel } from '@/components/analytics';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
-import { OrderCard } from '@/widgets/order/ui/components/OrderCard';
 import PayModel from '@/components/PayModel';
 import { roboto } from '@/shared/config/fonts';
 import { formatPhoneNumber } from '@/shared/lib/formatters/formatPhoneNumber';
 import { appPalette } from '@/shared/styles/appPalette';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined';
+import { OrderMapDrawer } from '@/widgets/order/ui/components/OrderMapDrawer';
 import { useAppHeader } from '../model/useAppHeader';
 
 type NavigationItem = {
@@ -75,43 +75,6 @@ const routeTitles: Record<string, string> = {
   '/settings': 'Настройки',
 };
 
-function OrderMapDrawer() {
-  const globalFontSize = useHeaderStore((state) => state.globalFontSize);
-  const { isOpenOrderMap, closeOrderMap, showOrders, setActiveConfirm, actionPayOrder } =
-    useOrdersStore((state) => ({
-      isOpenOrderMap: state.isOpenOrderMap,
-      closeOrderMap: state.closeOrderMap,
-      showOrders: state.showOrders,
-      setActiveConfirm: state.setActiveConfirm,
-      actionPayOrder: state.actionPayOrder,
-    }));
-
-  const handleAction = (action: string, orderId: number) => {
-    setActiveConfirm(true, orderId, true, action, null);
-  };
-
-  return (
-    <SwipeableDrawer
-      anchor="bottom"
-      open={isOpenOrderMap}
-      onClose={closeOrderMap}
-      className={`modalOrderMap ${roboto.variable}`}
-      onOpen={() => {}}
-    >
-      {showOrders.map((item: unknown, index: number) => (
-        <OrderCard
-          key={index}
-          item={item}
-          is_map
-          globalFontSize={globalFontSize}
-          onAction={handleAction}
-          onPay={(orderId) => actionPayOrder(orderId, true)}
-        />
-      ))}
-    </SwipeableDrawer>
-  );
-}
-
 function OrderTypeDrawer() {
   const [isOpenMenu, setOpenMenu, setCloseMenu, types, setType] = useOrdersStore((state) => [
     state.isOpenMenu,
@@ -123,7 +86,13 @@ function OrderTypeDrawer() {
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
 
   return (
-    <SwipeableDrawer anchor="bottom" open={isOpenMenu} onClose={setCloseMenu} onOpen={setOpenMenu}>
+    <SwipeableDrawer
+      anchor="bottom"
+      open={isOpenMenu}
+      onClose={setCloseMenu}
+      onOpen={setOpenMenu}
+      disableSwipeToOpen
+    >
       <List className={`monthList ${roboto.variable}`}>
         {types.map((item, index: number) => (
           <ListItem disablePadding key={index} onClick={() => setType(item)}>
@@ -206,6 +175,11 @@ function DeletedOrdersDrawer() {
 
 function OrdersLoadingBackdrop() {
   const isLoading = useOrdersStore((state) => state.is_load);
+  const isOpenOrderMap = useOrdersStore((state) => state.isOpenOrderMap);
+
+  if (isOpenOrderMap) {
+    return null;
+  }
 
   return (
     <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isLoading}>
@@ -278,7 +252,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
     {
       href: '/feedback',
       label: 'Предложения',
-      icon: <ErrorOutlineIcon />,
+      icon: <ErrorOutlinedIcon />,
     },
   ];
 
@@ -504,18 +478,20 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
 
                       <ListItemText
                         primary={item.label}
-                        primaryTypographyProps={{
-                          sx: {
-                            fontSize: navigationLabelFontSize,
-                            fontWeight: isSelected ? 700 : 500,
-                            color: isSelected ? appPalette.primaryDeep : appPalette.text,
-                            whiteSpace: 'nowrap',
-                            lineHeight: 1.2,
-                          },
-                        }}
                         sx={{
                           my: 0,
                           minWidth: 0,
+                        }}
+                        slotProps={{
+                          primary: {
+                            sx: {
+                              fontSize: navigationLabelFontSize,
+                              fontWeight: isSelected ? 700 : 500,
+                              color: isSelected ? appPalette.primaryDeep : appPalette.text,
+                              whiteSpace: 'nowrap',
+                              lineHeight: 1.2,
+                            },
+                          },
                         }}
                       />
                     </ListItemButton>

@@ -26,18 +26,6 @@ export default function MyTextInput({
   multiline,
   rows = 1,
 }: MyTextInputProps) {
-  const inputProps: any = {};
-
-  if (startAdornment || endAdornment) {
-    inputProps.InputProps = {};
-    if (startAdornment) {
-      inputProps.InputProps.startAdornment = startAdornment;
-    }
-    if (endAdornment) {
-      inputProps.InputProps.endAdornment = endAdornment;
-    }
-  }
-
   return (
     <TextField
       label={label}
@@ -51,7 +39,16 @@ export default function MyTextInput({
       multiline={multiline}
       rows={rows}
       style={{ width: '100%' }}
-      {...inputProps}
+      slotProps={
+        startAdornment || endAdornment
+          ? {
+              input: {
+                startAdornment,
+                endAdornment,
+              },
+            }
+          : undefined
+      }
       onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
         if (onKeyPress && event.key === 'Enter') {
           onKeyPress(event);

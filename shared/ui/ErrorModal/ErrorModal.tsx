@@ -6,7 +6,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined';
 
 interface ErrorModalProps {
   open: boolean;
@@ -21,15 +21,24 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({ open, errorText, onClose
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
+      data-testid="error-modal"
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+          },
         },
       }}
     >
       <DialogTitle sx={{ pb: 1 }}>
-        <Box display="flex" alignItems="center" gap={1}>
-          <ErrorOutlineIcon color="error" />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <ErrorOutlinedIcon color="error" />
           <Typography variant="h6" component="span">
             Ошибка
           </Typography>
@@ -37,7 +46,13 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({ open, errorText, onClose
       </DialogTitle>
       <DialogContent>
         <Box sx={{ py: 2 }}>
-          <Typography variant="body1" color="text.secondary">
+          <Typography
+            variant="body1"
+            sx={{
+              color: 'text.secondary',
+              whiteSpace: 'pre-line',
+            }}
+          >
             {errorText || 'Произошла неизвестная ошибка'}
           </Typography>
         </Box>

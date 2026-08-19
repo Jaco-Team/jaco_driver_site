@@ -39,6 +39,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
     actionGetOrder,
     actionFakeOrder,
     is_load,
+    isClick,
     showErrOrder,
     textErrOrder,
     closeErrOrder,
@@ -57,6 +58,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
     actionGetOrder: state.actionGetOrder,
     actionFakeOrder: state.actionFakeOrder,
     is_load: state.is_load,
+    isClick: state.isClick,
     showErrOrder: state.showErrOrder,
     textErrOrder: state.textErrOrder,
     closeErrOrder: state.closeErrOrder,
@@ -64,11 +66,15 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
 
   useOrdersAutoRefresh({ isEnabled: isAuth === true });
 
+  const actionsBusy = is_load || isClick;
+
   const handleOrderAction = useCallback(
     (action: string, orderId: number) => {
+      if (actionsBusy) return;
+
       switch (action) {
         case 'take':
-          setActiveConfirm(true, orderId, false, 'take', null);
+          actionGetOrder(orderId);
           break;
         case 'cancel':
           setActiveConfirm(true, orderId, false, 'cancel', null);
@@ -83,11 +89,11 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
           devLog('orders_unknown_action', 'Unknown action', action);
       }
     },
-    [setActiveConfirm]
+    [actionsBusy, actionGetOrder, setActiveConfirm]
   );
 
   const handleConfirm = useCallback(() => {
-    if (!order_finish_id) return;
+    if (!order_finish_id || actionsBusy) return;
 
     switch (type_confirm) {
       case 'finish':
@@ -106,6 +112,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
         devLog('orders_unknown_confirm_type', 'Unknown confirm type', type_confirm);
     }
   }, [
+    actionsBusy,
     order_finish_id,
     type_confirm,
     actionFinishOrder,
@@ -159,6 +166,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
           <OrdersList
             orders={orders}
             globalFontSize={globalFontSize}
+            actionsDisabled={actionsBusy}
             onOrderAction={handleOrderAction}
           />
         )}
@@ -168,6 +176,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
         open={modalConfirm}
         orderId={order_finish_id}
         typeConfirm={type_confirm}
+        busy={actionsBusy}
         onClose={handleCloseModal}
         onConfirm={handleConfirm}
       />

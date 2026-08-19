@@ -31,6 +31,7 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
     feedbacks: [],
     feedbacksAll: [],
     isLoad: false,
+    isSaving: false,
     addModal: false,
     status: 0,
     type: 'предложение',
@@ -105,6 +106,10 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
     },
 
     saveFeedbacks: async () => {
+      if (get().isSaving) {
+        return;
+      }
+
       const { type, title, description, img, is_need_notification } = get();
 
       // Валидация на фронтенде
@@ -168,7 +173,7 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
         }
       }
 
-      set({ isLoad: true });
+      set({ isSaving: true });
       const formData = new FormData();
 
       formData.append('type', type);
@@ -177,16 +182,15 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
 
       if (img && img.length > 0) {
         img.forEach((file) => {
-          formData.append('images', file);
+          formData.append('images[]', file);
         });
       }
 
-      formData.append('is_need_notification', String(is_need_notification));
+      formData.append('is_need_notification', is_need_notification ? '1' : '0');
 
       try {
         const res = await saveFeedbacks(formData);
 
-        // Успешное сообщение
         set({
           snackbar: {
             open: true,
@@ -195,9 +199,7 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
             severity: 'success',
             message: res.message || 'Отзыв успешно создан!',
           },
-          isLoad: false,
           addModal: false,
-          // Сброс формы
           type: 'предложение',
           title: '',
           description: '',
@@ -205,7 +207,6 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
           is_need_notification: false,
         });
 
-        // Перезагружаем список
         const res2 = await getFeedbacks();
         const { search, status } = get();
         set({
@@ -215,7 +216,9 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
       } catch (error: any) {
         let errorMessage = 'Ошибка при создании отзыва';
 
-        if (error.response?.data?.message) {
+        if (error.response?.status === 429) {
+          errorMessage = error.response?.data?.message || 'Подождите, предложение уже отправляется';
+        } else if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         } else if (error.response?.data?.errors) {
           const errors = Object.values(error.response.data.errors).flat();
@@ -225,7 +228,6 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
         }
 
         set({
-          isLoad: false,
           snackbar: {
             open: true,
             vertical: 'top',
@@ -234,6 +236,8 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
             message: errorMessage,
           },
         });
+      } finally {
+        set({ isSaving: false });
       }
     },
   }),

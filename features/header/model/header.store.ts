@@ -9,6 +9,7 @@ import {
 } from '@/entities/settings/api/settings.api';
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { type SettingsData, useSettingsStore } from '@/entities/settings';
+import { readDriverPosition } from '@/shared/lib/geolocation';
 
 interface HeaderState {
   isOpenMenu: boolean;
@@ -210,18 +211,13 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     check_pos: async (func: (lat: number, lng: number) => void) => {
-      await new Promise<void>((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          ({ coords }) => {
-            func(coords.latitude, coords.longitude);
-            resolve();
-          },
-          () => {
-            resolve();
-          },
-          { enableHighAccuracy: true }
-        );
-      });
+      const result = await readDriverPosition();
+
+      if (!result.latitude || !result.longitude) {
+        return;
+      }
+
+      func(Number(result.latitude), Number(result.longitude));
     },
 
     checkMyPos: () => {

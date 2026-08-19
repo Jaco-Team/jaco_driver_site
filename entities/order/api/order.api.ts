@@ -13,8 +13,11 @@ interface GetOrdersResponse extends ApiResponse {
   driver_pay?: boolean;
   driver_need_gps?: number;
   home?: {
-    latitude: number;
-    longitude: number;
+    latitude?: number;
+    longitude?: number;
+    lat?: number;
+    lon?: number;
+    lng?: number;
   };
 }
 
@@ -112,6 +115,30 @@ export async function checkPayOrder(
   return connector.rest.post<ApiResponse, typeof data>(apiRoutes.orders.checkPayOrder, data);
 }
 
+function toCoord(value: unknown): number | null {
+  const parsed = typeof value === 'number' ? value : parseFloat(String(value ?? ''));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeHome(home: GetOrdersResponse['home'], zoomSize: number): HomeLocation | null {
+  if (!home) {
+    return null;
+  }
+
+  const latitude = toCoord(home.latitude ?? home.lat);
+  const longitude = toCoord(home.longitude ?? home.lon ?? home.lng);
+
+  if (latitude === null || longitude === null) {
+    return null;
+  }
+
+  return {
+    center: [latitude, longitude],
+    zoom: zoomSize,
+    controls: [],
+  };
+}
+
 export function normalizeOrdersResponse(response: GetOrdersResponse): {
   orders: Order[];
   update_interval: number;
@@ -124,15 +151,7 @@ export function normalizeOrdersResponse(response: GetOrdersResponse): {
   zoomSize: number;
 } {
   const zoomSize = typeof window !== 'undefined' && window.innerWidth < 601 ? 12 : 11.5;
-
-  let home: HomeLocation | null = null;
-  if (response?.home?.latitude !== undefined && response?.home?.longitude !== undefined) {
-    home = {
-      center: [response.home.latitude, response.home.longitude],
-      zoom: zoomSize,
-      controls: [],
-    };
-  }
+  const home = normalizeHome(response?.home, zoomSize);
 
   return {
     orders: Array.isArray(response?.orders) ? response.orders.map(normalizeOrderRow) : [],

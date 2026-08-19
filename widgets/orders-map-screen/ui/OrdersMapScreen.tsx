@@ -244,7 +244,12 @@ const OrdersMapObjects = memo(function OrdersMapObjects({
 
       {yMapsApi && home ? (
         <>
-          <OrdersMapHomePoint point={home.center} getHome={getHome} yMapsApi={yMapsApi} />
+          <OrdersMapHomePoint
+            key={home.center.join(',')}
+            point={home.center}
+            getHome={getHome}
+            yMapsApi={yMapsApi}
+          />
 
           {orders.location_driver && orders.type_location !== 'none' ? (
             <OrdersMapDriverPoint
@@ -298,6 +303,7 @@ export function OrdersMapScreen() {
         >
           <YMaps query={{ lang: 'ru_RU', apikey: 'f600fbbd-6500-4bf7-a0ab-ec9336f6c7d8' }}>
             <Map
+              key={orders.home.center.join(',')}
               defaultState={orders.home as HomeLocation}
               instanceRef={(ref: MapInstance | null) => {
                 mapRef.current = ref;
@@ -383,6 +389,7 @@ export function OrdersMapScreen() {
         open={orders.modalConfirm}
         orderId={orders.order_finish_id}
         typeConfirm={orders.type_confirm}
+        busy={orders.isClick || orders.is_load}
         onClose={() => orders.setActiveConfirm(false, null, true, null, null)}
         onConfirm={handleConfirm}
       />

@@ -39,6 +39,7 @@ export interface FeedbackStore {
   feedbacks: Feedback[];
   feedbacksAll: Feedback[];
   isLoad: boolean;
+  isSaving: boolean;
   addModal: boolean;
   status: FeedbackStatus;
   type: string;

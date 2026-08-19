@@ -284,7 +284,9 @@ export default function StatisticsPage() {
           onClose={closePicker}
           onOpen={() => undefined}
           className="price__pickerDrawer"
-          PaperProps={{ className: 'price__pickerPaper' }}
+          slotProps={{
+            paper: { className: 'price__pickerPaper' },
+          }}
         >
           <div className="price__pickerSheet">
             <div className="price__pickerHandle" />

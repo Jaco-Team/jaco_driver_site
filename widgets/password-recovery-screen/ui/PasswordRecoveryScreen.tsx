@@ -50,8 +50,10 @@ export default function RegistrationPage() {
       <Grid
         container
         spacing={3}
-        justifyContent="center"
         className={'auth auth--recovery ' + roboto.variable}
+        sx={{
+          justifyContent: 'center',
+        }}
       >
         <Grid size={{ xs: 12, md: 8, lg: 5 }}>
           <section className="auth__panel auth__panel--solo">

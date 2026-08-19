@@ -1,16 +1,5 @@
 import React, { useState, memo } from 'react';
-import {
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Box,
-  Button,
-  Grid,
-  Link,
-  Tooltip,
-  styled,
-} from '@mui/material';
+import { Card, CardContent, Typography, Chip, Box, Button, Tooltip, styled } from '@mui/material';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import { tooltipClasses } from '@mui/material/Tooltip';
 
@@ -18,6 +7,7 @@ interface OrderCardProps {
   item: any;
   is_map?: boolean;
   globalFontSize: number;
+  actionsDisabled?: boolean;
   onAction?: (action: string, orderId: number) => void;
   onPay?: (orderId: number) => void;
 }
@@ -45,42 +35,72 @@ const StyledCard = styled(Card, {
 
 const InfoRow = styled(Box)({
   marginBottom: 8,
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'baseline',
-  gap: 4,
+  overflowWrap: 'break-word',
 });
 
 const Label = styled(Typography)({
+  display: 'inline',
   fontWeight: 600,
 });
 
+Label.defaultProps = {
+  component: 'span',
+};
+
 const Value = styled(Typography)({
+  display: 'inline',
   fontWeight: 400,
 });
 
-const PhoneBox = styled(Box)({
-  backgroundColor: '#E0E0E0',
-  borderRadius: 8,
-  padding: '12px 16px',
-  textAlign: 'center',
-  margin: '16px 0',
-  '& a': {
-    color: 'inherit',
-    textDecoration: 'none',
-    fontWeight: 500,
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-  },
-});
+Value.defaultProps = {
+  component: 'span',
+};
+
+export const ORDER_CARD_BUTTON_HEIGHT = 44;
 
 const ActionButton = styled(Button)({
   textTransform: 'uppercase',
   fontWeight: 600,
+  fontSize: '0.875rem',
+  lineHeight: 1.2,
   borderRadius: 8,
-  padding: '8px 16px',
+  height: ORDER_CARD_BUTTON_HEIGHT,
+  minHeight: ORDER_CARD_BUTTON_HEIGHT,
+  maxHeight: ORDER_CARD_BUTTON_HEIGHT,
+  padding: '0 16px',
   minWidth: 100,
+  boxSizing: 'border-box',
+});
+
+const PhoneButton = styled(ActionButton)({
+  backgroundColor: '#E0E0E0',
+  color: 'inherit',
+  width: '100%',
+  textTransform: 'none',
+  fontWeight: 500,
+  boxShadow: 'none',
+  '&:hover': {
+    backgroundColor: '#d5d5d5',
+    boxShadow: 'none',
+  },
+});
+
+const DriverInfoBox = styled(Box)({
+  backgroundColor: '#E0E0E0',
+  borderRadius: 8,
+  height: ORDER_CARD_BUTTON_HEIGHT,
+  minHeight: ORDER_CARD_BUTTON_HEIGHT,
+  padding: '0 16px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '0.875rem',
+  lineHeight: 1.2,
+  fontWeight: 500,
+  boxSizing: 'border-box',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 });
 
 const TakeButton = styled(ActionButton)({
@@ -120,8 +140,8 @@ const FakeButton = styled(ActionButton)({
 const PayButton = styled(ActionButton)({
   backgroundColor: '#9c27b0',
   color: '#fff',
-  minWidth: 'auto',
-  padding: '8px 12px',
+  minWidth: ORDER_CARD_BUTTON_HEIGHT,
+  padding: '0 12px',
   '&:hover': {
     backgroundColor: '#7b1fa2',
   },
@@ -207,84 +227,93 @@ const MyOrderActions = memo(
     driverPay,
     onAction,
     onPay,
+    actionsDisabled,
   }: {
     item: any;
     statusOrder: number;
     onlinePay: number;
     driverPay: boolean;
+    actionsDisabled?: boolean;
     onAction?: (action: string, orderId: number) => void;
     onPay?: (orderId: number) => void;
   }) => {
     const handleAction = (action: string) => {
+      if (actionsDisabled) return;
       if (onAction) {
         onAction(action, item.id);
       }
     };
 
     const handlePay = () => {
+      if (actionsDisabled) return;
       if (onPay) {
         onPay(item.id);
       }
     };
 
     return (
-      <Box>
-        <Grid container spacing={1} sx={{ mb: 2 }}>
-          <Grid size={6}>
-            {statusOrder !== 6 && (
-              <CancelButton fullWidth variant="contained" onClick={() => handleAction('cancel')}>
-                Отменить
-              </CancelButton>
-            )}
-          </Grid>
-          <Grid size={6}>
-            <PhoneBox
-              sx={{
-                m: 0,
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {statusOrder !== 6 && (
+            <CancelButton
+              fullWidth
+              variant="contained"
+              disabled={actionsDisabled}
+              onClick={() => handleAction('cancel')}
+              sx={{ flex: 1 }}
+              data-testid="order-card-cancel"
             >
-              <Link href={`tel:${item.number}`} underline="none">
-                {item.number}
-              </Link>
-            </PhoneBox>
-          </Grid>
-        </Grid>
+              Отменить
+            </CancelButton>
+          )}
+          <PhoneButton
+            variant="contained"
+            disableElevation
+            href={`tel:${item.number}`}
+            sx={{ flex: 1 }}
+            data-testid="order-card-phone"
+          >
+            {item.number}
+          </PhoneButton>
+        </Box>
+
+        {statusOrder !== 6 &&
+          (onlinePay === 0 && driverPay ? (
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <FinishButton
+                fullWidth
+                variant="contained"
+                disabled={actionsDisabled}
+                onClick={() => handleAction('finish')}
+                sx={{ flex: 1 }}
+                data-testid="order-card-finish"
+              >
+                Завершить
+              </FinishButton>
+              <PayButton variant="contained" disabled={actionsDisabled} onClick={handlePay}>
+                <QrCodeScannerIcon />
+              </PayButton>
+            </Box>
+          ) : (
+            <FinishButton
+              fullWidth
+              variant="contained"
+              disabled={actionsDisabled}
+              onClick={() => handleAction('finish')}
+              data-testid="order-card-finish"
+            >
+              Завершить
+            </FinishButton>
+          ))}
 
         {statusOrder !== 6 && (
-          <Grid container spacing={1}>
-            {onlinePay === 0 && driverPay ? (
-              <>
-                <Grid size={6}>
-                  <FinishButton
-                    fullWidth
-                    variant="contained"
-                    onClick={() => handleAction('finish')}
-                  >
-                    Завершить
-                  </FinishButton>
-                </Grid>
-                <Grid size={6}>
-                  <PayButton fullWidth variant="contained" onClick={handlePay}>
-                    <QrCodeScannerIcon />
-                  </PayButton>
-                </Grid>
-              </>
-            ) : (
-              <Grid size={12}>
-                <FinishButton fullWidth variant="contained" onClick={() => handleAction('finish')}>
-                  Завершить
-                </FinishButton>
-              </Grid>
-            )}
-          </Grid>
-        )}
-
-        {statusOrder !== 6 && (
-          <FakeButton variant="contained" onClick={() => handleAction('fake')} sx={{ mt: 2 }}>
+          <FakeButton
+            fullWidth
+            variant="contained"
+            disabled={actionsDisabled}
+            onClick={() => handleAction('fake')}
+            data-testid="order-card-fake"
+          >
             Клиент не вышел на связь
           </FakeButton>
         )}
@@ -297,7 +326,7 @@ MyOrderActions.displayName = 'MyOrderActions';
 
 // Основной компонент с memo
 export const OrderCard = memo<OrderCardProps>(
-  ({ item, is_map = false, globalFontSize, onAction, onPay }) => {
+  ({ item, is_map = false, globalFontSize, actionsDisabled = false, onAction, onPay }) => {
     // Мемоизируем вычисляемые значения
     const isDeleted = getIsDeleted(item);
     const isMy = getIsMy(item);
@@ -308,21 +337,40 @@ export const OrderCard = memo<OrderCardProps>(
 
     const handleAction = React.useCallback(
       (action: string) => {
+        if (actionsDisabled) return;
         if (onAction) {
           onAction(action, item.id);
         }
       },
-      [onAction, item.id]
+      [actionsDisabled, onAction, item.id]
     );
 
     const handlePay = React.useCallback(() => {
+      if (actionsDisabled) return;
       if (onPay) {
         onPay(item.id);
       }
-    }, [onPay, item.id]);
+    }, [actionsDisabled, onPay, item.id]);
 
     return (
-      <StyledCard isDeleted={isDeleted} style={{ fontSize: globalFontSize }}>
+      <StyledCard
+        isDeleted={isDeleted}
+        data-testid="order-card"
+        style={{ fontSize: globalFontSize }}
+        sx={
+          is_map
+            ? {
+                boxShadow: 'none',
+                borderRadius: 0,
+                padding: 0,
+                backgroundColor: 'transparent',
+                '&:hover': {
+                  boxShadow: 'none',
+                },
+              }
+            : undefined
+        }
+      >
         <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
           {/* Номер заказа */}
           <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
@@ -365,7 +413,12 @@ export const OrderCard = memo<OrderCardProps>(
           {/* Домофон */}
           {parseInt(item.fake_dom) === 0 && (
             <InfoRow>
-              <Typography variant="body1" color="text.secondary">
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'text.secondary',
+                }}
+              >
                 Домофон не работает
               </Typography>
             </InfoRow>
@@ -439,39 +492,42 @@ export const OrderCard = memo<OrderCardProps>(
             </InfoRow>
           )}
 
-          {/* Телефон */}
-          <PhoneBox>
-            <Link href={`tel:${item.number}`} underline="none">
-              {item.number}
-            </Link>
-          </PhoneBox>
-
           {/* Кнопки действий */}
           {!isGet ? (
-            <TakeButton variant="contained" onClick={() => handleAction('take')}>
-              Взять
-            </TakeButton>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <PhoneButton
+                variant="contained"
+                disableElevation
+                href={`tel:${item.number}`}
+                data-testid="order-card-phone"
+              >
+                {item.number}
+              </PhoneButton>
+              <TakeButton
+                variant="contained"
+                disabled={actionsDisabled}
+                onClick={() => handleAction('take')}
+                data-testid="order-card-take"
+              >
+                Взять
+              </TakeButton>
+            </Box>
           ) : isMy ? (
             <MyOrderActions
               item={item}
               statusOrder={statusOrder}
               onlinePay={onlinePay}
               driverPay={driverPay}
+              actionsDisabled={actionsDisabled}
               onAction={onAction}
               onPay={onPay}
             />
           ) : (
-            <Box>
-              <PhoneBox sx={{ m: 0, mb: 1 }}>
-                <Typography variant="body1" fontWeight={500}>
-                  Водитель: {item.driver_name}
-                </Typography>
-              </PhoneBox>
-              <PhoneBox sx={{ m: 0 }}>
-                <Link href={`tel:${item.driver_login}`} underline="none">
-                  {item.driver_login}
-                </Link>
-              </PhoneBox>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <DriverInfoBox>Водитель: {item.driver_name}</DriverInfoBox>
+              <PhoneButton variant="contained" disableElevation href={`tel:${item.driver_login}`}>
+                {item.driver_login}
+              </PhoneButton>
             </Box>
           )}
         </CardContent>
@@ -491,6 +547,7 @@ const areEqual = (prevProps: OrderCardProps, nextProps: OrderCardProps) => {
     prevProps.item.is_delete === nextProps.item.is_delete &&
     prevProps.globalFontSize === nextProps.globalFontSize &&
     prevProps.is_map === nextProps.is_map &&
+    prevProps.actionsDisabled === nextProps.actionsDisabled &&
     prevProps.onAction === nextProps.onAction &&
     prevProps.onPay === nextProps.onPay
   );

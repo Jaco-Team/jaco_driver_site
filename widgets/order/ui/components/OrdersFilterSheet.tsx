@@ -1,34 +1,19 @@
 import React from 'react';
 import Box from '@mui/material/Box';
-import Checkbox from '@mui/material/Checkbox';
-import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
-import Modal from '@mui/material/Modal';
+import Button from '@mui/material/Button';
+import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import Typography from '@mui/material/Typography';
-import { styled } from '@mui/material/styles';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 
+import { log } from '@/components/analytics';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
-import { log } from '@/components/analytics';
+import { appPalette } from '@/shared/styles/appPalette';
+import { ORDER_CARD_BUTTON_HEIGHT } from '@/widgets/order/ui/components/OrderCard';
 
-const StyledBottomSheet = styled(Modal)(({ theme }) => ({
-  '& .MuiBackdrop-root': {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  '& .orders-map-filter-modal__sheet': {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: theme.palette.background.paper,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: theme.spacing(2),
-    maxHeight: '80vh',
-    overflowY: 'auto',
-  },
-}));
+function clampFontSize(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
 
 export function OrdersFilterSheet() {
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
@@ -42,53 +27,136 @@ export function OrdersFilterSheet() {
     })
   );
 
+  const titleFontSize = clampFontSize(globalFontSize + 4, 18, 24);
+  const helperFontSize = clampFontSize(globalFontSize - 1, 13, 16);
+  const actionFontSize = clampFontSize(globalFontSize + 1, 14, 18);
+
   const handleClose = () => showModalTypeDop(false);
 
-  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-
+  const handleToggle = (value: string) => {
     log('order_select', 'Выбор типа заказа');
 
     setTypeDop(
-      event.target.checked ? [...type_dop, value] : type_dop.filter((item) => item !== value)
+      type_dop.includes(value) ? type_dop.filter((item) => item !== value) : [...type_dop, value]
     );
   };
 
   return (
-    <StyledBottomSheet open={is_showModalTypeDop} onClose={handleClose} sx={{ zIndex: 1000 }}>
-      <Box className="orders-map-filter-modal__sheet">
-        <Typography
-          variant="h6"
-          align="center"
-          sx={{ p: 2, fontSize: globalFontSize, fontWeight: 'bold' }}
+    <SwipeableDrawer
+      anchor="bottom"
+      open={is_showModalTypeDop}
+      onClose={handleClose}
+      onOpen={() => {}}
+      disableSwipeToOpen
+      data-testid="orders-filter-sheet"
+      slotProps={{
+        paper: {
+          sx: {
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            maxHeight: '75vh',
+            height: 'auto',
+            bottom: 0,
+            top: 'auto',
+            background: '#ffffff',
+            overflow: 'hidden',
+            border: `1px solid ${appPalette.softStrong}`,
+            boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+          },
+        },
+      }}
+    >
+      <Box
+        sx={{
+          px: 2.5,
+          pt: 1.15,
+          pb: 'calc(env(safe-area-inset-bottom, 0px) + 28px)',
+        }}
+      >
+        <Box
+          sx={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            pb: 1.5,
+            cursor: 'pointer',
+          }}
+          onClick={handleClose}
+          data-testid="orders-filter-sheet-handle"
         >
-          Только для Активных заказов
+          <Box
+            sx={{
+              width: 62,
+              height: 6,
+              borderRadius: 999,
+              backgroundColor: 'rgba(31, 43, 54, 0.2)',
+            }}
+          />
+        </Box>
+
+        <Typography
+          component="h2"
+          sx={{
+            fontSize: titleFontSize,
+            fontWeight: 700,
+            lineHeight: 1.2,
+            color: appPalette.text,
+            mb: 0.5,
+          }}
+        >
+          Активные заказы
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: helperFontSize,
+            lineHeight: 1.4,
+            color: appPalette.textMuted,
+            mb: 2,
+          }}
+        >
+          Какие статусы показывать
         </Typography>
 
-        <Divider sx={{ my: 1 }} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {types_dop.map((item) => {
+            const value = item.id.toString();
+            const selected = type_dop.includes(value);
 
-        <FormGroup>
-          {types_dop.map((item) => (
-            <FormControlLabel
-              key={item.id}
-              control={
-                <Checkbox
-                  checked={type_dop.includes(item.id.toString())}
-                  onChange={handleCheckboxChange}
-                  value={item.id.toString()}
-                  sx={{ '& .MuiSvgIcon-root': { fontSize: globalFontSize * 1.2 } }}
-                />
-              }
-              label={
-                <Typography sx={{ fontSize: globalFontSize, fontWeight: 500 }}>
-                  {item.text}
-                </Typography>
-              }
-              sx={{ ml: 1, my: 0.5 }}
-            />
-          ))}
-        </FormGroup>
+            return (
+              <Button
+                key={item.id}
+                fullWidth
+                disableElevation
+                variant="contained"
+                onClick={() => handleToggle(value)}
+                aria-pressed={selected}
+                sx={{
+                  height: ORDER_CARD_BUTTON_HEIGHT,
+                  minHeight: ORDER_CARD_BUTTON_HEIGHT,
+                  borderRadius: '12px',
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  fontSize: actionFontSize,
+                  justifyContent: 'space-between',
+                  px: 2,
+                  backgroundColor: selected
+                    ? `${appPalette.brand} !important`
+                    : appPalette.surfaceAlt,
+                  color: selected ? '#fff' : appPalette.text,
+                  boxShadow: 'none',
+                  '&:hover': {
+                    backgroundColor: selected ? '#b4002d !important' : appPalette.soft,
+                    boxShadow: 'none',
+                  },
+                }}
+              >
+                {item.text}
+                {selected ? <CheckRoundedIcon sx={{ fontSize: 20 }} /> : <Box sx={{ width: 20 }} />}
+              </Button>
+            );
+          })}
+        </Box>
       </Box>
-    </StyledBottomSheet>
+    </SwipeableDrawer>
   );
 }

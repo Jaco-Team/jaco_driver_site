@@ -1,4 +1,4 @@
-@use "./settings" as *;
+@use './settings' as *;
 
 .modalOrderPay {
   & .MuiPaper-root.MuiDrawer-paper.MuiDrawer-paperAnchorBottom {
@@ -35,16 +35,22 @@
 .modalOrderMap {
   & .MuiPaper-root.MuiDrawer-paper.MuiDrawer-paperAnchorBottom {
     max-height: 75vh;
-    border-radius: $MyScale80_mobile $MyScale80_mobile 0 0;
+    height: auto;
+    top: auto;
+    bottom: 0;
+    border-radius: 28px 28px 0 0;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid rgba(66, 98, 125, 0.14);
+    box-shadow: 0 24px 44px rgba(31, 43, 54, 0.2);
   }
-  
+
   & .lineModal {
-    width: $MyScale150_mobile;
-    min-height: $MyScale10_mobile;
-    border-radius: $MyScale5_mobile;
-    background: rgba(0, 0, 0, 0.2);
-    margin: 0 auto;
-    margin-bottom: $MyScale80_mobile;
+    width: 62px;
+    min-height: 6px;
+    border-radius: 999px;
+    background: rgba(31, 43, 54, 0.2);
+    margin: 12px auto 14px;
   }
 
   & .OrderCard,
@@ -179,7 +185,8 @@ div.text-base {
     flex-direction: column;
     width: 100%;
     padding-bottom: 15px;
-    & > .addr_1, .addr_2 {
+    & > .addr_1,
+    .addr_2 {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;

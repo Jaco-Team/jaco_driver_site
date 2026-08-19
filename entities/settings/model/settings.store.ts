@@ -74,6 +74,18 @@ type SettingsStore = SettingsState & SettingsActions;
 let settingsFetchPromise: Promise<SettingsResponse> | null = null;
 const SETTINGS_POINT_ID_STORAGE_KEY = 'jaco_driver_selected_cafe_id';
 
+function sortPointsByCityThenId(points: Point[]): Point[] {
+  return [...points].sort((left, right) => {
+    const cityDiff = Number(left.city_id) - Number(right.city_id);
+
+    if (cityDiff !== 0) {
+      return cityDiff;
+    }
+
+    return Number(left.id) - Number(right.id);
+  });
+}
+
 function normalizeSettingsPayload(payload: DriverSettingsPayload): {
   settings: SettingsResponse;
   pointId: number | null;
@@ -81,7 +93,11 @@ function normalizeSettingsPayload(payload: DriverSettingsPayload): {
   cityId: string;
 } {
   const settings = unwrapSettingsPayload(payload);
-  const points = Array.isArray(payload?.all_points) ? payload.all_points : [];
+  const points = sortPointsByCityThenId(
+    (Array.isArray(payload?.all_points) ? payload.all_points : []).filter(
+      (point) => Number(point.id) > 0
+    )
+  );
   const storedPointId = readStoredPointId();
   const isStoredPointAvailable =
     storedPointId !== null && (points.length === 0 || hasPoint(points, storedPointId));
