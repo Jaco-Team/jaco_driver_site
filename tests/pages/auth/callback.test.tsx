@@ -75,16 +75,17 @@ describe('AuthCallbackPage', () => {
     expect(screen.getByText('Завершаем вход')).toBeInTheDocument();
   });
 
-  it('checks the Sanctum session and redirects after successful callback', async () => {
+  it('saves the token, marks session authenticated and redirects after successful callback', async () => {
     const me = { id: 1, name: 'Driver' };
     mocks.fetchMe.mockResolvedValueOnce(me);
-    window.localStorage.setItem('jaco_driver_auth_token', 'legacy-token');
-    window.history.pushState({}, '', '/auth/callback?status=success');
+    window.history.pushState({}, '', '/auth/callback?status=success&token=sso-token');
 
     render(<AuthCallbackPage />);
 
-    await waitFor(() => expect(mocks.setAuthenticated).toHaveBeenCalledWith(me));
-    expect(window.localStorage.getItem('jaco_driver_auth_token')).toBeNull();
+    await waitFor(() =>
+      expect(mocks.setAuthenticated).toHaveBeenCalledWith({ ...me, token: 'sso-token' })
+    );
+    expect(window.localStorage.getItem('jaco_driver_auth_token')).toBe('sso-token');
     expect(mocks.replace).toHaveBeenCalledWith('/list_orders', { scroll: false });
   });
 
@@ -97,9 +98,19 @@ describe('AuthCallbackPage', () => {
     expect(mocks.replace).toHaveBeenCalledWith('/auth?error=sso_failed', { scroll: false });
   });
 
+  it('marks session unauthorized and redirects when token is missing', async () => {
+    window.history.pushState({}, '', '/auth/callback?status=success');
+
+    render(<AuthCallbackPage />);
+
+    await waitFor(() => expect(mocks.setUnauthorized).toHaveBeenCalled());
+    expect(mocks.fetchMe).not.toHaveBeenCalled();
+    expect(mocks.replace).toHaveBeenCalledWith('/auth?error=sso_failed', { scroll: false });
+  });
+
   it('marks session unauthorized and redirects when profile request fails', async () => {
     mocks.fetchMe.mockRejectedValueOnce(new Error('fail'));
-    window.history.pushState({}, '', '/auth/callback?status=success');
+    window.history.pushState({}, '', '/auth/callback?status=success&token=sso-token');
 
     render(<AuthCallbackPage />);
 

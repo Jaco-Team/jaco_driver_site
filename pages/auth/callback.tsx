@@ -9,7 +9,7 @@ import Meta from '@/components/meta';
 import { fetchMe } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { getApiErrorInfo } from '@/shared/api/errors';
-import { clearAuthToken } from '@/shared/api/token';
+import { clearAuthToken, setAuthToken } from '@/shared/api/token';
 import { log } from '@/components/analytics';
 
 import { roboto } from '@/shared/ui/Font';
@@ -23,9 +23,10 @@ export default function AuthCallbackPage() {
     const finish = async () => {
       const params = new URLSearchParams(window.location.search);
       const status = params.get('status');
+      const token = params.get('token');
       const code = params.get('code');
 
-      if (status !== 'success') {
+      if (status !== 'success' || !token) {
         log('auth_sso_callback_fail', 'Ошибка SSO авторизации', { code: code || 'unknown' });
         clearAuthToken();
         useAuthStore.getState().setUnauthorized();
@@ -37,9 +38,7 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      // SSO and password login use the same Sanctum session cookie.
-      // Remove a token left by older frontend versions before checking the session.
-      clearAuthToken();
+      setAuthToken(token);
 
       try {
         const me = await fetchMe();
@@ -48,7 +47,7 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        useAuthStore.getState().setAuthenticated(me);
+        useAuthStore.getState().setAuthenticated({ ...me, token });
         log('auth_sso_callback_success', 'Успешная SSO авторизация');
         router.replace('/list_orders', { scroll: false });
       } catch (error) {
