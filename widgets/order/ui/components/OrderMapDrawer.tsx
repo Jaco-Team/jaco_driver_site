@@ -71,7 +71,7 @@ export function OrderMapDrawer() {
             border: '1px solid rgba(66, 98, 125, 0.14)',
             boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
           },
-        },
+        } as any,
       }}
     >
       <Box sx={{ position: 'relative' }}>

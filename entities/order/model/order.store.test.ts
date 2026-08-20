@@ -231,7 +231,11 @@ describe('orders store actions', () => {
   });
 
   it('keeps the same home point when cafe coordinates did not change', async () => {
-    const home = { center: [53.531521, 49.312353], zoom: 12, controls: [] as string[] };
+    const home = {
+      center: [53.531521, 49.312353] as [number, number],
+      zoom: 12,
+      controls: [] as string[],
+    };
 
     useOrdersStore.setState({
       home,

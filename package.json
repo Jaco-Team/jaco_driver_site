@@ -34,7 +34,6 @@
     "@sentry/nextjs": "^10.70.0",
     "@uiw/color-convert": "^2.10.3",
     "@uiw/react-color-alpha": "^2.10.3",
-    "@uiw/react-color-circle": "^2.10.3",
     "@uiw/react-color-wheel": "^2.10.3",
     "axios": "^1.19.0",
     "dayjs": "^1.11.23",

@@ -181,7 +181,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
           value={title}
           onChange={(event) => setForm('title', event.target.value)}
           disabled={isSaving}
-          inputProps={{ maxLength: 255 }}
+          slotProps={{ htmlInput: { maxLength: 255 } }}
           sx={{
             mb: 2,
             '& .MuiOutlinedInput-root': {
@@ -212,7 +212,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
           value={description}
           onChange={(event) => setForm('description', event.target.value)}
           disabled={isSaving}
-          inputProps={{ maxLength: 5000 }}
+          slotProps={{ htmlInput: { maxLength: 5000 } }}
           sx={{
             mb: 2,
             '& .MuiOutlinedInput-root': {

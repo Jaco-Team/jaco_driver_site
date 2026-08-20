@@ -38,23 +38,19 @@ const InfoRow = styled(Box)({
   overflowWrap: 'break-word',
 });
 
-const Label = styled(Typography)({
+const Label = styled((props: React.ComponentProps<typeof Typography>) => (
+  <Typography component="span" {...props} />
+))({
   display: 'inline',
   fontWeight: 600,
 });
 
-Label.defaultProps = {
-  component: 'span',
-};
-
-const Value = styled(Typography)({
+const Value = styled((props: React.ComponentProps<typeof Typography>) => (
+  <Typography component="span" {...props} />
+))({
   display: 'inline',
   fontWeight: 400,
 });
-
-Value.defaultProps = {
-  component: 'span',
-};
 
 export const ORDER_CARD_BUTTON_HEIGHT = 44;
 

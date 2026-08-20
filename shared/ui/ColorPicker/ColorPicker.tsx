@@ -1,7 +1,6 @@
 import React from 'react';
 import Wheel from '@uiw/react-color-wheel';
 import Alpha from '@uiw/react-color-alpha';
-import Circle from '@uiw/react-color-circle';
 import { hsvaToHex, hexToHsva, HsvaColor, ColorResult } from '@uiw/color-convert';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
@@ -82,26 +81,44 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, fontS
         </Box>
         <Wheel color={color} onChange={applyColor} style={{ marginBottom: 28 }} />
         <Alpha hsva={hsva} width="92%" onChange={handleAlphaChange} style={{ marginBottom: 28 }} />
-        <div className="settingsColorPicker">
-          <Circle
-            colors={PRESET_COLORS}
-            color={color}
-            onChange={applyColor}
-            style={{
-              width: '100%',
-              justifyContent: 'center',
-              gap: 14,
-            }}
-            pointProps={{
-              style: {
-                width: 28,
-                height: 28,
-                marginRight: 0,
-                marginBottom: 0,
-              },
-            }}
-          />
-        </div>
+        <Box
+          className="settingsColorPicker"
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: '14px',
+          }}
+        >
+          {PRESET_COLORS.map((preset) => {
+            const selected = color.slice(0, 7).toLowerCase() === preset.toLowerCase();
+
+            return (
+              <Box
+                key={preset}
+                component="button"
+                type="button"
+                aria-label={preset}
+                aria-pressed={selected}
+                onClick={() => {
+                  const nextHsva = { ...hexToHsva(preset), a: hsva.a };
+                  setHsva(nextHsva);
+                  onChange(hsvaToHex(nextHsva));
+                }}
+                sx={{
+                  width: 28,
+                  height: 28,
+                  padding: 0,
+                  borderRadius: '50%',
+                  border: selected ? '2px solid #22303d' : '1px solid rgba(66, 98, 125, 0.28)',
+                  backgroundColor: preset,
+                  cursor: 'pointer',
+                  boxShadow: selected ? '0 0 0 2px #fff' : 'none',
+                }}
+              />
+            );
+          })}
+        </Box>
       </Paper>
     </Grid>
   );
