@@ -62,7 +62,7 @@ export async function exchangeSsoLoginCode(loginCode: string): Promise<string> {
   const token = `${payload?.token ?? ''}`.trim();
 
   if (!token) {
-    throw new Error('Сервер не вернул токен авторизации.');
+    throw new Error('Сервер не вернул токен авторизации. ');
   }
 
   setAuthToken(token);
