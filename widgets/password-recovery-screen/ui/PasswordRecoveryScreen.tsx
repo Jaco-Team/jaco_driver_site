@@ -18,6 +18,8 @@ import Meta from '@/components/meta';
 
 import MyTextInput from '@/shared/ui/MyTextInput';
 import PasswordInput from '@/shared/ui/PasswordInput';
+import PasswordRequirementsList from '@/shared/ui/PasswordRequirementsList';
+import YandexSmartCaptcha, { SMARTCAPTCHA_CLIENT_KEY } from '@/shared/ui/YandexSmartCaptcha';
 import { roboto } from '@/shared/ui/Font';
 
 import { useRegistrationPage } from '../model/useRegistrationPage';
@@ -39,6 +41,11 @@ export default function RegistrationPage() {
     confirmRecoveryCode,
     errorText,
     helperText,
+    captchaResetKey,
+    setCaptchaToken,
+    resetCaptcha,
+    retryAfter,
+    canSubmit,
   } = useRegistrationPage();
 
   return (
@@ -88,13 +95,23 @@ export default function RegistrationPage() {
                     onChange={(e) => setMyPWD(e.target.value)}
                     onKeyPress={submitOnEnter(requestRecoveryCode)}
                   />
+                  <PasswordRequirementsList password={myPWD} />
+                  {SMARTCAPTCHA_CLIENT_KEY ? (
+                    <YandexSmartCaptcha
+                      resetKey={captchaResetKey}
+                      onSuccess={setCaptchaToken}
+                      onTokenExpired={resetCaptcha}
+                    />
+                  ) : null}
                 </>
               ) : (
                 <MyTextInput
                   label="Код из смс"
                   value={myCode}
-                  onChange={(e) => setMyCode(e.target.value)}
+                  onChange={(e) => setMyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   onKeyPress={submitOnEnter(confirmRecoveryCode)}
+                  maxLength={6}
+                  inputMode="numeric"
                 />
               )}
             </div>
@@ -109,9 +126,14 @@ export default function RegistrationPage() {
               variant="contained"
               fullWidth
               className="auth__primaryButton"
+              disabled={!canSubmit}
               onClick={() => (activeStep === 0 ? requestRecoveryCode() : confirmRecoveryCode())}
             >
-              {activeStep === 0 ? 'Получить код' : 'Подтвердить'}
+              {retryAfter > 0
+                ? 'Попробуйте позже'
+                : activeStep === 0
+                  ? 'Получить код'
+                  : 'Подтвердить'}
             </Button>
 
             <div className="auth__linkRow">

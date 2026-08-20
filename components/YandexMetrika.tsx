@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import Script from 'next/script';
 
 type YandexMetrikaFunction = {
@@ -14,45 +14,59 @@ type YandexMetrikaWindow = Window & {
 };
 
 type YandexMetrikaProps = {
-  yid: number | string;
+  yid?: number | string;
+  ids?: Array<number | string>;
   clickmap?: boolean;
   trackLinks?: boolean;
   accurateTrackBounce?: boolean;
   webvisor?: boolean;
 };
 
+function uniqueIds(yid?: number | string, ids?: Array<number | string>): string[] {
+  const list = [...(ids ?? []), ...(yid != null && `${yid}`.trim() ? [yid] : [])]
+    .map((id) => String(id).trim())
+    .filter(Boolean);
+
+  return [...new Set(list)];
+}
+
 export default function YandexMetrika({
   yid,
+  ids,
   clickmap = true,
   trackLinks = true,
   accurateTrackBounce = true,
   webvisor = false,
 }: YandexMetrikaProps) {
+  const counterIds = useMemo(() => uniqueIds(yid, ids), [ids, yid]);
+
   const initCounter = useCallback(() => {
     const analyticsWindow = window as YandexMetrikaWindow;
 
-    if (typeof analyticsWindow.ym !== 'function') {
+    if (typeof analyticsWindow.ym !== 'function' || counterIds.length === 0) {
       return;
     }
 
     analyticsWindow.__ymIds = analyticsWindow.__ymIds || [];
     analyticsWindow.__ymInitializedIds = analyticsWindow.__ymInitializedIds || [];
 
-    if (!analyticsWindow.__ymInitializedIds.includes(yid)) {
-      analyticsWindow.ym(yid, 'init', {
-        clickmap,
-        trackLinks,
-        accurateTrackBounce,
-        webvisor,
-        defer: true,
-      });
-      analyticsWindow.__ymInitializedIds.push(yid);
-    }
+    counterIds.forEach((id) => {
+      if (!analyticsWindow.__ymInitializedIds?.includes(id)) {
+        analyticsWindow.ym?.(id, 'init', {
+          clickmap,
+          trackLinks,
+          accurateTrackBounce,
+          webvisor,
+          defer: true,
+        });
+        analyticsWindow.__ymInitializedIds?.push(id);
+      }
 
-    if (!analyticsWindow.__ymIds.includes(yid)) {
-      analyticsWindow.__ymIds.push(yid);
-    }
-  }, [accurateTrackBounce, clickmap, trackLinks, webvisor, yid]);
+      if (!analyticsWindow.__ymIds?.includes(id)) {
+        analyticsWindow.__ymIds?.push(id);
+      }
+    });
+  }, [accurateTrackBounce, clickmap, counterIds, trackLinks, webvisor]);
 
   useEffect(() => {
     const analyticsWindow = window as YandexMetrikaWindow;
@@ -68,10 +82,14 @@ export default function YandexMetrika({
     initCounter();
   }, [initCounter]);
 
+  if (counterIds.length === 0) {
+    return null;
+  }
+
   return (
     <>
       <Script
-        id={`ym-loader-${yid}`} // уникальный id скрипта
+        id="ym-loader"
         src="https://mc.yandex.ru/metrika/tag.js"
         strategy="afterInteractive"
         onLoad={initCounter}
@@ -79,12 +97,14 @@ export default function YandexMetrika({
       />
       <noscript>
         <div>
-          {/* Пиксель для браузеров без JS */}
-          <img
-            src={`https://mc.yandex.ru/watch/${yid}`}
-            style={{ position: 'absolute', left: '-9999px' }}
-            alt=""
-          />
+          {counterIds.map((id) => (
+            <img
+              key={id}
+              src={`https://mc.yandex.ru/watch/${id}`}
+              style={{ position: 'absolute', left: '-9999px' }}
+              alt=""
+            />
+          ))}
         </div>
       </noscript>
     </>

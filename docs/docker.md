@@ -65,7 +65,23 @@ Dev-режим монтирует текущую папку проекта в к
 
 ## Env
 
-Для production используется `.env.production`, для development — `.env.development`.
+В git лежат только публичные URL: `.env.production` и `.env.development`.
+Ключи Карт и Sentry — в `.env.production.local` / `.env.development.local` (не коммитятся)
+и в GitHub Actions secrets для CI.
+
+Для production-сборки образа, чтобы ключи попали в `NEXT_PUBLIC_*` на этапе `next build`:
+
+```bash
+docker compose --env-file .env.production --env-file .env.production.local up --build app
+```
+
+На сервере с `compose.prod.yaml`:
+
+```bash
+docker compose --env-file .env.production --env-file .env.production.local -f compose.prod.yaml up -d --build
+```
+
+Если образ уже собран в CI с секретами, на сервере достаточно `docker compose pull` — ключи уже внутри образа.
 
 Если backend работает на хост-машине и frontend должен обращаться к нему из браузера на этой же машине, `http://localhost:8080` обычно подходит.
 

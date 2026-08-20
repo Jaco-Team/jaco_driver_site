@@ -7,7 +7,7 @@ import {
   loginToken,
   sendPasswordRecoveryCode as requestPasswordRecoveryCodeApi,
 } from '@/features/auth/api/auth.api';
-import { getApiErrorInfo, getAuthErrorMessage } from '@/shared/api/errors';
+import { getApiErrorInfo, getAuthErrorMessage, getAuthSecurityState } from '@/shared/api/errors';
 import { clearAuthToken, getAuthToken } from '@/shared/api/token';
 import type { ApiResponse, User } from '@/shared/api/types';
 
@@ -21,6 +21,8 @@ interface AuthResult extends AuthSession {
   st: boolean | 'load';
   text?: string;
   status?: number | null;
+  captcha_required?: boolean;
+  retry_after?: number;
 }
 
 interface AuthState {
@@ -34,8 +36,12 @@ interface AuthActions {
   setLoginErr: (err: string) => void;
   setAuthenticated: (user: User) => void;
   setUnauthorized: () => void;
-  login: (login: string, pwd: string) => Promise<AuthResult>;
-  requestPasswordRecoveryCode: (login: string, pwd: string) => Promise<ApiResponse>;
+  login: (login: string, pwd: string, captchaToken?: string) => Promise<AuthResult>;
+  requestPasswordRecoveryCode: (
+    login: string,
+    pwd: string,
+    captchaToken?: string
+  ) => Promise<ApiResponse>;
   confirmPasswordRecoveryCode: (login: string, code: string) => Promise<ApiResponse>;
   refreshSession: () => Promise<AuthResult>;
 }
@@ -126,7 +132,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
       set({ session: unauthorizedSession() });
     },
 
-    login: async (login: string, pwd: string) => {
+    login: async (login: string, pwd: string, captchaToken = '') => {
       if (get().isSubmitting) {
         return currentAuthResult(get(), false, 'Уже выполняется вход');
       }
@@ -134,7 +140,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
       set({ isSubmitting: true });
 
       try {
-        const loginResult = await loginToken(login, pwd);
+        const loginResult = await loginToken(login, pwd, 'driver-web', captchaToken);
         const me = await fetchMe();
         const authData = sessionFromUser(me, loginResult.token);
         const result = {
@@ -153,6 +159,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
         return result;
       } catch (error) {
         const errorInfo = getApiErrorInfo(error);
+        const security = getAuthSecurityState(error);
         const errorText = getAuthErrorMessage(error);
         const authData = unauthorizedSession();
         const result = {
@@ -160,6 +167,8 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
           ...authData,
           text: errorText,
           status: errorInfo.status,
+          captcha_required: security.captchaRequired,
+          retry_after: security.retryAfter,
         };
 
         setExplicitUnauthorized(true);
@@ -174,7 +183,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
       }
     },
 
-    requestPasswordRecoveryCode: async (login: string, pwd: string) => {
+    requestPasswordRecoveryCode: async (login: string, pwd: string, captchaToken = '') => {
       if (get().isSubmitting) {
         return { st: false, text: 'Подождите' };
       }
@@ -182,14 +191,17 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
       set({ isSubmitting: true });
 
       try {
-        return await requestPasswordRecoveryCodeApi(login, pwd);
+        return await requestPasswordRecoveryCodeApi(login, pwd, captchaToken);
       } catch (error) {
         const errorInfo = getApiErrorInfo(error);
+        const security = getAuthSecurityState(error);
         return {
           st: false,
           text: getAuthErrorMessage(error, 'Не удалось отправить код восстановления.'),
           status: errorInfo.status ?? undefined,
           data: errorInfo.data,
+          captcha_required: security.captchaRequired,
+          retry_after: security.retryAfter,
         };
       } finally {
         set({ isSubmitting: false });

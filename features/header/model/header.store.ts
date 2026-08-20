@@ -57,25 +57,8 @@ let avgTimeKey = '';
 const pointPhonesCache = new Map<string, PointPhonesPayload | null>();
 const pointPhonesRequests = new Map<string, Promise<PointPhonesPayload | null>>();
 
-function canRunProtectedRequest(token: string): boolean {
-  const session = useAuthStore.getState().session;
-
-  if (session.isAuth !== true) {
-    return false;
-  }
-
-  const requestToken = `${token ?? ''}`.trim();
-  const sessionToken = `${session.token ?? ''}`.trim();
-
-  if (!sessionToken && requestToken) {
-    return false;
-  }
-
-  if (sessionToken && requestToken && sessionToken !== requestToken) {
-    return false;
-  }
-
-  return true;
+function canRunProtectedRequest(_token?: string): boolean {
+  return useAuthStore.getState().session.isAuth === true;
 }
 
 function normalizeBoolLike(value: any): boolean {

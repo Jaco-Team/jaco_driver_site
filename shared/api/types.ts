@@ -4,6 +4,10 @@ export interface ApiResponse<T = any> {
   data?: T;
   status?: number;
   errors?: Record<string, string[]>;
+  captcha_required?: boolean;
+  retry_after?: number;
+  resend_after?: number;
+  locked?: boolean;
 }
 
 export interface User {

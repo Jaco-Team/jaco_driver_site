@@ -1,7 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ORDER_CARD_BUTTON_HEIGHT, OrderCard } from './OrderCard';
+import { ORDER_CARD_BUTTON_HEIGHT, ORDER_CARD_DELETED_BG, OrderCard } from './OrderCard';
+
+vi.mock('@/components/analytics', () => ({
+  log: vi.fn(),
+  logTel: vi.fn(),
+}));
 
 const openOrder = {
   id: 866503,
@@ -90,5 +95,77 @@ describe('OrderCard', () => {
 
     expect(onAction).not.toHaveBeenCalled();
     expect(screen.getByTestId('order-card-take')).toBeDisabled();
+  });
+
+  it('does not show a comment call button when the comment has no phones', () => {
+    render(<OrderCard item={openOrder} globalFontSize={16} />);
+
+    expect(screen.queryByTestId('order-card-comment-call')).not.toBeInTheDocument();
+  });
+
+  it('calls the only phone found in the comment', () => {
+    render(
+      <OrderCard
+        item={{ ...openOrder, comment: 'Домофон не работает, звонить 89178206693' }}
+        globalFontSize={16}
+      />
+    );
+
+    const callButton = screen.getByTestId('order-card-comment-call');
+
+    expect(callButton).toHaveAttribute('href', 'tel:+79178206693');
+    expect(screen.queryByTestId('order-card-comment-phones-drawer')).not.toBeInTheDocument();
+  });
+
+  it('opens a phone list when the comment has several numbers', () => {
+    render(
+      <OrderCard
+        item={{
+          ...openOrder,
+          comment: 'звоните 89178206693 или 89171112233',
+        }}
+        globalFontSize={16}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('order-card-comment-call'));
+
+    expect(screen.getByTestId('order-card-comment-phones-drawer')).toBeInTheDocument();
+    expect(screen.getByTestId('order-card-comment-phone-79178206693')).toHaveAttribute(
+      'href',
+      'tel:+79178206693'
+    );
+    expect(screen.getByTestId('order-card-comment-phone-79171112233')).toHaveAttribute(
+      'href',
+      'tel:+79171112233'
+    );
+  });
+
+  it('turns the card red when the order is cancelled', () => {
+    render(
+      <OrderCard
+        item={{ ...openOrder, is_delete: 1, delete_reason: 'Клиент отменил' }}
+        globalFontSize={16}
+      />
+    );
+
+    expect(screen.getByTestId('order-card')).toHaveStyle({
+      backgroundColor: ORDER_CARD_DELETED_BG,
+    });
+    expect(screen.getByText('Клиент отменил')).toBeInTheDocument();
+  });
+
+  it('keeps a cancelled card red inside the map sheet', () => {
+    render(
+      <OrderCard
+        item={{ ...openOrder, is_delete: 1, delete_reason: 'Клиент отменил' }}
+        is_map
+        globalFontSize={16}
+      />
+    );
+
+    expect(screen.getByTestId('order-card')).toHaveStyle({
+      backgroundColor: ORDER_CARD_DELETED_BG,
+    });
   });
 });

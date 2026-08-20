@@ -12,6 +12,7 @@ export const apiRoutes = {
     me: '/api/v1/auth/me',
     sessionMeta: '/api/v1/auth/session/meta',
     logout: '/api/v1/auth/logout',
+    ssoExchange: '/api/v1/auth/sso/exchange',
   },
   sso: {
     login: '/auth/sso/login',

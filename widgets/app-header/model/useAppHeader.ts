@@ -122,26 +122,28 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
   }, [checkMyPos, getMyAvgTime, session?.isAuth, sessionToken]);
 
   const handleLogout = () => {
-    void logoutWeb().catch((error) => {
-      devLog('logout_request_failed', 'Logout request failed', error);
-    });
+    void logoutWeb()
+      .catch((error) => {
+        devLog('logout_request_failed', 'Logout request failed', error);
+      })
+      .finally(() => {
+        useAuthStore.getState().setUnauthorized();
+        useOrdersStore.setState({ token: '' });
+        useHeaderStore.setState({ token: '', phones: null });
 
-    useAuthStore.getState().setUnauthorized();
-    useOrdersStore.setState({ token: '' });
-    useHeaderStore.setState({ token: '', phones: null });
+        let pushed = false;
+        const go = () => {
+          if (pushed) {
+            return;
+          }
 
-    let pushed = false;
-    const go = () => {
-      if (pushed) {
-        return;
-      }
+          pushed = true;
+          router.push('/auth', { scroll: false });
+        };
 
-      pushed = true;
-      router.push('/auth', { scroll: false });
-    };
-
-    log('logout', 'Выход из аккаунта', undefined, { callback: go });
-    setTimeout(go, 200);
+        log('logout', 'Выход из аккаунта', undefined, { callback: go });
+        setTimeout(go, 200);
+      });
   };
 
   const pageTitle = activePageRU || routeTitles[pathname] || '';

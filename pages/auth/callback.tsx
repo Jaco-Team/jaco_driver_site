@@ -6,10 +6,9 @@ import Grid from '@mui/material/Grid';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import Meta from '@/components/meta';
-import { fetchMe } from '@/features/auth/api/auth.api';
+import { exchangeSsoLoginCode, fetchMe } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { getApiErrorInfo } from '@/shared/api/errors';
-import { clearAuthToken, setAuthToken } from '@/shared/api/token';
 import { log } from '@/components/analytics';
 
 import { roboto } from '@/shared/ui/Font';
@@ -23,12 +22,13 @@ export default function AuthCallbackPage() {
     const finish = async () => {
       const params = new URLSearchParams(window.location.search);
       const status = params.get('status');
-      const token = params.get('token');
-      const code = params.get('code');
+      const loginCode = params.get('login_code');
+      const errorCode = params.get('code');
 
-      if (status !== 'success' || !token) {
-        log('auth_sso_callback_fail', 'Ошибка SSO авторизации', { code: code || 'unknown' });
-        clearAuthToken();
+      window.history.replaceState({}, '', window.location.pathname);
+
+      if (status !== 'success' || !loginCode) {
+        log('auth_sso_callback_fail', 'Ошибка SSO авторизации', { code: errorCode || 'unknown' });
         useAuthStore.getState().setUnauthorized();
 
         if (!cancelled) {
@@ -38,9 +38,8 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      setAuthToken(token);
-
       try {
+        const token = await exchangeSsoLoginCode(loginCode);
         const me = await fetchMe();
 
         if (cancelled) {
@@ -57,7 +56,6 @@ export default function AuthCallbackPage() {
           status: errorInfo.status || 'unknown',
         });
 
-        clearAuthToken();
         useAuthStore.getState().setUnauthorized();
 
         if (!cancelled) {

@@ -32,6 +32,9 @@ jobs:
             --build-arg NEXT_PUBLIC_LEGACY_API_ORIGIN=https://apidriver.jacochef.ru \
             --build-arg NEXT_PUBLIC_MEDIA_ORIGIN=https://apidriver.jacochef.ru \
             --build-arg NEXT_PUBLIC_YANDEX_METRIKA_ID="${{ secrets.NEXT_PUBLIC_YANDEX_METRIKA_ID }}" \
+            --build-arg NEXT_PUBLIC_YANDEX_MAPS_API_KEY="${{ secrets.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }}" \
+            --build-arg NEXT_PUBLIC_SENTRY_DSN="${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}" \
+            --build-arg NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY="${{ secrets.NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}" \
             -t $IMAGE_NAME .
 
       - name: Push frontend image

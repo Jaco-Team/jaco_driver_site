@@ -41,6 +41,9 @@ const cspDirectives = [
     'https://www.gstatic.com',
     'https://*.sentry.io',
     'https://*.ingest.sentry.io',
+    'https://smartcaptcha.yandexcloud.net',
+    'https://*.smartcaptcha.yandexcloud.net',
+    'https://smartcaptcha.cloud.yandex.ru',
   ]
     .filter(Boolean)
     .join(' '),
@@ -67,13 +70,16 @@ const cspDirectives = [
     'https://fcmregistrations.googleapis.com',
     'https://*.sentry.io',
     'https://*.ingest.sentry.io',
+    'https://smartcaptcha.yandexcloud.net',
+    'https://*.smartcaptcha.yandexcloud.net',
+    'https://smartcaptcha.cloud.yandex.ru',
     'wss:',
   ].join(' '),
   "media-src 'self' data: blob:",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-src 'self' https://yookassa.ru https://*.yookassa.ru https://yoomoney.ru https://*.yoomoney.ru",
+  "frame-src 'self' https://yookassa.ru https://*.yookassa.ru https://yoomoney.ru https://*.yoomoney.ru https://smartcaptcha.yandexcloud.net https://*.smartcaptcha.yandexcloud.net https://smartcaptcha.cloud.yandex.ru",
   "frame-ancestors 'none'",
   "worker-src 'self' blob:",
 ];

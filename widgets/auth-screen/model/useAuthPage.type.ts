@@ -12,4 +12,10 @@ export interface UseAuthPageResult {
   setMyPWD: Dispatch<SetStateAction<string>>;
   loginErr: string;
   router: AppRouter;
+  captchaRequired: boolean;
+  captchaResetKey: number;
+  setCaptchaToken: (token: string) => void;
+  resetCaptcha: () => void;
+  retryAfter: number;
+  canSubmit: boolean;
 }

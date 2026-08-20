@@ -29,15 +29,17 @@ function toUser(payload: TokenLoginResponse, token: string): User {
 export async function loginToken(
   login: string,
   password: string,
-  deviceName: string = 'driver-web'
+  deviceName: string = 'driver-web',
+  captchaToken: string = ''
 ): Promise<User> {
   const payload = await connector.rest.post<
     TokenLoginResponse,
-    { login: string; password: string; device_name: string }
+    { login: string; password: string; device_name: string; captcha_token?: string }
   >(apiRoutes.auth.tokenLogin, {
     login: login.trim(),
     password,
     device_name: deviceName,
+    ...(captchaToken ? { captcha_token: captchaToken } : {}),
   });
 
   const token = `${payload?.token ?? ''}`.trim();
@@ -51,17 +53,36 @@ export async function loginToken(
   return toUser(payload, token);
 }
 
+export async function exchangeSsoLoginCode(loginCode: string): Promise<string> {
+  const payload = await connector.rest.post<{ token?: string }, { login_code: string }>(
+    apiRoutes.auth.ssoExchange,
+    { login_code: loginCode }
+  );
+
+  const token = `${payload?.token ?? ''}`.trim();
+
+  if (!token) {
+    throw new Error('Сервер не вернул токен авторизации.');
+  }
+
+  setAuthToken(token);
+
+  return token;
+}
+
 export async function sendPasswordRecoveryCode(
   login: string,
-  password: string
+  password: string,
+  captchaToken: string = ''
 ): Promise<ApiResponse> {
-  return connector.rest.post<ApiResponse, { login: string; password: string }>(
-    apiRoutes.auth.passwordRecoverySendCode,
-    {
-      login: login.trim(),
-      password,
-    }
-  );
+  return connector.rest.post<
+    ApiResponse,
+    { login: string; password: string; captcha_token?: string }
+  >(apiRoutes.auth.passwordRecoverySendCode, {
+    login: login.trim(),
+    password,
+    ...(captchaToken ? { captcha_token: captchaToken } : {}),
+  });
 }
 
 export async function confirmPasswordRecoveryCode(

@@ -11,6 +11,7 @@ import {
   TYPE_STATUS_MAP,
 } from './order.types';
 import { normalizeOrderRow, filterOrdersByTypes } from './order.utils';
+import { getApiErrorInfo } from '@/shared/api/errors';
 import { log } from '@/components/analytics';
 import { devLog } from '@/shared/lib/devLog';
 import { describeGeolocationError, readDriverPosition } from '@/shared/lib/geolocation';
@@ -31,6 +32,12 @@ function getSelectedPointId(): number | null {
 
 function isApiOk(st: unknown): boolean {
   return st === true || st === 1 || st === '1';
+}
+
+function formatOrderError(error: unknown): string {
+  const message = getApiErrorInfo(error).message.trim();
+
+  return message || 'Не удалось выполнить запрос.';
 }
 
 function hasHomeMoved(current: HomeLocation | null, next: HomeLocation | null): boolean {
@@ -172,7 +179,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       await fn();
     } catch (err) {
       devLog('orders_action_error', 'Order action error', err);
-      get().openErrOrder('Ошибка ' + err);
+      get().openErrOrder(formatOrderError(err));
     } finally {
       set({ isClick: false, is_load: false });
     }
@@ -320,7 +327,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       } catch (err) {
         devLog('orders_fetch_error', 'Orders fetch error', err);
         log('orders_fetch_fail', 'Ошибка при получении списка заказов');
-        get().openErrOrder('Ошибка ' + err);
+        get().openErrOrder(formatOrderError(err));
       }
 
       setTimeout(() => {

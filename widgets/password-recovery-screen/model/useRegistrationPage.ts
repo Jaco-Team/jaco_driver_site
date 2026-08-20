@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { log } from '@/components/analytics';
+import { isPasswordStrong, stripPasswordSpaces } from '@/shared/lib/passwordRequirements';
+import { SMARTCAPTCHA_CLIENT_KEY } from '@/shared/ui/YandexSmartCaptcha';
 import type {
   ConfirmPasswordRecoveryCode,
   LoginByPassword,
@@ -24,8 +26,11 @@ export function useRegistrationPage(): UseRegistrationPageResult {
   const [err2, setErr2] = useState('');
 
   const [myLogin, setMyLogin] = useState('');
-  const [myPWD, setMyPWD] = useState('');
+  const [myPWD, setMyPWDState] = useState('');
   const [myCode, setMyCode] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+  const [retryAfter, setRetryAfter] = useState(0);
 
   const { requestPasswordRecoveryCode, confirmPasswordRecoveryCode, login } = useAuthStore(
     (state) => ({
@@ -37,16 +42,52 @@ export function useRegistrationPage(): UseRegistrationPageResult {
   const requestRecoveryCodeApi: RequestPasswordRecoveryCode = requestPasswordRecoveryCode;
   const confirmRecoveryCodeApi: ConfirmPasswordRecoveryCode = confirmPasswordRecoveryCode;
   const loginByPasswordApi: LoginByPassword = login;
+  const isPasswordValid = isPasswordStrong(myPWD);
+
+  useEffect(() => {
+    if (retryAfter <= 0) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setRetryAfter((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [retryAfter]);
+
+  function resetCaptcha(): void {
+    setCaptchaToken('');
+    setCaptchaResetKey((key) => key + 1);
+  }
+
+  function setMyPWD(value: string): void {
+    setMyPWDState(stripPasswordSpaces(value));
+    if (err1) {
+      setErr1('');
+    }
+  }
 
   async function requestRecoveryCode(): Promise<void> {
-    if (myLogin.length === 0 || myPWD.length === 0) {
+    if (myLogin.length === 0 || !isPasswordValid || retryAfter > 0) {
+      return;
+    }
+
+    if (SMARTCAPTCHA_CLIENT_KEY && !captchaToken) {
+      setErr1('Пожалуйста, подтвердите, что вы не робот');
       return;
     }
 
     setLoader(true);
     setErr1('');
 
-    const res = await requestRecoveryCodeApi(myLogin, myPWD);
+    const res = await requestRecoveryCodeApi(myLogin, myPWD, captchaToken);
+
+    if (res.retry_after && res.retry_after > 0) {
+      setRetryAfter(Math.ceil(res.retry_after));
+    }
+
+    resetCaptcha();
 
     if (res.st === true) {
       log('auth_send_sms', 'Отправка СМС-кода');
@@ -62,7 +103,7 @@ export function useRegistrationPage(): UseRegistrationPageResult {
   }
 
   async function confirmRecoveryCode(): Promise<void> {
-    if (myCode.length !== 4) {
+    if (myCode.length !== 6) {
       return;
     }
 
@@ -100,13 +141,16 @@ export function useRegistrationPage(): UseRegistrationPageResult {
   const errorText = activeStep === 0 ? err1 : err2;
   const helperText =
     activeStep === 0
-      ? 'Пароль лучше задать новый, чтобы сразу обновить доступ к аккаунту.'
-      : 'Если код не пришел, проверьте номер телефона и повторите отправку.';
+      ? 'Если номер зарегистрирован, отправим SMS с кодом. Пароль должен быть сложным.'
+      : 'Если код не пришел, проверьте номер телефона и повторите отправку позже.';
   const submitOnEnter: SubmitOnEnter = (handler: SubmitHandler) => (event) => {
     if (event.key === 'Enter') {
       handler();
     }
   };
+  const canSubmit =
+    retryAfter <= 0 &&
+    (activeStep === 1 || Boolean(isPasswordValid && (!SMARTCAPTCHA_CLIENT_KEY || captchaToken)));
 
   return {
     loader,
@@ -124,5 +168,11 @@ export function useRegistrationPage(): UseRegistrationPageResult {
     confirmRecoveryCode,
     errorText,
     helperText,
+    captchaResetKey,
+    setCaptchaToken,
+    resetCaptcha,
+    retryAfter,
+    canSubmit,
+    isPasswordValid,
   };
 }

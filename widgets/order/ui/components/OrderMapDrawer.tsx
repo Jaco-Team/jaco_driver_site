@@ -7,7 +7,7 @@ import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { roboto } from '@/shared/config/fonts';
-import { OrderCard } from '@/widgets/order/ui/components/OrderCard';
+import { OrderCard, ORDER_CARD_DELETED_BG } from '@/widgets/order/ui/components/OrderCard';
 
 export function OrderMapDrawer() {
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
@@ -32,6 +32,9 @@ export function OrderMapDrawer() {
   }));
 
   const actionsBusy = isClick || is_load;
+  const sheetDeleted =
+    showOrders.length > 0 &&
+    showOrders.every((item: { is_delete?: unknown }) => parseInt(`${item?.is_delete}`, 10) === 1);
 
   const handleAction = (action: string, orderId: number) => {
     if (actionsBusy) return;
@@ -66,7 +69,7 @@ export function OrderMapDrawer() {
             height: 'auto',
             bottom: 0,
             top: 'auto',
-            background: '#ffffff',
+            background: sheetDeleted ? ORDER_CARD_DELETED_BG : '#ffffff',
             overflow: 'hidden',
             border: '1px solid rgba(66, 98, 125, 0.14)',
             boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',

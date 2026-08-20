@@ -7,6 +7,7 @@ import AuthCallbackPage from '@/pages/auth/callback';
 const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   fetchMe: vi.fn(),
+  exchangeSsoLoginCode: vi.fn(),
   log: vi.fn(),
   setAuthenticated: vi.fn(),
   setUnauthorized: vi.fn(),
@@ -33,6 +34,7 @@ vi.mock('@/components/meta', () => ({
 
 vi.mock('@/features/auth/api/auth.api', () => ({
   fetchMe: () => mocks.fetchMe(),
+  exchangeSsoLoginCode: (loginCode: string) => mocks.exchangeSsoLoginCode(loginCode),
 }));
 
 vi.mock('@/shared/api/errors', () => ({
@@ -60,6 +62,7 @@ describe('AuthCallbackPage', () => {
   beforeEach(() => {
     mocks.replace.mockClear();
     mocks.fetchMe.mockReset();
+    mocks.exchangeSsoLoginCode.mockReset();
     mocks.log.mockClear();
     mocks.setAuthenticated.mockClear();
     mocks.setUnauthorized.mockClear();
@@ -75,17 +78,19 @@ describe('AuthCallbackPage', () => {
     expect(screen.getByText('Завершаем вход')).toBeInTheDocument();
   });
 
-  it('saves the token, marks session authenticated and redirects after successful callback', async () => {
+  it('exchanges the one-time code, marks session authenticated and redirects after successful callback', async () => {
     const me = { id: 1, name: 'Driver' };
+    mocks.exchangeSsoLoginCode.mockResolvedValueOnce('sso-token');
     mocks.fetchMe.mockResolvedValueOnce(me);
-    window.history.pushState({}, '', '/auth/callback?status=success&token=sso-token');
+    window.history.pushState({}, '', '/auth/callback?status=success&login_code=one-time-code');
 
     render(<AuthCallbackPage />);
 
     await waitFor(() =>
       expect(mocks.setAuthenticated).toHaveBeenCalledWith({ ...me, token: 'sso-token' })
     );
-    expect(window.localStorage.getItem('jaco_driver_auth_token')).toBe('sso-token');
+    expect(mocks.exchangeSsoLoginCode).toHaveBeenCalledWith('one-time-code');
+    expect(window.location.search).toBe('');
     expect(mocks.replace).toHaveBeenCalledWith('/list_orders', { scroll: false });
   });
 
@@ -98,19 +103,21 @@ describe('AuthCallbackPage', () => {
     expect(mocks.replace).toHaveBeenCalledWith('/auth?error=sso_failed', { scroll: false });
   });
 
-  it('marks session unauthorized and redirects when token is missing', async () => {
+  it('marks session unauthorized and redirects when login code is missing', async () => {
     window.history.pushState({}, '', '/auth/callback?status=success');
 
     render(<AuthCallbackPage />);
 
     await waitFor(() => expect(mocks.setUnauthorized).toHaveBeenCalled());
+    expect(mocks.exchangeSsoLoginCode).not.toHaveBeenCalled();
     expect(mocks.fetchMe).not.toHaveBeenCalled();
     expect(mocks.replace).toHaveBeenCalledWith('/auth?error=sso_failed', { scroll: false });
   });
 
   it('marks session unauthorized and redirects when profile request fails', async () => {
+    mocks.exchangeSsoLoginCode.mockResolvedValueOnce('sso-token');
     mocks.fetchMe.mockRejectedValueOnce(new Error('fail'));
-    window.history.pushState({}, '', '/auth/callback?status=success&token=sso-token');
+    window.history.pushState({}, '', '/auth/callback?status=success&login_code=one-time-code');
 
     render(<AuthCallbackPage />);
 

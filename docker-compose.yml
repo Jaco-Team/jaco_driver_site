@@ -3,11 +3,22 @@ services:
     build:
       context: .
       target: runner
+      args:
+        NEXT_PUBLIC_API_ORIGIN: ${NEXT_PUBLIC_API_ORIGIN:-https://apidriver.jacochef.ru}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://apidriver.jacochef.ru}
+        NEXT_PUBLIC_LEGACY_API_ORIGIN: ${NEXT_PUBLIC_LEGACY_API_ORIGIN:-https://apidriver.jacochef.ru}
+        NEXT_PUBLIC_MEDIA_ORIGIN: ${NEXT_PUBLIC_MEDIA_ORIGIN:-https://jacochef.ru}
+        NEXT_PUBLIC_YANDEX_METRIKA_ID: ${NEXT_PUBLIC_YANDEX_METRIKA_ID:-}
+        NEXT_PUBLIC_YANDEX_MAPS_API_KEY: ${NEXT_PUBLIC_YANDEX_MAPS_API_KEY:-}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY:-}
     image: jaco-driver-site:latest
     ports:
       - "${APP_PORT:-3225}:3225"
     env_file:
       - .env.production
+      - path: .env.production.local
+        required: false
     environment:
       NODE_ENV: production
       PORT: 3225
@@ -27,6 +38,8 @@ services:
       - "${APP_PORT:-3225}:3225"
     env_file:
       - .env.development
+      - path: .env.development.local
+        required: false
     environment:
       NODE_ENV: development
       NEXT_TELEMETRY_DISABLED: 1

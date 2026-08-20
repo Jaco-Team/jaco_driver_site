@@ -4,9 +4,6 @@
 
 import * as Sentry from '@sentry/nextjs';
 
-const FALLBACK_SENTRY_DSN =
-  'https://8ccd1c75a74531b0b0ec88d63f62e450@o4505941569830912.ingest.us.sentry.io/4508173486325760';
-
 function readSampleRate(value, fallback) {
   const parsed = Number(value);
 
@@ -18,13 +15,16 @@ function readSampleRate(value, fallback) {
 }
 
 const isProduction = process.env.NODE_ENV === 'production';
+const dsn = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN || FALLBACK_SENTRY_DSN,
+if (dsn) {
+  Sentry.init({
+    dsn,
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: readSampleRate(process.env.SENTRY_TRACES_SAMPLE_RATE, isProduction ? 0.1 : 1),
+    // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
+    tracesSampleRate: readSampleRate(process.env.SENTRY_TRACES_SAMPLE_RATE, isProduction ? 0.1 : 1),
 
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
-});
+    // Setting this option to true will print useful information to the console while you're setting up Sentry.
+    debug: false,
+  });
+}

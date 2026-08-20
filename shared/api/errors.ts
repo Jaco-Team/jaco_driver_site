@@ -30,7 +30,9 @@ export function getApiErrorInfo(error: unknown): ErrorInfo {
 
   let message = 'Не удалось выполнить запрос.';
 
-  if (validationMessage) {
+  if (typeof data?.text === 'string' && data.text.trim().length > 0) {
+    message = data.text;
+  } else if (validationMessage) {
     message = validationMessage;
   } else if (typeof data === 'string' && data.trim().length > 0) {
     message = data;
@@ -71,8 +73,33 @@ export function getAuthErrorMessage(
   }
 
   if (info.status === 429) {
-    return 'Слишком много попыток. Попробуйте позже.';
+    return info.message || 'Слишком много попыток. Попробуйте позже.';
   }
 
   return info.message || fallbackMessage;
+}
+
+export function getAuthSecurityState(error: unknown): {
+  captchaRequired: boolean;
+  retryAfter: number;
+} {
+  const axiosError = error as AxiosError;
+  const data = (axiosError?.response?.data as any) ?? null;
+  const headerRetryAfter = Number(axiosError?.response?.headers?.['retry-after'] ?? 0);
+  const payloadRetryAfter = Number(data?.retry_after ?? 0);
+  const retryAfter = Math.max(
+    0,
+    Math.ceil(
+      Number.isFinite(payloadRetryAfter) && payloadRetryAfter > 0
+        ? payloadRetryAfter
+        : Number.isFinite(headerRetryAfter)
+          ? headerRetryAfter
+          : 0
+    )
+  );
+
+  return {
+    captchaRequired: Boolean(data?.captcha_required),
+    retryAfter,
+  };
 }

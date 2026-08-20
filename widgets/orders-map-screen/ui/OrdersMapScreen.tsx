@@ -16,6 +16,7 @@ import PinDropIcon from '@mui/icons-material/PinDrop';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import type { HomeLocation, Order } from '@/entities/order/model/order.types';
+import { escapeHtml, sanitizeCssColor, sanitizeCssIdent } from '@/shared/lib/escapeHtml';
 import { roboto } from '@/shared/ui/Font';
 import { OrdersFilterSheet } from '@/widgets/order/ui/components/OrdersFilterSheet';
 import { OrderConfirmModal } from '@/widgets/order/ui/components/OrderConfirmModal';
@@ -23,11 +24,116 @@ import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 import { useOrdersMapScreen } from '../model/useOrdersMapScreen';
 import type { MapInstance } from '../model/useOrdersMapScreen.type';
 
+const YANDEX_MAPS_API_KEY = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY ?? '';
+
 type YMapsTemplateApi = {
   templateLayoutFactory: {
-    createClass: (template: string) => unknown;
+    createClass: (template: string, overrides?: Record<string, unknown>) => unknown;
   };
 };
+
+type IconLayoutInstance = {
+  _shapeFrame?: number;
+  _onMarkerClick?: (event: Event) => void;
+  getElement?: () => Element | null;
+  getData?: () => {
+    options?: { set?: (key: string, value: unknown) => void };
+    geoObject?: { events?: { fire?: (type: string) => void } };
+  };
+};
+
+type IconLayoutClass = {
+  superclass?: {
+    build?: (this: unknown) => void;
+    clear?: (this: unknown) => void;
+  };
+};
+
+function resolveMarkerElement(root: Element | null): HTMLElement | null {
+  if (!root) {
+    return null;
+  }
+
+  if (root instanceof HTMLElement && root.classList.contains('map-img')) {
+    return root;
+  }
+
+  return root.querySelector('.map-img');
+}
+
+function applyMarkerIconShape(layout: IconLayoutInstance) {
+  const root = layout.getElement?.() ?? null;
+  const marker = resolveMarkerElement(root);
+
+  if (!marker) {
+    return;
+  }
+
+  const style = window.getComputedStyle(marker);
+  const left = Number.parseFloat(style.left) || marker.offsetLeft || 0;
+  const top = Number.parseFloat(style.top) || marker.offsetTop || 0;
+  const width = Math.ceil(
+    Math.max(marker.offsetWidth, marker.scrollWidth, marker.getBoundingClientRect().width)
+  );
+  const height = Math.ceil(
+    Math.max(marker.offsetHeight, marker.scrollHeight, marker.getBoundingClientRect().height)
+  );
+  const shape = {
+    type: 'Rectangle',
+    coordinates: [
+      [left, top],
+      [left + (width || 240), top + (height || 36)],
+    ],
+  };
+
+  const options = layout.getData?.()?.options;
+
+  options?.set?.('shape', shape);
+  options?.set?.('iconShape', shape);
+}
+
+function createMeasuredIconLayout(yMapsApi: YMapsTemplateApi, template: string) {
+  const Layout = yMapsApi.templateLayoutFactory.createClass(template, {
+    build(this: IconLayoutInstance) {
+      (Layout as IconLayoutClass).superclass?.build?.call(this);
+      applyMarkerIconShape(this);
+
+      if (this._shapeFrame) {
+        window.cancelAnimationFrame(this._shapeFrame);
+      }
+
+      this._shapeFrame = window.requestAnimationFrame(() => applyMarkerIconShape(this));
+
+      const marker = resolveMarkerElement(this.getElement?.() ?? null);
+
+      if (!marker) {
+        return;
+      }
+
+      this._onMarkerClick = () => {
+        this.getData?.()?.geoObject?.events?.fire?.('click');
+      };
+      marker.addEventListener('click', this._onMarkerClick);
+    },
+    clear(this: IconLayoutInstance) {
+      if (this._shapeFrame) {
+        window.cancelAnimationFrame(this._shapeFrame);
+        this._shapeFrame = undefined;
+      }
+
+      const marker = resolveMarkerElement(this.getElement?.() ?? null);
+
+      if (marker && this._onMarkerClick) {
+        marker.removeEventListener('click', this._onMarkerClick);
+        this._onMarkerClick = undefined;
+      }
+
+      (Layout as IconLayoutClass).superclass?.clear?.call(this);
+    },
+  });
+
+  return Layout;
+}
 
 interface MapPointProps {
   item: Order;
@@ -92,30 +198,36 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
   showOrdersMap,
   yMapsApi,
 }: MapPointProps) {
-  const scale = String(mapScale).replace('.', '_');
-  const markerColor = (item?.point_color || item?.color) ?? 'blue';
-  const label = item?.point_text ?? '';
+  const scale = sanitizeCssIdent(String(mapScale).replace('.', '_'), '1');
+  const markerColor = sanitizeCssColor((item?.point_color || item?.color) ?? 'blue');
+  const rawLabel = String(item?.point_text ?? '');
+  const label = escapeHtml(rawLabel);
+  const themeClass = sanitizeCssIdent(theme, 'white');
+  const fontClass = sanitizeCssIdent(roboto.variable, 'font');
+  const fontSize = Number.isFinite(globalFontSize) ? globalFontSize : 16;
 
   const circleLayout = useMemo(
     () =>
-      yMapsApi.templateLayoutFactory.createClass(
-        `<div class="map-img ${roboto.variable}"><span class='span_svg_circle_${scale}'><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="none" viewBox="0 0 24 24"><path fill="${markerColor}" d="M11.969 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.47-10-10-10m.03 14.23c-2.34 0-4.23-1.89-4.23-4.23s1.89-4.23 4.23-4.23 4.23 1.89 4.23 4.23-1.89 4.23-4.23 4.23" /></svg></span><span class='span_text_${theme}' style='font-size: ${globalFontSize}px'>${label}</span></div>`
+      createMeasuredIconLayout(
+        yMapsApi,
+        `<div class="map-img ${fontClass}"><span class='span_svg_circle_${scale}'><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="none" viewBox="0 0 24 24"><path fill="${markerColor}" d="M11.969 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.47-10-10-10m.03 14.23c-2.34 0-4.23-1.89-4.23-4.23s1.89-4.23 4.23-4.23 4.23 1.89 4.23 4.23-1.89 4.23-4.23 4.23" /></svg></span><span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${label}</span></div>`
       ),
-    [globalFontSize, label, markerColor, scale, theme, yMapsApi]
+    [fontClass, fontSize, label, markerColor, scale, themeClass, yMapsApi]
   );
 
   const locationLayout = useMemo(
     () =>
-      yMapsApi.templateLayoutFactory.createClass(
-        `<div class="map-img ${roboto.variable}"><span class='span_svg_loc_${scale}'><svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" id="Layer_1" width="80" height="80" version="1" viewBox="0 0 64 64"><path fill="${markerColor}" d="M32 0C18.746 0 8 10.746 8 24c0 5.219 1.711 10.008 4.555 13.93.051.094.059.199.117.289l16 24a4 4 0 0 0 6.656 0l16-24c.059-.09.066-.195.117-.289C54.289 34.008 56 29.219 56 24 56 10.746 45.254 0 32 0m0 32a8 8 0 1 1 0-16 8 8 0 0 1 0 16" /></svg></span><span class='span_text_${theme}' style='font-size: ${globalFontSize}px'>${label}</span></div>`
+      createMeasuredIconLayout(
+        yMapsApi,
+        `<div class="map-img ${fontClass}"><span class='span_svg_loc_${scale}'><svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" id="Layer_1" width="80" height="80" version="1" viewBox="0 0 64 64"><path fill="${markerColor}" d="M32 0C18.746 0 8 10.746 8 24c0 5.219 1.711 10.008 4.555 13.93.051.094.059.199.117.289l16 24a4 4 0 0 0 6.656 0l16-24c.059-.09.066-.195.117-.289C54.289 34.008 56 29.219 56 24 56 10.746 45.254 0 32 0m0 32a8 8 0 1 1 0-16 8 8 0 0 1 0 16" /></svg></span><span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${label}</span></div>`
       ),
-    [globalFontSize, label, markerColor, scale, theme, yMapsApi]
+    [fontClass, fontSize, label, markerColor, scale, themeClass, yMapsApi]
   );
 
+  const lat = Number(item?.xy?.latitude);
+  const lon = Number(item?.xy?.longitude);
   const geometry =
-    typeof item?.xy?.latitude === 'number' && typeof item?.xy?.longitude === 'number'
-      ? ([item.xy.latitude, item.xy.longitude] as any)
-      : undefined;
+    Number.isFinite(lat) && Number.isFinite(lon) ? ([lat, lon] as [number, number]) : undefined;
 
   if (!geometry) {
     return null;
@@ -125,6 +237,7 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
     return (
       <Placemark
         geometry={geometry}
+        onClick={() => showOrdersMap(item.id)}
         instanceRef={(ref: any) => {
           ref?.events.add('click', () => showOrdersMap(item.id));
         }}
@@ -140,7 +253,8 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
   return (
     <Placemark
       geometry={geometry}
-      properties={{ iconCaption: label }}
+      onClick={() => showOrdersMap(item.id)}
+      properties={{ iconCaption: rawLabel }}
       instanceRef={(ref: any) => {
         ref?.events.add('click', () => showOrdersMap(item.id));
       }}
@@ -165,13 +279,15 @@ const OrdersMapHomePoint = memo(function OrdersMapHomePoint({
   yMapsApi: YMapsTemplateApi;
 }) {
   const nightMap = useHeaderStore((state) => state.night_map);
-  const fill = nightMap ? '#f0f8ff' : '#000';
+  const fill = sanitizeCssColor(nightMap ? '#f0f8ff' : '#000', '#000');
+  const fontClass = sanitizeCssIdent(roboto.variable, 'font');
   const homeLayout = useMemo(
     () =>
-      yMapsApi.templateLayoutFactory.createClass(
-        `<span class="map-img ${roboto.variable}"><span class="span_svg_home"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="none" viewBox="0 0 24 24"><path fill="${fill}" stroke="${fill}" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.5 20v-9H3l9-6 9 6h-3.5v9h-3v-3.5A1.5 1.5 0 0 0 13 15h-2a1.5 1.5 0 0 0-1.5 1.5V20z" /></svg></span></span>`
+      createMeasuredIconLayout(
+        yMapsApi,
+        `<span class="map-img ${fontClass}"><span class="span_svg_home"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="none" viewBox="0 0 24 24"><path fill="${fill}" stroke="${fill}" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.5 20v-9H3l9-6 9 6h-3.5v9h-3v-3.5A1.5 1.5 0 0 0 13 15h-2a1.5 1.5 0 0 0-1.5 1.5V20z" /></svg></span></span>`
       ),
-    [fill, yMapsApi]
+    [fill, fontClass, yMapsApi]
   );
 
   return (
@@ -202,13 +318,18 @@ const OrdersMapDriverPoint = memo(function OrdersMapDriverPoint({
   location_driver_time_text: string;
   yMapsApi: YMapsTemplateApi;
 }) {
-  const scale = String(mapScale).replace('.', '_');
+  const scale = sanitizeCssIdent(String(mapScale).replace('.', '_'), '1');
+  const themeClass = sanitizeCssIdent(theme, 'white');
+  const fontClass = sanitizeCssIdent(roboto.variable, 'font');
+  const fontSize = Number.isFinite(globalFontSize) ? globalFontSize : 16;
+  const timeText = escapeHtml(location_driver_time_text);
   const trackLayout = useMemo(
     () =>
-      yMapsApi.templateLayoutFactory.createClass(
-        `<span class="map-img ${roboto.variable}"><span class='span_svg_circle_${scale}'><svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" id="Capa_1" width="80" height="80" fill="red" version="1.1" viewBox="0 0 462.522 462.522"><path d="M432.958 222.262c-1.452-.305-2.823-.592-4.042-.909-13.821-3.594-20.129-5.564-24.793-14.569l-17.667-35.768c-5.678-10.961-20.339-19.879-32.682-19.879h-31.453v-41.303c0-7.416-6.034-13.45-13.452-13.45l-219.07.22c-7.218 0-12.661 5.736-12.661 13.343v12.208h-56.12C9.429 122.156 0 131.584 0 143.174s9.429 21.018 21.018 21.018h56.119v20.145H40.394c-11.589 0-21.018 9.429-21.018 21.018s9.429 21.018 21.018 21.018h36.743v20.145H59.77c-11.589 0-21.018 9.429-21.018 21.018s9.429 21.018 21.018 21.018h17.367v21.07c0 7.416 6.034 13.45 13.45 13.45h22.788c3.549 24.323 24.542 43.064 49.837 43.064 25.297 0 46.291-18.741 49.841-43.064h92.224c.479 0 .97-.032 1.46-.064 3.522 24.354 24.528 43.128 49.845 43.128 25.297 0 46.291-18.741 49.841-43.064h32.732c12.885 0 23.368-10.482 23.368-23.366V260.06c-.001-31.595-17.793-35.328-29.565-37.798" /></svg></span><span class='span_text_${theme}' style='font-size: ${globalFontSize}px'>${location_driver_time_text}</span></span>`
+      createMeasuredIconLayout(
+        yMapsApi,
+        `<span class="map-img ${fontClass}"><span class='span_svg_circle_${scale}'><svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" id="Capa_1" width="80" height="80" fill="red" version="1.1" viewBox="0 0 462.522 462.522"><path d="M432.958 222.262c-1.452-.305-2.823-.592-4.042-.909-13.821-3.594-20.129-5.564-24.793-14.569l-17.667-35.768c-5.678-10.961-20.339-19.879-32.682-19.879h-31.453v-41.303c0-7.416-6.034-13.45-13.452-13.45l-219.07.22c-7.218 0-12.661 5.736-12.661 13.343v12.208h-56.12C9.429 122.156 0 131.584 0 143.174s9.429 21.018 21.018 21.018h56.119v20.145H40.394c-11.589 0-21.018 9.429-21.018 21.018s9.429 21.018 21.018 21.018h36.743v20.145H59.77c-11.589 0-21.018 9.429-21.018 21.018s9.429 21.018 21.018 21.018h17.367v21.07c0 7.416 6.034 13.45 13.45 13.45h22.788c3.549 24.323 24.542 43.064 49.837 43.064 25.297 0 46.291-18.741 49.841-43.064h92.224c.479 0 .97-.032 1.46-.064 3.522 24.354 24.528 43.128 49.845 43.128 25.297 0 46.291-18.741 49.841-43.064h32.732c12.885 0 23.368-10.482 23.368-23.366V260.06c-.001-31.595-17.793-35.328-29.565-37.798" /></svg></span><span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${timeText}</span></span>`
       ),
-    [globalFontSize, location_driver_time_text, scale, theme, yMapsApi]
+    [fontClass, fontSize, scale, themeClass, timeText, yMapsApi]
   );
 
   return (
@@ -301,7 +422,12 @@ export function OrdersMapScreen() {
               : undefined
           }
         >
-          <YMaps query={{ lang: 'ru_RU', apikey: 'f600fbbd-6500-4bf7-a0ab-ec9336f6c7d8' }}>
+          <YMaps
+            query={{
+              lang: 'ru_RU',
+              ...(YANDEX_MAPS_API_KEY ? { apikey: YANDEX_MAPS_API_KEY } : {}),
+            }}
+          >
             <Map
               key={orders.home.center.join(',')}
               defaultState={orders.home as HomeLocation}

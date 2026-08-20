@@ -4,9 +4,6 @@
 
 import * as Sentry from '@sentry/nextjs';
 
-const FALLBACK_SENTRY_DSN =
-  'https://8ccd1c75a74531b0b0ec88d63f62e450@o4505941569830912.ingest.us.sentry.io/4508173486325760';
-
 function readSampleRate(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
 
@@ -18,10 +15,16 @@ function readSampleRate(value: string | undefined, fallback: number): number {
 }
 
 export function register() {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+  if (!dsn) {
+    return;
+  }
+
   const isProduction = process.env.NODE_ENV === 'production';
 
   Sentry.init({
-    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN || FALLBACK_SENTRY_DSN,
+    dsn,
 
     // Add optional integrations for additional features
     integrations: [Sentry.replayIntegration()],

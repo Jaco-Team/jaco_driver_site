@@ -25,6 +25,9 @@ import { devLog } from '@/shared/lib/devLog';
 import YandexMetrika from '@/components/YandexMetrika';
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
+import { resolveYandexMetrikaIds } from '@/shared/lib/yandexMetrikaIds';
+
+const YANDEX_METRIKA_IDS = resolveYandexMetrikaIds();
 
 const theme = createTheme({
   palette: {
@@ -129,7 +132,7 @@ function MyApp(props: MyAppProps) {
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>
       <ThemeProvider theme={theme}>
-        <YandexMetrika yid={104768072} />
+        <YandexMetrika ids={YANDEX_METRIKA_IDS} />
         <Component {...pagePropsWithoutSession} />
       </ThemeProvider>
     </AppCacheProvider>

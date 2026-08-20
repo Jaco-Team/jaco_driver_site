@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OrderMapDrawer } from './OrderMapDrawer';
+import { ORDER_CARD_DELETED_BG } from './OrderCard';
 
 const mocks = vi.hoisted(() => ({
   headerState: {
@@ -137,5 +138,24 @@ describe('OrderMapDrawer', () => {
     fireEvent.click(screen.getByTestId('order-map-drawer-handle'));
 
     expect(mocks.orderState.closeOrderMap).not.toHaveBeenCalled();
+  });
+
+  it('turns the map sheet red when the order is cancelled', () => {
+    mocks.orderState.showOrders = [
+      {
+        ...mocks.orderState.showOrders[0],
+        is_delete: 1,
+        delete_reason: 'Клиент отменил',
+      },
+    ];
+
+    render(<OrderMapDrawer />);
+
+    expect(screen.getByTestId('order-map-drawer-paper')).toHaveStyle({
+      background: ORDER_CARD_DELETED_BG,
+    });
+    expect(screen.getByTestId('order-card')).toHaveStyle({
+      backgroundColor: ORDER_CARD_DELETED_BG,
+    });
   });
 });

@@ -24,7 +24,7 @@ export interface UseRegistrationPageResult {
   myLogin: string;
   setMyLogin: Dispatch<SetStateAction<string>>;
   myPWD: string;
-  setMyPWD: Dispatch<SetStateAction<string>>;
+  setMyPWD: (value: string) => void;
   submitOnEnter: SubmitOnEnter;
   requestRecoveryCode: () => Promise<void>;
   myCode: string;
@@ -32,4 +32,10 @@ export interface UseRegistrationPageResult {
   confirmRecoveryCode: () => Promise<void>;
   errorText: string;
   helperText: string;
+  captchaResetKey: number;
+  setCaptchaToken: (token: string) => void;
+  resetCaptcha: () => void;
+  retryAfter: number;
+  canSubmit: boolean;
+  isPasswordValid: boolean;
 }

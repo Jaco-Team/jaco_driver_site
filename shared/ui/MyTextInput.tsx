@@ -12,6 +12,8 @@ interface MyTextInputProps {
   endAdornment?: ReactNode;
   multiline?: boolean;
   rows?: number;
+  maxLength?: number;
+  inputMode?: 'text' | 'numeric' | 'tel';
 }
 
 export default function MyTextInput({
@@ -25,6 +27,8 @@ export default function MyTextInput({
   endAdornment,
   multiline,
   rows = 1,
+  maxLength,
+  inputMode,
 }: MyTextInputProps) {
   return (
     <TextField
@@ -39,16 +43,20 @@ export default function MyTextInput({
       multiline={multiline}
       rows={rows}
       style={{ width: '100%' }}
-      slotProps={
-        startAdornment || endAdornment
+      slotProps={{
+        htmlInput: {
+          maxLength,
+          inputMode,
+        },
+        ...(startAdornment || endAdornment
           ? {
               input: {
                 startAdornment,
                 endAdornment,
               },
             }
-          : undefined
-      }
+          : {}),
+      }}
       onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
         if (onKeyPress && event.key === 'Enter') {
           onKeyPress(event);

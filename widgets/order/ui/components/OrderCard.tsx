@@ -1,7 +1,13 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useMemo, useEffect } from 'react';
 import { Card, CardContent, Typography, Chip, Box, Button, Tooltip, styled } from '@mui/material';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import { tooltipClasses } from '@mui/material/Tooltip';
+
+import { extractPhonesFromText } from '@/shared/lib/extractPhones';
+import {
+  CommentPhonesControl,
+  CommentPhonesDrawer,
+} from '@/widgets/order/ui/components/CommentPhonesDrawer';
 
 interface OrderCardProps {
   item: any;
@@ -20,12 +26,15 @@ const getStatusOrder = (item: any) => parseInt(item.status_order);
 const getOnlinePay = (item: any) => parseInt(item.online_pay);
 const getDriverPay = (item: any) => parseInt(item.driver_pay) === 1;
 
+export const ORDER_CARD_BUTTON_HEIGHT = 44;
+export const ORDER_CARD_DELETED_BG = '#d95030';
+
 const StyledCard = styled(Card, {
   shouldForwardProp: (prop) => prop !== 'isDeleted',
 })<{ isDeleted?: boolean }>(({ isDeleted }) => ({
   borderRadius: 16,
   boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
-  backgroundColor: isDeleted ? '#d95030' : '#fff',
+  backgroundColor: isDeleted ? ORDER_CARD_DELETED_BG : '#fff',
   padding: 16,
   transition: 'all 0.3s ease',
   '&:hover': {
@@ -51,8 +60,6 @@ const Value = styled((props: React.ComponentProps<typeof Typography>) => (
   display: 'inline',
   fontWeight: 400,
 });
-
-export const ORDER_CARD_BUTTON_HEIGHT = 44;
 
 const ActionButton = styled(Button)({
   textTransform: 'uppercase',
@@ -348,186 +355,217 @@ export const OrderCard = memo<OrderCardProps>(
       }
     }, [actionsDisabled, onPay, item.id]);
 
+    const commentPhones = useMemo(() => extractPhonesFromText(item.comment), [item.comment]);
+    const [commentPhonesOpen, setCommentPhonesOpen] = useState(false);
+
+    useEffect(() => {
+      if (commentPhones.length < 2) {
+        setCommentPhonesOpen(false);
+      }
+    }, [commentPhones.length]);
+
     return (
-      <StyledCard
-        isDeleted={isDeleted}
-        data-testid="order-card"
-        style={{ fontSize: globalFontSize }}
-        sx={
-          is_map
-            ? {
-                boxShadow: 'none',
-                borderRadius: 0,
-                padding: 0,
-                backgroundColor: 'transparent',
-                '&:hover': {
+      <>
+        <StyledCard
+          isDeleted={isDeleted}
+          data-testid="order-card"
+          style={{ fontSize: globalFontSize }}
+          sx={
+            is_map
+              ? {
                   boxShadow: 'none',
-                },
-              }
-            : undefined
-        }
-      >
-        <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-          {/* Номер заказа */}
-          <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
-            {item.id_text}
-          </Typography>
+                  borderRadius: 0,
+                  padding: 0,
+                  backgroundColor: isDeleted ? ORDER_CARD_DELETED_BG : 'transparent',
+                  '&:hover': {
+                    boxShadow: 'none',
+                  },
+                }
+              : undefined
+          }
+        >
+          <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
+            {/* Номер заказа */}
+            <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
+              {item.id_text}
+            </Typography>
 
-          {/* Количество позиций */}
-          <OrderChips item={item} />
+            {/* Количество позиций */}
+            <OrderChips item={item} />
 
-          {/* Адрес */}
-          <InfoRow>
-            <Label variant="body1">Адрес: </Label>
-            <Value variant="body1">{item.addr}</Value>
-          </InfoRow>
-
-          {/* Пд, Эт, Кв */}
-          {(parseInt(item.pd) > 0 || parseInt(item.et) > 0 || parseInt(item.kv) > 0) && (
+            {/* Адрес */}
             <InfoRow>
-              {parseInt(item.pd) > 0 && (
-                <>
-                  <Label variant="body1">Пд: </Label>
-                  <Value variant="body1">{item.pd}, </Value>
-                </>
-              )}
-              {parseInt(item.et) > 0 && (
-                <>
-                  <Label variant="body1">Эт: </Label>
-                  <Value variant="body1">{item.et}, </Value>
-                </>
-              )}
-              {parseInt(item.kv) > 0 && (
-                <>
-                  <Label variant="body1">Кв: </Label>
-                  <Value variant="body1">{item.kv}</Value>
-                </>
-              )}
+              <Label variant="body1">Адрес: </Label>
+              <Value variant="body1">{item.addr}</Value>
             </InfoRow>
-          )}
 
-          {/* Домофон */}
-          {parseInt(item.fake_dom) === 0 && (
+            {/* Пд, Эт, Кв */}
+            {(parseInt(item.pd) > 0 || parseInt(item.et) > 0 || parseInt(item.kv) > 0) && (
+              <InfoRow>
+                {parseInt(item.pd) > 0 && (
+                  <>
+                    <Label variant="body1">Пд: </Label>
+                    <Value variant="body1">{item.pd}, </Value>
+                  </>
+                )}
+                {parseInt(item.et) > 0 && (
+                  <>
+                    <Label variant="body1">Эт: </Label>
+                    <Value variant="body1">{item.et}, </Value>
+                  </>
+                )}
+                {parseInt(item.kv) > 0 && (
+                  <>
+                    <Label variant="body1">Кв: </Label>
+                    <Value variant="body1">{item.kv}</Value>
+                  </>
+                )}
+              </InfoRow>
+            )}
+
+            {/* Домофон */}
+            {parseInt(item.fake_dom) === 0 && (
+              <InfoRow>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: 'text.secondary',
+                  }}
+                >
+                  Домофон не работает
+                </Typography>
+              </InfoRow>
+            )}
+
+            {/* Ко времени */}
             <InfoRow>
-              <Typography
-                variant="body1"
+              <Label variant="body1">Ко времени: </Label>
+              <Value variant="body1">{item.need_time}</Value>
+            </InfoRow>
+
+            {/* Начнут готовить */}
+            {statusOrder === 1 && (
+              <InfoRow>
+                <Label variant="body1">Начнут готовить: </Label>
+                <Value variant="body1">{item.time_start_order}</Value>
+              </InfoRow>
+            )}
+
+            {/* Отдали */}
+            {statusOrder === 6 && item.close_date_time_order && (
+              <InfoRow>
+                <Label variant="body1">Отдали: </Label>
+                <Value variant="body1">{item.close_date_time_order}</Value>
+              </InfoRow>
+            )}
+
+            {/* Осталось */}
+            {statusOrder !== 6 && (
+              <InfoRow>
+                <Label variant="body1">Осталось: </Label>
+                <Value variant="body1">{item.to_time}</Value>
+              </InfoRow>
+            )}
+
+            {/* Комментарий */}
+            {item.comment && item.comment.length > 0 && (
+              <InfoRow
                 sx={{
-                  color: 'text.secondary',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
                 }}
               >
-                Домофон не работает
-              </Typography>
-            </InfoRow>
-          )}
-
-          {/* Ко времени */}
-          <InfoRow>
-            <Label variant="body1">Ко времени: </Label>
-            <Value variant="body1">{item.need_time}</Value>
-          </InfoRow>
-
-          {/* Начнут готовить */}
-          {statusOrder === 1 && (
-            <InfoRow>
-              <Label variant="body1">Начнут готовить: </Label>
-              <Value variant="body1">{item.time_start_order}</Value>
-            </InfoRow>
-          )}
-
-          {/* Отдали */}
-          {statusOrder === 6 && item.close_date_time_order && (
-            <InfoRow>
-              <Label variant="body1">Отдали: </Label>
-              <Value variant="body1">{item.close_date_time_order}</Value>
-            </InfoRow>
-          )}
-
-          {/* Осталось */}
-          {statusOrder !== 6 && (
-            <InfoRow>
-              <Label variant="body1">Осталось: </Label>
-              <Value variant="body1">{item.to_time}</Value>
-            </InfoRow>
-          )}
-
-          {/* Комментарий */}
-          {item.comment && item.comment.length > 0 && (
-            <InfoRow>
-              <Label variant="body1">Комментарий: </Label>
-              <Value variant="body1">{item.comment}</Value>
-            </InfoRow>
-          )}
-
-          {/* Причина удаления */}
-          {isDeleted && item.delete_reason && (
-            <InfoRow>
-              <Label variant="body1">Причина удаления: </Label>
-              <Value variant="body1">{item.delete_reason}</Value>
-            </InfoRow>
-          )}
-
-          {/* Сумма */}
-          <InfoRow>
-            <Label variant="body1">Сумма: </Label>
-            {onlinePay === 1 ? (
-              <Value variant="body1" sx={{ color: '#4caf50' }}>
-                Оплачено
-              </Value>
-            ) : (
-              <Value variant="body1">{item.sum_order}₽</Value>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Label variant="body1">Комментарий: </Label>
+                  <Value variant="body1">{item.comment}</Value>
+                </Box>
+                <CommentPhonesControl
+                  phones={commentPhones}
+                  onOpenMultiple={() => setCommentPhonesOpen(true)}
+                />
+              </InfoRow>
             )}
-          </InfoRow>
 
-          {/* Сдача */}
-          {parseInt(item.sdacha) !== 0 && onlinePay !== 1 && (
+            {/* Причина удаления */}
+            {isDeleted && item.delete_reason && (
+              <InfoRow>
+                <Label variant="body1">Причина удаления: </Label>
+                <Value variant="body1">{item.delete_reason}</Value>
+              </InfoRow>
+            )}
+
+            {/* Сумма */}
             <InfoRow>
-              <Label variant="body1">Сдача с: </Label>
-              <Value variant="body1">
-                {item.sdacha}₽ ({item.sum_sdacha}₽)
-              </Value>
+              <Label variant="body1">Сумма: </Label>
+              {onlinePay === 1 ? (
+                <Value variant="body1" sx={{ color: '#4caf50' }}>
+                  Оплачено
+                </Value>
+              ) : (
+                <Value variant="body1">{item.sum_order}₽</Value>
+              )}
             </InfoRow>
-          )}
 
-          {/* Кнопки действий */}
-          {!isGet ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <PhoneButton
-                variant="contained"
-                disableElevation
-                href={`tel:${item.number}`}
-                data-testid="order-card-phone"
-              >
-                {item.number}
-              </PhoneButton>
-              <TakeButton
-                variant="contained"
-                disabled={actionsDisabled}
-                onClick={() => handleAction('take')}
-                data-testid="order-card-take"
-              >
-                Взять
-              </TakeButton>
-            </Box>
-          ) : isMy ? (
-            <MyOrderActions
-              item={item}
-              statusOrder={statusOrder}
-              onlinePay={onlinePay}
-              driverPay={driverPay}
-              actionsDisabled={actionsDisabled}
-              onAction={onAction}
-              onPay={onPay}
-            />
-          ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <DriverInfoBox>Водитель: {item.driver_name}</DriverInfoBox>
-              <PhoneButton variant="contained" disableElevation href={`tel:${item.driver_login}`}>
-                {item.driver_login}
-              </PhoneButton>
-            </Box>
-          )}
-        </CardContent>
-      </StyledCard>
+            {/* Сдача */}
+            {parseInt(item.sdacha) !== 0 && onlinePay !== 1 && (
+              <InfoRow>
+                <Label variant="body1">Сдача с: </Label>
+                <Value variant="body1">
+                  {item.sdacha}₽ ({item.sum_sdacha}₽)
+                </Value>
+              </InfoRow>
+            )}
+
+            {/* Кнопки действий */}
+            {!isGet ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <PhoneButton
+                  variant="contained"
+                  disableElevation
+                  href={`tel:${item.number}`}
+                  data-testid="order-card-phone"
+                >
+                  {item.number}
+                </PhoneButton>
+                <TakeButton
+                  variant="contained"
+                  disabled={actionsDisabled}
+                  onClick={() => handleAction('take')}
+                  data-testid="order-card-take"
+                >
+                  Взять
+                </TakeButton>
+              </Box>
+            ) : isMy ? (
+              <MyOrderActions
+                item={item}
+                statusOrder={statusOrder}
+                onlinePay={onlinePay}
+                driverPay={driverPay}
+                actionsDisabled={actionsDisabled}
+                onAction={onAction}
+                onPay={onPay}
+              />
+            ) : (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <DriverInfoBox>Водитель: {item.driver_name}</DriverInfoBox>
+                <PhoneButton variant="contained" disableElevation href={`tel:${item.driver_login}`}>
+                  {item.driver_login}
+                </PhoneButton>
+              </Box>
+            )}
+          </CardContent>
+        </StyledCard>
+        {commentPhones.length > 1 ? (
+          <CommentPhonesDrawer
+            open={commentPhonesOpen}
+            phones={commentPhones}
+            globalFontSize={globalFontSize}
+            onClose={() => setCommentPhonesOpen(false)}
+          />
+        ) : null}
+      </>
     );
   }
 );
@@ -541,6 +579,7 @@ const areEqual = (prevProps: OrderCardProps, nextProps: OrderCardProps) => {
     prevProps.item.is_my === nextProps.item.is_my &&
     prevProps.item.is_get === nextProps.item.is_get &&
     prevProps.item.is_delete === nextProps.item.is_delete &&
+    prevProps.item.comment === nextProps.item.comment &&
     prevProps.globalFontSize === nextProps.globalFontSize &&
     prevProps.is_map === nextProps.is_map &&
     prevProps.actionsDisabled === nextProps.actionsDisabled &&

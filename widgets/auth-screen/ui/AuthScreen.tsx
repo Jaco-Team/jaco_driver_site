@@ -9,13 +9,28 @@ import { log } from '@/components/analytics';
 
 import MyTextInput from '@/shared/ui/MyTextInput';
 import PasswordInput from '@/shared/ui/PasswordInput';
+import YandexSmartCaptcha, { SMARTCAPTCHA_CLIENT_KEY } from '@/shared/ui/YandexSmartCaptcha';
 import { roboto } from '@/shared/ui/Font';
 
 import { useAuthPage } from '../model/useAuthPage';
 
 export default function AuthPage() {
-  const { loginWithSso, loginFN, myLogin, setMyLogin, myPWD, setMyPWD, loginErr, router } =
-    useAuthPage();
+  const {
+    loginWithSso,
+    loginFN,
+    myLogin,
+    setMyLogin,
+    myPWD,
+    setMyPWD,
+    loginErr,
+    router,
+    captchaRequired,
+    captchaResetKey,
+    setCaptchaToken,
+    resetCaptcha,
+    retryAfter,
+    canSubmit,
+  } = useAuthPage();
 
   return (
     <Meta title="Авторизация">
@@ -54,6 +69,14 @@ export default function AuthPage() {
               />
             </div>
 
+            {SMARTCAPTCHA_CLIENT_KEY && captchaRequired ? (
+              <YandexSmartCaptcha
+                resetKey={captchaResetKey}
+                onSuccess={setCaptchaToken}
+                onTokenExpired={resetCaptcha}
+              />
+            ) : null}
+
             {loginErr ? (
               <div className="auth__error">{loginErr}</div>
             ) : (
@@ -66,9 +89,10 @@ export default function AuthPage() {
               variant="contained"
               fullWidth
               className="auth__primaryButton"
+              disabled={!canSubmit}
               onClick={() => loginFN()}
             >
-              Войти
+              {retryAfter > 0 ? 'Попробуйте позже' : 'Войти'}
             </Button>
 
             <Button
