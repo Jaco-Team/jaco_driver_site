@@ -10,8 +10,10 @@ const BASE_HEADERS = {
 
 export const http: AxiosInstance = axios.create({
   baseURL: apiConfig.apiOrigin,
-  withCredentials: false,
-  withXSRFToken: false,
+  withCredentials: true,
+  withXSRFToken: true,
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
   headers: BASE_HEADERS,
 });
 
