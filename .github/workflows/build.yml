@@ -1,4 +1,4 @@
-name: Build Frontend API Laravel
+name: Build and Deploy Frontend API Laravel
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
   IMAGE_NAME: ghcr.io/jaco-team/jaco-driver-frontend:api-laravel
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +24,7 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build image
+      - name: Build frontend image
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_API_ORIGIN=https://apidriver.jacochef.ru \
@@ -34,5 +34,21 @@ jobs:
             --build-arg NEXT_PUBLIC_YANDEX_METRIKA_ID="${{ secrets.NEXT_PUBLIC_YANDEX_METRIKA_ID }}" \
             -t $IMAGE_NAME .
 
-      - name: Push image
+      - name: Push frontend image
         run: docker push $IMAGE_NAME
+
+      - name: Deploy frontend over SSH
+        if: ${{ vars.AUTO_DEPLOY_FRONTEND == 'true' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /home/deploy/deploy/driver-frontend
+
+            docker compose pull
+            docker rm -f driver-frontend-new || true
+            docker compose up -d
+
+            docker ps --filter "name=driver-frontend-new"
