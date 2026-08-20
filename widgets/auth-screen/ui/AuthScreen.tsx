@@ -34,7 +34,7 @@ export default function AuthPage() {
             </div>
 
             <span className="auth__eyebrow">Авторизация</span>
-            <h2 className="auth__panelTitle">Вход в аккаунт!</h2>
+            <h2 className="auth__panelTitle">Вход в аккаунт</h2>
             <p className="auth__panelText">
               Введите номер телефона и пароль, чтобы продолжить работу в приложении.
             </p>

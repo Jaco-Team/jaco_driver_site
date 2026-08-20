@@ -1,60 +1,31 @@
-import { connector } from '@/shared/api/connector';
+import { connector, ensureCsrfCookie } from '@/shared/api/connector';
 import { getApiErrorInfo } from '@/shared/api/errors';
 import { apiRoutes, getSsoLoginUrl } from '@/shared/api/routes';
-import { setAuthToken } from '@/shared/api/token';
 import type { ApiResponse, User } from '@/shared/api/types';
 
-interface TokenLoginResponse {
-  token?: string;
-  token_type?: string;
-  auth_mode?: string;
-  user_id?: number | null;
-  name?: string | null;
-  login?: string | null;
-  city_id?: number | null;
-  point_id?: number | null;
-  appointment_id?: number | null;
-}
-
-function toUser(payload: TokenLoginResponse, token: string): User {
-  return {
-    ...payload,
-    token,
-    id: payload.user_id ?? undefined,
-    name: payload.name ?? undefined,
-    login: payload.login ?? undefined,
-  };
-}
-
-export async function loginToken(
+export async function loginWeb(
   login: string,
   password: string,
-  deviceName: string = 'driver-web'
+  remember: boolean = true
 ): Promise<User> {
-  const payload = await connector.rest.post<
-    TokenLoginResponse,
-    { login: string; password: string; device_name: string }
-  >(apiRoutes.auth.tokenLogin, {
-    login: login.trim(),
-    password,
-    device_name: deviceName,
-  });
+  await ensureCsrfCookie();
 
-  const token = `${payload?.token ?? ''}`.trim();
-
-  if (!token) {
-    throw new Error('Сервер не вернул токен авторизации.');
-  }
-
-  setAuthToken(token);
-
-  return toUser(payload, token);
+  return connector.rest.post<User, { login: string; password: string; remember: boolean }>(
+    apiRoutes.auth.sessionLogin,
+    {
+      login: login.trim(),
+      password,
+      remember,
+    }
+  );
 }
 
 export async function sendPasswordRecoveryCode(
   login: string,
   password: string
 ): Promise<ApiResponse> {
+  await ensureCsrfCookie();
+
   return connector.rest.post<ApiResponse, { login: string; password: string }>(
     apiRoutes.auth.passwordRecoverySendCode,
     {
@@ -68,6 +39,8 @@ export async function confirmPasswordRecoveryCode(
   login: string,
   code: string
 ): Promise<ApiResponse> {
+  await ensureCsrfCookie();
+
   return connector.rest.post<ApiResponse, { login: string; code: string }>(
     apiRoutes.auth.passwordRecoveryConfirmCode,
     {

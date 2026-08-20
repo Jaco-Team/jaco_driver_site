@@ -4,11 +4,11 @@ import { shallow } from 'zustand/shallow';
 import {
   confirmPasswordRecoveryCode as confirmPasswordRecoveryCodeApi,
   fetchMe,
-  loginToken,
+  loginWeb,
   sendPasswordRecoveryCode as requestPasswordRecoveryCodeApi,
 } from '@/features/auth/api/auth.api';
 import { getApiErrorInfo, getAuthErrorMessage } from '@/shared/api/errors';
-import { clearAuthToken, getAuthToken } from '@/shared/api/token';
+import { clearAuthToken } from '@/shared/api/token';
 import type { ApiResponse, User } from '@/shared/api/types';
 
 export interface AuthSession {
@@ -44,15 +44,13 @@ type AuthStore = AuthState & AuthActions;
 
 const EXPLICIT_UNAUTHORIZED_STORAGE_KEY = 'jaco_driver_explicit_unauthorized';
 
-function sessionFromUser(user: User, token?: string | null): AuthSession {
-  const resolvedToken = `${token ?? user?.token ?? getAuthToken() ?? ''}`.trim();
-
+function sessionFromUser(user: User): AuthSession {
   return {
     isAuth: true,
-    token: resolvedToken,
+    token: '',
     user: {
       ...user,
-      token: resolvedToken || user?.token,
+      token: undefined,
       id: user?.id ?? user?.user_id,
     },
   };
@@ -134,9 +132,10 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
       set({ isSubmitting: true });
 
       try {
-        const loginResult = await loginToken(login, pwd);
+        clearAuthToken();
+        await loginWeb(login, pwd, true);
         const me = await fetchMe();
-        const authData = sessionFromUser(me, loginResult.token);
+        const authData = sessionFromUser(me);
         const result = {
           st: true,
           ...authData,
@@ -219,7 +218,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
     },
 
     refreshSession: async () => {
-      if (get().session.isAuth === false || readExplicitUnauthorized() || !getAuthToken()) {
+      if (get().session.isAuth === false || readExplicitUnauthorized()) {
         const authData = unauthorizedSession();
         set({ session: authData });
         return {
@@ -237,7 +236,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
 
       try {
         const me = await fetchMe();
-        const authData = sessionFromUser(me, getAuthToken());
+        const authData = sessionFromUser(me);
         const result = {
           st: true,
           ...authData,
