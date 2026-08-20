@@ -33,8 +33,7 @@ export function OrderMapDrawer() {
 
   const actionsBusy = isClick || is_load;
   const sheetDeleted =
-    showOrders.length > 0 &&
-    showOrders.every((item: { is_delete?: unknown }) => parseInt(`${item?.is_delete}`, 10) === 1);
+    showOrders.length > 0 && showOrders.every((item) => parseInt(`${item?.is_delete}`, 10) === 1);
 
   const handleAction = (action: string, orderId: number) => {
     if (actionsBusy) return;

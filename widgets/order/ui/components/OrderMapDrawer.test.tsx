@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
         id: 866503,
         id_text: '#866503 В очереди 0%',
         is_delete: 0,
+        delete_reason: '',
         is_my: 0,
         is_get: 0,
         status_order: 1,

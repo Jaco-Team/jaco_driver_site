@@ -16,6 +16,8 @@ export interface Order {
   };
   is_pred?: number;
   is_my?: number;
+  is_delete?: number | string;
+  delete_reason?: string;
   time_start_mini?: string;
   close_time_?: string;
 }
