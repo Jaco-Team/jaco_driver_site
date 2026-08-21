@@ -110,7 +110,7 @@ export function OrderMapDrawer() {
             />
           </Box>
 
-          {showOrders.map((item: unknown, index: number) => (
+          {showOrders.map((item, index) => (
             <OrderCard
               key={index}
               item={item}

@@ -18,11 +18,16 @@ interface TokenLoginResponse {
 
 function toUser(payload: TokenLoginResponse, token: string): User {
   return {
-    ...payload,
     token,
+    token_type: payload.token_type,
     id: payload.user_id ?? undefined,
+    user_id: payload.user_id,
     name: payload.name ?? undefined,
     login: payload.login ?? undefined,
+    city_id: payload.city_id,
+    point_id: payload.point_id,
+    appointment_id: payload.appointment_id,
+    auth_mode: payload.auth_mode,
   };
 }
 

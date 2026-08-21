@@ -34,6 +34,17 @@ function isApiOk(st: unknown): boolean {
   return st === true || st === 1 || st === '1';
 }
 
+function nestedApiStatus(res: { st?: unknown; text?: string; data?: unknown }): {
+  st?: unknown;
+  text?: string;
+} {
+  const nested = res.data;
+  if (nested && typeof nested === 'object') {
+    return nested as { st?: unknown; text?: string };
+  }
+  return res;
+}
+
 function formatOrderError(error: unknown): string {
   const message = getApiErrorInfo(error).message.trim();
 
@@ -512,7 +523,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         latitude,
         longitude,
       });
-      const dataRes = res?.data ?? res;
+      const dataRes = nestedApiStatus(res);
 
       if (!isApiOk(dataRes?.st ?? res?.st)) {
         get().openErrOrder(dataRes?.text || res?.text || 'Ошибка');

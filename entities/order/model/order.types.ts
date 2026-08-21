@@ -1,3 +1,22 @@
+export type OrderFlag = number | string;
+
+export interface DrinkItem {
+  id?: number;
+  name?: string;
+  names?: string;
+  count?: number;
+  price?: number;
+}
+
+export interface OrderCoordinates {
+  latitude: number;
+  longitude: number;
+  lat?: number;
+  lon?: number;
+  latitudeDelta?: number;
+  longitudeDelta?: number;
+}
+
 export interface Order {
   id: number;
   drink_list: DrinkItem[];
@@ -5,28 +24,38 @@ export interface Order {
   et: string;
   kv: string;
   comment: string;
+  id_text?: string;
+  number?: string;
+  addr?: string;
+  fake_dom?: OrderFlag;
+  need_time?: string;
+  time_start_order?: string;
+  close_date_time_order?: string;
+  to_time?: string;
+  time_start_mini?: string;
+  close_time_?: string;
   status?: string;
-  status_order?: number;
+  status_order?: OrderFlag;
+  online_pay?: OrderFlag;
+  driver_pay?: OrderFlag;
+  is_pred?: OrderFlag;
+  is_my?: OrderFlag;
+  is_get?: OrderFlag;
+  is_delete?: OrderFlag;
+  delete_reason?: string;
+  sum_order?: number | string;
+  sdacha?: OrderFlag;
+  sum_sdacha?: number | string;
+  count_other?: OrderFlag;
+  count_pasta?: OrderFlag;
+  count_pizza?: OrderFlag;
+  count_drink?: OrderFlag;
+  driver_name?: string;
+  driver_login?: string | null;
   point_color?: string;
   color?: string;
   point_text?: string;
-  xy?: {
-    latitude: number;
-    longitude: number;
-  };
-  is_pred?: number;
-  is_my?: number;
-  is_delete?: number | string;
-  delete_reason?: string;
-  time_start_mini?: string;
-  close_time_?: string;
-}
-
-interface DrinkItem {
-  id?: number;
-  name?: string;
-  count?: number;
-  price?: number;
+  xy?: OrderCoordinates;
 }
 
 export interface OrderType {
@@ -34,30 +63,31 @@ export interface OrderType {
   text: string;
 }
 
-interface LocationCoords {
-  latitude: number;
-  longitude: number;
-}
-
 export interface HomeLocation {
   center: [number, number];
   zoom: number;
-  controls: any[];
+  controls: string[];
+}
+
+export interface PayCheckStatus {
+  data: {
+    order_id: number;
+    is_map: boolean;
+  };
+  latitude?: string;
+  longitude?: string;
 }
 
 export interface PayData {
   qr?: string;
   url?: string;
-  check_data?: any;
+  check_data?: PayCheckStatus;
   confirmation?: {
     confirmation_data?: string;
   };
 }
 
-export interface DelOrder {
-  id: number;
-  [key: string]: any;
-}
+export type DelOrder = Order;
 
 export const ORDER_TYPES: OrderType[] = [
   { id: 1, text: 'Активные' },

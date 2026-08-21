@@ -2,14 +2,18 @@ import { AxiosError } from 'axios';
 
 import { ErrorInfo } from '@/shared/api/types';
 
-function getValidationMessage(data: any): string {
-  const errors = data?.errors;
+function getValidationMessage(data: unknown): string {
+  if (!data || typeof data !== 'object' || !('errors' in data)) {
+    return '';
+  }
+
+  const errors = (data as { errors?: unknown }).errors;
 
   if (!errors || typeof errors !== 'object') {
     return '';
   }
 
-  for (const value of Object.values(errors)) {
+  for (const value of Object.values(errors as Record<string, unknown>)) {
     if (Array.isArray(value) && value.length > 0 && value[0]) {
       return `${value[0]}`;
     }
@@ -22,22 +26,27 @@ function getValidationMessage(data: any): string {
   return '';
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
 export function getApiErrorInfo(error: unknown): ErrorInfo {
   const axiosError = error as AxiosError;
   const status = axiosError?.response?.status ?? null;
-  const data = (axiosError?.response?.data as any) ?? null;
+  const data = axiosError?.response?.data ?? null;
+  const record = isRecord(data) ? data : null;
   const validationMessage = getValidationMessage(data);
 
   let message = 'Не удалось выполнить запрос.';
 
-  if (typeof data?.text === 'string' && data.text.trim().length > 0) {
-    message = data.text;
+  if (typeof record?.text === 'string' && record.text.trim().length > 0) {
+    message = record.text;
   } else if (validationMessage) {
     message = validationMessage;
   } else if (typeof data === 'string' && data.trim().length > 0) {
     message = data;
-  } else if (typeof data?.message === 'string' && data.message.trim().length > 0) {
-    message = data.message;
+  } else if (typeof record?.message === 'string' && record.message.trim().length > 0) {
+    message = record.message;
   } else if (typeof axiosError?.message === 'string' && axiosError.message.trim().length > 0) {
     message = axiosError.message;
   }
@@ -84,9 +93,10 @@ export function getAuthSecurityState(error: unknown): {
   retryAfter: number;
 } {
   const axiosError = error as AxiosError;
-  const data = (axiosError?.response?.data as any) ?? null;
+  const data = axiosError?.response?.data;
+  const record = isRecord(data) ? data : null;
   const headerRetryAfter = Number(axiosError?.response?.headers?.['retry-after'] ?? 0);
-  const payloadRetryAfter = Number(data?.retry_after ?? 0);
+  const payloadRetryAfter = Number(record?.retry_after ?? 0);
   const retryAfter = Math.max(
     0,
     Math.ceil(
@@ -99,7 +109,7 @@ export function getAuthSecurityState(error: unknown): {
   );
 
   return {
-    captchaRequired: Boolean(data?.captcha_required),
+    captchaRequired: Boolean(record?.captcha_required),
     retryAfter,
   };
 }

@@ -224,14 +224,19 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         };
       } catch (e) {
         const errorInfo = getApiErrorInfo(e);
-        const validationMessage = getFirstValidationError(errorInfo?.data?.errors);
+        const errorPayload = errorInfo.data;
+        const errors =
+          errorPayload && typeof errorPayload === 'object' && 'errors' in errorPayload
+            ? (errorPayload as { errors?: Record<string, string | string[]> }).errors
+            : undefined;
+        const validationMessage = getFirstValidationError(errors);
         const errorText = validationMessage || errorInfo.message || 'Ошибка сохранения настроек';
         log('settings_save_fail', 'Ошибка сохранения настроек');
         return {
           st: false,
           text: errorText,
           status: errorInfo.status ?? undefined,
-          errors: errorInfo?.data?.errors,
+          errors,
           data: errorInfo?.data,
         };
       } finally {

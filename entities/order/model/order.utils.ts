@@ -1,32 +1,37 @@
 import { Order, TYPE_SHOW_DEL_FROM_INT, TYPE_SHOW_DEL_TO_INT } from './order.types';
 
-export function normalizeOrderRow(order: any): Order {
+function emptyOrder(): Order {
+  return {
+    drink_list: [],
+    pd: '',
+    et: '',
+    kv: '',
+    comment: '',
+    id: 0,
+  };
+}
+
+export function normalizeOrderRow(order: unknown): Order {
   if (!order || typeof order !== 'object') {
-    return {
-      drink_list: [],
-      pd: '',
-      et: '',
-      kv: '',
-      comment: '',
-      id: 0,
-    };
+    return emptyOrder();
   }
 
-  const id = parseInt(`${order.id ?? 0}`, 10);
-  const latitude = parseFloat(`${order?.xy?.latitude ?? ''}`);
-  const longitude = parseFloat(`${order?.xy?.longitude ?? ''}`);
+  const row = order as Partial<Order>;
+  const id = parseInt(`${row.id ?? 0}`, 10);
+  const latitude = parseFloat(`${row.xy?.latitude ?? ''}`);
+  const longitude = parseFloat(`${row.xy?.longitude ?? ''}`);
 
   return {
-    ...order,
-    drink_list: Array.isArray(order.drink_list) ? order.drink_list : [],
-    pd: order.pd ?? '',
-    et: order.et ?? '',
-    kv: order.kv ?? '',
-    comment: order.comment ?? '',
+    ...row,
+    drink_list: Array.isArray(row.drink_list) ? row.drink_list : [],
+    pd: row.pd ?? '',
+    et: row.et ?? '',
+    kv: row.kv ?? '',
+    comment: row.comment ?? '',
     id: Number.isNaN(id) ? 0 : id,
     xy:
       Number.isNaN(latitude) || Number.isNaN(longitude)
-        ? order.xy
+        ? row.xy
         : {
             latitude,
             longitude,

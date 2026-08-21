@@ -17,7 +17,9 @@ export default function PayModel() {
     }
 
     const interval = window.setInterval(() => {
-      getCheckStatusPay(payData.check_data);
+      if (payData.check_data) {
+        getCheckStatusPay(payData.check_data);
+      }
     }, 5000);
 
     return () => {

@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
     showOrders: [
       {
         id: 866503,
+        drink_list: [],
         id_text: '#866503 В очереди 0%',
         is_delete: 0,
         delete_reason: '',

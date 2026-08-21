@@ -10,6 +10,7 @@ vi.mock('@/components/analytics', () => ({
 
 const openOrder = {
   id: 866503,
+  drink_list: [],
   id_text: '#866503 В очереди 0%',
   is_delete: 0,
   is_my: 0,

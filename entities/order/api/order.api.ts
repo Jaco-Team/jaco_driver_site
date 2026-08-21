@@ -5,13 +5,13 @@ import { Order, DelOrder, PayData, HomeLocation } from '../model/order.types';
 import { normalizeOrderRow } from '../model/order.utils';
 
 interface GetOrdersResponse extends ApiResponse {
-  orders?: any[];
+  orders?: unknown[];
   update_interval?: number;
   limit?: string;
   limit_count?: string;
-  arr_del_list?: any[];
+  arr_del_list?: unknown[];
   driver_pay?: boolean;
-  driver_need_gps?: number;
+  driver_need_gps?: number | string | boolean;
   home?: {
     latitude?: number;
     longitude?: number;

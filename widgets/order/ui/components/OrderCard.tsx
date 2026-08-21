@@ -1,8 +1,9 @@
 import React, { useState, memo, useMemo, useEffect } from 'react';
-import { Card, CardContent, Typography, Chip, Box, Button, Tooltip, styled } from '@mui/material';
+import { Card, CardContent, Typography, Chip, Box, Button, styled } from '@mui/material';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { tooltipClasses } from '@mui/material/Tooltip';
+import Tooltip, { tooltipClasses, type TooltipProps } from '@mui/material/Tooltip';
 
+import type { DrinkItem, Order } from '@/entities/order/model/order.types';
 import { extractPhonesFromText } from '@/shared/lib/extractPhones';
 import {
   CommentPhonesControl,
@@ -10,7 +11,7 @@ import {
 } from '@/widgets/order/ui/components/CommentPhonesDrawer';
 
 interface OrderCardProps {
-  item: any;
+  item: Order;
   is_map?: boolean;
   globalFontSize: number;
   actionsDisabled?: boolean;
@@ -18,13 +19,16 @@ interface OrderCardProps {
   onPay?: (orderId: number) => void;
 }
 
-// Выносим вычисления за пределы компонента для мемоизации
-const getIsDeleted = (item: any) => parseInt(item.is_delete) === 1;
-const getIsMy = (item: any) => parseInt(item.is_my) === 1;
-const getIsGet = (item: any) => parseInt(item.is_get) === 1;
-const getStatusOrder = (item: any) => parseInt(item.status_order);
-const getOnlinePay = (item: any) => parseInt(item.online_pay);
-const getDriverPay = (item: any) => parseInt(item.driver_pay) === 1;
+function toFlagInt(value: unknown): number {
+  return parseInt(String(value ?? 0), 10) || 0;
+}
+
+const getIsDeleted = (item: Order) => toFlagInt(item.is_delete) === 1;
+const getIsMy = (item: Order) => toFlagInt(item.is_my) === 1;
+const getIsGet = (item: Order) => toFlagInt(item.is_get) === 1;
+const getStatusOrder = (item: Order) => toFlagInt(item.status_order);
+const getOnlinePay = (item: Order) => toFlagInt(item.online_pay);
+const getDriverPay = (item: Order) => toFlagInt(item.driver_pay) === 1;
 
 export const ORDER_CARD_BUTTON_HEIGHT = 44;
 export const ORDER_CARD_DELETED_BG = '#d95030';
@@ -156,7 +160,7 @@ const ChipStyled = styled(Chip)({
   marginBottom: 8,
 });
 
-const HtmlTooltip = styled(({ className, ...props }: any) => (
+const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
   <Tooltip {...props} classes={{ popper: className }} />
 ))(({ theme }) => ({
   [`& .${tooltipClasses.tooltip}`]: {
@@ -171,35 +175,35 @@ const HtmlTooltip = styled(({ className, ...props }: any) => (
 }));
 
 // Компонент для отображения чипов позиций (вынесен для мемоизации)
-const OrderChips = memo(({ item }: { item: any }) => {
+const OrderChips = memo(({ item }: { item: Order }) => {
   const [openTooltip, setOpenTooltip] = useState(false);
 
   return (
     <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-      {parseInt(item.count_other) > 0 && (
+      {toFlagInt(item.count_other) > 0 && (
         <ChipStyled label="Роллы" size="small" sx={{ backgroundColor: '#2196F3', color: '#fff' }} />
       )}
-      {parseInt(item.count_pasta) > 0 && (
+      {toFlagInt(item.count_pasta) > 0 && (
         <ChipStyled
           label={`Паста x${item.count_pasta}`}
           size="small"
           sx={{ backgroundColor: '#9c27b0', color: '#fff' }}
         />
       )}
-      {parseInt(item.count_pizza) > 0 && (
+      {toFlagInt(item.count_pizza) > 0 && (
         <ChipStyled
           label={`Пицца x${item.count_pizza}`}
           size="small"
           sx={{ backgroundColor: '#f44336', color: '#fff' }}
         />
       )}
-      {parseInt(item.count_drink) > 0 && (
+      {toFlagInt(item.count_drink) > 0 && (
         <HtmlTooltip
           open={openTooltip}
           onClose={() => setOpenTooltip(false)}
           title={
             <Box>
-              {item.drink_list?.map((drink: any, k: number) => (
+              {item.drink_list?.map((drink: DrinkItem, k: number) => (
                 <Typography key={k} sx={{ padding: '5px 0', color: '#fff' }}>
                   {drink.names || drink.name}
                 </Typography>
@@ -232,7 +236,7 @@ const MyOrderActions = memo(
     onPay,
     actionsDisabled,
   }: {
-    item: any;
+    item: Order;
     statusOrder: number;
     onlinePay: number;
     driverPay: boolean;
@@ -400,21 +404,21 @@ export const OrderCard = memo<OrderCardProps>(
             </InfoRow>
 
             {/* Пд, Эт, Кв */}
-            {(parseInt(item.pd) > 0 || parseInt(item.et) > 0 || parseInt(item.kv) > 0) && (
+            {(toFlagInt(item.pd) > 0 || toFlagInt(item.et) > 0 || toFlagInt(item.kv) > 0) && (
               <InfoRow>
-                {parseInt(item.pd) > 0 && (
+                {toFlagInt(item.pd) > 0 && (
                   <>
                     <Label variant="body1">Пд: </Label>
                     <Value variant="body1">{item.pd}, </Value>
                   </>
                 )}
-                {parseInt(item.et) > 0 && (
+                {toFlagInt(item.et) > 0 && (
                   <>
                     <Label variant="body1">Эт: </Label>
                     <Value variant="body1">{item.et}, </Value>
                   </>
                 )}
-                {parseInt(item.kv) > 0 && (
+                {toFlagInt(item.kv) > 0 && (
                   <>
                     <Label variant="body1">Кв: </Label>
                     <Value variant="body1">{item.kv}</Value>
@@ -424,7 +428,7 @@ export const OrderCard = memo<OrderCardProps>(
             )}
 
             {/* Домофон */}
-            {parseInt(item.fake_dom) === 0 && (
+            {toFlagInt(item.fake_dom) === 0 && (
               <InfoRow>
                 <Typography
                   variant="body1"
@@ -508,7 +512,7 @@ export const OrderCard = memo<OrderCardProps>(
             </InfoRow>
 
             {/* Сдача */}
-            {parseInt(item.sdacha) !== 0 && onlinePay !== 1 && (
+            {toFlagInt(item.sdacha) !== 0 && onlinePay !== 1 && (
               <InfoRow>
                 <Label variant="body1">Сдача с: </Label>
                 <Value variant="body1">

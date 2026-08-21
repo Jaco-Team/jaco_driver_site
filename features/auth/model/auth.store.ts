@@ -59,7 +59,7 @@ function sessionFromUser(user: User, token?: string | null): AuthSession {
     user: {
       ...user,
       token: resolvedToken || user?.token,
-      id: user?.id ?? user?.user_id,
+      id: user?.id ?? user?.user_id ?? undefined,
     },
   };
 }
