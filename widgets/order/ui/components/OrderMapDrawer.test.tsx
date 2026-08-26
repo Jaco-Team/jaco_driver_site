@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OrderMapDrawer } from './OrderMapDrawer';
@@ -63,6 +64,23 @@ vi.mock('@/shared/config/fonts', () => ({
   roboto: { variable: 'roboto-variable' },
 }));
 
+function renderDrawer(mode: 'light' | 'dark' = 'light') {
+  return render(
+    <ThemeProvider
+      theme={createTheme({
+        palette: {
+          mode,
+          background: {
+            paper: mode === 'dark' ? '#18232D' : '#FFFFFF',
+          },
+        },
+      })}
+    >
+      <OrderMapDrawer />
+    </ThemeProvider>
+  );
+}
+
 describe('OrderMapDrawer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,7 +90,7 @@ describe('OrderMapDrawer', () => {
   });
 
   it('anchors the order card to the bottom of the screen, not the top', () => {
-    render(<OrderMapDrawer />);
+    renderDrawer();
 
     const drawer = screen.getByTestId('order-map-drawer');
     const paper = screen.getByTestId('order-map-drawer-paper');
@@ -83,17 +101,25 @@ describe('OrderMapDrawer', () => {
     expect(paper).toHaveStyle({ top: 'auto', bottom: '0px' });
   });
 
+  it('uses a dark paper background when the app theme is dark', () => {
+    renderDrawer('dark');
+
+    expect(screen.getByTestId('order-map-drawer-paper')).toHaveStyle({
+      background: '#18232D',
+    });
+  });
+
   it('shows a spinner over the card while a request is in flight', () => {
     mocks.orderState.is_load = true;
 
-    render(<OrderMapDrawer />);
+    renderDrawer();
 
     expect(screen.getByTestId('order-map-drawer-spinner')).toBeInTheDocument();
     expect(screen.getByTestId('order-card-take')).toBeDisabled();
   });
 
   it('takes an order immediately from the map card', () => {
-    render(<OrderMapDrawer />);
+    renderDrawer();
 
     fireEvent.click(screen.getByTestId('order-card-take'));
 
@@ -110,7 +136,7 @@ describe('OrderMapDrawer', () => {
       },
     ];
 
-    render(<OrderMapDrawer />);
+    renderDrawer();
 
     fireEvent.click(screen.getByTestId('order-card-cancel'));
     fireEvent.click(screen.getByTestId('order-card-finish'));
@@ -135,7 +161,7 @@ describe('OrderMapDrawer', () => {
   it('does not close the card by the handle while a request is running', () => {
     mocks.orderState.is_load = true;
 
-    render(<OrderMapDrawer />);
+    renderDrawer();
 
     fireEvent.click(screen.getByTestId('order-map-drawer-handle'));
 
@@ -151,7 +177,7 @@ describe('OrderMapDrawer', () => {
       },
     ];
 
-    render(<OrderMapDrawer />);
+    renderDrawer();
 
     expect(screen.getByTestId('order-map-drawer-paper')).toHaveStyle({
       background: ORDER_CARD_DELETED_BG,

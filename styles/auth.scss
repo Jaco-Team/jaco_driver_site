@@ -262,13 +262,18 @@
     padding-top: 0;
     padding-bottom: 0;
     border-radius: 18px;
+    color: #1f1015;
+    -webkit-text-fill-color: #1f1015;
+    caret-color: #1f1015;
   }
 
   .MuiOutlinedInput-input:-webkit-autofill,
   .MuiOutlinedInput-input:-webkit-autofill:hover,
   .MuiOutlinedInput-input:-webkit-autofill:focus,
   .MuiOutlinedInput-input:-webkit-autofill:active {
+    color: #1f1015;
     -webkit-text-fill-color: #1f1015;
+    caret-color: #1f1015;
     box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.98) inset;
     -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.98) inset;
     border-radius: 18px;
@@ -276,8 +281,89 @@
   }
 }
 
+.auth__otp {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth__otpLabel {
+  @include font_custom(0.98rem, 500, rgba(64, 79, 92, 0.72));
+}
+
+.auth__otpBoxes {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  cursor: text;
+}
+
+.auth__otpBoxes--disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.auth__otpBox {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 56px;
+  padding: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(37, 18, 22, 0.1);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 10px 24px rgba(24, 17, 20, 0.05);
+  @include font_custom(1.35rem, 700, #1f1015);
+  line-height: 1;
+  text-align: center;
+  color: #1f1015;
+  outline: none;
+  appearance: none;
+  -moz-appearance: textfield;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.18s ease;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.auth__otpBox--filled {
+  border-color: rgba(31, 61, 86, 0.28);
+  background: rgba(245, 249, 253, 0.96);
+}
+
+.auth__otpBox--active {
+  border-color: $colorMain;
+  box-shadow: 0 14px 28px rgba(166, 0, 42, 0.12);
+  transform: translateY(-1px);
+}
+
 .auth__captcha {
   margin: 4px 0 8px;
+}
+
+@media (max-width: 599px) {
+  .auth__otpBoxes {
+    gap: 6px;
+  }
+
+  .auth__otpBox {
+    min-height: 50px;
+    border-radius: 14px;
+    font-size: 1.2rem;
+  }
 }
 
 .auth__requirements {

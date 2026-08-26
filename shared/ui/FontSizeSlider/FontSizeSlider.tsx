@@ -37,20 +37,22 @@ export const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
         style={{ padding: 0, backgroundColor: 'transparent' }}
       >
         <SectionTitle title="Размер шрифта" fontSize={baseFontSize} />
-        <Typography sx={{ fontSize: helperFontSize, color: '#6f7f8d', mb: 1.2 }}>
+        <Typography sx={{ fontSize: helperFontSize, color: 'text.secondary', mb: 1.2 }}>
           Текущее значение: {value}
         </Typography>
         <Box className="settingsScalePreview">
           <Box className="settingsScalePreview__item">
-            <span style={{ color: '#1f2b36', fontSize: 10, lineHeight: 1 }}>Ая</span>
+            <span style={{ color: 'var(--app-text)', fontSize: 10, lineHeight: 1 }}>Ая</span>
             <span className="settingsScalePreview__caption">Меньше</span>
           </Box>
           <Box className="settingsScalePreview__item">
-            <span style={{ color: '#1f2b36', fontSize: sampleMediumSize, lineHeight: 1 }}>Ая</span>
+            <span style={{ color: 'var(--app-text)', fontSize: sampleMediumSize, lineHeight: 1 }}>
+              Ая
+            </span>
             <span className="settingsScalePreview__caption">Текущий</span>
           </Box>
           <Box className="settingsScalePreview__item">
-            <span style={{ color: '#1f2b36', fontSize: 40, lineHeight: 1 }}>Ая</span>
+            <span style={{ color: 'var(--app-text)', fontSize: 40, lineHeight: 1 }}>Ая</span>
             <span className="settingsScalePreview__caption">Больше</span>
           </Box>
         </Box>

@@ -35,12 +35,12 @@ export const RadioGroupField: React.FC<RadioGroupFieldProps> = ({
         component="legend"
         sx={{
           fontSize: labelFontSize,
-          color: '#1f2b36',
+          color: 'text.primary',
           fontWeight: 700,
           lineHeight: 1.2,
           mb: 0.65,
           '&.Mui-focused': {
-            color: '#1f2b36',
+            color: 'text.primary',
           },
         }}
       >
@@ -54,7 +54,7 @@ export const RadioGroupField: React.FC<RadioGroupFieldProps> = ({
             control={
               <Radio
                 sx={{
-                  color: 'rgba(66, 98, 125, 0.45)',
+                  color: 'text.secondary',
                   '&.Mui-checked': {
                     color: '#cc0033',
                   },
@@ -69,11 +69,11 @@ export const RadioGroupField: React.FC<RadioGroupFieldProps> = ({
               borderRadius: '12px',
               transition: 'background-color 0.18s ease',
               '&:hover': {
-                backgroundColor: 'rgba(66, 98, 125, 0.06)',
+                backgroundColor: 'action.hover',
               },
               '& .MuiFormControlLabel-label': {
                 fontSize: optionFontSize,
-                color: '#2b3744',
+                color: 'text.primary',
                 lineHeight: 1.32,
               },
             }}

@@ -62,7 +62,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, fontS
         style={{ padding: 0, backgroundColor: 'transparent' }}
       >
         <SectionTitle title="Цвет на карте" fontSize={baseFontSize} />
-        <Typography sx={{ fontSize: helperFontSize, color: '#6f7f8d', mb: 1.4 }}>
+        <Typography sx={{ fontSize: helperFontSize, color: 'text.secondary', mb: 1.4 }}>
           Текущий цвет: {color.toUpperCase()}
         </Typography>
         <Box className="settingsColorPreview" sx={{ mb: 2 }}>
@@ -75,7 +75,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, fontS
               backgroundColor: color,
             }}
           />
-          <Typography sx={{ fontSize: baseFontSize, color: '#22303d', fontWeight: 600 }}>
+          <Typography sx={{ fontSize: baseFontSize, color: 'text.primary', fontWeight: 600 }}>
             Выбранный оттенок
           </Typography>
         </Box>

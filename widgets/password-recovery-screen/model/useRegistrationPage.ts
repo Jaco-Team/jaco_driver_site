@@ -27,7 +27,7 @@ export function useRegistrationPage(): UseRegistrationPageResult {
 
   const [myLogin, setMyLogin] = useState('');
   const [myPWD, setMyPWDState] = useState('');
-  const [myCode, setMyCode] = useState('');
+  const [myCode, setMyCodeState] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [retryAfter, setRetryAfter] = useState(0);
@@ -68,6 +68,13 @@ export function useRegistrationPage(): UseRegistrationPageResult {
     }
   }
 
+  function setMyCode(value: string): void {
+    setMyCodeState(value.replace(/\D/g, '').slice(0, 6));
+    if (err2) {
+      setErr2('');
+    }
+  }
+
   async function requestRecoveryCode(): Promise<void> {
     if (myLogin.length === 0 || !isPasswordValid || retryAfter > 0) {
       return;
@@ -102,15 +109,17 @@ export function useRegistrationPage(): UseRegistrationPageResult {
     }, 300);
   }
 
-  async function confirmRecoveryCode(): Promise<void> {
-    if (myCode.length !== 6) {
+  async function confirmRecoveryCode(codeOverride?: string): Promise<void> {
+    const code = (codeOverride ?? myCode).replace(/\D/g, '').slice(0, 6);
+
+    if (code.length !== 6 || loader) {
       return;
     }
 
     setLoader(true);
     setErr2('');
 
-    const res = await confirmRecoveryCodeApi(myLogin, myCode);
+    const res = await confirmRecoveryCodeApi(myLogin, code);
 
     if (res.st === true) {
       const authResult = await loginByPasswordApi(myLogin, myPWD);
@@ -150,7 +159,9 @@ export function useRegistrationPage(): UseRegistrationPageResult {
   };
   const canSubmit =
     retryAfter <= 0 &&
-    (activeStep === 1 || Boolean(isPasswordValid && (!SMARTCAPTCHA_CLIENT_KEY || captchaToken)));
+    (activeStep === 1
+      ? myCode.length === 6
+      : Boolean(isPasswordValid && (!SMARTCAPTCHA_CLIENT_KEY || captchaToken)));
 
   return {
     loader,

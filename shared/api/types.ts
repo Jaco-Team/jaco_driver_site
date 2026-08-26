@@ -17,6 +17,7 @@ export interface UserSettings {
   update_interval?: number;
   action_centered_map?: number | string;
   night_map?: number | string;
+  dark_theme?: number | string | boolean;
   is_scaleMap?: number | string;
   fontSize?: number;
   theme?: string;

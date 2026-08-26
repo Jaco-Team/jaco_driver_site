@@ -15,14 +15,18 @@ import PinDropIcon from '@mui/icons-material/PinDrop';
 
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
-import type { HomeLocation, Order } from '@/entities/order/model/order.types';
+import type { HomeLocation } from '@/entities/order/model/order.types';
+import {
+  groupOrdersByMapLocation,
+  type OrderMapGroup,
+} from '@/entities/order/model/orderMapGroups';
 import { escapeHtml, sanitizeCssColor, sanitizeCssIdent } from '@/shared/lib/escapeHtml';
 import { roboto } from '@/shared/ui/Font';
 import { OrdersFilterSheet } from '@/widgets/order/ui/components/OrdersFilterSheet';
 import { OrderConfirmModal } from '@/widgets/order/ui/components/OrderConfirmModal';
 import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 import { useOrdersMapScreen } from '../model/useOrdersMapScreen';
-import type { MapInstance } from '../model/useOrdersMapScreen.type';
+import { getMapEdgeIndicators, type MapViewport } from '../model/mapViewport';
 
 const YANDEX_MAPS_API_KEY = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY ?? '';
 
@@ -136,7 +140,7 @@ function createMeasuredIconLayout(yMapsApi: YMapsTemplateApi, template: string) 
 }
 
 interface MapPointProps {
-  item: Order;
+  group: OrderMapGroup;
   theme: string;
   mapScale: string;
   globalFontSize: number;
@@ -145,19 +149,20 @@ interface MapPointProps {
 }
 
 const OrdersMapPoints = memo(function OrdersMapPoints({
+  groups,
   theme,
   globalFontSize,
   mapScale,
   yMapsApi,
 }: {
+  groups: OrderMapGroup[];
   theme: string;
   globalFontSize: number;
   mapScale: string;
   yMapsApi: YMapsTemplateApi;
 }) {
-  const { getOrders, orders, update_interval, showOrdersMap } = useOrdersStore((state) => ({
+  const { getOrders, update_interval, showOrdersMap } = useOrdersStore((state) => ({
     getOrders: state.getOrders,
-    orders: state.orders,
     update_interval: state.update_interval,
     showOrdersMap: state.showOrdersMap,
   }));
@@ -175,10 +180,10 @@ const OrdersMapPoints = memo(function OrdersMapPoints({
 
   return (
     <>
-      {orders.map((item) => (
+      {groups.map((group) => (
         <OrdersMapPoint
-          key={item.id}
-          item={item}
+          key={group.key}
+          group={group}
           theme={theme}
           mapScale={mapScale}
           globalFontSize={globalFontSize}
@@ -191,37 +196,79 @@ const OrdersMapPoints = memo(function OrdersMapPoints({
 });
 
 const OrdersMapPoint = memo(function OrdersMapPoint({
-  item,
+  group,
   theme,
   mapScale,
   globalFontSize,
   showOrdersMap,
   yMapsApi,
 }: MapPointProps) {
+  const item = group.representative;
   const scale = sanitizeCssIdent(String(mapScale).replace('.', '_'), '1');
   const markerColor = sanitizeCssColor((item?.point_color || item?.color) ?? 'blue');
   const rawLabel = String(item?.point_text ?? '');
   const label = escapeHtml(rawLabel);
-  const themeClass = sanitizeCssIdent(theme, 'white');
+  const themeClass = sanitizeCssIdent(theme === 'classic' ? 'white' : theme, 'white');
   const fontClass = sanitizeCssIdent(roboto.variable, 'font');
   const fontSize = Number.isFinite(globalFontSize) ? globalFontSize : 16;
+  const compactFontSize = Math.min(18, Math.max(12, fontSize - 2));
+  const groupCount =
+    group.count > 1
+      ? `<span class="map-marker-count" style="font-size:${compactFontSize}px">${group.count}</span>`
+      : '';
+  const statusDots =
+    group.count > 1
+      ? `<span class="map-marker-statuses">${group.statusColors
+          .slice(0, 3)
+          .map(
+            (color) =>
+              `<span class="map-marker-status" style="background:${sanitizeCssColor(color)}"></span>`
+          )
+          .join('')}${
+          group.statusColors.length > 3
+            ? `<span class="map-marker-status-overflow">+${group.statusColors.length - 3}</span>`
+            : ''
+        }</span>`
+      : '';
 
   const circleLayout = useMemo(
     () =>
       createMeasuredIconLayout(
         yMapsApi,
-        `<div class="map-img ${fontClass}"><span class='span_svg_circle_${scale}'><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="none" viewBox="0 0 24 24"><path fill="${markerColor}" d="M11.969 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.47-10-10-10m.03 14.23c-2.34 0-4.23-1.89-4.23-4.23s1.89-4.23 4.23-4.23 4.23 1.89 4.23 4.23-1.89 4.23-4.23 4.23" /></svg></span><span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${label}</span></div>`
+        `<div class="map-img ${fontClass} map-img--group-${group.count > 1 ? 'multiple' : 'single'}"><span class="map-marker-icon"><span class='span_svg_circle_${scale}'><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="none" viewBox="0 0 24 24"><path fill="${markerColor}" d="M11.969 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.47-10-10-10m.03 14.23c-2.34 0-4.23-1.89-4.23-4.23s1.89-4.23 4.23-4.23 4.23 1.89 4.23 4.23-1.89 4.23-4.23 4.23" /></svg></span>${groupCount}${statusDots}</span><span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${label}</span></div>`
       ),
-    [fontClass, fontSize, label, markerColor, scale, themeClass, yMapsApi]
+    [
+      fontClass,
+      fontSize,
+      group.count,
+      groupCount,
+      label,
+      markerColor,
+      scale,
+      statusDots,
+      themeClass,
+      yMapsApi,
+    ]
   );
 
   const locationLayout = useMemo(
     () =>
       createMeasuredIconLayout(
         yMapsApi,
-        `<div class="map-img ${fontClass}"><span class='span_svg_loc_${scale}'><svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" id="Layer_1" width="80" height="80" version="1" viewBox="0 0 64 64"><path fill="${markerColor}" d="M32 0C18.746 0 8 10.746 8 24c0 5.219 1.711 10.008 4.555 13.93.051.094.059.199.117.289l16 24a4 4 0 0 0 6.656 0l16-24c.059-.09.066-.195.117-.289C54.289 34.008 56 29.219 56 24 56 10.746 45.254 0 32 0m0 32a8 8 0 1 1 0-16 8 8 0 0 1 0 16" /></svg></span><span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${label}</span></div>`
+        `<div class="map-img ${fontClass} map-img--group-${group.count > 1 ? 'multiple' : 'single'}"><span class="map-marker-icon"><span class='span_svg_loc_${scale}'><svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" id="Layer_1" width="80" height="80" version="1" viewBox="0 0 64 64"><path fill="${markerColor}" d="M32 0C18.746 0 8 10.746 8 24c0 5.219 1.711 10.008 4.555 13.93.051.094.059.199.117.289l16 24a4 4 0 0 0 6.656 0l16-24c.059-.09.066-.195.117-.289C54.289 34.008 56 29.219 56 24 56 10.746 45.254 0 32 0m0 32a8 8 0 1 1 0-16 8 8 0 0 1 0 16" /></svg></span>${groupCount}${statusDots}</span><span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${label}</span></div>`
       ),
-    [fontClass, fontSize, label, markerColor, scale, themeClass, yMapsApi]
+    [
+      fontClass,
+      fontSize,
+      group.count,
+      groupCount,
+      label,
+      markerColor,
+      scale,
+      statusDots,
+      themeClass,
+      yMapsApi,
+    ]
   );
 
   const lat = Number(item?.xy?.latitude);
@@ -233,7 +280,7 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
     return null;
   }
 
-  if (theme !== 'classic') {
+  if (theme !== 'classic' || group.count > 1) {
     return (
       <Placemark
         geometry={geometry}
@@ -347,10 +394,12 @@ const OrdersMapDriverPoint = memo(function OrdersMapDriverPoint({
 const OrdersMapObjects = memo(function OrdersMapObjects({
   header,
   orders,
+  groups,
   getHome,
 }: {
   header: ReturnType<typeof useOrdersMapScreen>['header'];
   orders: ReturnType<typeof useOrdersMapScreen>['orders'];
+  groups: OrderMapGroup[];
   getHome: () => void;
 }) {
   const yMapsApi = useYMaps(['templateLayoutFactory']) as YMapsTemplateApi | null;
@@ -384,6 +433,7 @@ const OrdersMapObjects = memo(function OrdersMapObjects({
           ) : null}
 
           <OrdersMapPoints
+            groups={groups}
             theme={header.theme}
             mapScale={header.mapScale}
             globalFontSize={header.globalFontSize}
@@ -395,8 +445,102 @@ const OrdersMapObjects = memo(function OrdersMapObjects({
   );
 });
 
+const COMPASS_DIRECTIONS = [
+  'север',
+  'северо-восток',
+  'восток',
+  'юго-восток',
+  'юг',
+  'юго-запад',
+  'запад',
+  'северо-запад',
+];
+
+function getOrderCountLabel(count: number): string {
+  const lastTwoDigits = count % 100;
+  const lastDigit = count % 10;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return `${count} заказов`;
+  }
+
+  if (lastDigit === 1) {
+    return `${count} заказ`;
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return `${count} заказа`;
+  }
+
+  return `${count} заказов`;
+}
+
+const OrdersMapCompass = memo(function OrdersMapCompass({
+  groups,
+  viewport,
+  globalFontSize,
+  onCenter,
+}: {
+  groups: OrderMapGroup[];
+  viewport: MapViewport | null;
+  globalFontSize: number;
+  onCenter: (coordinate: [number, number]) => void;
+}) {
+  const indicators = useMemo(() => getMapEdgeIndicators(groups, viewport), [groups, viewport]);
+  const countFontSize = Math.min(18, Math.max(12, globalFontSize - 2));
+
+  if (indicators.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="orders-map-compass" aria-label="Заказы за пределами карты">
+      {indicators.map((indicator) => (
+        <button
+          key={indicator.sector}
+          type="button"
+          className="orders-map-compass__indicator"
+          style={{ left: `${indicator.left}%`, top: `${indicator.top}%` }}
+          aria-label={`Показать ${getOrderCountLabel(indicator.orderCount)}, направление ${
+            COMPASS_DIRECTIONS[indicator.sector]
+          }`}
+          onClick={() => onCenter(indicator.target.coordinate)}
+        >
+          <span
+            className="orders-map-compass__arrow"
+            style={{ transform: `rotate(${indicator.angle}deg)` }}
+            aria-hidden="true"
+          />
+          <span className="orders-map-compass__count" style={{ fontSize: countFontSize }}>
+            {indicator.orderCount}
+          </span>
+          <span className="orders-map-compass__statuses" aria-hidden="true">
+            {indicator.statusColors.slice(0, 3).map((color) => (
+              <span
+                key={color}
+                className="orders-map-compass__status"
+                style={{ backgroundColor: sanitizeCssColor(color) }}
+              />
+            ))}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+});
+
 export function OrdersMapScreen() {
-  const { mapRef, header, orders, iconColor, getHome, handleConfirm } = useOrdersMapScreen();
+  const {
+    setMapInstance,
+    viewport,
+    header,
+    orders,
+    iconColor,
+    getHome,
+    centerOnCoordinate,
+    handleConfirm,
+  } = useOrdersMapScreen();
+  const groups = useMemo(() => groupOrdersByMapLocation(orders.orders), [orders.orders]);
 
   return (
     <>
@@ -415,33 +559,46 @@ export function OrdersMapScreen() {
       </div>
 
       {orders.home ? (
-        <div
-          style={
-            header.night_map
-              ? { filter: 'invert(90%) hue-rotate(180deg) brightness(85%)', height: '100vh' }
-              : undefined
-          }
-        >
-          <YMaps
-            query={{
-              lang: 'ru_RU',
-              ...(YANDEX_MAPS_API_KEY ? { apikey: YANDEX_MAPS_API_KEY } : {}),
-            }}
+        <div className="orders-map-stage">
+          <div
+            className="orders-map-stage__map"
+            style={
+              header.night_map
+                ? { filter: 'invert(90%) hue-rotate(180deg) brightness(85%)' }
+                : undefined
+            }
           >
-            <Map
-              key={orders.home.center.join(',')}
-              defaultState={orders.home as HomeLocation}
-              instanceRef={(ref: MapInstance | null) => {
-                mapRef.current = ref;
+            <YMaps
+              query={{
+                lang: 'ru_RU',
+                ...(YANDEX_MAPS_API_KEY ? { apikey: YANDEX_MAPS_API_KEY } : {}),
               }}
-              width="100%"
-              height="100vh"
-              style={{ minHeight: '100vh' }}
-              modules={['control.ZoomControl', 'control.TrafficControl']}
             >
-              <OrdersMapObjects header={header} orders={orders} getHome={getHome} />
-            </Map>
-          </YMaps>
+              <Map
+                key={orders.home.center.join(',')}
+                defaultState={orders.home as HomeLocation}
+                instanceRef={setMapInstance}
+                width="100%"
+                height="100vh"
+                style={{ minHeight: '100vh' }}
+                modules={['control.ZoomControl', 'control.TrafficControl']}
+              >
+                <OrdersMapObjects
+                  header={header}
+                  orders={orders}
+                  groups={groups}
+                  getHome={getHome}
+                />
+              </Map>
+            </YMaps>
+          </div>
+
+          <OrdersMapCompass
+            groups={groups}
+            viewport={viewport}
+            globalFontSize={header.globalFontSize}
+            onCenter={centerOnCoordinate}
+          />
         </div>
       ) : null}
 

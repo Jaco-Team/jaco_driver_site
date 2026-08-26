@@ -251,4 +251,21 @@ describe('orders store actions', () => {
 
     expect(useOrdersStore.getState().home).toBe(home);
   });
+
+  it('opens all orders grouped at practically the same map location', () => {
+    useOrdersStore.setState({
+      orders: [
+        { id: 1, xy: { latitude: 55.700001, longitude: 37.600001 } } as any,
+        { id: 2, xy: { latitude: 55.700004, longitude: 37.600004 } } as any,
+        { id: 3, xy: { latitude: 55.71, longitude: 37.61 } } as any,
+      ],
+      showOrders: [],
+      isOpenOrderMap: false,
+    });
+
+    useOrdersStore.getState().showOrdersMap(1);
+
+    expect(useOrdersStore.getState().showOrders.map((order) => order.id)).toEqual([1, 2]);
+    expect(useOrdersStore.getState().isOpenOrderMap).toBe(true);
+  });
 });

@@ -10,6 +10,7 @@ import {
   unwrapSettingsPayload,
   getFirstValidationError,
   normalizeIdString,
+  normalizeBooleanSetting,
   buildSaveSettingsPayload,
 } from './settings.utils';
 
@@ -173,6 +174,22 @@ describe('settings.utils', () => {
     });
   });
 
+  describe('normalizeBooleanSetting', () => {
+    it('accepts boolean-like API values', () => {
+      expect(normalizeBooleanSetting(true)).toBe(true);
+      expect(normalizeBooleanSetting(1)).toBe(true);
+      expect(normalizeBooleanSetting('1')).toBe(true);
+      expect(normalizeBooleanSetting('true')).toBe(true);
+    });
+
+    it('falls back to false for disabled or invalid values', () => {
+      expect(normalizeBooleanSetting(false)).toBe(false);
+      expect(normalizeBooleanSetting(0)).toBe(false);
+      expect(normalizeBooleanSetting('0')).toBe(false);
+      expect(normalizeBooleanSetting(undefined)).toBe(false);
+    });
+  });
+
   describe('buildSaveSettingsPayload', () => {
     it('builds correct payload with boolean flags', () => {
       const params = {
@@ -185,6 +202,7 @@ describe('settings.utils', () => {
         theme: 'dark',
         mapScale: 1.5,
         night_map: false,
+        dark_theme: true,
         is_scaleMap: true,
       };
 
@@ -196,6 +214,7 @@ describe('settings.utils', () => {
         update_interval: 60,
         action_centered_map: 1,
         night_map: 0,
+        dark_theme: 1,
         is_scaleMap: 1,
         color: '#FF0000',
         fontSize: 14,

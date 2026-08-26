@@ -22,6 +22,7 @@ interface HeaderState {
   is_need_avg_time: boolean;
   is_need_page_stat: boolean;
   night_map: boolean;
+  darkTheme: boolean;
   globalFontSize: number;
   theme: string;
   mapScale: string;
@@ -33,6 +34,7 @@ interface HeaderActions {
   applySettings: (settings: SettingsData) => void;
   setGlobalFontSize: (fontSize: number) => void;
   setTheme: (theme: string) => void;
+  setDarkTheme: (darkTheme: boolean) => void;
   setGlobalMapScale: (mapScale: string) => void;
   getMyFontSize: (token: string) => Promise<void>;
   getMyAvgTime: (token: string, pointId?: string | number | null) => Promise<void>;
@@ -111,6 +113,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     is_need_avg_time: false,
     is_need_page_stat: false,
     night_map: false,
+    darkTheme: false,
     globalFontSize: DEFAULT_GLOBAL_FONT_SIZE,
     theme: 'white',
     mapScale: '1',
@@ -134,6 +137,9 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
         night_map: hasField('night_map')
           ? normalizeBoolLike(settings.night_map)
           : currentState.night_map,
+        darkTheme: hasField('dark_theme')
+          ? normalizeBoolLike(settings.dark_theme)
+          : currentState.darkTheme,
         is_scaleMap: hasField('is_scaleMap')
           ? normalizeBoolLike(settings.is_scaleMap)
           : currentState.is_scaleMap,
@@ -153,6 +159,10 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
 
     setTheme: (theme: string) => {
       set({ theme });
+    },
+
+    setDarkTheme: (darkTheme: boolean) => {
+      set({ darkTheme });
     },
 
     setGlobalMapScale: (mapScale: string) => {

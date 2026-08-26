@@ -2,14 +2,49 @@
 
 @use './settings' as *;
 
+:root {
+  --app-background: #f4f7fa;
+  --app-surface: #ffffff;
+  --app-surface-alt: #e9eef3;
+  --app-surface-raised: #f8fafc;
+  --app-text: #1f2d38;
+  --app-text-muted: #6b7883;
+  --app-border: rgba(66, 98, 125, 0.16);
+  --app-shadow: rgba(17, 27, 36, 0.12);
+  --app-steel-soft: rgba(66, 98, 125, 0.08);
+}
+
+:root[data-app-theme='dark'] {
+  --app-background: #10171e;
+  --app-surface: #18232d;
+  --app-surface-alt: #22303b;
+  --app-surface-raised: #293945;
+  --app-text: #f3f6f8;
+  --app-text-muted: #aebbc5;
+  --app-border: rgba(174, 187, 197, 0.22);
+  --app-shadow: rgba(0, 0, 0, 0.34);
+  --app-steel-soft: rgba(117, 147, 173, 0.16);
+}
+
+html,
+body,
+#__next {
+  min-height: 100%;
+  background-color: var(--app-background);
+}
+
 body {
   margin: 0px;
   font-family: Roboto, Helvetica, Arial, sans-serif;
+  color: var(--app-text);
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
 }
 .MuiDrawer-paper li a,
 .MuiDrawer-paper li span {
   text-decoration: none;
-  @include font_custom(1rem, 400);
+  @include font_custom(1rem, 400, var(--app-text));
   line-height: 2rem;
   padding: 0 40px;
 }

@@ -34,7 +34,7 @@ export const MapScaleSlider: React.FC<MapScaleSliderProps> = ({
         style={{ padding: 0, backgroundColor: 'transparent' }}
       >
         <SectionTitle title="Масштабирование иконок на карте" fontSize={baseFontSize} />
-        <Typography sx={{ fontSize: helperFontSize, color: '#6f7f8d', mb: 1.2 }}>
+        <Typography sx={{ fontSize: helperFontSize, color: 'text.secondary', mb: 1.2 }}>
           Текущее значение: {value.toFixed(1)}
         </Typography>
         <Box sx={{ px: 0.6, pt: 0.6 }}>

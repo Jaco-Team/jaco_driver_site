@@ -16,6 +16,7 @@ export interface UseSettingsFormReturn {
   updateInterval: number;
   centeredMap: boolean;
   nightMap: boolean;
+  darkTheme: boolean;
   isScaleMap: boolean;
   color: string;
   groupTypeTheme: ThemeType;
@@ -29,6 +30,7 @@ export interface UseSettingsFormReturn {
   setUpdateInterval: Dispatch<SetStateAction<number>>;
   setCenteredMap: Dispatch<SetStateAction<boolean>>;
   setNightMap: Dispatch<SetStateAction<boolean>>;
+  setDarkTheme: (darkTheme: boolean) => void;
   setIsScaleMap: Dispatch<SetStateAction<boolean>>;
   setColor: Dispatch<SetStateAction<string>>;
   setGroupTypeTheme: Dispatch<SetStateAction<ThemeType>>;

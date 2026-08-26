@@ -121,6 +121,19 @@ export function normalizeIdString(value: unknown): string {
   return `${value}`.trim();
 }
 
+export function normalizeBooleanSetting(value: unknown): boolean {
+  if (value === true || value === 1) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === '1' || normalized === 'true';
+  }
+
+  return false;
+}
+
 export function buildSaveSettingsPayload(params: {
   groupTypeTime: string;
   type_show_del: string;
@@ -131,6 +144,7 @@ export function buildSaveSettingsPayload(params: {
   theme: string;
   mapScale: number;
   night_map: boolean;
+  dark_theme: boolean;
   is_scaleMap: boolean;
 }): SaveSettingsPayload {
   return {
@@ -139,6 +153,7 @@ export function buildSaveSettingsPayload(params: {
     update_interval: parseInt(String(params.update_interval)),
     action_centered_map: params.centered_map ? 1 : 0,
     night_map: params.night_map ? 1 : 0,
+    dark_theme: params.dark_theme ? 1 : 0,
     is_scaleMap: params.is_scaleMap ? 1 : 0,
     color: params.color,
     fontSize: parseInt(String(params.fontSize)),

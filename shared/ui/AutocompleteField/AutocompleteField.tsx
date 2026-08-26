@@ -52,9 +52,10 @@ export function AutocompleteField<TOption extends AutocompleteOptionBase>({
           sx: {
             mt: '-2px',
             borderRadius: '0 0 22px 22px',
-            border: '2px solid #42627d',
+            border: '2px solid',
+            borderColor: 'secondary.main',
             borderTop: 'none',
-            backgroundColor: '#ffffff',
+            backgroundColor: 'background.paper',
             boxShadow: '0 22px 38px rgba(31, 43, 54, 0.16)',
             overflow: 'hidden',
           },
@@ -79,7 +80,7 @@ export function AutocompleteField<TOption extends AutocompleteOptionBase>({
               px: 2,
               py: 1.35,
               borderBottom: '1px solid rgba(31, 43, 54, 0.08)',
-              color: '#2f343a',
+              color: 'text.primary',
               fontSize: optionFontSize,
               lineHeight: 1.25,
               transition: 'background-color 0.16s ease, color 0.16s ease',
@@ -88,15 +89,15 @@ export function AutocompleteField<TOption extends AutocompleteOptionBase>({
               borderBottom: 'none',
             },
             '& .MuiAutocomplete-option.Mui-focused': {
-              backgroundColor: '#f5f8fa',
+              backgroundColor: 'action.hover',
             },
             '& .MuiAutocomplete-option[aria-selected="true"]': {
-              backgroundColor: '#eef3f7',
-              color: '#1f2b36',
+              backgroundColor: 'action.selected',
+              color: 'text.primary',
               fontWeight: 600,
             },
             '& .MuiAutocomplete-option[aria-selected="true"].Mui-focused': {
-              backgroundColor: '#e8eef3',
+              backgroundColor: 'action.selected',
             },
           },
         },
@@ -118,8 +119,8 @@ export function AutocompleteField<TOption extends AutocompleteOptionBase>({
               minHeight: 58,
               borderRadius: '18px',
               fontSize: textFontSize,
-              backgroundColor: '#ffffff',
-              color: '#1f2b36',
+              backgroundColor: 'background.paper',
+              color: 'text.primary',
               boxShadow: '0 10px 20px rgba(31, 43, 54, 0.05)',
               transition:
                 'border-radius 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease',
@@ -128,7 +129,7 @@ export function AutocompleteField<TOption extends AutocompleteOptionBase>({
               fontWeight: 600,
             },
             '& .MuiInputBase-input::placeholder': {
-              color: '#8a94a0',
+              color: 'text.secondary',
               opacity: 1,
               fontSize: placeholderFontSize,
             },
@@ -140,7 +141,7 @@ export function AutocompleteField<TOption extends AutocompleteOptionBase>({
               borderColor: 'rgba(66, 98, 125, 0.36)',
             },
             '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#42627d',
+              borderColor: 'secondary.main',
               borderWidth: 2,
             },
           }}
@@ -157,11 +158,11 @@ export function AutocompleteField<TOption extends AutocompleteOptionBase>({
           boxShadow: '0 14px 26px rgba(31, 43, 54, 0.08)',
         },
         '&.Mui-expanded .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#42627d',
+          borderColor: 'secondary.main',
           borderBottomColor: 'transparent',
         },
         '& .MuiAutocomplete-popupIndicator, & .MuiAutocomplete-clearIndicator': {
-          color: '#5f6d7a',
+          color: 'text.secondary',
         },
         '& .MuiAutocomplete-popupIndicator': {
           mr: 0.4,

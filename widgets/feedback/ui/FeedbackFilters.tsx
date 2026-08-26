@@ -39,8 +39,12 @@ export const FeedbackFilters: React.FC<FeedbackFiltersProps> = ({ globalFontSize
       <Box
         sx={{
           borderRadius: '24px',
-          border: '1px solid rgba(66, 98, 125, 0.16)',
-          background: 'linear-gradient(180deg, #ffffff 0%, #f7f9fb 100%)',
+          border: '1px solid',
+          borderColor: 'divider',
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, #1b2833 0%, #18232d 100%)'
+              : 'linear-gradient(180deg, #ffffff 0%, #f7f9fb 100%)',
           boxShadow: '0 14px 30px rgba(31, 43, 54, 0.08)',
           px: { xs: 2, sm: 2.5 },
           pt: 2,
@@ -55,10 +59,14 @@ export const FeedbackFilters: React.FC<FeedbackFiltersProps> = ({ globalFontSize
             mb: 1.25,
           }}
         >
-          <Typography sx={{ fontWeight: 700, color: '#1f2b36', fontSize: sectionTitleFontSize }}>
+          <Typography
+            sx={{ fontWeight: 700, color: 'text.primary', fontSize: sectionTitleFontSize }}
+          >
             Статус
           </Typography>
-          <Typography sx={{ fontWeight: 500, color: '#6f7f8d', fontSize: sectionMetaFontSize }}>
+          <Typography
+            sx={{ fontWeight: 500, color: 'text.secondary', fontSize: sectionMetaFontSize }}
+          >
             Выбрано: {activeStatusLabel}
           </Typography>
         </Box>
@@ -86,9 +94,10 @@ export const FeedbackFilters: React.FC<FeedbackFiltersProps> = ({ globalFontSize
                 height: 40,
                 flex: '0 0 auto',
                 fontSize: chipFontSize,
-                border: status === u.id ? '1px solid #cc0033' : '1px solid #e0e4e9',
-                backgroundColor: status === u.id ? '#cc0033 !important' : '#ffffff',
-                color: status === u.id ? '#ffffff' : '#253343',
+                border: '1px solid',
+                borderColor: status === u.id ? '#cc0033' : 'divider',
+                backgroundColor: status === u.id ? '#cc0033 !important' : 'background.paper',
+                color: status === u.id ? '#ffffff' : 'text.primary',
                 transition: 'all 0.18s ease',
                 '&.MuiChip-clickable:hover': {
                   backgroundColor: status === u.id ? '#b4002d !important' : '#f4f7fa',
@@ -112,8 +121,9 @@ export const FeedbackFilters: React.FC<FeedbackFiltersProps> = ({ globalFontSize
             display: 'flex',
             alignItems: 'center',
             borderRadius: '18px',
-            border: '1px solid rgba(66, 98, 125, 0.26)',
-            backgroundColor: '#fff',
+            border: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: 'background.paper',
             px: 1.5,
             py: 0.35,
             boxSizing: 'border-box',
@@ -129,7 +139,7 @@ export const FeedbackFilters: React.FC<FeedbackFiltersProps> = ({ globalFontSize
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
-              color: '#6f7f8d',
+              color: 'text.secondary',
               flexShrink: 0,
             }}
           >
@@ -144,13 +154,13 @@ export const FeedbackFilters: React.FC<FeedbackFiltersProps> = ({ globalFontSize
             sx={{
               ml: 1.25,
               flex: 1,
-              color: '#1f2b36',
+              color: 'text.primary',
               '& input': {
                 py: 1.1,
                 fontSize: searchInputFontSize,
               },
               '& input::placeholder': {
-                color: '#8a94a0',
+                color: 'text.secondary',
                 opacity: 1,
               },
             }}
@@ -162,7 +172,7 @@ export const FeedbackFilters: React.FC<FeedbackFiltersProps> = ({ globalFontSize
               onClick={() => setSearch('')}
               size="small"
               sx={{
-                color: '#8a94a0',
+                color: 'text.secondary',
                 ml: 0.5,
                 '&:hover': {
                   backgroundColor: 'rgba(66, 98, 125, 0.1)',

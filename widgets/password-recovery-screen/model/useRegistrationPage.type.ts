@@ -28,8 +28,8 @@ export interface UseRegistrationPageResult {
   submitOnEnter: SubmitOnEnter;
   requestRecoveryCode: () => Promise<void>;
   myCode: string;
-  setMyCode: Dispatch<SetStateAction<string>>;
-  confirmRecoveryCode: () => Promise<void>;
+  setMyCode: (value: string) => void;
+  confirmRecoveryCode: (codeOverride?: string) => Promise<void>;
   errorText: string;
   helperText: string;
   captchaResetKey: number;

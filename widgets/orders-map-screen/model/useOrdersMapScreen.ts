@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { log } from '@/components/analytics';
 import type { MapInstance, UseOrdersMapScreenResult } from './useOrdersMapScreen.type';
+import type { MapViewport } from './mapViewport';
 
 export function useOrdersMapScreen(): UseOrdersMapScreenResult {
   const mapRef = useRef<MapInstance | null>(null);
+  const [mapInstance, setMapInstanceState] = useState<MapInstance | null>(null);
+  const [viewport, setViewport] = useState<MapViewport | null>(null);
   const header = useHeaderStore((state) => ({
     globalFontSize: state.globalFontSize,
     theme: state.theme,
@@ -16,6 +19,7 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
   }));
   const orders = useOrdersStore((state) => ({
     type: state.type,
+    orders: state.orders,
     limit: state.limit,
     limit_count: state.limit_count,
     setType: state.setType,
@@ -37,7 +41,13 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
     actionFakeOrder: state.actionFakeOrder,
     isClick: state.isClick,
     is_load: state.is_load,
+    showOrdersMap: state.showOrdersMap,
   }));
+
+  const setMapInstance = useCallback((instance: MapInstance | null) => {
+    mapRef.current = instance;
+    setMapInstanceState(instance);
+  }, []);
 
   const getHome = useCallback(() => {
     if (!orders.home?.center) return;
@@ -45,6 +55,11 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
     log('map_home_center', 'Центрирование карты на домашнюю точку');
     mapRef.current?.setCenter(orders.home.center);
   }, [orders.home]);
+
+  const centerOnCoordinate = useCallback((coordinate: [number, number]) => {
+    log('map_edge_order_center', 'Переход к заказам за границей карты');
+    mapRef.current?.setCenter(coordinate);
+  }, []);
 
   const handleConfirm = useCallback(() => {
     if (!orders.order_finish_id || orders.isClick || orders.is_load) return;
@@ -73,14 +88,42 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
     }
   }, [orders.home]);
 
+  useEffect(() => {
+    if (!mapInstance) {
+      setViewport(null);
+      return undefined;
+    }
+
+    const updateViewport = () => {
+      const bounds = mapInstance.getBounds?.();
+      const center = mapInstance.getCenter?.();
+
+      if (!bounds || !center) {
+        return;
+      }
+
+      setViewport({ bounds, center });
+    };
+
+    updateViewport();
+    mapInstance.events?.add?.('boundschange', updateViewport);
+
+    return () => {
+      mapInstance.events?.remove?.('boundschange', updateViewport);
+    };
+  }, [mapInstance]);
+
   const iconColor = header.night_map ? '#f0f8ff' : '#000';
 
   return {
     mapRef,
+    setMapInstance,
+    viewport,
     header,
     orders,
     iconColor,
     getHome,
+    centerOnCoordinate,
     handleConfirm,
   };
 }

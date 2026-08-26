@@ -442,3 +442,18 @@ div.text-base {
     }
   }
 }
+
+:root[data-app-theme='dark'] {
+  .modalOrderMap {
+    & .MuiPaper-root.MuiDrawer-paper.MuiDrawer-paperAnchorBottom {
+      background: #18232d;
+      color: #f3f6f8;
+      border-color: rgba(174, 187, 197, 0.22);
+      box-shadow: 0 24px 44px rgba(0, 0, 0, 0.46);
+    }
+
+    & .lineModal {
+      background: rgba(243, 246, 248, 0.28);
+    }
+  }
+}

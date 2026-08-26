@@ -28,7 +28,7 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({ options, fontSize 
               checked={option.value}
               onClick={(e) => option.onChange((e.target as HTMLInputElement).checked)}
               sx={{
-                color: 'rgba(66, 98, 125, 0.45)',
+                color: 'text.secondary',
                 '&.Mui-checked': {
                   color: '#cc0033',
                 },
@@ -43,11 +43,11 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({ options, fontSize 
             borderRadius: '12px',
             transition: 'background-color 0.18s ease',
             '&:hover': {
-              backgroundColor: 'rgba(66, 98, 125, 0.06)',
+              backgroundColor: 'action.hover',
             },
             '& .MuiFormControlLabel-label': {
               fontSize: optionFontSize,
-              color: '#2b3744',
+              color: 'text.primary',
               lineHeight: 1.32,
             },
           }}

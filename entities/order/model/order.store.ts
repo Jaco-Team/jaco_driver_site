@@ -11,6 +11,7 @@ import {
   TYPE_STATUS_MAP,
 } from './order.types';
 import { normalizeOrderRow, filterOrdersByTypes } from './order.utils';
+import { getOrderMapLocationKey } from './orderMapGroups';
 import { getApiErrorInfo } from '@/shared/api/errors';
 import { log } from '@/components/analytics';
 import { devLog } from '@/shared/lib/devLog';
@@ -455,11 +456,10 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
 
       const order = get().orders.find((item) => item.id === idNum);
       if (order) {
-        const newOrders = get().orders.filter(
-          (item) =>
-            item?.xy?.latitude === order?.xy?.latitude &&
-            item?.xy?.longitude === order?.xy?.longitude
-        );
+        const locationKey = getOrderMapLocationKey(order);
+        const newOrders = locationKey
+          ? get().orders.filter((item) => getOrderMapLocationKey(item) === locationKey)
+          : [order];
 
         log('order_map_open', 'Открытие заказа на карте');
         set({ showOrders: newOrders, isOpenOrderMap: true });

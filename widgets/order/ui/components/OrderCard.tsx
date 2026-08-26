@@ -35,10 +35,11 @@ export const ORDER_CARD_DELETED_BG = '#d95030';
 
 const StyledCard = styled(Card, {
   shouldForwardProp: (prop) => prop !== 'isDeleted',
-})<{ isDeleted?: boolean }>(({ isDeleted }) => ({
+})<{ isDeleted?: boolean }>(({ isDeleted, theme }) => ({
   borderRadius: 16,
   boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
-  backgroundColor: isDeleted ? ORDER_CARD_DELETED_BG : '#fff',
+  backgroundColor: isDeleted ? ORDER_CARD_DELETED_BG : theme.palette.background.paper,
+  color: isDeleted ? '#fff' : theme.palette.text.primary,
   padding: 16,
   transition: 'all 0.3s ease',
   '&:hover': {
@@ -79,21 +80,22 @@ const ActionButton = styled(Button)({
   boxSizing: 'border-box',
 });
 
-const PhoneButton = styled(ActionButton)({
-  backgroundColor: '#E0E0E0',
-  color: 'inherit',
+const PhoneButton = styled(ActionButton)(({ theme }) => ({
+  backgroundColor: theme.palette.action.selected,
+  color: theme.palette.text.primary,
   width: '100%',
   textTransform: 'none',
   fontWeight: 500,
   boxShadow: 'none',
   '&:hover': {
-    backgroundColor: '#d5d5d5',
+    backgroundColor: theme.palette.action.hover,
     boxShadow: 'none',
   },
-});
+}));
 
-const DriverInfoBox = styled(Box)({
-  backgroundColor: '#E0E0E0',
+const DriverInfoBox = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.action.selected,
+  color: theme.palette.text.primary,
   borderRadius: 8,
   height: ORDER_CARD_BUTTON_HEIGHT,
   minHeight: ORDER_CARD_BUTTON_HEIGHT,
@@ -108,7 +110,7 @@ const DriverInfoBox = styled(Box)({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
-});
+}));
 
 const TakeButton = styled(ActionButton)({
   backgroundColor: '#4CAF50',

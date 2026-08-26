@@ -3,6 +3,7 @@
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
+import { useTheme } from '@mui/material/styles';
 
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
@@ -10,6 +11,8 @@ import { roboto } from '@/shared/config/fonts';
 import { OrderCard, ORDER_CARD_DELETED_BG } from '@/widgets/order/ui/components/OrderCard';
 
 export function OrderMapDrawer() {
+  const theme = useTheme();
+  const isDarkTheme = theme.palette.mode === 'dark';
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
   const {
     isOpenOrderMap,
@@ -68,10 +71,13 @@ export function OrderMapDrawer() {
             height: 'auto',
             bottom: 0,
             top: 'auto',
-            background: sheetDeleted ? ORDER_CARD_DELETED_BG : '#ffffff',
+            background: sheetDeleted ? ORDER_CARD_DELETED_BG : theme.palette.background.paper,
+            color: sheetDeleted ? '#fff' : theme.palette.text.primary,
             overflow: 'hidden',
-            border: '1px solid rgba(66, 98, 125, 0.14)',
-            boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+            border: `1px solid ${theme.palette.divider}`,
+            boxShadow: isDarkTheme
+              ? '0 24px 44px rgba(0, 0, 0, 0.46)'
+              : '0 24px 44px rgba(31, 43, 54, 0.2)',
           },
         } as any,
       }}
@@ -105,7 +111,9 @@ export function OrderMapDrawer() {
                 width: 62,
                 height: 6,
                 borderRadius: 999,
-                backgroundColor: 'rgba(31, 43, 54, 0.2)',
+                backgroundColor: isDarkTheme
+                  ? 'rgba(243, 246, 248, 0.28)'
+                  : 'rgba(31, 43, 54, 0.2)',
               }}
             />
           </Box>
@@ -135,7 +143,9 @@ export function OrderMapDrawer() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: 'rgba(255, 255, 255, 0.72)',
+              backgroundColor: isDarkTheme
+                ? 'rgba(24, 35, 45, 0.72)'
+                : 'rgba(255, 255, 255, 0.72)',
               zIndex: 2,
             }}
           >

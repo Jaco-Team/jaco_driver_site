@@ -298,7 +298,10 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
       sx={{
         '& .MuiDrawer-paper': {
           width: 'min(86vw, 340px)',
-          background: 'linear-gradient(180deg, #f6f9fc 0%, #ffffff 34%)',
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, #22303b 0%, #18232d 34%)'
+              : 'linear-gradient(180deg, #f6f9fc 0%, #ffffff 34%)',
           boxShadow: `0 28px 60px ${appPalette.shadowStrong}`,
           overflow: 'hidden',
         },
@@ -378,7 +381,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                   flexShrink: 0,
                   borderRadius: '16px',
                   color: appPalette.primary,
-                  bgcolor: '#fff',
+                  bgcolor: 'background.paper',
                   boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 }}
               >
@@ -391,7 +394,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                   sx={{
                     fontSize: Math.max(globalFontSize - 3, 12),
                     fontWeight: 700,
-                    color: appPalette.textMuted,
+                    color: 'text.secondary',
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
                     mb: 0.5,
@@ -406,7 +409,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                     fontSize: Math.max(globalFontSize + 4, 22),
                     fontWeight: 800,
                     lineHeight: 1,
-                    color: appPalette.primaryDeep,
+                    color: 'text.primary',
                   }}
                 >
                   {avgTime || '00:00:00'}
@@ -423,7 +426,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                 mb: 1,
                 fontSize: Math.max(globalFontSize - 3, 12),
                 fontWeight: 800,
-                color: appPalette.textMuted,
+                color: 'text.secondary',
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
               }}
@@ -448,52 +451,40 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                         minHeight: 60,
                         borderRadius: 3,
                         border: '1px solid',
-                        borderColor: isSelected ? appPalette.primary : 'rgba(15, 23, 42, 0.06)',
-                        bgcolor: isSelected ? appPalette.softStrong : '#fff',
+                        borderColor: isSelected ? 'secondary.main' : 'divider',
+                        bgcolor: isSelected ? 'action.selected' : 'background.paper',
+                        color: 'text.primary',
                         boxShadow: isSelected
                           ? '0 14px 30px rgba(66, 98, 125, 0.12)'
                           : '0 10px 22px rgba(15, 23, 42, 0.04)',
                         overflow: 'hidden',
                         '&.Mui-selected': {
-                          bgcolor: appPalette.softStrong,
-                          borderColor: appPalette.primary,
+                          bgcolor: 'action.selected',
+                          borderColor: 'secondary.main',
+                          color: 'text.primary',
                           boxShadow: '0 14px 30px rgba(66, 98, 125, 0.12)',
                         },
                         '&.Mui-selected:hover': {
                           bgcolor: 'rgba(66, 98, 125, 0.18)',
                         },
                         '&:hover': {
-                          bgcolor: isSelected ? 'rgba(66, 98, 125, 0.18)' : appPalette.softHover,
+                          bgcolor: isSelected ? 'rgba(66, 98, 125, 0.18)' : 'action.hover',
+                        },
+                        '& .MuiListItemIcon-root': {
+                          color: isSelected ? 'secondary.main' : 'text.secondary',
+                        },
+                        '& .MuiListItemText-primary': {
+                          color: 'text.primary',
+                          fontSize: navigationLabelFontSize,
+                          fontWeight: isSelected ? 700 : 500,
+                          whiteSpace: 'nowrap',
+                          lineHeight: 1.2,
                         },
                       }}
                     >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 40,
-                          color: isSelected ? appPalette.primary : '#5f6b75',
-                        }}
-                      >
-                        {item.icon}
-                      </ListItemIcon>
+                      <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
 
-                      <ListItemText
-                        primary={item.label}
-                        sx={{
-                          my: 0,
-                          minWidth: 0,
-                        }}
-                        slotProps={{
-                          primary: {
-                            sx: {
-                              fontSize: navigationLabelFontSize,
-                              fontWeight: isSelected ? 700 : 500,
-                              color: isSelected ? appPalette.primaryDeep : appPalette.text,
-                              whiteSpace: 'nowrap',
-                              lineHeight: 1.2,
-                            },
-                          },
-                        }}
-                      />
+                      <ListItemText primary={item.label} sx={{ my: 0, minWidth: 0 }} />
                     </ListItemButton>
                   </ListItem>
                 );
@@ -503,7 +494,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
 
           {contactItems.length > 0 && (
             <>
-              <Divider sx={{ borderColor: 'rgba(15, 23, 42, 0.08)' }} />
+              <Divider />
 
               <Box>
                 <Typography
@@ -513,7 +504,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                     mb: 1,
                     fontSize: Math.max(globalFontSize - 3, 12),
                     fontWeight: 800,
-                    color: appPalette.textMuted,
+                    color: 'text.secondary',
                     textTransform: 'uppercase',
                     letterSpacing: '0.1em',
                   }}
@@ -540,11 +531,12 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                           columnGap: 1.25,
                           alignItems: 'center',
                           borderRadius: 3,
-                          border: '1px solid rgba(15, 23, 42, 0.06)',
-                          bgcolor: '#fff',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          bgcolor: 'background.paper',
                           boxShadow: '0 10px 22px rgba(15, 23, 42, 0.04)',
                           '&:hover': {
-                            bgcolor: appPalette.softHover,
+                            bgcolor: 'action.hover',
                           },
                         }}
                       >
@@ -553,7 +545,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                             minWidth: 36,
                             m: 0,
                             justifyContent: 'center',
-                            color: appPalette.primary,
+                            color: 'secondary.main',
                             '& svg': {
                               fontSize: 28,
                             },
@@ -577,7 +569,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                             sx={{
                               fontSize: contactLabelFontSize,
                               fontWeight: 600,
-                              color: appPalette.text,
+                              color: 'text.primary',
                               textAlign: 'center',
                               whiteSpace: 'nowrap',
                               lineHeight: 1.15,
@@ -591,7 +583,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                             component="div"
                             sx={{
                               fontSize: contactPhoneFontSize,
-                              color: appPalette.textMuted,
+                              color: 'text.secondary',
                               textAlign: 'center',
                               lineHeight: 1.2,
                             }}
@@ -622,7 +614,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
               py: 1.2,
               borderRadius: 3,
               borderColor: appPalette.brandSoftStrong,
-              bgcolor: '#fff',
+              bgcolor: 'background.paper',
               color: appPalette.brand,
               fontSize: globalFontSize,
               fontWeight: 700,

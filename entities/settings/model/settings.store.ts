@@ -63,6 +63,7 @@ interface SettingsActions {
     theme: string,
     mapScale: number,
     night_map: boolean,
+    dark_theme: boolean,
     is_scaleMap: boolean
   ) => Promise<{ st: boolean; text?: string; data?: any; status?: number; errors?: any }>;
   getMySetting: (token: string) => Promise<SettingsResponse>;
@@ -178,6 +179,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       theme: string,
       mapScale: number,
       night_map: boolean,
+      dark_theme: boolean,
       is_scaleMap: boolean
     ) => {
       if (get().isClick === false) {
@@ -196,6 +198,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         theme,
         mapScale,
         night_map,
+        dark_theme,
         is_scaleMap,
       });
 
@@ -207,10 +210,14 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         log('settings_save_success', 'Успешное сохранение настроек');
         const savedSettings = response?.settings ?? response?.data;
         const currentPointId = get().pointId;
+        const nextSettings = {
+          ...(get().settings ?? {}),
+          ...data,
+          ...(savedSettings ?? {}),
+          point_id: currentPointId,
+        } as SettingsResponse;
         set({
-          settings: savedSettings
-            ? ({ ...savedSettings, point_id: currentPointId } as SettingsResponse)
-            : get().settings,
+          settings: nextSettings,
           pointId: currentPointId,
           point_id: currentPointId,
           cityId: normalizeIdString(
@@ -220,7 +227,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         return {
           st: true,
           text: response?.message || 'Сохранено',
-          data: savedSettings,
+          data: savedSettings ?? data,
         };
       } catch (e) {
         const errorInfo = getApiErrorInfo(e);

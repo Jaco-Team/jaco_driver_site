@@ -591,3 +591,54 @@
     }
   }
 }
+
+:root[data-app-theme='dark'] {
+  .priceScreen,
+  .statisticsScreen {
+    & .price__hero,
+    & .price__card,
+    & .price__segmentedRangeControl,
+    & .price__dateLauncher {
+      border-color: var(--app-border);
+      background: var(--app-surface);
+      box-shadow: 0 18px 40px var(--app-shadow);
+    }
+
+    & .price__heroTitle,
+    & .price__cardTitle,
+    & .price__segmentValue,
+    & .price__dateLauncherValue,
+    & .price__total,
+    & .price__metricLabel > span,
+    & .price__metricValue,
+    & .price__metricValue--emphasis {
+      color: var(--app-text);
+    }
+
+    & .price__heroText,
+    & .price__cardDescription,
+    & .price__segmentLabel,
+    & .price__segmentDivider,
+    & .price__dateLauncherLabel,
+    & .statistics__emptyText {
+      color: var(--app-text-muted);
+    }
+
+    & .price__metricRow {
+      border-color: var(--app-border);
+    }
+  }
+
+  .price__pickerPaper {
+    background: linear-gradient(180deg, var(--app-surface-raised) 0%, var(--app-surface) 24%);
+    box-shadow: 0 -20px 44px var(--app-shadow);
+  }
+
+  .price__pickerHandle {
+    background: var(--app-border);
+  }
+
+  .price__pickerTitle {
+    color: var(--app-text);
+  }
+}

@@ -1,4 +1,5 @@
 export { useSettingsStore } from './model/settings.store';
+export { normalizeBooleanSetting } from './model/settings.utils';
 export type {
   DriverSettingsPayload,
   SaveSettingsPayload,

@@ -261,9 +261,6 @@
     //color: #000;
     //font-size: 16px;
     @include font_custom(1rem, 400, #fff);
-    @media (prefers-color-scheme: dark) {
-      @include font_custom(1rem, 400, #000);
-    }
   }
 
   .span_text_white {
@@ -305,6 +302,158 @@
   }
 }
 
+.map-marker-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.map-marker-count {
+  position: absolute;
+  top: -11px;
+  right: -13px;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: $colorMain;
+  box-shadow: 0 4px 10px rgba(31, 43, 54, 0.3);
+  @include font_custom(0.75rem, 800, #fff);
+  line-height: 1;
+}
+
+.map-marker-statuses {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 9px;
+  padding: 2px 4px;
+  border: 1px solid rgba(31, 43, 54, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 3px 8px rgba(31, 43, 54, 0.18);
+  transform: translateX(-50%);
+}
+
+.map-marker-status {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.map-marker-status-overflow {
+  @include font_custom(0.56rem, 800, $colorSecondaryDeep);
+  line-height: 1;
+}
+
+.orders-map-stage {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.orders-map-stage__map {
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+}
+
+.orders-map-compass {
+  position: absolute;
+  z-index: 80;
+  top: 92px;
+  right: 68px;
+  bottom: calc(145px + env(safe-area-inset-bottom));
+  left: 14px;
+  pointer-events: none;
+}
+
+.orders-map-compass__indicator {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid rgba(47, 70, 91, 0.24);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 20px rgba(31, 43, 54, 0.24);
+  color: $colorSecondaryDeep;
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  touch-action: manipulation;
+
+  &:active {
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(204, 0, 51, 0.28);
+    outline-offset: 2px;
+  }
+}
+
+.orders-map-compass__arrow {
+  position: absolute;
+  top: 5px;
+  width: 0;
+  height: 0;
+  border-right: 7px solid transparent;
+  border-bottom: 11px solid $colorMain;
+  border-left: 7px solid transparent;
+  transform-origin: 50% 19px;
+}
+
+.orders-map-compass__count {
+  margin-top: 4px;
+  @include font_custom(0.86rem, 800, $colorSecondaryDeep);
+  line-height: 1;
+}
+
+.orders-map-compass__statuses {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  left: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+
+.orders-map-compass__status {
+  width: 6px;
+  height: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 50%;
+}
+
+:root[data-app-theme='dark'] .span_text_transparent_white {
+  color: #000;
+}
+
+:root[data-app-theme='dark'] .orders-map-compass__indicator {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(31, 43, 54, 0.94);
+  color: #fff;
+}
+
+:root[data-app-theme='dark'] .orders-map-compass__count {
+  color: #fff;
+}
+
 .location_svg {
   position: absolute;
   z-index: 100;
@@ -320,5 +469,25 @@
       height: 100%;
       transition-duration: 1s;
     }
+  }
+}
+
+@media (max-width: 599px) {
+  .orders-map-compass {
+    top: 78px;
+    right: 62px;
+    bottom: calc(140px + env(safe-area-inset-bottom));
+    left: 10px;
+  }
+
+  .orders-map-compass__indicator {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .orders-map-compass__arrow {
+    top: 4px;
+    transform-origin: 50% 18px;
   }
 }

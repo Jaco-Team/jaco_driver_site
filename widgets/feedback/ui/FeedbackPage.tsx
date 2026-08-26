@@ -110,10 +110,14 @@ const FeedbackPage: React.FC = () => {
               px: 0.5,
             }}
           >
-            <Typography sx={{ color: '#5e6874', fontWeight: 600, fontSize: listTitleFontSize }}>
+            <Typography
+              sx={{ color: 'text.secondary', fontWeight: 600, fontSize: listTitleFontSize }}
+            >
               Лента предложений
             </Typography>
-            <Typography sx={{ color: '#7a8591', fontWeight: 500, fontSize: listMetaFontSize }}>
+            <Typography
+              sx={{ color: 'text.secondary', fontWeight: 500, fontSize: listMetaFontSize }}
+            >
               Всего: {feedbacks?.length ?? 0}
             </Typography>
           </Box>
@@ -134,18 +138,19 @@ const FeedbackPage: React.FC = () => {
             <Box
               sx={{
                 borderRadius: '24px',
-                border: '1px dashed rgba(66, 98, 125, 0.32)',
-                backgroundColor: '#ffffff',
+                border: '1px dashed',
+                borderColor: 'divider',
+                backgroundColor: 'background.paper',
                 py: 5,
                 px: 2,
                 textAlign: 'center',
-                color: '#4f5c68',
+                color: 'text.primary',
               }}
             >
               <Typography sx={{ fontSize: emptyTitleFontSize, fontWeight: 700, mb: 0.6 }}>
                 Ничего не найдено
               </Typography>
-              <Typography sx={{ fontSize: emptyTextFontSize, color: '#768391' }}>
+              <Typography sx={{ fontSize: emptyTextFontSize, color: 'text.secondary' }}>
                 Попробуйте изменить фильтр или текст поиска
               </Typography>
             </Box>

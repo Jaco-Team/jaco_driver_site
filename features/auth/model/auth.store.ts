@@ -140,7 +140,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
       set({ isSubmitting: true });
 
       try {
-        const loginResult = await loginToken(login, pwd, 'driver-web', captchaToken);
+        const loginResult = await loginToken(login, pwd, 'test', captchaToken);
         const me = await fetchMe();
         const authData = sessionFromUser(me, loginResult.token);
         const result = {

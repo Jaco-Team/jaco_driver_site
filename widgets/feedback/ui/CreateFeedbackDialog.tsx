@@ -83,9 +83,10 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
             maxHeight: '86vh',
-            background: '#ffffff',
+            backgroundColor: 'background.paper',
             overflow: 'hidden',
-            border: '1px solid rgba(66, 98, 125, 0.14)',
+            border: '1px solid',
+            borderColor: 'divider',
             boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
           },
         },
@@ -125,7 +126,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
           sx={{
             fontSize: modalTitleFontSize,
             fontWeight: 800,
-            color: '#1f2b36',
+            color: 'text.primary',
             lineHeight: 1.2,
             mb: 2,
           }}
@@ -136,7 +137,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
         <Divider sx={{ mx: -2.5, mb: 2 }} />
 
         <Typography
-          sx={{ fontSize: sectionTitleFontSize, fontWeight: 700, color: '#253343', mb: 1 }}
+          sx={{ fontSize: sectionTitleFontSize, fontWeight: 700, color: 'text.primary', mb: 1 }}
         >
           Тип
         </Typography>
@@ -170,7 +171,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
         </Box>
 
         <Typography
-          sx={{ fontSize: sectionTitleFontSize, fontWeight: 700, color: '#253343', mb: 1 }}
+          sx={{ fontSize: sectionTitleFontSize, fontWeight: 700, color: 'text.primary', mb: 1 }}
         >
           Заголовок
         </Typography>
@@ -200,7 +201,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
         />
 
         <Typography
-          sx={{ fontSize: sectionTitleFontSize, fontWeight: 700, color: '#253343', mb: 1 }}
+          sx={{ fontSize: sectionTitleFontSize, fontWeight: 700, color: 'text.primary', mb: 1 }}
         >
           Описание
         </Typography>
@@ -230,7 +231,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
         />
 
         <Typography
-          sx={{ fontSize: sectionTitleFontSize, fontWeight: 700, color: '#253343', mb: 1 }}
+          sx={{ fontSize: sectionTitleFontSize, fontWeight: 700, color: 'text.primary', mb: 1 }}
         >
           Изображение (опционально)
         </Typography>
@@ -248,8 +249,9 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
           onDrop={handleDropFiles}
           sx={{
             borderRadius: '16px',
-            border: '1px dashed rgba(66, 98, 125, 0.35)',
-            backgroundColor: '#ffffff',
+            border: '1px dashed',
+            borderColor: 'divider',
+            backgroundColor: 'background.paper',
             minHeight: 86,
             display: 'flex',
             alignItems: 'center',
@@ -262,7 +264,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
         >
           <Typography
             sx={{
-              color: img && img.length > 0 ? '#1f2b36' : '#7f8790',
+              color: img && img.length > 0 ? 'text.primary' : 'text.secondary',
               fontSize: helperFontSize,
               textAlign: 'center',
             }}

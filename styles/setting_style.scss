@@ -10,22 +10,22 @@
 
 .settingsPage__intro {
   border-radius: 24px;
-  border: 1px solid rgba(66, 98, 125, 0.18);
-  background: linear-gradient(180deg, #ffffff 0%, #f4f7fa 100%);
-  box-shadow: 0 14px 30px rgba(31, 43, 54, 0.08);
+  border: 1px solid var(--app-border);
+  background: linear-gradient(180deg, var(--app-surface) 0%, var(--app-background) 100%);
+  box-shadow: 0 14px 30px var(--app-shadow);
   padding: 18px 18px 16px;
 }
 
 .settingsPage__introTitle {
   margin: 0;
-  color: #1f2b36;
+  color: var(--app-text);
   font-weight: 800;
   line-height: 1.16;
 }
 
 .settingsPage__introText {
   margin: 8px 0 0;
-  color: #5f6d7a;
+  color: var(--app-text-muted);
   line-height: 1.35;
 }
 
@@ -51,7 +51,7 @@
 }
 
 .settingsCard--action {
-  background: #ffffff;
+  background: var(--app-surface);
 }
 
 .settingsScalePreview {
@@ -62,8 +62,8 @@
   align-items: center;
   justify-content: space-between;
   border-radius: 16px;
-  border: 1px solid rgba(66, 98, 125, 0.18);
-  background: #f7f9fb;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-alt);
   padding: 12px 14px 10px;
   margin-bottom: 8px;
   min-height: 92px;
@@ -80,7 +80,7 @@
 }
 
 .settingsScalePreview__caption {
-  color: #6f7f8d;
+  color: var(--app-text-muted);
   font-size: 0.83rem;
   line-height: 1;
 }
@@ -106,7 +106,7 @@
   max-width: 100%;
   box-sizing: border-box;
   border-radius: 20px;
-  border: 1px solid rgba(66, 98, 125, 0.2);
+  border: 1px solid var(--app-border);
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -205,7 +205,7 @@
   color: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
+:root[data-app-theme='dark'] {
   .settingsToken--transparentWhite {
     color: #1f2b36;
   }

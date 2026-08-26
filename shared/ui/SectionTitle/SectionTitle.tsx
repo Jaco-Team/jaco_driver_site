@@ -17,7 +17,7 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({ title, fontSize = 14
     <Typography
       component="h2"
       sx={{
-        color: '#1f2b36',
+        color: 'text.primary',
         fontSize: titleSize,
         fontWeight: 700,
         lineHeight: 1.2,

@@ -10,7 +10,7 @@ import '../styles/auth.scss';
 import '../styles/settings.scss';
 import '../styles/setting_style.scss';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import type { AppProps, NextWebVitalsMetric } from 'next/app';
@@ -18,9 +18,10 @@ import { log, hit, screenOpen } from '@/components/analytics';
 import type { EmotionCache } from '@emotion/react';
 
 import { AppCacheProvider, createEmotionCache } from '@mui/material-nextjs/v16-pagesRouter';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider } from '@mui/material/styles';
 
-import { appPalette } from '@/shared/styles/appPalette';
+import { createAppTheme } from '@/shared/styles/createAppTheme';
 import { devLog } from '@/shared/lib/devLog';
 import YandexMetrika from '@/components/YandexMetrika';
 import { useAuthStore } from '@/features/auth/model/auth.store';
@@ -28,27 +29,6 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import { resolveYandexMetrikaIds } from '@/shared/lib/yandexMetrikaIds';
 
 const YANDEX_METRIKA_IDS = resolveYandexMetrikaIds();
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: appPalette.brand,
-    },
-    secondary: {
-      main: appPalette.primary,
-    },
-  },
-  typography: {
-    fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
-  },
-  components: {
-    MuiButtonBase: {
-      defaultProps: {
-        disableRipple: true,
-      },
-    },
-  },
-});
 
 const clientEmotionCache = createEmotionCache({ key: 'css' });
 const PUBLIC_ROUTES = new Set(['/auth', '/auth/callback', '/registration', '/initial']);
@@ -68,6 +48,8 @@ function MyApp(props: MyAppProps) {
   };
   const router = useRouter();
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
+  const darkTheme = useHeaderStore((state) => state.darkTheme);
+  const muiTheme = useMemo(() => createAppTheme(darkTheme), [darkTheme]);
   const normalizedGlobalFontSize =
     Number.isFinite(globalFontSize) && globalFontSize > 0
       ? globalFontSize
@@ -126,12 +108,28 @@ function MyApp(props: MyAppProps) {
     };
   }, [appFontSize]);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const mode = darkTheme ? 'dark' : 'light';
+    document.documentElement.dataset.appTheme = mode;
+    document.documentElement.style.colorScheme = mode;
+
+    return () => {
+      delete document.documentElement.dataset.appTheme;
+      document.documentElement.style.colorScheme = '';
+    };
+  }, [darkTheme]);
+
   return (
     <AppCacheProvider emotionCache={emotionCache}>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={muiTheme}>
+        <CssBaseline enableColorScheme />
         <YandexMetrika ids={YANDEX_METRIKA_IDS} />
         <Component {...pagePropsWithoutSession} />
       </ThemeProvider>

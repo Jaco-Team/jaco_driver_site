@@ -59,7 +59,8 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
       sx={{
         bgcolor: 'background.paper',
         borderRadius: 4,
-        border: '1px solid rgba(66, 98, 125, 0.12)',
+        border: '1px solid',
+        borderColor: 'divider',
         boxShadow: '0 12px 24px rgba(31, 43, 54, 0.08)',
         transition: 'transform 0.2s, boxShadow 0.2s, border-color 0.2s',
         minHeight: isCompactCard ? { xs: 172, sm: 184 } : { xs: 198, sm: 216 },
@@ -91,7 +92,7 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
           component="h3"
           sx={{
             fontWeight: 800,
-            color: '#171b22',
+            color: 'text.primary',
             mb: 1.15,
             fontSize: titleFontSize,
             lineHeight: 1.22,
@@ -113,7 +114,7 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             mb: 1.25,
-            color: '#5a6470',
+            color: 'text.secondary',
             fontSize: descriptionFontSize,
             lineHeight: 1.45,
             overflowWrap: 'anywhere',
@@ -132,7 +133,7 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
             mt: 'auto',
             minHeight: 40,
             borderTop: '1px solid',
-            borderColor: 'rgba(66, 98, 125, 0.2)',
+            borderColor: 'divider',
           }}
         >
           <Chip
@@ -158,13 +159,18 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 0.55,
-              color: '#6e7884',
+              color: 'text.secondary',
               minHeight: 30,
             }}
           >
             <CalendarTodayRoundedIcon sx={{ fontSize: footerFontSize }} />
             <Typography
-              sx={{ fontSize: footerFontSize, color: '#66707b', fontWeight: 500, lineHeight: 1 }}
+              sx={{
+                fontSize: footerFontSize,
+                color: 'text.secondary',
+                fontWeight: 500,
+                lineHeight: 1,
+              }}
             >
               {createdAt}
             </Typography>

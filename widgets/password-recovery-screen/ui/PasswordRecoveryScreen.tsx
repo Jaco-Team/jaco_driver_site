@@ -17,6 +17,7 @@ const steps = ['Телефон', 'Подтверждение'];
 import Meta from '@/components/meta';
 
 import MyTextInput from '@/shared/ui/MyTextInput';
+import OtpCodeInput from '@/shared/ui/OtpCodeInput/OtpCodeInput';
 import PasswordInput from '@/shared/ui/PasswordInput';
 import PasswordRequirementsList from '@/shared/ui/PasswordRequirementsList';
 import YandexSmartCaptcha, { SMARTCAPTCHA_CLIENT_KEY } from '@/shared/ui/YandexSmartCaptcha';
@@ -105,13 +106,15 @@ export default function RegistrationPage() {
                   ) : null}
                 </>
               ) : (
-                <MyTextInput
+                <OtpCodeInput
                   label="Код из смс"
                   value={myCode}
-                  onChange={(e) => setMyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  onKeyPress={submitOnEnter(confirmRecoveryCode)}
-                  maxLength={6}
-                  inputMode="numeric"
+                  onChange={setMyCode}
+                  onComplete={(code) => {
+                    void confirmRecoveryCode(code);
+                  }}
+                  disabled={loader}
+                  autoFocus
                 />
               )}
             </div>
@@ -126,7 +129,7 @@ export default function RegistrationPage() {
               variant="contained"
               fullWidth
               className="auth__primaryButton"
-              disabled={!canSubmit}
+              disabled={!canSubmit || loader}
               onClick={() => (activeStep === 0 ? requestRecoveryCode() : confirmRecoveryCode())}
             >
               {retryAfter > 0

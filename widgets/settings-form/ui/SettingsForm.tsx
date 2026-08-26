@@ -16,6 +16,7 @@ import { SectionTitle } from '@/shared/ui/SectionTitle/SectionTitle';
 import { AutocompleteField } from '@/shared/ui/AutocompleteField/AutocompleteField';
 import { RadioGroupField } from '@/shared/ui/RadioGroupField/RadioGroupField';
 import { CheckboxField } from '@/shared/ui/CheckboxField/CheckboxField';
+import { SwitchField } from '@/shared/ui/SwitchField/SwitchField';
 import { FontSizeSlider } from '@/shared/ui/FontSizeSlider/FontSizeSlider';
 import { MapScaleSlider } from '@/shared/ui/MapScaleSlider/MapScaleSlider';
 import { ColorPicker } from '@/shared/ui/ColorPicker/ColorPicker';
@@ -35,6 +36,7 @@ export const SettingsForm: React.FC = () => {
     updateInterval,
     centeredMap,
     nightMap,
+    darkTheme,
     isScaleMap,
     color,
     groupTypeTheme,
@@ -47,6 +49,7 @@ export const SettingsForm: React.FC = () => {
     setUpdateInterval,
     setCenteredMap,
     setNightMap,
+    setDarkTheme,
     setIsScaleMap,
     setColor,
     setGroupTypeTheme,
@@ -236,6 +239,15 @@ export const SettingsForm: React.FC = () => {
             value={typeShowDel}
             onChange={(val) => setTypeShowDel(val as TypeShowDel)}
             options={cancelOrdersOptions}
+            fontSize={globalFontSize}
+          />
+        </SettingsSection>
+
+        <SettingsSection>
+          <SwitchField
+            label="Тёмная тема интерфейса"
+            checked={darkTheme}
+            onChange={setDarkTheme}
             fontSize={globalFontSize}
           />
         </SettingsSection>

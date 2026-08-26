@@ -28,9 +28,16 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
         sx={{
           p: `${padding}px`,
           borderRadius: '24px',
-          border: '1px solid rgba(66, 98, 125, 0.16)',
-          background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-          boxShadow: '0 14px 30px rgba(31, 43, 54, 0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, #1b2833 0%, #18232d 100%)'
+              : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+          boxShadow: (theme) =>
+            theme.palette.mode === 'dark'
+              ? '0 14px 30px rgba(0, 0, 0, 0.28)'
+              : '0 14px 30px rgba(31, 43, 54, 0.08)',
           ...sx,
         }}
       >
@@ -66,9 +73,16 @@ export const SettingsSectionWithPreview: React.FC<SettingsSectionWithPreviewProp
         sx={{
           p: '20px',
           borderRadius: '24px',
-          border: '1px solid rgba(66, 98, 125, 0.16)',
-          background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-          boxShadow: '0 14px 30px rgba(31, 43, 54, 0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, #1b2833 0%, #18232d 100%)'
+              : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+          boxShadow: (theme) =>
+            theme.palette.mode === 'dark'
+              ? '0 14px 30px rgba(0, 0, 0, 0.28)'
+              : '0 14px 30px rgba(31, 43, 54, 0.08)',
           position: 'relative',
         }}
       >

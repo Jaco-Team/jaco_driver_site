@@ -21,3 +21,16 @@ export const appPalette = {
   shadowStrong: 'rgba(17, 27, 36, 0.18)',
   error: '#9c4a3d',
 } as const;
+
+export const appDarkPalette = {
+  background: '#10171E',
+  surface: '#18232D',
+  surfaceAlt: '#22303B',
+  surfaceRaised: '#293945',
+  border: 'rgba(174, 187, 197, 0.22)',
+  text: '#F3F6F8',
+  textMuted: '#AEBBC5',
+  shadowSoft: 'rgba(0, 0, 0, 0.24)',
+  shadow: 'rgba(0, 0, 0, 0.34)',
+  shadowStrong: 'rgba(0, 0, 0, 0.46)',
+} as const;

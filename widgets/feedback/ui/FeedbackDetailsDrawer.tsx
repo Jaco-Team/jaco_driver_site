@@ -76,7 +76,8 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
             maxHeight: '86vh',
-            border: '1px solid rgba(66, 98, 125, 0.14)',
+            border: '1px solid',
+            borderColor: 'divider',
             boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
             overflow: 'hidden',
           },
@@ -109,7 +110,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
           sx={{
             fontWeight: 800,
             fontSize: modalTitleFontSize,
-            color: '#1f2b36',
+            color: 'text.primary',
             mb: 2,
             pr: 4,
             wordBreak: 'break-word',
@@ -122,8 +123,8 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.8, flexWrap: 'wrap' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <AccessTimeIcon sx={{ fontSize: metaFontSize, color: '#6e7884' }} />
-            <Typography sx={{ fontSize: metaFontSize, color: '#66707b', lineHeight: 1 }}>
+            <AccessTimeIcon sx={{ fontSize: metaFontSize, color: 'text.secondary' }} />
+            <Typography sx={{ fontSize: metaFontSize, color: 'text.secondary', lineHeight: 1 }}>
               {feedback.date_time_create?.replace(/^(\d{4})-(\d{2})-(\d{2}).*$/, '$3.$2.$1') || '—'}
             </Typography>
           </Box>
@@ -144,8 +145,8 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             label={feedback.type}
             size="small"
             sx={{
-              backgroundColor: '#f0f2f5',
-              color: '#253343',
+              backgroundColor: 'action.selected',
+              color: 'text.primary',
               borderRadius: '999px',
               fontWeight: 600,
               height: 32,
@@ -161,7 +162,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             fontWeight: 700,
             fontSize: sectionTitleFontSize,
             lineHeight: 1.3,
-            color: '#253343',
+            color: 'text.primary',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
@@ -173,7 +174,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             mb: 1.4,
             fontSize: bodyFontSize,
             lineHeight: 1.45,
-            color: '#5a6470',
+            color: 'text.secondary',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
@@ -188,7 +189,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
                 fontWeight: 700,
                 fontSize: sectionTitleFontSize,
                 lineHeight: 1.3,
-                color: '#253343',
+                color: 'text.primary',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
               }}
@@ -229,7 +230,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             fontWeight: 700,
             fontSize: sectionTitleFontSize,
             lineHeight: 1.3,
-            color: '#253343',
+            color: 'text.primary',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
@@ -241,12 +242,13 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             mb: 1.2,
             fontSize: bodyFontSize,
             lineHeight: 1.45,
-            color: '#5a6470',
-            backgroundColor: '#f5f5f5',
+            color: 'text.secondary',
+            backgroundColor: 'action.hover',
             padding: '12px 14px',
             borderRadius: '16px',
             fontWeight: '500',
-            border: '1px solid rgba(66, 98, 125, 0.1)',
+            border: '1px solid',
+            borderColor: 'divider',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
