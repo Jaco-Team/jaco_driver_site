@@ -5,9 +5,9 @@ import type { useOrdersStore } from '@/entities/order/model/order.store';
 import type { MapBounds, MapViewport } from './mapViewport';
 
 export interface MapInstance {
-  setCenter: (center: [number, number]) => void | Promise<unknown>;
-  getCenter: () => [number, number] | null;
-  getBounds: () => MapBounds | null;
+  setCenter: (center: number[]) => void | Promise<unknown>;
+  getCenter: () => number[] | null;
+  getBounds: () => number[][] | null;
   events: {
     add: (event: string, handler: () => void) => void;
     remove: (event: string, handler: () => void) => void;

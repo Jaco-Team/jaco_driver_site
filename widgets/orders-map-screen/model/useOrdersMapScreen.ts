@@ -4,7 +4,7 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { log } from '@/components/analytics';
 import type { MapInstance, UseOrdersMapScreenResult } from './useOrdersMapScreen.type';
-import type { MapViewport } from './mapViewport';
+import type { MapBounds, MapViewport } from './mapViewport';
 
 export function useOrdersMapScreen(): UseOrdersMapScreenResult {
   const mapRef = useRef<MapInstance | null>(null);
@@ -47,6 +47,10 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
   const setMapInstance = useCallback((instance: MapInstance | null) => {
     mapRef.current = instance;
     setMapInstanceState(instance);
+
+    if (!instance) {
+      setViewport(null);
+    }
   }, []);
 
   const getHome = useCallback(() => {
@@ -90,7 +94,6 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
 
   useEffect(() => {
     if (!mapInstance) {
-      setViewport(null);
       return undefined;
     }
 
@@ -98,11 +101,28 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
       const bounds = mapInstance.getBounds?.();
       const center = mapInstance.getCenter?.();
 
-      if (!bounds || !center) {
+      if (
+        !bounds ||
+        bounds.length < 2 ||
+        bounds[0].length < 2 ||
+        bounds[1].length < 2 ||
+        !center ||
+        center.length < 2
+      ) {
         return;
       }
 
-      setViewport({ bounds, center });
+      const normalizedBounds: MapBounds = [
+        [Number(bounds[0][0]), Number(bounds[0][1])],
+        [Number(bounds[1][0]), Number(bounds[1][1])],
+      ];
+      const normalizedCenter: [number, number] = [Number(center[0]), Number(center[1])];
+
+      if (![...normalizedBounds.flat(), ...normalizedCenter].every(Number.isFinite)) {
+        return;
+      }
+
+      setViewport({ bounds: normalizedBounds, center: normalizedCenter });
     };
 
     updateViewport();
