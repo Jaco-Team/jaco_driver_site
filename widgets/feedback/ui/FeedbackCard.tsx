@@ -58,7 +58,7 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
       onClick={() => onClick(feedback)}
       sx={{
         bgcolor: 'background.paper',
-        borderRadius: 4,
+        borderRadius: '24px',
         border: '1px solid',
         borderColor: 'divider',
         boxShadow: '0 12px 24px rgba(31, 43, 54, 0.08)',
