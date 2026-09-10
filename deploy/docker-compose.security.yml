@@ -1,0 +1,9 @@
+services:
+  driver-frontend-new:
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,uid=1001,gid=65533,size=64m
+      - /app/.next/cache:rw,nosuid,nodev,uid=1001,gid=65533,size=256m

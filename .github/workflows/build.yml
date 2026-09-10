@@ -40,9 +40,21 @@ jobs:
       - name: Push frontend image
         run: docker push $IMAGE_NAME
 
+      - name: Upload frontend runtime security policy
+        if: ${{ vars.AUTO_DEPLOY_FRONTEND == 'true' }}
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: deploy/docker-compose.security.yml
+          target: /home/deploy/deploy/driver-frontend
+          strip_components: 1
+          overwrite: true
+
       - name: Deploy frontend over SSH
         if: ${{ vars.AUTO_DEPLOY_FRONTEND == 'true' }}
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -50,8 +62,17 @@ jobs:
           script: |
             cd /home/deploy/deploy/driver-frontend
 
-            docker compose pull
-            docker rm -f driver-frontend-new || true
-            docker compose up -d
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.security.yml \
+              config --quiet
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.security.yml \
+              pull
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.security.yml \
+              up -d
 
             docker ps --filter "name=driver-frontend-new"

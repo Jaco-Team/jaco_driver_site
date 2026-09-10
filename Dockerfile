@@ -71,4 +71,7 @@ USER nextjs
 
 EXPOSE 3225
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:3225/ || exit 1
+
 CMD ["node", "server.js"]
