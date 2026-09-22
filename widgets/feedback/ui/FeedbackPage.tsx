@@ -79,8 +79,8 @@ const FeedbackPage: React.FC = () => {
         <Fab
           onClick={() => setAddModal(true)}
           sx={{
-            backgroundColor: '#cc0033',
-            color: '#ffffff',
+            backgroundColor: 'primary.main',
+            color: 'primary.contrastText',
             position: 'fixed',
             right: 14,
             bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
@@ -90,7 +90,7 @@ const FeedbackPage: React.FC = () => {
             boxShadow: '0 22px 34px rgba(146, 0, 36, 0.32)',
             zIndex: 1000,
             '&:hover': {
-              backgroundColor: '#b4002d',
+              backgroundColor: 'primary.dark',
               boxShadow: '0 24px 36px rgba(146, 0, 36, 0.36)',
             },
           }}

@@ -9,7 +9,7 @@ import PhoneIcon from '@mui/icons-material/Phone';
 
 import { log, logTel } from '@/components/analytics';
 import type { ExtractedPhone } from '@/shared/lib/extractPhones';
-import { appPalette } from '@/shared/styles/appPalette';
+import { appDarkPalette, appPalette } from '@/shared/styles/appPalette';
 
 const CALL_BUTTON_HEIGHT = 44;
 
@@ -87,8 +87,8 @@ export function CommentPhonesControl({ phones, onOpenMultiple }: CommentPhonesCo
         overlap="circular"
         sx={{
           '& .MuiBadge-badge': {
-            backgroundColor: appPalette.brand,
-            color: '#fff',
+            backgroundColor: 'primary.main',
+            color: 'primary.contrastText',
             fontWeight: 700,
           },
         }}
@@ -125,10 +125,15 @@ export function CommentPhonesDrawer({
             height: 'auto',
             bottom: 0,
             top: 'auto',
-            background: '#ffffff',
+            backgroundColor: 'background.paper',
             overflow: 'hidden',
-            border: `1px solid ${appPalette.softStrong}`,
-            boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+            border: '1px solid',
+            borderColor: (theme) =>
+              theme.palette.mode === 'dark' ? theme.palette.divider : appPalette.softStrong,
+            boxShadow: (theme) =>
+              theme.palette.mode === 'dark'
+                ? `0 24px 44px ${appDarkPalette.shadow}`
+                : '0 24px 44px rgba(31, 43, 54, 0.2)',
             zIndex: (theme) => theme.zIndex.modal + 2,
           },
         },
@@ -159,7 +164,10 @@ export function CommentPhonesDrawer({
               width: 62,
               height: 6,
               borderRadius: 999,
-              backgroundColor: 'rgba(31, 43, 54, 0.2)',
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'rgba(217, 224, 230, 0.28)'
+                  : 'rgba(31, 43, 54, 0.2)',
             }}
           />
         </Box>
@@ -170,7 +178,7 @@ export function CommentPhonesDrawer({
             fontSize: titleFontSize,
             fontWeight: 700,
             lineHeight: 1.2,
-            color: appPalette.text,
+            color: 'text.primary',
             mb: 2,
           }}
         >
@@ -197,11 +205,13 @@ export function CommentPhonesDrawer({
                 textTransform: 'none',
                 fontWeight: 600,
                 fontSize: actionFontSize,
-                backgroundColor: '#E0E0E0',
-                color: appPalette.text,
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'dark' ? appDarkPalette.surfaceAlt : '#E0E0E0',
+                color: 'text.primary',
                 boxShadow: 'none',
                 '&:hover': {
-                  backgroundColor: '#d5d5d5',
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === 'dark' ? appDarkPalette.surfaceRaised : '#d5d5d5',
                   boxShadow: 'none',
                 },
               }}

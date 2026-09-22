@@ -12,47 +12,62 @@ import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 
 import { useOrdersStore } from '@/entities/order/model/order.store';
-import { appPalette } from '@/shared/styles/appPalette';
+import {
+  appDarkPalette,
+  appDarkSuccessPalette,
+  appPalette,
+  appSuccessPalette,
+} from '@/shared/styles/appPalette';
 
-const HeaderBox = styled(Box)({
+const SELECTED_TYPE_BG_LIGHT = '#e3f2fd';
+const SELECTED_TYPE_TEXT_LIGHT = '#1976d2';
+const SELECTED_TYPE_BG_DARK = 'rgba(117, 147, 173, 0.18)';
+const SELECTED_TYPE_TEXT_DARK = '#9CC0DD';
+
+const HeaderBox = styled(Box)(({ theme }) => ({
   position: 'sticky',
   top: 0,
   zIndex: 1,
-  backgroundColor: '#fff',
-});
-
-const TitleText = styled(Typography)({
-  fontWeight: 600,
-  textAlign: 'center',
-  color: '#333',
-});
-
-const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
-  padding: theme.spacing(2, 3),
-  margin: theme.spacing(0.5, 2),
-  backgroundColor: '#fff',
-  borderRadius: 12,
-  justifyContent: 'center',
-  textAlign: 'center',
-  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
-  transition: 'all 0.2s ease',
-  '&:hover': {
-    backgroundColor: '#fff',
-    opacity: 0.9,
-  },
-  '&:active': {
-    backgroundColor: '#f0f0f0',
-  },
+  backgroundColor: theme.palette.background.paper,
 }));
 
-const ActiveBadge = styled(Box)({
+const TitleText = styled(Typography)(({ theme }) => ({
+  fontWeight: 600,
+  textAlign: 'center',
+  color: theme.palette.mode === 'dark' ? theme.palette.text.primary : '#333',
+}));
+
+const StyledListItemButton = styled(ListItemButton)(({ theme }) => {
+  const isDark = theme.palette.mode === 'dark';
+
+  return {
+    padding: theme.spacing(2, 3),
+    margin: theme.spacing(0.5, 2),
+    backgroundColor: isDark ? appDarkPalette.surfaceAlt : '#fff',
+    borderRadius: 12,
+    justifyContent: 'center',
+    textAlign: 'center',
+    boxShadow: isDark ? `0 1px 3px ${appDarkPalette.shadowSoft}` : '0 1px 3px rgba(0, 0, 0, 0.08)',
+    transition: 'all 0.2s ease',
+    '&:hover': {
+      backgroundColor: isDark ? appDarkPalette.surfaceRaised : '#fff',
+      opacity: 0.9,
+    },
+    '&:active': {
+      backgroundColor: isDark ? appDarkPalette.surfaceRaised : '#f0f0f0',
+    },
+  };
+});
+
+const ActiveBadge = styled(Box)(({ theme }) => ({
   position: 'absolute',
   right: 16,
   width: 8,
   height: 8,
   borderRadius: '50%',
-  backgroundColor: '#4caf50',
-});
+  backgroundColor:
+    theme.palette.mode === 'dark' ? appDarkSuccessPalette.main : appSuccessPalette.main,
+}));
 
 interface OrderStatusModalProps {
   open: boolean;
@@ -87,6 +102,7 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
       data-testid="order-status-modal"
       slotProps={{
         paper: {
+          className: 'orderStatusSheet',
           sx: {
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
@@ -94,10 +110,15 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
             height: 'auto',
             bottom: 0,
             top: 'auto',
-            background: '#ffffff',
+            backgroundColor: 'background.paper',
             overflow: 'hidden',
-            border: `1px solid ${appPalette.softStrong}`,
-            boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+            border: '1px solid',
+            borderColor: (theme) =>
+              theme.palette.mode === 'dark' ? theme.palette.divider : appPalette.softStrong,
+            boxShadow: (theme) =>
+              theme.palette.mode === 'dark'
+                ? `0 24px 44px ${appDarkPalette.shadow}`
+                : '0 24px 44px rgba(31, 43, 54, 0.2)',
           },
         },
       }}
@@ -126,12 +147,18 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
                 width: 62,
                 height: 6,
                 borderRadius: 999,
-                backgroundColor: 'rgba(31, 43, 54, 0.2)',
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(217, 224, 230, 0.28)'
+                    : 'rgba(31, 43, 54, 0.2)',
               }}
             />
           </Box>
 
-          <Box sx={{ position: 'relative', px: 3, pb: 1 }}>
+          <Box sx={{ position: 'relative', px: 3, pb: 1, backgroundColor: (theme) => {
+                    const isDark = theme.palette.mode === 'dark';
+                    return isDark ? appDarkPalette.surface : '#fff';
+                  }, }}>
             <IconButton
               onClick={onClose}
               size="small"
@@ -159,7 +186,15 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
               <StyledListItemButton
                 onClick={() => handleStatusClick(orderType)}
                 sx={{
-                  backgroundColor: type?.id === orderType.id ? '#e3f2fd' : '#fff',
+                  backgroundColor: (theme) => {
+                    const isDark = theme.palette.mode === 'dark';
+
+                    if (type?.id === orderType.id) {
+                      return isDark ? SELECTED_TYPE_BG_DARK : SELECTED_TYPE_BG_LIGHT;
+                    }
+
+                    return isDark ? appDarkPalette.surface : '#fff';
+                  },
                   position: 'relative',
                 }}
               >
@@ -167,11 +202,23 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
                   primary={orderType.text}
                   slotProps={{
                     primary: {
+                      // Doubled selector so the global `.MuiDrawer-paper li span` rule
+                      // does not win over the per-item typography.
                       sx: {
-                        fontSize: globalFontSize,
-                        fontWeight: type?.id === orderType.id ? 600 : 500,
-                        textAlign: 'center',
-                        color: type?.id === orderType.id ? '#1976d2' : '#333',
+                        '&&': {
+                          fontSize: globalFontSize,
+                          fontWeight: type?.id === orderType.id ? 600 : 500,
+                          textAlign: 'center',
+                          color: (theme) => {
+                            const isDark = theme.palette.mode === 'dark';
+
+                            if (type?.id === orderType.id) {
+                              return isDark ? SELECTED_TYPE_TEXT_DARK : SELECTED_TYPE_TEXT_LIGHT;
+                            }
+
+                            return isDark ? theme.palette.text.primary : '#333';
+                          },
+                        },
                       },
                     },
                   }}

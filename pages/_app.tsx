@@ -27,6 +27,8 @@ import YandexMetrika from '@/components/YandexMetrika';
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { resolveYandexMetrikaIds } from '@/shared/lib/yandexMetrikaIds';
+import { useConnectivityWatch } from '@/features/offline/model/useConnectivityWatch';
+import { useServiceWorker } from '@/features/offline/model/useServiceWorker';
 
 const YANDEX_METRIKA_IDS = resolveYandexMetrikaIds();
 
@@ -49,6 +51,8 @@ function MyApp(props: MyAppProps) {
   const router = useRouter();
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
   const darkTheme = useHeaderStore((state) => state.darkTheme);
+  useConnectivityWatch();
+  useServiceWorker();
   const muiTheme = useMemo(() => createAppTheme(darkTheme), [darkTheme]);
   const normalizedGlobalFontSize =
     Number.isFinite(globalFontSize) && globalFontSize > 0
@@ -57,6 +61,24 @@ function MyApp(props: MyAppProps) {
   const appFontSize = EXCLUDED_GLOBAL_FONT_ROUTES.has(router.pathname)
     ? DEFAULT_GLOBAL_FONT_SIZE
     : normalizedGlobalFontSize;
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const syncDeviceTheme = () => {
+      useHeaderStore.getState().setDeviceDarkTheme(media.matches);
+    };
+
+    syncDeviceTheme();
+    media.addEventListener?.('change', syncDeviceTheme);
+
+    return () => {
+      media.removeEventListener?.('change', syncDeviceTheme);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') {

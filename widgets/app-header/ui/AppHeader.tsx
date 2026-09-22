@@ -31,6 +31,7 @@ import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
+import WifiOffRoundedIcon from '@mui/icons-material/WifiOffRounded';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import AppBar from '@mui/material/AppBar';
@@ -42,7 +43,7 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import PayModel from '@/components/PayModel';
 import { roboto } from '@/shared/config/fonts';
 import { formatPhoneNumber } from '@/shared/lib/formatters/formatPhoneNumber';
-import { appPalette } from '@/shared/styles/appPalette';
+import { appDarkPalette, appPalette } from '@/shared/styles/appPalette';
 import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined';
 import { OrderMapDrawer } from '@/widgets/order/ui/components/OrderMapDrawer';
 import { useAppHeader } from '../model/useAppHeader';
@@ -300,7 +301,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
           width: 'min(86vw, 340px)',
           background: (theme) =>
             theme.palette.mode === 'dark'
-              ? 'linear-gradient(180deg, #22303b 0%, #18232d 34%)'
+              ? `linear-gradient(180deg, ${appDarkPalette.surfaceAlt} 0%, ${appDarkPalette.surface} 34%)`
               : 'linear-gradient(180deg, #f6f9fc 0%, #ffffff 34%)',
           boxShadow: `0 28px 60px ${appPalette.shadowStrong}`,
           overflow: 'hidden',
@@ -316,8 +317,11 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
             px: 2.5,
             pt: 2.5,
             pb: 2,
-            color: '#fff',
-            background: `linear-gradient(135deg, ${appPalette.brand} 0%, ${appPalette.brandDeep} 100%)`,
+            color: 'primary.contrastText',
+            background: (theme) =>
+              theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, ${appDarkPalette.brand} 0%, ${appDarkPalette.brandDeep} 100%)`
+                : `linear-gradient(135deg, ${appPalette.brand} 0%, ${appPalette.brandDeep} 100%)`,
           }}
         >
           <Typography
@@ -613,16 +617,25 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
               px: 1.75,
               py: 1.2,
               borderRadius: '24px',
-              borderColor: appPalette.brandSoftStrong,
+              borderColor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? appDarkPalette.brandSoftStrong
+                  : appPalette.brandSoftStrong,
               bgcolor: 'background.paper',
-              color: appPalette.brand,
+              color: 'primary.main',
               fontSize: globalFontSize,
               fontWeight: 700,
               textTransform: 'none',
               boxShadow: '0 10px 22px rgba(15, 23, 42, 0.04)',
               '&:hover': {
-                borderColor: appPalette.brandSoftStrong,
-                bgcolor: appPalette.brandSoft,
+                borderColor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? appDarkPalette.brandSoftStrong
+                    : appPalette.brandSoftStrong,
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? appDarkPalette.brandSoft
+                    : appPalette.brandSoft,
               },
             }}
           >
@@ -643,6 +656,7 @@ export function AppHeader() {
     showModalTypeDop,
     getOrders,
     isOrdersActionsVisible,
+    isOnline,
     handleLogout,
   } = useAppHeader(routeTitles);
 
@@ -663,11 +677,41 @@ export function AppHeader() {
           <Typography
             variant="h6"
             component="div"
-            sx={{ flexGrow: 1 }}
+            sx={{ flexGrow: 1, minWidth: 0 }}
             style={{ fontSize: globalFontSize }}
+            noWrap
           >
             {pageTitle}
           </Typography>
+          {!isOnline && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.75,
+                mr: isOrdersActionsVisible ? 0.5 : 0,
+                px: 1,
+                py: 0.5,
+                minHeight: 44,
+                borderRadius: '16px',
+                bgcolor: 'rgba(0, 0, 0, 0.18)',
+                flexShrink: 0,
+              }}
+            >
+              <WifiOffRoundedIcon sx={{ fontSize: Math.max(globalFontSize + 2, 18) }} />
+              <Typography
+                component="span"
+                sx={{
+                  fontSize: Math.max(Math.min(globalFontSize - 1, 15), 12),
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Нет интернета
+              </Typography>
+            </Box>
+          )}
           {isOrdersActionsVisible && (
             <div>
               <Button

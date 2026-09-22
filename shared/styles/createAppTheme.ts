@@ -9,14 +9,14 @@ export function createAppTheme(darkMode: boolean) {
     palette: {
       mode: isDark ? 'dark' : 'light',
       primary: {
-        main: appPalette.brand,
-        dark: appPalette.brandDark,
-        contrastText: '#FFFFFF',
+        main: isDark ? appDarkPalette.brand : appPalette.brand,
+        dark: isDark ? appDarkPalette.brandDark : appPalette.brandDark,
+        contrastText: isDark ? appDarkPalette.onBrand : '#FFFFFF',
       },
       secondary: {
         main: appPalette.primary,
         dark: appPalette.primaryDark,
-        contrastText: '#FFFFFF',
+        contrastText: isDark ? appDarkPalette.onBrand : '#FFFFFF',
       },
       error: {
         main: appPalette.error,
@@ -31,8 +31,8 @@ export function createAppTheme(darkMode: boolean) {
       },
       divider: isDark ? appDarkPalette.border : appPalette.border,
       action: {
-        hover: isDark ? 'rgba(117, 147, 173, 0.10)' : appPalette.softHover,
-        selected: isDark ? 'rgba(117, 147, 173, 0.16)' : appPalette.soft,
+        hover: isDark ? 'rgba(117, 147, 173, 0.12)' : appPalette.softHover,
+        selected: isDark ? 'rgba(117, 147, 173, 0.18)' : appPalette.soft,
       },
     },
     shape: {

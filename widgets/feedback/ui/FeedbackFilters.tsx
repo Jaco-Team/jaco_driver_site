@@ -4,6 +4,7 @@ import { useFeedbackStore } from '@/widgets/feedback/model/feedback.store';
 import { statusArr } from '@/entities/feedback/model/types';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { clampFeedbackFontSize } from '@/widgets/feedback/model/feedbackTypography';
+import { appDarkPalette } from '@/shared/styles/appPalette';
 
 interface FeedbackFiltersProps {
   globalFontSize: number;
@@ -43,7 +44,7 @@ export const FeedbackFilters: React.FC<FeedbackFiltersProps> = ({ globalFontSize
           borderColor: 'divider',
           background: (theme) =>
             theme.palette.mode === 'dark'
-              ? 'linear-gradient(180deg, #1b2833 0%, #18232d 100%)'
+              ? `linear-gradient(180deg, ${appDarkPalette.surfaceAlt} 0%, ${appDarkPalette.surface} 100%)`
               : 'linear-gradient(180deg, #ffffff 0%, #f7f9fb 100%)',
           boxShadow: '0 14px 30px rgba(31, 43, 54, 0.08)',
           px: { xs: 2, sm: 2.5 },
@@ -95,18 +96,36 @@ export const FeedbackFilters: React.FC<FeedbackFiltersProps> = ({ globalFontSize
                 flex: '0 0 auto',
                 fontSize: chipFontSize,
                 border: '1px solid',
-                borderColor: status === u.id ? '#cc0033' : 'divider',
-                backgroundColor: status === u.id ? '#cc0033 !important' : 'background.paper',
-                color: status === u.id ? '#ffffff' : 'text.primary',
+                borderColor: status === u.id ? 'primary.main' : 'divider',
+                backgroundColor: (theme) =>
+                  status === u.id
+                    ? `${theme.palette.primary.main} !important`
+                    : theme.palette.background.paper,
+                color: status === u.id ? 'primary.contrastText' : 'text.primary',
                 transition: 'all 0.18s ease',
                 '&.MuiChip-clickable:hover': {
-                  backgroundColor: status === u.id ? '#b4002d !important' : '#f4f7fa',
+                  backgroundColor: (theme) =>
+                    status === u.id
+                      ? `${theme.palette.primary.dark} !important`
+                      : theme.palette.mode === 'dark'
+                        ? appDarkPalette.surfaceRaised
+                        : '#f4f7fa',
                 },
                 '&.MuiChip-clickable:active': {
-                  backgroundColor: status === u.id ? '#a8002a !important' : '#edf2f6',
+                  backgroundColor: (theme) =>
+                    status === u.id
+                      ? `${theme.palette.primary.dark} !important`
+                      : theme.palette.mode === 'dark'
+                        ? appDarkPalette.surfaceRaised
+                        : '#edf2f6',
                 },
                 '&.Mui-focusVisible': {
-                  backgroundColor: status === u.id ? '#b4002d !important' : '#f4f7fa',
+                  backgroundColor: (theme) =>
+                    status === u.id
+                      ? `${theme.palette.primary.dark} !important`
+                      : theme.palette.mode === 'dark'
+                        ? appDarkPalette.surfaceRaised
+                        : '#f4f7fa',
                 },
               }}
               onClick={() => changeStatus(u.id)}

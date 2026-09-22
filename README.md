@@ -132,6 +132,7 @@ pages/widgets/features
 
 ```text
 NEXT_PUBLIC_API_ORIGIN
+NEXT_PUBLIC_API_PROXY
 NEXT_PUBLIC_MEDIA_ORIGIN
 NEXT_PUBLIC_SENTRY_DSN
 NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE
@@ -140,6 +141,21 @@ NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE
 SENTRY_DSN
 SENTRY_TRACES_SAMPLE_RATE
 ```
+
+### Локальный бэкенд без CORS
+
+Если бэкенд (например, `http://localhost:8000`) не отдаёт заголовок `Access-Control-Allow-Origin`,
+браузер блокирует все запросы с origin dev-сервера. Чтобы работать без правок бэкенда, включите
+прокси в `.env.development`:
+
+```text
+NEXT_PUBLIC_API_ORIGIN=http://localhost:8000
+NEXT_PUBLIC_API_PROXY=true
+```
+
+С этим флагом axios использует относительный `baseURL`, а Next проксирует `/api/v1/*` на
+`NEXT_PUBLIC_API_ORIGIN`, поэтому запросы остаются same-origin и CORS не нужен. После изменения
+env перезапустите dev-сервер. Альтернатива — добавить origin фронтенда в `config/cors.php` бэкенда.
 
 ### Контракты Auth API
 
@@ -347,3 +363,9 @@ Legacy слой `modules/` удален из активного frontend-код�
 Если нужна более строгая памятка для дальнейшей работы модели или разработчиков, используйте:
 
 - [AGENTS.md](./AGENTS.md)
+
+- когда пропадает интернет надо в статус баре отобразить что нет интернета
+- с какой-то переодичностью проверять наличие интернета
+- если интернет пропадает курьер должен видеть все заказы что у него были, с теми же настройками
+- так же должна сохраниться возможность открывать карточки заказов на карте
+- только заказы, настройки и номера телефонов, остальное можно не хранить

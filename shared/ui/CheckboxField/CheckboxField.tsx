@@ -30,7 +30,7 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({ options, fontSize 
               sx={{
                 color: 'text.secondary',
                 '&.Mui-checked': {
-                  color: '#cc0033',
+                  color: 'primary.main',
                 },
               }}
             />

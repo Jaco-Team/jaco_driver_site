@@ -3,6 +3,7 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { SectionTitle } from '@/shared/ui/SectionTitle/SectionTitle';
 import { SxProps, Theme } from '@mui/material/styles';
+import { appDarkPalette } from '@/shared/styles/appPalette';
 
 interface SettingsSectionProps {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
           borderColor: 'divider',
           background: (theme) =>
             theme.palette.mode === 'dark'
-              ? 'linear-gradient(180deg, #1b2833 0%, #18232d 100%)'
+              ? `linear-gradient(180deg, ${appDarkPalette.surfaceAlt} 0%, ${appDarkPalette.surface} 100%)`
               : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
           boxShadow: (theme) =>
             theme.palette.mode === 'dark'
@@ -77,7 +78,7 @@ export const SettingsSectionWithPreview: React.FC<SettingsSectionWithPreviewProp
           borderColor: 'divider',
           background: (theme) =>
             theme.palette.mode === 'dark'
-              ? 'linear-gradient(180deg, #1b2833 0%, #18232d 100%)'
+              ? `linear-gradient(180deg, ${appDarkPalette.surfaceAlt} 0%, ${appDarkPalette.surface} 100%)`
               : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
           boxShadow: (theme) =>
             theme.palette.mode === 'dark'

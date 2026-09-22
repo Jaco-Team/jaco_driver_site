@@ -39,10 +39,10 @@
     padding-left: 0 !important;
     padding-right: 0 !important;
     justify-content: flex-start !important;
-    color: $colorMain !important;
+    color: var(--app-brand) !important;
     text-align: left;
     white-space: nowrap;
-    @include font_custom(1rem, 500, $colorMain);
+    @include font_custom(1rem, 500, var(--app-brand));
   }
 }
 

@@ -58,10 +58,15 @@
   display: flex;
   flex-direction: column;
   padding: 34px;
-  color: #fff;
+  color: var(--app-on-brand);
   background:
     linear-gradient(160deg, rgba(255, 255, 255, 0.08), transparent 46%),
-    linear-gradient(135deg, $colorMain 0%, $colorMainDark 52%, $colorMainDeep 100%);
+    linear-gradient(
+      135deg,
+      var(--app-brand) 0%,
+      var(--app-brand-dark) 52%,
+      var(--app-brand-deep) 100%
+    );
   box-shadow: 0 24px 60px rgba(22, 42, 61, 0.24);
 
   &::after {
@@ -345,7 +350,7 @@
 }
 
 .auth__otpBox--active {
-  border-color: $colorMain;
+  border-color: var(--app-brand);
   box-shadow: 0 14px 28px rgba(166, 0, 42, 0.12);
   transform: translateY(-1px);
 }
@@ -430,12 +435,12 @@
 
   .MuiStepLabel-label.Mui-active,
   .MuiStepLabel-label.Mui-completed {
-    color: $colorMainDark;
+    color: var(--app-brand-dark);
   }
 
   .MuiStepIcon-root.Mui-active,
   .MuiStepIcon-root.Mui-completed {
-    color: $colorMain;
+    color: var(--app-brand);
   }
 }
 
@@ -463,14 +468,14 @@
   min-height: 56px;
   margin-top: 18px;
   border-radius: 18px;
-  background: linear-gradient(135deg, $colorMain 0%, $colorMainDark 100%);
+  background: linear-gradient(135deg, var(--app-brand) 0%, var(--app-brand-dark) 100%);
   box-shadow: 0 18px 34px rgba(166, 0, 42, 0.22);
-  @include font_custom(1rem, 700, #fff);
+  @include font_custom(1rem, 700, var(--app-on-brand));
   letter-spacing: 0.01em;
   text-transform: none;
 
   &:hover {
-    background: linear-gradient(135deg, #b0002c 0%, $colorMainDeep 100%);
+    background: linear-gradient(135deg, var(--app-brand-dark) 0%, var(--app-brand-deep) 100%);
     box-shadow: 0 20px 36px rgba(166, 0, 42, 0.28);
   }
 }
@@ -505,7 +510,7 @@
 
 .auth__link {
   align-self: flex-start;
-  @include font_custom(1rem, 700, $colorMain);
+  @include font_custom(1rem, 700, var(--app-brand));
   line-height: 1.4;
   text-decoration: none;
   position: relative;
@@ -529,6 +534,126 @@
   &:hover::after {
     transform: scaleX(1);
     opacity: 1;
+  }
+}
+
+:root[data-app-theme='dark'] {
+  .auth {
+    background:
+      radial-gradient(circle at top left, rgba(66, 98, 125, 0.16), transparent 30%),
+      radial-gradient(circle at bottom right, rgba(31, 61, 86, 0.1), transparent 34%),
+      linear-gradient(180deg, #070a0e 0%, #0b1015 48%, #070a0e 100%);
+
+    &::before {
+      background: rgba(66, 98, 125, 0.1);
+    }
+
+    &::after {
+      background: rgba(0, 0, 0, 0.18);
+    }
+  }
+
+  .auth__panel {
+    background: rgba(16, 21, 27, 0.94);
+    border-color: var(--app-border);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.54);
+  }
+
+  .auth__eyebrow,
+  .auth__panelText,
+  .auth__linkCaption,
+  .auth__requirementsTitle,
+  .auth__requirement,
+  .auth__stepper .MuiStepLabel-label {
+    color: var(--app-text-muted);
+  }
+
+  .auth__panelTitle {
+    color: var(--app-text);
+  }
+
+  .auth__fieldGroup {
+    .MuiInputLabel-root {
+      color: var(--app-text-muted);
+    }
+
+    .MuiOutlinedInput-root {
+      background: var(--app-surface-alt);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+
+      &:hover,
+      &.Mui-focused {
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+      }
+    }
+
+    .MuiOutlinedInput-notchedOutline {
+      border-color: var(--app-border);
+    }
+
+    .MuiOutlinedInput-input {
+      color: var(--app-text);
+      -webkit-text-fill-color: var(--app-text);
+      caret-color: var(--app-text);
+    }
+
+    .MuiOutlinedInput-input:-webkit-autofill,
+    .MuiOutlinedInput-input:-webkit-autofill:hover,
+    .MuiOutlinedInput-input:-webkit-autofill:focus,
+    .MuiOutlinedInput-input:-webkit-autofill:active {
+      color: var(--app-text);
+      -webkit-text-fill-color: var(--app-text);
+      caret-color: var(--app-text);
+      box-shadow: 0 0 0 1000px var(--app-surface-alt) inset;
+      -webkit-box-shadow: 0 0 0 1000px var(--app-surface-alt) inset;
+    }
+  }
+
+  .auth__hint {
+    background: var(--app-surface-alt);
+    border-color: var(--app-border);
+    color: var(--app-text-muted);
+  }
+
+  .auth__secondaryButton.MuiButton-root {
+    border-color: var(--app-border);
+    color: var(--app-text);
+    background: var(--app-surface-alt);
+
+    &:hover {
+      border-color: rgba(117, 147, 173, 0.42);
+      background: var(--app-surface-raised);
+    }
+  }
+
+  .auth__otpLabel {
+    color: var(--app-text-muted);
+  }
+
+  .auth__otpBox {
+    border-color: var(--app-border);
+    background: var(--app-surface-alt);
+    color: var(--app-text);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  }
+
+  .auth__otpBox--filled {
+    background: var(--app-surface-raised);
+  }
+
+  .auth__requirementMark {
+    border-color: var(--app-border);
+    background: var(--app-surface-alt);
+    color: var(--app-success);
+  }
+
+  .auth__requirement--met {
+    color: var(--app-success);
+  }
+
+  .auth__requirement--met .auth__requirementMark {
+    border-color: var(--app-success);
+    background: rgba(63, 122, 85, 0.22);
   }
 }
 

@@ -8,6 +8,8 @@ import { useAuthStore, useSession } from '@/features/auth/model/auth.store';
 import { useSettingsStore } from '@/entities/settings';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
+import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
+import { clearOfflineCache } from '@/shared/lib/offline/cache';
 import { devLog } from '@/shared/lib/devLog';
 import type { UseAppHeaderResult } from './useAppHeader.type';
 
@@ -45,6 +47,7 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
     state.showModalTypeDop,
     state.getOrders,
   ]);
+  const isOnline = useConnectivityStore((state) => state.isOnline);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -128,8 +131,9 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
       })
       .finally(() => {
         useAuthStore.getState().setUnauthorized();
-        useOrdersStore.setState({ token: '' });
+        useOrdersStore.setState({ token: '', orders: [], sourceOrders: [], showOrders: [] });
         useHeaderStore.setState({ token: '', phones: null });
+        clearOfflineCache();
 
         let pushed = false;
         const go = () => {
@@ -157,6 +161,7 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
     showModalTypeDop,
     getOrders,
     isOrdersActionsVisible,
+    isOnline,
     handleLogout,
   };
 }

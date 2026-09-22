@@ -10,7 +10,12 @@ import PersonOffIcon from '@mui/icons-material/PersonOff';
 import WarningIcon from '@mui/icons-material/Warning';
 
 import { useHeaderStore } from '@/features/header/model/header.store';
-import { appPalette } from '@/shared/styles/appPalette';
+import {
+  appDarkPalette,
+  appDarkSuccessPalette,
+  appPalette,
+  appSuccessPalette,
+} from '@/shared/styles/appPalette';
 import { ORDER_CARD_BUTTON_HEIGHT } from '@/widgets/order/ui/components/OrderCard';
 
 interface OrderConfirmModalProps {
@@ -26,8 +31,10 @@ function clampFontSize(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function getConfig(typeConfirm: string | null, orderId: number | null) {
+function getConfig(typeConfirm: string | null, orderId: number | null, isDark: boolean) {
   const orderLabel = orderId ? `#${orderId}` : '';
+  const brandColor = isDark ? appDarkPalette.brand : appPalette.brand;
+  const successColor = isDark ? appDarkSuccessPalette.main : appSuccessPalette.main;
 
   switch (typeConfirm) {
     case 'finish':
@@ -43,7 +50,7 @@ function getConfig(typeConfirm: string | null, orderId: number | null) {
         title: 'Отменить заказ',
         message: `Заказ ${orderLabel} вернётся в общую очередь.`,
         confirmText: 'Отменить',
-        confirmColor: appPalette.brand,
+        confirmColor: brandColor,
         icon: <CancelIcon />,
       };
     case 'take':
@@ -51,7 +58,7 @@ function getConfig(typeConfirm: string | null, orderId: number | null) {
         title: 'Взять заказ',
         message: `Заказ ${orderLabel} будет назначен вам.`,
         confirmText: 'Взять',
-        confirmColor: '#4CAF50',
+        confirmColor: successColor,
         icon: <CheckCircleIcon />,
       };
     case 'fake':
@@ -82,10 +89,11 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
   onConfirm,
 }) => {
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
+  const isDarkTheme = useHeaderStore((state) => state.darkTheme);
   const titleFontSize = clampFontSize(globalFontSize + 4, 18, 24);
   const bodyFontSize = clampFontSize(globalFontSize, 14, 18);
   const actionFontSize = clampFontSize(globalFontSize + 1, 14, 18);
-  const config = getConfig(typeConfirm, orderId);
+  const config = getConfig(typeConfirm, orderId, isDarkTheme);
 
   return (
     <SwipeableDrawer
@@ -107,10 +115,15 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
             height: 'auto',
             bottom: 0,
             top: 'auto',
-            background: '#ffffff',
+            backgroundColor: 'background.paper',
             overflow: 'hidden',
-            border: `1px solid ${appPalette.softStrong}`,
-            boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+            border: '1px solid',
+            borderColor: (theme) =>
+              theme.palette.mode === 'dark' ? theme.palette.divider : appPalette.softStrong,
+            boxShadow: (theme) =>
+              theme.palette.mode === 'dark'
+                ? `0 24px 44px ${appDarkPalette.shadow}`
+                : '0 24px 44px rgba(31, 43, 54, 0.2)',
             zIndex: (theme) => theme.zIndex.modal + 2,
           },
         },
@@ -144,7 +157,10 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
               width: 62,
               height: 6,
               borderRadius: 999,
-              backgroundColor: 'rgba(31, 43, 54, 0.2)',
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'rgba(217, 224, 230, 0.28)'
+                  : 'rgba(31, 43, 54, 0.2)',
             }}
           />
         </Box>
@@ -181,7 +197,7 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
               fontSize: titleFontSize,
               fontWeight: 700,
               lineHeight: 1.2,
-              color: appPalette.text,
+              color: 'text.primary',
             }}
           >
             {config.title}
@@ -192,7 +208,7 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
           sx={{
             fontSize: bodyFontSize,
             lineHeight: 1.45,
-            color: appPalette.textMuted,
+            color: 'text.secondary',
             mb: 2.5,
           }}
         >
@@ -213,11 +229,17 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
               textTransform: 'none',
               fontWeight: 700,
               fontSize: actionFontSize,
-              backgroundColor: appPalette.surfaceAlt,
-              color: appPalette.text,
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? appDarkPalette.surfaceAlt
+                  : appPalette.surfaceAlt,
+              color: 'text.primary',
               boxShadow: 'none',
               '&:hover': {
-                backgroundColor: appPalette.soft,
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? appDarkPalette.surfaceRaised
+                    : appPalette.soft,
                 boxShadow: 'none',
               },
             }}

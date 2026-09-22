@@ -43,6 +43,7 @@ export const apiRoutes = {
     getPayQr: '/api/v1/orders/get_pay_qr',
     hideDeletedOrders: '/api/v1/orders/hide_del_orders',
     checkPayOrder: '/api/v1/orders/check_pay_order',
+    suggestRoute: '/api/v1/orders/suggest-route',
   },
   price: {
     between: '/api/v1/price/between',

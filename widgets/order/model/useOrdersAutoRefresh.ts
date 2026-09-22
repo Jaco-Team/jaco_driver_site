@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useOrdersStore } from '@/entities/order/model/order.store';
+import { isAppOnline } from '@/features/offline/model/connectivity.store';
 import { devLog } from '@/shared/lib/devLog';
 import type { UseOrdersAutoRefreshOptions } from './useOrdersAutoRefresh.type';
 
@@ -18,7 +19,7 @@ export const useOrdersAutoRefresh = (options: UseOrdersAutoRefreshOptions = {}) 
     const intervalTime = (update_interval || 10) * 1000;
 
     const interval = setInterval(() => {
-      if (!is_load) {
+      if (!is_load && isAppOnline()) {
         devLog('orders_auto_refresh', 'Auto-refreshing orders', update_interval);
         try {
           getOrders(false);

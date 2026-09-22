@@ -9,7 +9,7 @@ const BASE_HEADERS = {
 } as const;
 
 export const http: AxiosInstance = axios.create({
-  baseURL: apiConfig.apiOrigin,
+  baseURL: apiConfig.apiBaseUrl,
   withCredentials: false,
   withXSRFToken: false,
   headers: BASE_HEADERS,

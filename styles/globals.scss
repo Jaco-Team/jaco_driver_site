@@ -12,18 +12,34 @@
   --app-border: rgba(66, 98, 125, 0.16);
   --app-shadow: rgba(17, 27, 36, 0.12);
   --app-steel-soft: rgba(66, 98, 125, 0.08);
+  --app-brand: #cc0033;
+  --app-brand-dark: #a6002a;
+  --app-brand-deep: #7a001f;
+  --app-brand-soft: rgba(204, 0, 51, 0.08);
+  --app-brand-soft-strong: rgba(204, 0, 51, 0.14);
+  --app-on-brand: #ffffff;
+  --app-success: #3caa3c;
+  --app-on-success: #ffffff;
 }
 
 :root[data-app-theme='dark'] {
-  --app-background: #10171e;
-  --app-surface: #18232d;
-  --app-surface-alt: #22303b;
-  --app-surface-raised: #293945;
-  --app-text: #f3f6f8;
-  --app-text-muted: #aebbc5;
-  --app-border: rgba(174, 187, 197, 0.22);
-  --app-shadow: rgba(0, 0, 0, 0.34);
-  --app-steel-soft: rgba(117, 147, 173, 0.16);
+  --app-background: #070a0e;
+  --app-surface: #10151b;
+  --app-surface-alt: #171e26;
+  --app-surface-raised: #202a34;
+  --app-text: #d9e0e6;
+  --app-text-muted: #8e9ca8;
+  --app-border: rgba(174, 187, 197, 0.18);
+  --app-shadow: rgba(0, 0, 0, 0.48);
+  --app-steel-soft: rgba(117, 147, 173, 0.18);
+  --app-brand: #aa3e53;
+  --app-brand-dark: #8a2438;
+  --app-brand-deep: #6b1b2b;
+  --app-brand-soft: rgba(170, 62, 83, 0.14);
+  --app-brand-soft-strong: rgba(170, 62, 83, 0.24);
+  --app-on-brand: #f0e4e7;
+  --app-success: #3f7a55;
+  --app-on-success: #e7f0ea;
 }
 
 html,

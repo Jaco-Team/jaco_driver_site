@@ -551,13 +551,13 @@
     width: 100%;
     min-height: 58px;
     border-radius: 18px;
-    background: $colorMain;
+    background: var(--app-brand);
     box-shadow: 0 14px 30px rgba(166, 0, 42, 0.22);
     text-transform: none;
     font-weight: 700;
 
     &:hover {
-      background: $colorMainDark;
+      background: var(--app-brand-dark);
     }
   }
 

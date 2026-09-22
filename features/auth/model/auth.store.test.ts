@@ -24,6 +24,18 @@ vi.mock('@/shared/api/token', () => ({
   clearAuthToken: mocks.clearAuthToken,
 }));
 
+vi.mock('@/features/offline/model/connectivity.store', () => ({
+  markAppOffline: vi.fn(),
+  markAppOnline: vi.fn(),
+  isAppOnline: () => true,
+}));
+
+vi.mock('@/shared/lib/offline/cache', () => ({
+  clearOfflineCache: vi.fn(),
+  readOfflineCache: () => null,
+  writeOfflineCache: vi.fn(),
+}));
+
 function resetStore() {
   window.localStorage.clear();
   useAuthStore.setState({
@@ -125,5 +137,18 @@ describe('auth store', () => {
 
     expect(result.st).toBe(true);
     expect(useAuthStore.getState().session.user?.settings?.fontSize).toBe(16);
+  });
+
+  it('keeps the session when /me fails because of a network error', async () => {
+    mocks.getAuthToken.mockReturnValue('token-1');
+    mocks.fetchMe.mockRejectedValue({ code: 'ERR_NETWORK', message: 'Network Error' });
+
+    const result = await useAuthStore.getState().refreshSession();
+
+    expect(result.st).toBe(true);
+    expect(result.isAuth).toBe(true);
+    expect(result.token).toBe('token-1');
+    expect(useAuthStore.getState().session.isAuth).toBe(true);
+    expect(mocks.clearAuthToken).not.toHaveBeenCalled();
   });
 });

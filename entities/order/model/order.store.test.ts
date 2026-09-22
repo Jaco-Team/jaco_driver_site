@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getPayQr: vi.fn(),
   hideDelOrders: vi.fn(),
   checkPayOrder: vi.fn(),
+  isOnline: true,
 }));
 
 vi.mock('@/shared/lib/geolocation', () => ({
@@ -47,9 +48,27 @@ vi.mock('@/entities/order/api/order.api', () => ({
   }),
 }));
 
+vi.mock('@/shared/lib/offline/cache', () => ({
+  readOfflineCache: () => null,
+  writeOfflineCache: vi.fn(),
+  clearOfflineCache: vi.fn(),
+}));
+
 vi.mock('@/entities/settings', () => ({
   useSettingsStore: {
     getState: () => ({ pointId: 12 }),
+  },
+}));
+
+vi.mock('@/features/offline/model/connectivity.store', () => ({
+  isAppOnline: () => mocks.isOnline,
+  markAppOffline: () => {
+    mocks.isOnline = false;
+  },
+  useConnectivityStore: {
+    getState: () => ({
+      probeConnectivity: vi.fn(),
+    }),
   },
 }));
 
@@ -64,6 +83,7 @@ vi.mock('@/shared/lib/devLog', () => ({
 describe('orders store actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.isOnline = true;
     mocks.readDriverPosition.mockResolvedValue({
       latitude: '53.5',
       longitude: '49.4',
@@ -267,5 +287,22 @@ describe('orders store actions', () => {
 
     expect(useOrdersStore.getState().showOrders.map((order) => order.id)).toEqual([1, 2]);
     expect(useOrdersStore.getState().isOpenOrderMap).toBe(true);
+  });
+
+  it('keeps cached orders and skips the error modal on a network failure', async () => {
+    const cached = { id: 42, drink_list: [], pd: '', et: '', kv: '', comment: 'cached' } as any;
+    useOrdersStore.setState({
+      orders: [cached],
+      is_check: false,
+      is_load: false,
+      showErrOrder: false,
+      textErrOrder: '',
+    });
+    mocks.fetchOrders.mockRejectedValue({ code: 'ERR_NETWORK', message: 'Network Error' });
+
+    await useOrdersStore.getState().getOrders(false);
+
+    expect(useOrdersStore.getState().orders).toEqual([cached]);
+    expect(useOrdersStore.getState().showErrOrder).toBe(false);
   });
 });

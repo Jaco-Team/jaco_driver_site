@@ -12,6 +12,7 @@ import { OrdersList } from './OrdersList';
 import { OrderConfirmModal } from './components/OrderConfirmModal';
 import { OrdersFilterSheet } from './components/OrdersFilterSheet';
 import { useSettingsStore } from '@/entities/settings';
+import { OrderRecommendationControl } from '@/features/order-recommendation/ui/OrderRecommendationControl';
 import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 import { devLog } from '@/shared/lib/devLog';
 
@@ -157,6 +158,17 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
           globalFontSize={globalFontSize}
           onOpenMenu={setOpenMenu}
         />
+
+        <Grid size={12}>
+          <OrderRecommendationControl
+            orders={orders}
+            pointId={pointId ? Number(pointId) : null}
+            limit={limit || ''}
+            limitCount={limit_count || ''}
+            globalFontSize={globalFontSize}
+            disabled={actionsBusy}
+          />
+        </Grid>
 
         {is_load ? (
           <Grid size={12} style={{ textAlign: 'center', padding: '50px' }}>

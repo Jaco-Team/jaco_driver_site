@@ -9,6 +9,9 @@ import {
 } from '@/features/auth/api/auth.api';
 import { getApiErrorInfo, getAuthErrorMessage, getAuthSecurityState } from '@/shared/api/errors';
 import { clearAuthToken, getAuthToken } from '@/shared/api/token';
+import { clearOfflineCache } from '@/shared/lib/offline/cache';
+import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
+import { markAppOffline } from '@/features/offline/model/connectivity.store';
 import type { ApiResponse, User } from '@/shared/api/types';
 
 export interface AuthSession {
@@ -72,6 +75,29 @@ function unauthorizedSession(): AuthSession {
   };
 }
 
+function initialSession(): AuthSession {
+  if (readExplicitUnauthorized()) {
+    return unauthorizedSession();
+  }
+
+  const token = `${getAuthToken() ?? ''}`.trim();
+
+  if (
+    typeof window !== 'undefined' &&
+    typeof navigator !== 'undefined' &&
+    navigator.onLine === false &&
+    token
+  ) {
+    return {
+      isAuth: true,
+      token,
+      user: null,
+    };
+  }
+
+  return { isAuth: 'load', token: '', user: null };
+}
+
 function readExplicitUnauthorized(): boolean {
   if (typeof window === 'undefined') {
     return false;
@@ -113,9 +139,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
     isSubmitting: false,
     isSessionRefreshing: false,
     loginErr: '',
-    session: readExplicitUnauthorized()
-      ? unauthorizedSession()
-      : { isAuth: 'load', token: '', user: null },
+    session: initialSession(),
 
     setLoginErr: (err: string) => {
       set({ loginErr: err });
@@ -129,6 +153,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
     setUnauthorized: () => {
       setExplicitUnauthorized(true);
       clearAuthToken();
+      clearOfflineCache();
       set({ session: unauthorizedSession() });
     },
 
@@ -263,6 +288,27 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
       } catch (error) {
         const errorInfo = getApiErrorInfo(error);
         const status = errorInfo.status;
+        const token = `${getAuthToken() ?? ''}`.trim();
+
+        if (isConnectivityError(error) && token) {
+          markAppOffline();
+          const current = get().session;
+          const authData: AuthSession = {
+            isAuth: true,
+            token,
+            user: current.user,
+          };
+
+          set({ session: authData });
+
+          return {
+            st: true,
+            ...authData,
+            text: 'Нет интернета',
+            status,
+          };
+        }
+
         const isUnauthorized = status === 401 || status === 403;
         const errorText = isUnauthorized
           ? 'Не авторизован'
@@ -279,6 +325,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
 
         if (isUnauthorized) {
           clearAuthToken();
+          clearOfflineCache();
         }
 
         set({ session: authData });

@@ -10,6 +10,9 @@ import {
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { type SettingsData, useSettingsStore } from '@/entities/settings';
 import { readDriverPosition } from '@/shared/lib/geolocation';
+import { isAppOnline, markAppOffline } from '@/features/offline/model/connectivity.store';
+import { readOfflineCache, writeOfflineCache } from '@/shared/lib/offline/cache';
+import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
 
 interface HeaderState {
   isOpenMenu: boolean;
@@ -23,6 +26,7 @@ interface HeaderState {
   is_need_page_stat: boolean;
   night_map: boolean;
   darkTheme: boolean;
+  darkThemeSource: 'device' | 'settings';
   globalFontSize: number;
   theme: string;
   mapScale: string;
@@ -35,6 +39,8 @@ interface HeaderActions {
   setGlobalFontSize: (fontSize: number) => void;
   setTheme: (theme: string) => void;
   setDarkTheme: (darkTheme: boolean) => void;
+  setDeviceDarkTheme: (darkTheme: boolean) => void;
+  followDeviceTheme: (darkTheme: boolean) => void;
   setGlobalMapScale: (mapScale: string) => void;
   getMyFontSize: (token: string) => Promise<void>;
   getMyAvgTime: (token: string, pointId?: string | number | null) => Promise<void>;
@@ -53,6 +59,8 @@ type HeaderStore = HeaderState & HeaderActions;
 const DEFAULT_GLOBAL_FONT_SIZE = 16;
 const MIN_GLOBAL_FONT_SIZE = 10;
 const MAX_GLOBAL_FONT_SIZE = 40;
+
+const cachedOffline = readOfflineCache();
 
 let avgTimePromise: Promise<string> | null = null;
 let avgTimeKey = '';
@@ -74,6 +82,10 @@ function normalizeBoolLike(value: any): boolean {
     }
   }
   return false;
+}
+
+function hasSettingValue(value: unknown): boolean {
+  return value !== undefined && value !== null && `${value}`.trim() !== '';
 }
 
 function normalizePointId(value: SettingsData['point_id'] | null): number | null {
@@ -105,7 +117,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
   (set, get) => ({
     isOpenMenu: false,
     activePageRU: '',
-    phones: null,
+    phones: cachedOffline?.phones ?? null,
     token: '',
     is_scaleMap: false,
     check_pos_check: false,
@@ -114,6 +126,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     is_need_page_stat: false,
     night_map: false,
     darkTheme: false,
+    darkThemeSource: 'device',
     globalFontSize: DEFAULT_GLOBAL_FONT_SIZE,
     theme: 'white',
     mapScale: '1',
@@ -122,9 +135,9 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
 
     applySettings: (settings) => {
       const currentState = get();
-      const hasField = (field: keyof SettingsData) =>
-        settings[field] !== undefined && settings[field] !== null && settings[field] !== '';
+      const hasField = (field: keyof SettingsData) => hasSettingValue(settings[field]);
       const nextPointId = normalizePointId(settings.point_id);
+      const hasDarkThemeSetting = hasField('dark_theme');
 
       set({
         pointId: nextPointId ?? currentState.pointId,
@@ -137,9 +150,10 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
         night_map: hasField('night_map')
           ? normalizeBoolLike(settings.night_map)
           : currentState.night_map,
-        darkTheme: hasField('dark_theme')
+        darkTheme: hasDarkThemeSetting
           ? normalizeBoolLike(settings.dark_theme)
           : currentState.darkTheme,
+        darkThemeSource: hasDarkThemeSetting ? 'settings' : 'device',
         is_scaleMap: hasField('is_scaleMap')
           ? normalizeBoolLike(settings.is_scaleMap)
           : currentState.is_scaleMap,
@@ -162,7 +176,17 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     setDarkTheme: (darkTheme: boolean) => {
-      set({ darkTheme });
+      set({ darkTheme, darkThemeSource: 'settings' });
+    },
+
+    setDeviceDarkTheme: (darkTheme: boolean) => {
+      if (get().darkThemeSource === 'device') {
+        set({ darkTheme });
+      }
+    },
+
+    followDeviceTheme: (darkTheme: boolean) => {
+      set({ darkTheme, darkThemeSource: 'device' });
     },
 
     setGlobalMapScale: (mapScale: string) => {
@@ -174,7 +198,7 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     getMyAvgTime: async (token: string, pointId?: string | number | null) => {
-      if (!canRunProtectedRequest(token)) {
+      if (!canRunProtectedRequest(token) || !isAppOnline()) {
         return;
       }
 
@@ -214,8 +238,9 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     checkMyPos: () => {
-      // Нужно импортировать useOrdersStore, но пока оставим заглушку
-      // if (useOrdersStore.getState().driver_need_gps === false) return;
+      if (!isAppOnline()) {
+        return;
+      }
       if (get().check_pos_check === false) {
         set({ check_pos_check: true });
       } else {
@@ -264,6 +289,13 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
       }
 
       const pointPhonesKey = `${normalizedPointId}`;
+      const cachedPhones = readOfflineCache()?.phones ?? null;
+
+      if (!isAppOnline()) {
+        const phones = pointPhonesCache.get(pointPhonesKey) ?? cachedPhones;
+        set({ phones: phones ?? null, token });
+        return;
+      }
 
       if (pointPhonesCache.has(pointPhonesKey)) {
         set({ phones: pointPhonesCache.get(pointPhonesKey) ?? null, token });
@@ -276,7 +308,19 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
         pointPhonesRequest = fetchPointPhones(normalizedPointId)
           .then((phones) => {
             pointPhonesCache.set(pointPhonesKey, phones);
+            if (phones) {
+              writeOfflineCache({ phones });
+            }
             return phones;
+          })
+          .catch((error) => {
+            if (isConnectivityError(error)) {
+              markAppOffline();
+              const phones = cachedPhones ?? pointPhonesCache.get(pointPhonesKey) ?? null;
+              return phones;
+            }
+
+            throw error;
           })
           .finally(() => {
             pointPhonesRequests.delete(pointPhonesKey);
@@ -290,3 +334,11 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
   }),
   shallow
 );
+
+if (cachedOffline?.settings?.settings) {
+  useHeaderStore.getState().applySettings(cachedOffline.settings.settings);
+}
+
+if (cachedOffline?.phones && cachedOffline.settings?.pointId) {
+  pointPhonesCache.set(`${cachedOffline.settings.pointId}`, cachedOffline.phones);
+}

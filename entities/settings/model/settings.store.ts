@@ -5,6 +5,9 @@ import { log } from '@/components/analytics';
 import { connector } from '@/shared/api/connector';
 import { apiRoutes } from '@/shared/api/routes';
 import { fetchDriverSettings } from '@/entities/settings/api/settings.api';
+import { isAppOnline, markAppOffline } from '@/features/offline/model/connectivity.store';
+import { readOfflineCache, writeOfflineCache } from '@/shared/lib/offline/cache';
+import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
 import type { Point } from '@/entities/point';
 import {
   DriverSettingsPayload,
@@ -45,6 +48,7 @@ function hasPoint(points: Point[], pointId: number | null): boolean {
 interface SettingsState {
   isClick: boolean;
   settings: SettingsResponse | null;
+  settingsSynced: boolean;
   pointId: number | null;
   points: Point[];
   cityId: string;
@@ -158,15 +162,33 @@ function mergePointIdIntoSettings(
 }
 
 const initialPointId = readStoredPointId();
+const cachedSettings = readOfflineCache()?.settings ?? null;
+
+function persistSettingsSnapshot(state: {
+  settings: SettingsResponse | null;
+  pointId: number | null;
+  points: Point[];
+  cityId: string;
+}): void {
+  writeOfflineCache({
+    settings: {
+      settings: state.settings,
+      pointId: state.pointId,
+      points: state.points,
+      cityId: state.cityId,
+    },
+  });
+}
 
 export const useSettingsStore = createWithEqualityFn<SettingsStore>(
   (set, get) => ({
     isClick: false,
-    settings: null,
-    pointId: initialPointId,
-    cityId: '',
-    points: [],
-    point_id: initialPointId,
+    settings: cachedSettings?.settings ?? null,
+    settingsSynced: false,
+    pointId: cachedSettings?.pointId ?? initialPointId,
+    cityId: cachedSettings?.cityId ?? '',
+    points: cachedSettings?.points ?? [],
+    point_id: cachedSettings?.pointId ?? initialPointId,
 
     saveMySetting: async (
       token: string | undefined,
@@ -218,8 +240,17 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         } as SettingsResponse;
         set({
           settings: nextSettings,
+          settingsSynced: true,
           pointId: currentPointId,
           point_id: currentPointId,
+          cityId: normalizeIdString(
+            hasCityId(savedSettings) ? savedSettings.city_id : get().cityId
+          ),
+        });
+        persistSettingsSnapshot({
+          settings: nextSettings,
+          pointId: currentPointId,
+          points: get().points,
           cityId: normalizeIdString(
             hasCityId(savedSettings) ? savedSettings.city_id : get().cityId
           ),
@@ -262,12 +293,17 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         point_id: nextPointId,
         settings: mergePointIdIntoSettings(state.settings, nextPointId),
       }));
+      persistSettingsSnapshot({
+        ...get(),
+        pointId: nextPointId,
+        settings: mergePointIdIntoSettings(get().settings, nextPointId),
+      });
     },
 
     getMySetting: async (_token: string) => {
       const current = get();
 
-      if (current.settings) {
+      if (current.settings && (current.settingsSynced || !isAppOnline())) {
         return current.settings;
       }
 
@@ -276,18 +312,44 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       }
 
       settingsFetchPromise = (async () => {
-        const payload = (await fetchDriverSettings()) as DriverSettingsPayload;
-        const normalized = normalizeSettingsPayload(payload);
+        try {
+          const payload = (await fetchDriverSettings()) as DriverSettingsPayload;
+          const normalized = normalizeSettingsPayload(payload);
 
-        set({
-          settings: normalized.settings,
-          pointId: normalized.pointId,
-          points: normalized.points,
-          cityId: normalized.cityId,
-          point_id: normalized.pointId,
-        });
+          set({
+            settings: normalized.settings,
+            settingsSynced: true,
+            pointId: normalized.pointId,
+            points: normalized.points,
+            cityId: normalized.cityId,
+            point_id: normalized.pointId,
+          });
+          persistSettingsSnapshot(normalized);
 
-        return normalized.settings;
+          return normalized.settings;
+        } catch (error) {
+          if (isConnectivityError(error)) {
+            markAppOffline();
+            const cached = readOfflineCache()?.settings;
+
+            if (current.settings) {
+              return current.settings;
+            }
+
+            if (cached?.settings) {
+              set({
+                settings: cached.settings,
+                pointId: cached.pointId,
+                points: cached.points,
+                cityId: cached.cityId,
+                point_id: cached.pointId,
+              });
+              return cached.settings;
+            }
+          }
+
+          throw error;
+        }
       })();
 
       try {

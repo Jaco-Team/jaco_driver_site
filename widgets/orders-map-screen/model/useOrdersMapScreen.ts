@@ -15,6 +15,7 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
     theme: state.theme,
     mapScale: state.mapScale,
     night_map: state.night_map,
+    darkTheme: state.darkTheme,
     is_scaleMap: state.is_scaleMap,
   }));
   const orders = useOrdersStore((state) => ({
@@ -133,7 +134,7 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
     };
   }, [mapInstance]);
 
-  const iconColor = header.night_map ? '#f0f8ff' : '#000';
+  const iconColor = header.night_map || header.darkTheme ? '#f0f8ff' : '#000';
 
   return {
     mapRef,

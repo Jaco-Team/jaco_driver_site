@@ -19,7 +19,7 @@ type OrdersState = ReturnType<typeof useOrdersStore.getState>;
 
 export type OrdersMapHeaderState = Pick<
   HeaderState,
-  'globalFontSize' | 'theme' | 'mapScale' | 'night_map' | 'is_scaleMap'
+  'globalFontSize' | 'theme' | 'mapScale' | 'night_map' | 'darkTheme' | 'is_scaleMap'
 >;
 
 export type OrdersMapOrdersState = Pick<

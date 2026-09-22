@@ -56,7 +56,7 @@ export const RadioGroupField: React.FC<RadioGroupFieldProps> = ({
                 sx={{
                   color: 'text.secondary',
                   '&.Mui-checked': {
-                    color: '#cc0033',
+                    color: 'primary.main',
                   },
                 }}
               />

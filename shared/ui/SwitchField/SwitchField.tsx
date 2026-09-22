@@ -28,10 +28,10 @@ export function SwitchField({
           onChange={(_, nextChecked) => onChange(nextChecked)}
           sx={{
             '& .MuiSwitch-switchBase.Mui-checked': {
-              color: '#cc0033',
+              color: 'primary.main',
             },
             '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-              backgroundColor: '#cc0033',
+              backgroundColor: 'primary.main',
             },
           }}
         />

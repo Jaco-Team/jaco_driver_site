@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   YMaps,
   Map,
@@ -15,20 +15,30 @@ import PinDropIcon from '@mui/icons-material/PinDrop';
 
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
+import {
+  isAppOnline,
+  useConnectivityStore,
+} from '@/features/offline/model/connectivity.store';
 import type { HomeLocation } from '@/entities/order/model/order.types';
 import {
   groupOrdersByMapLocation,
   type OrderMapGroup,
 } from '@/entities/order/model/orderMapGroups';
 import { escapeHtml, sanitizeCssColor, sanitizeCssIdent } from '@/shared/lib/escapeHtml';
+import { appDarkSuccessPalette } from '@/shared/styles/appPalette';
 import { roboto } from '@/shared/ui/Font';
 import { OrdersFilterSheet } from '@/widgets/order/ui/components/OrdersFilterSheet';
 import { OrderConfirmModal } from '@/widgets/order/ui/components/OrderConfirmModal';
 import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 import { useOrdersMapScreen } from '../model/useOrdersMapScreen';
 import { getMapEdgeIndicators, type MapViewport } from '../model/mapViewport';
+import { OrdersMapOfflineList } from './OrdersMapOfflineList';
 
 const YANDEX_MAPS_API_KEY = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY ?? '';
+
+function isYandexMapsApiLoaded(): boolean {
+  return typeof window !== 'undefined' && Boolean((window as { ymaps?: unknown }).ymaps);
+}
 
 type YMapsTemplateApi = {
   templateLayoutFactory: {
@@ -170,7 +180,9 @@ const OrdersMapPoints = memo(function OrdersMapPoints({
   useEffect(() => {
     const interval = window.setInterval(
       () => {
-        getOrders();
+        if (isAppOnline()) {
+          getOrders();
+        }
       },
       parseInt(`${update_interval}`, 10) * 1000
     );
@@ -325,8 +337,8 @@ const OrdersMapHomePoint = memo(function OrdersMapHomePoint({
   getHome: () => void;
   yMapsApi: YMapsTemplateApi;
 }) {
-  const nightMap = useHeaderStore((state) => state.night_map);
-  const fill = sanitizeCssColor(nightMap ? '#f0f8ff' : '#000', '#000');
+  const isDarkMap = useHeaderStore((state) => state.night_map || state.darkTheme);
+  const fill = sanitizeCssColor(isDarkMap ? '#f0f8ff' : '#000', '#000');
   const fontClass = sanitizeCssIdent(roboto.variable, 'font');
   const homeLayout = useMemo(
     () =>
@@ -396,14 +408,22 @@ const OrdersMapObjects = memo(function OrdersMapObjects({
   orders,
   groups,
   getHome,
+  onMapApiReady,
 }: {
   header: ReturnType<typeof useOrdersMapScreen>['header'];
   orders: ReturnType<typeof useOrdersMapScreen>['orders'];
   groups: OrderMapGroup[];
   getHome: () => void;
+  onMapApiReady: () => void;
 }) {
   const yMapsApi = useYMaps(['templateLayoutFactory']) as YMapsTemplateApi | null;
   const home = orders.home;
+
+  useEffect(() => {
+    if (yMapsApi) {
+      onMapApiReady();
+    }
+  }, [onMapApiReady, yMapsApi]);
 
   return (
     <>
@@ -541,6 +561,44 @@ export function OrdersMapScreen() {
     handleConfirm,
   } = useOrdersMapScreen();
   const groups = useMemo(() => groupOrdersByMapLocation(orders.orders), [orders.orders]);
+  const isOnline = useConnectivityStore((state) => state.isOnline);
+  const [isMapApiReady, setIsMapApiReady] = useState(() => isYandexMapsApiLoaded());
+  const handleMapApiReady = useCallback(() => setIsMapApiReady(true), []);
+  const isDarkMap = header.night_map || header.darkTheme;
+  const activeTypeColor = header.darkTheme ? appDarkSuccessPalette.text : 'green';
+  // Yandex Maps grabs its script from the network, so the map cannot appear at all
+  // when the app starts offline.
+  const isOfflineFallback = !isOnline && !isMapApiReady;
+
+  if (isOfflineFallback) {
+    return (
+      <>
+        <OrdersFilterSheet />
+
+        <OrdersMapOfflineList
+          groups={groups}
+          typeText={orders.type.text}
+          globalFontSize={header.globalFontSize}
+          onOpenOrders={orders.showOrdersMap}
+        />
+
+        <OrderConfirmModal
+          open={orders.modalConfirm}
+          orderId={orders.order_finish_id}
+          typeConfirm={orders.type_confirm}
+          busy={orders.isClick || orders.is_load}
+          onClose={() => orders.setActiveConfirm(false, null, true, null, null)}
+          onConfirm={handleConfirm}
+        />
+
+        <ErrorModal
+          open={orders.showErrOrder}
+          errorText={orders.textErrOrder}
+          onClose={orders.closeErrOrder}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -562,11 +620,13 @@ export function OrdersMapScreen() {
         <div className="orders-map-stage">
           <div
             className="orders-map-stage__map"
-            style={
-              header.night_map
-                ? { filter: 'invert(90%) hue-rotate(180deg) brightness(85%)' }
-                : undefined
-            }
+            data-map-theme={isDarkMap ? 'dark' : 'light'}
+            style={{
+              backgroundColor: isDarkMap ? '#070A0E' : undefined,
+              filter: isDarkMap
+                ? 'invert(92%) hue-rotate(180deg) brightness(72%) contrast(92%) saturate(70%)'
+                : undefined,
+            }}
           >
             <YMaps
               query={{
@@ -588,6 +648,7 @@ export function OrdersMapScreen() {
                   orders={orders}
                   groups={groups}
                   getHome={getHome}
+                  onMapApiReady={handleMapApiReady}
                 />
               </Map>
             </YMaps>
@@ -619,21 +680,33 @@ export function OrdersMapScreen() {
       >
         <Button
           className="noselect"
-          style={{ flex: 3, color: orders.type.id === 1 ? 'green' : '#fff', fontWeight: 'bold' }}
+          style={{
+            flex: 3,
+            color: orders.type.id === 1 ? activeTypeColor : '#fff',
+            fontWeight: 'bold',
+          }}
           onClick={() => orders.setType({ id: 1, text: 'Активные' }, -1)}
         >
           Активные
         </Button>
         <Button
           className="noselect"
-          style={{ flex: 1, color: orders.type.id === 2 ? 'green' : '#fff', fontWeight: 'bold' }}
+          style={{
+            flex: 1,
+            color: orders.type.id === 2 ? activeTypeColor : '#fff',
+            fontWeight: 'bold',
+          }}
           onClick={() => orders.setType({ id: 2, text: 'Мои отмеченные' }, -1)}
         >
           Мои
         </Button>
         <Button
           className="noselect"
-          style={{ flex: 3, color: orders.type.id === 5 ? 'green' : '#fff', fontWeight: 'bold' }}
+          style={{
+            flex: 3,
+            color: orders.type.id === 5 ? activeTypeColor : '#fff',
+            fontWeight: 'bold',
+          }}
           onClick={() => orders.setType({ id: 5, text: 'У других курьеров' }, -1)}
         >
           У других

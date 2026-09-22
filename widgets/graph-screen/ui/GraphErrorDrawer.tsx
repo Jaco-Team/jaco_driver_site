@@ -5,7 +5,6 @@ import Typography from '@mui/material/Typography';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 
 import { resolveGraphErrorImageUrl } from '@/shared/api/routes';
-import { appPalette } from '@/shared/styles/appPalette';
 import type {
   GraphAppealBlockProps,
   GraphErrorDrawerProps,
@@ -79,11 +78,12 @@ function GraphAppealBlock({
         <Button
           disabled={isSubmittingAppeal}
           onClick={onSubmit}
-          style={{
-            color: '#fff',
-            marginTop: 10,
+          sx={{
+            color: 'primary.contrastText',
+            mt: '10px',
             width: '100%',
-            backgroundColor: appPalette.brand,
+            backgroundColor: 'primary.main',
+            '&:hover': { backgroundColor: 'primary.dark' },
           }}
         >
           Обжаловать

@@ -8,7 +8,7 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { log } from '@/components/analytics';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
-import { appPalette } from '@/shared/styles/appPalette';
+import { appDarkPalette, appPalette } from '@/shared/styles/appPalette';
 import { ORDER_CARD_BUTTON_HEIGHT } from '@/widgets/order/ui/components/OrderCard';
 
 function clampFontSize(value: number, min: number, max: number) {
@@ -58,10 +58,15 @@ export function OrdersFilterSheet() {
             height: 'auto',
             bottom: 0,
             top: 'auto',
-            background: '#ffffff',
+            backgroundColor: 'background.paper',
             overflow: 'hidden',
-            border: `1px solid ${appPalette.softStrong}`,
-            boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+            border: '1px solid',
+            borderColor: (theme) =>
+              theme.palette.mode === 'dark' ? theme.palette.divider : appPalette.softStrong,
+            boxShadow: (theme) =>
+              theme.palette.mode === 'dark'
+                ? `0 24px 44px ${appDarkPalette.shadow}`
+                : '0 24px 44px rgba(31, 43, 54, 0.2)',
           },
         },
       }}
@@ -89,7 +94,10 @@ export function OrdersFilterSheet() {
               width: 62,
               height: 6,
               borderRadius: 999,
-              backgroundColor: 'rgba(31, 43, 54, 0.2)',
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'rgba(217, 224, 230, 0.28)'
+                  : 'rgba(31, 43, 54, 0.2)',
             }}
           />
         </Box>
@@ -100,7 +108,7 @@ export function OrdersFilterSheet() {
             fontSize: titleFontSize,
             fontWeight: 700,
             lineHeight: 1.2,
-            color: appPalette.text,
+            color: 'text.primary',
             mb: 0.5,
           }}
         >
@@ -110,7 +118,7 @@ export function OrdersFilterSheet() {
           sx={{
             fontSize: helperFontSize,
             lineHeight: 1.4,
-            color: appPalette.textMuted,
+            color: 'text.secondary',
             mb: 2,
           }}
         >
@@ -139,13 +147,22 @@ export function OrdersFilterSheet() {
                   fontSize: actionFontSize,
                   justifyContent: 'space-between',
                   px: 2,
-                  backgroundColor: selected
-                    ? `${appPalette.brand} !important`
-                    : appPalette.surfaceAlt,
-                  color: selected ? '#fff' : appPalette.text,
+                  backgroundColor: (theme) =>
+                    selected
+                      ? `${theme.palette.primary.main} !important`
+                      : theme.palette.mode === 'dark'
+                        ? appDarkPalette.surfaceAlt
+                        : appPalette.surfaceAlt,
+                  color: (theme) =>
+                    selected ? theme.palette.primary.contrastText : theme.palette.text.primary,
                   boxShadow: 'none',
                   '&:hover': {
-                    backgroundColor: selected ? '#b4002d !important' : appPalette.soft,
+                    backgroundColor: (theme) =>
+                      selected
+                        ? `${theme.palette.primary.dark} !important`
+                        : theme.palette.mode === 'dark'
+                          ? appDarkPalette.surfaceRaised
+                          : appPalette.soft,
                     boxShadow: 'none',
                   },
                 }}

@@ -1,6 +1,15 @@
 {
-	"icons": [
+  "name": "Jaco Driver",
+  "short_name": "Jaco Driver",
+  "lang": "ru",
+  "start_url": "/list_orders",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F7FA",
+  "theme_color": "#CC0033",
+  "icons": [
     { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
     { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" }
-	]
+  ]
 }

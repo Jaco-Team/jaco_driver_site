@@ -206,8 +206,8 @@
     padding: 10px 14px;
     border-radius: 999px;
     background: $colorSurfaceAlt;
-    border: 1px solid $colorMainSoftStrong;
-    @include font_custom(0.95rem, 800, $colorMain);
+    border: 1px solid var(--app-brand-soft-strong);
+    @include font_custom(0.95rem, 800, var(--app-brand));
     line-height: 1;
     flex-shrink: 0;
   }
@@ -252,7 +252,7 @@
 
   & .graph__tableHeadCell--weekend {
     background: $colorSurfaceAlt !important;
-    color: $colorMain !important;
+    color: var(--app-brand) !important;
   }
 
   & .graph__tableHeadCell--today {

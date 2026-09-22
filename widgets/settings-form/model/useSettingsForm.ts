@@ -25,6 +25,18 @@ function normalizeFontSize(value: unknown): number {
   return Number.isNaN(parsed) ? 16 : parsed;
 }
 
+function hasSavedDarkTheme(value: unknown): boolean {
+  return value !== undefined && value !== null && `${value}`.trim() !== '';
+}
+
+function getDeviceDarkTheme(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
+}
+
 export const useSettingsForm = (): UseSettingsFormReturn => {
   const session = useSession();
   const [saveMySetting, getMySetting, isSaving, pointId, points, setPointId] = useSettingsStore(
@@ -37,12 +49,21 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
       state.setPointId,
     ]
   );
-  const [globalFontSize, setGlobalFontSize, setTheme, setHeaderDarkTheme, setGlobalMapScale] =
-    useHeaderStore((state) => [
+  const [
+    globalFontSize,
+    currentHeaderDarkTheme,
+    setGlobalFontSize,
+    setTheme,
+    setHeaderDarkTheme,
+    followDeviceTheme,
+    setGlobalMapScale,
+  ] = useHeaderStore((state) => [
       state.globalFontSize,
+      state.darkTheme,
       state.setGlobalFontSize,
       state.setTheme,
       state.setDarkTheme,
+      state.followDeviceTheme,
       state.setGlobalMapScale,
     ]);
 
@@ -52,14 +73,17 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
   const [updateInterval, setUpdateInterval] = useState<number>(30);
   const [centeredMap, setCenteredMap] = useState<boolean>(false);
   const [nightMap, setNightMap] = useState<boolean>(false);
-  const [darkTheme, setDarkThemeState] = useState<boolean>(false);
+  const [darkTheme, setDarkThemeState] = useState<boolean>(currentHeaderDarkTheme);
   const [isScaleMap, setIsScaleMap] = useState<boolean>(false);
   const [color, setColor] = useState<string>('#000000');
   const [groupTypeTheme, setGroupTypeTheme] = useState<ThemeType>('white');
   const [fontSize, setFontSize] = useState<number>(16);
   const [mapScale, setMapScale] = useState<number>(1);
   const [snackbarState, setSnackbarState] = useState<SnackbarState>(initialSnackbarState);
-  const persistedDarkThemeRef = useRef(false);
+  const persistedDarkThemeRef = useRef({
+    hasValue: false,
+    value: currentHeaderDarkTheme,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,10 +100,20 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
       );
       setCenteredMap(parseInt(String(res.action_centered_map)) === 1);
       setNightMap(parseInt(String(res.night_map)) === 1);
-      const nextDarkTheme = normalizeBooleanSetting(res.dark_theme);
-      persistedDarkThemeRef.current = nextDarkTheme;
+      const hasDarkTheme = hasSavedDarkTheme(res.dark_theme);
+      const nextDarkTheme = hasDarkTheme
+        ? normalizeBooleanSetting(res.dark_theme)
+        : getDeviceDarkTheme();
+      persistedDarkThemeRef.current = {
+        hasValue: hasDarkTheme,
+        value: nextDarkTheme,
+      };
       setDarkThemeState(nextDarkTheme);
-      setHeaderDarkTheme(nextDarkTheme);
+      if (hasDarkTheme) {
+        setHeaderDarkTheme(nextDarkTheme);
+      } else {
+        followDeviceTheme(nextDarkTheme);
+      }
       setIsScaleMap(parseInt(String(res.is_scaleMap)) === 1);
       setUpdateInterval(parseInt(String(res.update_interval ?? 30)));
       setTypeShowDel((res.type_show_del as TypeShowDel) ?? 'min');
@@ -93,13 +127,27 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     if (!isLoad) {
       void fetchData();
     }
-  }, [getMySetting, isLoad, session?.isAuth, session?.token, setHeaderDarkTheme, setPointId]);
+  }, [
+    followDeviceTheme,
+    getMySetting,
+    isLoad,
+    session?.isAuth,
+    session?.token,
+    setHeaderDarkTheme,
+    setPointId,
+  ]);
 
   useEffect(
     () => () => {
-      setHeaderDarkTheme(persistedDarkThemeRef.current);
+      const persistedTheme = persistedDarkThemeRef.current;
+
+      if (persistedTheme.hasValue) {
+        setHeaderDarkTheme(persistedTheme.value);
+      } else {
+        followDeviceTheme(getDeviceDarkTheme());
+      }
     },
-    [setHeaderDarkTheme]
+    [followDeviceTheme, setHeaderDarkTheme]
   );
 
   const setDarkTheme = (nextDarkTheme: boolean): void => {
@@ -126,7 +174,7 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     if (result?.st) {
       setGlobalFontSize(fontSize);
       setTheme(groupTypeTheme);
-      persistedDarkThemeRef.current = darkTheme;
+      persistedDarkThemeRef.current = { hasValue: true, value: darkTheme };
       setHeaderDarkTheme(darkTheme);
       setGlobalMapScale(String(mapScale));
       setSnackbarState((prev) => ({

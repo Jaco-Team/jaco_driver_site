@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => {
     theme: 'white',
     mapScale: '1',
     night_map: false,
+    darkTheme: false,
     is_scaleMap: true,
     },
     orderState: {
@@ -64,6 +65,7 @@ const mocks = vi.hoisted(() => {
     eventsAdd,
     eventsRemove,
     createClass: vi.fn((template: string) => template),
+    isOnline: true,
     mapInstance: {
       setCenter,
       getBounds,
@@ -114,6 +116,17 @@ vi.mock('@/shared/ui/Font', () => ({
   roboto: { variable: 'roboto-variable' },
 }));
 
+vi.mock('@/shared/config/fonts', () => ({
+  roboto: { variable: 'roboto-variable' },
+}));
+
+vi.mock('@/features/offline/model/connectivity.store', () => ({
+  isAppOnline: () => mocks.isOnline,
+  markAppOffline: vi.fn(),
+  useConnectivityStore: (selector: (state: { isOnline: boolean }) => any) =>
+    selector({ isOnline: mocks.isOnline }),
+}));
+
 vi.mock('@/widgets/order/ui/components/OrderConfirmModal', () => ({
   OrderConfirmModal: () => <div data-testid="confirm-modal" />,
 }));
@@ -127,6 +140,10 @@ describe('OrdersMapScreen', () => {
     vi.clearAllMocks();
     mocks.orderState.type = { id: 1, text: 'Активные' };
     mocks.orderState.orders = [];
+    mocks.isOnline = true;
+    mocks.headerState.night_map = false;
+    mocks.headerState.darkTheme = false;
+    delete (window as { ymaps?: unknown }).ymaps;
   });
 
   it('renders map controls and current limits', () => {
@@ -145,6 +162,17 @@ describe('OrdersMapScreen', () => {
     fireEvent.click(screen.getByText('Мои'));
 
     expect(mocks.orderState.setType).toHaveBeenCalledWith({ id: 2, text: 'Мои отмеченные' }, -1);
+  });
+
+  it('uses the dark map style when the interface theme is dark', () => {
+    mocks.headerState.darkTheme = true;
+
+    const { container } = render(<OrdersMapScreen />);
+    const mapStage = container.querySelector('.orders-map-stage__map');
+
+    expect(mapStage).toHaveAttribute('data-map-theme', 'dark');
+    expect(mapStage).toHaveStyle({ backgroundColor: '#070A0E' });
+    expect(mapStage?.getAttribute('style')).toContain('brightness(72%)');
   });
 
   it('renders one counted marker for orders at the same location', () => {
@@ -199,5 +227,44 @@ describe('OrdersMapScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: /Показать 2 заказа/ }));
 
     expect(mocks.setCenter).toHaveBeenCalledWith([55.7, 38]);
+  });
+
+  it('opens cached order cards from the offline list when the map cannot load', () => {
+    mocks.isOnline = false;
+    mocks.orderState.orders = [
+      {
+        id: 7,
+        addr: 'Ленина, 5',
+        status: 'Собран',
+        point_color: '#cc0033',
+        xy: { latitude: 55.7, longitude: 37.6 },
+      },
+      {
+        id: 8,
+        addr: 'Ленина, 5',
+        status: 'Готовится',
+        point_color: '#42627d',
+        xy: { latitude: 55.700004, longitude: 37.600004 },
+      },
+    ];
+
+    render(<OrdersMapScreen />);
+
+    expect(screen.queryByTestId('map')).not.toBeInTheDocument();
+    expect(screen.getByTestId('orders-map-offline-list')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Ленина, 5'));
+
+    expect(mocks.orderState.showOrdersMap).toHaveBeenCalledWith(7);
+  });
+
+  it('keeps the map when the maps api is already loaded and the app goes offline', () => {
+    mocks.isOnline = false;
+    (window as { ymaps?: unknown }).ymaps = {};
+
+    render(<OrdersMapScreen />);
+
+    expect(screen.getByTestId('map')).toBeInTheDocument();
+    expect(screen.queryByTestId('orders-map-offline-list')).not.toBeInTheDocument();
   });
 });

@@ -5,6 +5,7 @@ import Tooltip, { tooltipClasses, type TooltipProps } from '@mui/material/Toolti
 
 import type { DrinkItem, Order } from '@/entities/order/model/order.types';
 import { extractPhonesFromText } from '@/shared/lib/extractPhones';
+import { appDarkSuccessPalette, appSuccessPalette } from '@/shared/styles/appPalette';
 import {
   CommentPhonesControl,
   CommentPhonesDrawer,
@@ -112,13 +113,17 @@ const DriverInfoBox = styled(Box)(({ theme }) => ({
   whiteSpace: 'nowrap',
 }));
 
-const TakeButton = styled(ActionButton)({
-  backgroundColor: '#4CAF50',
-  color: '#fff',
-  width: '100%',
-  '&:hover': {
-    backgroundColor: '#45a049',
-  },
+const TakeButton = styled(ActionButton)(({ theme }) => {
+  const success = theme.palette.mode === 'dark' ? appDarkSuccessPalette : appSuccessPalette;
+
+  return {
+    backgroundColor: success.main,
+    color: success.onMain,
+    width: '100%',
+    '&:hover': {
+      backgroundColor: success.dark,
+    },
+  };
 });
 
 const CancelButton = styled(ActionButton)({
@@ -217,7 +222,15 @@ const OrderChips = memo(({ item }: { item: Order }) => {
             label={`Напиток x${item.count_drink}`}
             size="small"
             onClick={() => setOpenTooltip(true)}
-            sx={{ backgroundColor: '#4caf50', color: '#fff', cursor: 'pointer' }}
+            sx={{
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'dark' ? appDarkSuccessPalette.main : appSuccessPalette.main,
+              color: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? appDarkSuccessPalette.onMain
+                  : appSuccessPalette.onMain,
+              cursor: 'pointer',
+            }}
           />
         </HtmlTooltip>
       )}
@@ -505,7 +518,15 @@ export const OrderCard = memo<OrderCardProps>(
             <InfoRow>
               <Label variant="body1">Сумма: </Label>
               {onlinePay === 1 ? (
-                <Value variant="body1" sx={{ color: '#4caf50' }}>
+                <Value
+                  variant="body1"
+                  sx={{
+                    color: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? appDarkSuccessPalette.text
+                        : appSuccessPalette.text,
+                  }}
+                >
                   Оплачено
                 </Value>
               ) : (

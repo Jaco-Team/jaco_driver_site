@@ -12,5 +12,6 @@ export interface UseAppHeaderResult {
   showModalTypeDop: OrdersState['showModalTypeDop'];
   getOrders: OrdersState['getOrders'];
   isOrdersActionsVisible: boolean;
+  isOnline: boolean;
   handleLogout: () => void;
 }

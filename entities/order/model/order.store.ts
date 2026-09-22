@@ -18,6 +18,13 @@ import { devLog } from '@/shared/lib/devLog';
 import { describeGeolocationError, readDriverPosition } from '@/shared/lib/geolocation';
 import { useSettingsStore } from '@/entities/settings';
 import {
+  isAppOnline,
+  markAppOffline,
+  useConnectivityStore,
+} from '@/features/offline/model/connectivity.store';
+import { readOfflineCache, writeOfflineCache } from '@/shared/lib/offline/cache';
+import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
+import {
   fetchOrders,
   actionOrder as apiActionOrder,
   checkFakeOrder as apiCheckFakeOrder,
@@ -26,6 +33,8 @@ import {
   checkPayOrder as apiCheckPayOrder,
   normalizeOrdersResponse,
 } from '../api/order.api';
+
+const cachedOrders = readOfflineCache()?.orders ?? null;
 
 function getSelectedPointId(): number | null {
   return useSettingsStore.getState().pointId;
@@ -47,9 +56,41 @@ function nestedApiStatus(res: { st?: unknown; text?: string; data?: unknown }): 
 }
 
 function formatOrderError(error: unknown): string {
+  if (isConnectivityError(error) || !isAppOnline()) {
+    return 'Нет интернета. Действие будет доступно после восстановления связи.';
+  }
+
   const message = getApiErrorInfo(error).message.trim();
 
   return message || 'Не удалось выполнить запрос.';
+}
+
+function persistOrdersSnapshot(state: {
+  orders: Order[];
+  sourceOrders: Order[];
+  type: OrderType;
+  type_dop: string[];
+  update_interval: number;
+  limit: string;
+  limit_count: string;
+  home: HomeLocation | null;
+  driver_pay: boolean;
+  driver_need_gps: boolean;
+}): void {
+  writeOfflineCache({
+    orders: {
+      orders: state.orders,
+      sourceOrders: state.sourceOrders,
+      type: state.type,
+      type_dop: state.type_dop,
+      update_interval: state.update_interval,
+      limit: state.limit,
+      limit_count: state.limit_count,
+      home: state.home,
+      driver_pay: state.driver_pay,
+      driver_need_gps: state.driver_need_gps,
+    },
+  });
 }
 
 function hasHomeMoved(current: HomeLocation | null, next: HomeLocation | null): boolean {
@@ -67,6 +108,7 @@ function hasHomeMoved(current: HomeLocation | null, next: HomeLocation | null): 
 interface OrdersStore {
   // State
   orders: Order[];
+  sourceOrders: Order[];
   isOpenMenu: boolean;
   update_interval: number;
   limit: string;
@@ -185,6 +227,11 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       return;
     }
 
+    if (!isAppOnline()) {
+      get().openErrOrder(formatOrderError(new Error('offline')));
+      return;
+    }
+
     set({ isClick: true, is_load: true });
 
     try {
@@ -202,17 +249,18 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
   };
 
   return {
-    orders: [],
+    orders: cachedOrders?.orders ?? [],
+    sourceOrders: cachedOrders?.sourceOrders ?? cachedOrders?.orders ?? [],
     isOpenMenu: false,
-    update_interval: 30,
-    limit: '',
-    limit_count: '',
+    update_interval: cachedOrders?.update_interval ?? 30,
+    limit: cachedOrders?.limit ?? '',
+    limit_count: cachedOrders?.limit_count ?? '',
     token: '',
     notifToken: '',
-    type: { id: 1, text: 'Активные' },
+    type: cachedOrders?.type ?? { id: 1, text: 'Активные' },
     types: ORDER_TYPES,
     types_dop: ORDER_STATUS_TYPES,
-    type_dop: ['1', '2', '3'],
+    type_dop: cachedOrders?.type_dop ?? ['1', '2', '3'],
     is_showModalTypeDop: false,
     showErrOrder: false,
     textErrOrder: '',
@@ -229,15 +277,15 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     order_finish_is_delete: null,
     type_confirm: null,
     isClick: false,
-    driver_pay: false,
+    driver_pay: cachedOrders?.driver_pay ?? false,
     typeToStatus: TYPE_STATUS_MAP,
     is_check: false,
     location_driver: null,
     location_driver_time_text: '',
-    home: null,
+    home: cachedOrders?.home ?? null,
     type_location: 'none',
     id_watch: null,
-    driver_need_gps: false,
+    driver_need_gps: cachedOrders?.driver_need_gps ?? false,
 
     setShowPay: (active) => {
       set({ showPay: active });
@@ -273,10 +321,28 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     setTypeDop: (type) => {
       const newType = type.length === 0 ? ['1', '2', '3'] : type;
       set({ type_dop: newType });
+
+      if (!isAppOnline()) {
+        const { sourceOrders, type: currentType, types_dop, typeToStatus } = get();
+        const orders =
+          currentType.id === 1 && newType.length !== types_dop.length
+            ? filterOrdersByTypes(sourceOrders, newType, typeToStatus)
+            : sourceOrders;
+
+        set({ orders });
+        persistOrdersSnapshot({ ...get(), orders, type_dop: newType });
+        return;
+      }
+
       get().getOrders(true);
     },
 
     hideDelOrders: async () => {
+      if (!isAppOnline()) {
+        get().openErrOrder(formatOrderError(new Error('offline')));
+        return;
+      }
+
       const idList = get().del_orders.map((item) => item.id);
       await apiHideDelOrders(get().token, idList, getSelectedPointId());
       set({ del_orders: [] });
@@ -305,6 +371,11 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         return;
       }
 
+      if (!isAppOnline()) {
+        void useConnectivityStore.getState().probeConnectivity();
+        return;
+      }
+
       set({ is_check: true });
 
       if (is_reload) {
@@ -324,8 +395,13 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
           orders = filterOrdersByTypes(orders, type_dop, get().typeToStatus);
         }
 
+        const nextHome = hasHomeMoved(get().home, normalized.home)
+          ? normalized.home
+          : get().home;
+
         set({
           orders,
+          sourceOrders: normalized.orders,
           update_interval: normalized.update_interval,
           limit: normalized.limit,
           limit_count: normalized.limit_count,
@@ -335,11 +411,33 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
           ...(hasHomeMoved(get().home, normalized.home) ? { home: normalized.home } : {}),
         });
 
+        persistOrdersSnapshot({
+          orders,
+          sourceOrders: normalized.orders,
+          type: get().type,
+          type_dop: get().type_dop,
+          update_interval: normalized.update_interval,
+          limit: normalized.limit,
+          limit_count: normalized.limit_count,
+          home: nextHome,
+          driver_pay: normalized.driver_pay,
+          driver_need_gps: normalized.driver_need_gps,
+        });
+
         log('orders_fetch_success', 'Получение списка заказов');
       } catch (err) {
         devLog('orders_fetch_error', 'Orders fetch error', err);
         log('orders_fetch_fail', 'Ошибка при получении списка заказов');
-        get().openErrOrder(formatOrderError(err));
+
+        if (isConnectivityError(err)) {
+          markAppOffline();
+
+          if (get().orders.length === 0) {
+            get().openErrOrder(formatOrderError(err));
+          }
+        } else {
+          get().openErrOrder(formatOrderError(err));
+        }
       }
 
       setTimeout(() => {
@@ -467,7 +565,14 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     },
 
     setType: (type) => {
+      if (!isAppOnline()) {
+        set({ isOpenMenu: false });
+        get().openErrOrder(formatOrderError(new Error('offline')));
+        return;
+      }
+
       set({ type, isOpenMenu: false });
+      persistOrdersSnapshot({ ...get(), type });
       get().getOrders(false);
     },
 

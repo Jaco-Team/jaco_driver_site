@@ -23,6 +23,12 @@ const apiOrigins = unique([
   getOrigin(process.env.NEXT_PUBLIC_MEDIA_ORIGIN),
 ]);
 
+const apiProxyTarget =
+  getOrigin(process.env.NEXT_PUBLIC_API_ORIGIN) || getOrigin(process.env.NEXT_PUBLIC_API_URL);
+const isApiProxyEnabled =
+  ['1', 'true', 'yes'].includes(`${process.env.NEXT_PUBLIC_API_PROXY || ''}`.trim().toLowerCase()) &&
+  Boolean(apiProxyTarget);
+
 const cspDirectives = [
   "default-src 'self'",
   [
@@ -48,7 +54,7 @@ const cspDirectives = [
     .filter(Boolean)
     .join(' '),
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
+  ['img-src', "'self'", 'data:', 'blob:', 'https:', ...apiOrigins].join(' '),
   "font-src 'self' data:",
   [
     'connect-src',
@@ -117,6 +123,18 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  async rewrites() {
+    if (!isApiProxyEnabled) {
+      return [];
+    }
+
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: `${apiProxyTarget}/api/v1/:path*`,
+      },
+    ];
   },
   async redirects() {
     return [

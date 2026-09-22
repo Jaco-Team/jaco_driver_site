@@ -14,6 +14,7 @@ import {
 import { useFeedbackStore } from '@/widgets/feedback/model/feedback.store';
 import { feedbackTypes } from '@/entities/feedback/model/types';
 import { clampFeedbackFontSize } from '@/widgets/feedback/model/feedbackTypography';
+import { appDarkPalette } from '@/shared/styles/appPalette';
 
 interface CreateFeedbackDialogProps {
   open: boolean;
@@ -157,13 +158,34 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
                 height: 40,
                 borderRadius: 999,
                 px: 0.65,
-                border: feedbackType === type ? '1px solid #cc0033' : '1px solid #e0e4e9',
-                backgroundColor: feedbackType === type ? '#cc0033' : '#f0f2f5',
-                color: feedbackType === type ? '#ffffff' : '#253343',
+                border: '1px solid',
+                borderColor: (theme) =>
+                  feedbackType === type
+                    ? theme.palette.primary.main
+                    : theme.palette.mode === 'dark'
+                      ? theme.palette.divider
+                      : '#e0e4e9',
+                backgroundColor: (theme) =>
+                  feedbackType === type
+                    ? theme.palette.primary.main
+                    : theme.palette.mode === 'dark'
+                      ? appDarkPalette.surfaceAlt
+                      : '#f0f2f5',
+                color: (theme) =>
+                  feedbackType === type
+                    ? theme.palette.primary.contrastText
+                    : theme.palette.mode === 'dark'
+                      ? theme.palette.text.primary
+                      : '#253343',
                 fontSize: chipFontSize,
                 fontWeight: 600,
                 '&.MuiChip-clickable:hover': {
-                  backgroundColor: feedbackType === type ? '#b4002d' : '#e8edf2',
+                  backgroundColor: (theme) =>
+                    feedbackType === type
+                      ? theme.palette.primary.dark
+                      : theme.palette.mode === 'dark'
+                        ? appDarkPalette.surfaceRaised
+                        : '#e8edf2',
                 },
               }}
             />

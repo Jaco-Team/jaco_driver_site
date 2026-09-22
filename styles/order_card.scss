@@ -20,7 +20,7 @@
 
     & .btnGOOD {
       @include font_custom(1.2rem, 400, #fff);
-      background-color: #3caa3c;
+      background-color: var(--app-success);
       height: $MyScale150_mobile;
       display: flex;
       flex-direction: row;
@@ -70,7 +70,7 @@
 
   & .btnGOOD {
     @include font_custom(1.2rem, 400, #fff);
-    background-color: #3caa3c;
+    background-color: var(--app-success);
 
     height: 50px;
     display: flex;
@@ -174,7 +174,7 @@ div.text-base {
       }
       &.Green {
         @include font_custom(1.2rem, 500, #fff);
-        background-color: #3caa3c;
+        background-color: var(--app-success);
         color: #fff;
       }
     }
@@ -293,7 +293,7 @@ div.text-base {
     }
     & > button {
       @include font_custom(1.3rem, 400, #fff);
-      background-color: #3caa3c;
+      background-color: var(--app-success);
       width: 100%;
 
       height: 50px;
@@ -360,7 +360,7 @@ div.text-base {
         padding: 0;
         margin: 0;
         border-radius: 10px;
-        background-color: #3caa3c;
+        background-color: var(--app-success);
         @include font_custom(1.2rem, 400, #fff);
       }
 
@@ -378,7 +378,7 @@ div.text-base {
       margin-top: 20px;
 
       @include font_custom(1.2rem, 400, #fff);
-      background-color: #3caa3c;
+      background-color: var(--app-success);
 
       height: 50px;
       display: flex;
@@ -446,10 +446,10 @@ div.text-base {
 :root[data-app-theme='dark'] {
   .modalOrderMap {
     & .MuiPaper-root.MuiDrawer-paper.MuiDrawer-paperAnchorBottom {
-      background: #18232d;
-      color: #f3f6f8;
-      border-color: rgba(174, 187, 197, 0.22);
-      box-shadow: 0 24px 44px rgba(0, 0, 0, 0.46);
+      background: var(--app-surface);
+      color: var(--app-text);
+      border-color: var(--app-border);
+      box-shadow: 0 24px 44px var(--app-shadow);
     }
 
     & .lineModal {
