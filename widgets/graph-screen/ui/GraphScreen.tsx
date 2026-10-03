@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import dayjs from 'dayjs';
 import Backdrop from '@mui/material/Backdrop';
@@ -12,9 +12,12 @@ import { roboto } from '@/shared/config/fonts';
 import { useGraphStore } from '@/widgets/graph-screen/model/graph.store';
 import { GraphScreenView } from '@/widgets/graph-screen/ui/GraphScreenView';
 import { log } from '@/components/analytics';
+import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
+import { useRetryOnlineRequest } from '@/features/offline/model/useRetryOnlineRequest';
 
 export default function GraphScreen() {
   const session = useSession();
+  const isOnline = useConnectivityStore((state) => state.isOnline);
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
   const {
     isGraphLoading,
@@ -68,21 +71,21 @@ export default function GraphScreen() {
     submitCameraAppeal: state.submitCameraAppeal,
   }));
 
-  const [isLoaded, setIsLoaded] = useState(false);
   const month = getActiveMonthLabel(monthList);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (session?.isAuth === true) {
-        await loadGraph(dayjs().format('YYYY-MM'));
-        setIsLoaded(true);
-      }
-    };
+  const refreshGraph = useCallback(
+    () => loadGraph(useGraphStore.getState().chooseDate || dayjs().format('YYYY-MM')),
+    [loadGraph]
+  );
 
-    if (!isLoaded) {
-      void fetchData();
+  useRetryOnlineRequest(session?.isAuth === true && isOnline, refreshGraph);
+
+  useEffect(() => {
+    if (!isOnline) {
+      setMonthDrawerOpen(false);
+      if (errorModal) closeErrorModal();
     }
-  }, [isLoaded, loadGraph, session?.isAuth, session?.token]);
+  }, [closeErrorModal, errorModal, isOnline, setMonthDrawerOpen]);
 
   const handleOpenMonthDrawer = () => {
     log('graph_month_picker_open', 'Открытие выбора месяца (График работы)');
@@ -124,22 +127,32 @@ export default function GraphScreen() {
 
   return (
     <>
-      <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isGraphLoading}>
+      <Backdrop
+        style={{ zIndex: 9999, color: '#fff' }}
+        open={
+          isOnline &&
+          isGraphLoading &&
+          dates.length === 0 &&
+          errOrders.length === 0 &&
+          errCam.length === 0
+        }
+      >
         <CircularProgress color="inherit" />
       </Backdrop>
 
       <GraphScreenView
+        isOnline={isOnline}
         globalFontSize={globalFontSize}
         fontClassName={roboto.variable}
-        month={month}
-        monthList={monthList}
-        dates={dates}
-        users={users}
+        month={isOnline ? month : ''}
+        monthList={isOnline ? monthList : []}
+        dates={isOnline ? dates : []}
+        users={isOnline ? users : []}
         currentUserId={currentUserId}
-        currentUserName={currentUserName}
+        currentUserName={isOnline ? currentUserName : ''}
         chooseDate={chooseDate}
-        errOrders={errOrders}
-        errCam={errCam}
+        errOrders={isOnline ? errOrders : []}
+        errCam={isOnline ? errCam : []}
         isMonthDrawerOpen={isMonthDrawerOpen}
         errorModal={errorModal}
         alertText={alertText}

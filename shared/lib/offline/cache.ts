@@ -14,6 +14,7 @@ export interface OfflinePhones {
 export interface OfflineOrdersSnapshot {
   orders: Order[];
   sourceOrders: Order[];
+  ordersByContext?: Record<string, Order[]>;
   type: OrderType;
   type_dop: string[];
   update_interval: number;

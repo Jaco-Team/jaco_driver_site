@@ -13,7 +13,6 @@ import { OrderConfirmModal } from './components/OrderConfirmModal';
 import { OrdersFilterSheet } from './components/OrdersFilterSheet';
 import { useSettingsStore } from '@/entities/settings';
 import { OrderRecommendationControl } from '@/features/order-recommendation/ui/OrderRecommendationControl';
-import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 import { devLog } from '@/shared/lib/devLog';
 
 interface OrdersPageProps {
@@ -41,9 +40,6 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
     actionFakeOrder,
     is_load,
     isClick,
-    showErrOrder,
-    textErrOrder,
-    closeErrOrder,
   } = useOrdersStore((state: any) => ({
     orders: state.orders,
     type: state.type,
@@ -60,9 +56,6 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
     actionFakeOrder: state.actionFakeOrder,
     is_load: state.is_load,
     isClick: state.isClick,
-    showErrOrder: state.showErrOrder,
-    textErrOrder: state.textErrOrder,
-    closeErrOrder: state.closeErrOrder,
   }));
 
   useOrdersAutoRefresh({ isEnabled: isAuth === true });
@@ -170,18 +163,12 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
           />
         </Grid>
 
-        {is_load ? (
-          <Grid size={12} style={{ textAlign: 'center', padding: '50px' }}>
-            <CircularProgress />
-          </Grid>
-        ) : (
-          <OrdersList
-            orders={orders}
-            globalFontSize={globalFontSize}
-            actionsDisabled={actionsBusy}
-            onOrderAction={handleOrderAction}
-          />
-        )}
+        <OrdersList
+          orders={orders}
+          globalFontSize={globalFontSize}
+          actionsDisabled={actionsBusy}
+          onOrderAction={handleOrderAction}
+        />
       </Grid>
 
       <OrderConfirmModal
@@ -193,7 +180,6 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
         onConfirm={handleConfirm}
       />
 
-      <ErrorModal open={showErrOrder} errorText={textErrOrder} onClose={closeErrOrder} />
       <OrdersFilterSheet />
     </Meta>
   );

@@ -13,15 +13,18 @@ const mocks = vi.hoisted(() => {
   const getCenter = vi.fn(() => [55.7, 37.6]);
   const eventsAdd = vi.fn();
   const eventsRemove = vi.fn();
+  const getZoom = vi.fn(() => 12);
+  const setZoom = vi.fn();
+  const trafficSetMap = vi.fn();
 
   return {
     headerState: {
-    globalFontSize: 16,
-    theme: 'white',
-    mapScale: '1',
-    night_map: false,
-    darkTheme: false,
-    is_scaleMap: true,
+      globalFontSize: 16,
+      theme: 'white',
+      mapScale: '1',
+      night_map: false,
+      darkTheme: false,
+      is_scaleMap: true,
     },
     orderState: {
       orders: [],
@@ -64,40 +67,63 @@ const mocks = vi.hoisted(() => {
     getCenter,
     eventsAdd,
     eventsRemove,
+    getZoom,
+    setZoom,
+    trafficSetMap,
     createClass: vi.fn((template: string) => template),
     isOnline: true,
     mapInstance: {
       setCenter,
       getBounds,
       getCenter,
+      getZoom,
+      setZoom,
       events: { add: eventsAdd, remove: eventsRemove },
     },
   };
 });
 
-vi.mock('@pbe/react-yandex-maps', () => ({
-  YMaps: ({ children }: { children: React.ReactNode }) => <div data-testid="ymaps">{children}</div>,
-  Map: ({
-    children,
-    instanceRef,
-  }: {
-    children: React.ReactNode;
-    instanceRef?: (ref: any) => void;
-  }) => {
-    instanceRef?.(mocks.mapInstance);
-    return <div data-testid="map">{children}</div>;
-  },
-  Placemark: ({ onClick }: { onClick?: () => void }) => (
-    <button type="button" data-testid="placemark" onClick={onClick} />
-  ),
-  TrafficControl: () => <div data-testid="traffic-control" />,
-  ZoomControl: () => <div data-testid="zoom-control" />,
-  useYMaps: () => ({
-    templateLayoutFactory: {
-      createClass: mocks.createClass,
+vi.mock('@pbe/react-yandex-maps', async () => {
+  const { useEffect } = await vi.importActual<typeof import('react')>('react');
+
+  return {
+    YMaps: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="ymaps">{children}</div>
+    ),
+    Map: ({
+      children,
+      instanceRef,
+    }: {
+      children: React.ReactNode;
+      instanceRef?: (ref: any) => void;
+    }) => {
+      useEffect(() => {
+        instanceRef?.(mocks.mapInstance);
+
+        return () => instanceRef?.(null);
+      }, [instanceRef]);
+
+      return <div data-testid="map">{children}</div>;
     },
-  }),
-}));
+    Placemark: ({ onClick }: { onClick?: () => void }) => (
+      <button type="button" data-testid="placemark" onClick={onClick} />
+    ),
+    TrafficControl: () => <div data-testid="traffic-control" />,
+    ZoomControl: () => <div data-testid="zoom-control" />,
+    useYMaps: () => ({
+      templateLayoutFactory: {
+        createClass: mocks.createClass,
+      },
+      traffic: {
+        provider: {
+          Actual: class {
+            setMap = mocks.trafficSetMap;
+          },
+        },
+      },
+    }),
+  };
+});
 
 vi.mock('@/features/header/model/header.store', () => ({
   useHeaderStore: (selector: (state: typeof mocks.headerState) => any) =>
@@ -127,12 +153,26 @@ vi.mock('@/features/offline/model/connectivity.store', () => ({
     selector({ isOnline: mocks.isOnline }),
 }));
 
-vi.mock('@/widgets/order/ui/components/OrderConfirmModal', () => ({
-  OrderConfirmModal: () => <div data-testid="confirm-modal" />,
+vi.mock('@/entities/settings', () => ({
+  useSettingsStore: (selector: (state: { pointId: number }) => any) => selector({ pointId: 12 }),
 }));
 
-vi.mock('@/shared/ui/ErrorModal/ErrorModal', () => ({
-  ErrorModal: () => <div data-testid="error-modal" />,
+vi.mock('@/shared/lib/offline/offlineMapAssets', () => ({
+  ensureOfflineMapAssets: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('./OrdersOfflineMap', () => ({
+  OrdersOfflineMap: ({ onOpenOrders }: { onOpenOrders: (id: number) => void }) => (
+    <div data-testid="offline-map">
+      <button type="button" onClick={() => onOpenOrders(7)}>
+        Открыть сохранённый заказ
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock('@/widgets/order/ui/components/OrderConfirmModal', () => ({
+  OrderConfirmModal: () => <div data-testid="confirm-modal" />,
 }));
 
 describe('OrdersMapScreen', () => {
@@ -150,10 +190,27 @@ describe('OrdersMapScreen', () => {
     render(<OrdersMapScreen />);
 
     expect(screen.getByTestId('map')).toBeInTheDocument();
-    expect(screen.getByTestId('traffic-control')).toBeInTheDocument();
-    expect(screen.getByTestId('zoom-control')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Показать пробки на карте' })).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: 'Масштаб карты' })).toBeInTheDocument();
     expect(screen.getByText('1/5')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('switches API 2.1 traffic without changing the map controls', () => {
+    render(<OrdersMapScreen />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Показать пробки на карте' }));
+    expect(mocks.trafficSetMap).toHaveBeenCalledWith(mocks.mapInstance);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Скрыть пробки на карте' }));
+    expect(mocks.trafficSetMap).toHaveBeenLastCalledWith(null);
+  });
+
+  it('does not show the cached map before the online map is ready', () => {
+    render(<OrdersMapScreen />);
+
+    expect(screen.getByRole('progressbar', { name: 'Загрузка карты' })).toBeInTheDocument();
+    expect(screen.queryByTestId('offline-map')).not.toBeInTheDocument();
   });
 
   it('switches map order type through footer controls', () => {
@@ -171,8 +228,8 @@ describe('OrdersMapScreen', () => {
     const mapStage = container.querySelector('.orders-map-stage__map');
 
     expect(mapStage).toHaveAttribute('data-map-theme', 'dark');
-    expect(mapStage).toHaveStyle({ backgroundColor: '#070A0E' });
-    expect(mapStage?.getAttribute('style')).toContain('brightness(72%)');
+    expect(mapStage).toHaveStyle({ backgroundColor: '#2e3c4e' });
+    expect(mapStage?.getAttribute('style')).not.toContain('filter:');
   });
 
   it('renders one counted marker for orders at the same location', () => {
@@ -229,7 +286,7 @@ describe('OrdersMapScreen', () => {
     expect(mocks.setCenter).toHaveBeenCalledWith([55.7, 38]);
   });
 
-  it('opens cached order cards from the offline list when the map cannot load', () => {
+  it('opens cached order cards from the saved offline map', () => {
     mocks.isOnline = false;
     mocks.orderState.orders = [
       {
@@ -251,20 +308,32 @@ describe('OrdersMapScreen', () => {
     render(<OrdersMapScreen />);
 
     expect(screen.queryByTestId('map')).not.toBeInTheDocument();
-    expect(screen.getByTestId('orders-map-offline-list')).toBeInTheDocument();
+    expect(screen.getByTestId('offline-map')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Ленина, 5'));
+    fireEvent.click(screen.getByText('Открыть сохранённый заказ'));
 
     expect(mocks.orderState.showOrdersMap).toHaveBeenCalledWith(7);
   });
 
-  it('keeps the map when the maps api is already loaded and the app goes offline', () => {
+  it('uses the saved map offline even when the online maps api was loaded before', () => {
     mocks.isOnline = false;
     (window as { ymaps?: unknown }).ymaps = {};
 
     render(<OrdersMapScreen />);
 
+    expect(screen.queryByTestId('map')).not.toBeInTheDocument();
+    expect(screen.getByTestId('offline-map')).toBeInTheDocument();
+  });
+
+  it('switches from the cached map back to the online map without a page reload', () => {
+    mocks.isOnline = false;
+    const { rerender } = render(<OrdersMapScreen />);
+    expect(screen.getByTestId('offline-map')).toBeInTheDocument();
+
+    mocks.isOnline = true;
+    rerender(<OrdersMapScreen />);
+
+    expect(screen.queryByTestId('offline-map')).not.toBeInTheDocument();
     expect(screen.getByTestId('map')).toBeInTheDocument();
-    expect(screen.queryByTestId('orders-map-offline-list')).not.toBeInTheDocument();
   });
 });

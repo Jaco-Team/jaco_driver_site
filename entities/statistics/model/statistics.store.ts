@@ -5,6 +5,7 @@ import {
   type StatisticsSummaryRow,
 } from '@/entities/statistics/api/statistics.api';
 import { useSettingsStore } from '@/entities/settings';
+import { isAppOnline } from '@/features/offline/model/connectivity.store';
 
 interface StatisticsState {
   svod: StatisticsSummaryRow[];
@@ -22,6 +23,7 @@ const statisticsRequests = new Map<
   string,
   Promise<Awaited<ReturnType<typeof fetchStatisticsShowData>>>
 >();
+let latestStatisticsRequestId = 0;
 
 function normalizePointId(value?: number | null): number | null {
   if (value === undefined || value === null) {
@@ -38,6 +40,8 @@ export const useStatisticsStore = createWithEqualityFn<StatisticsStore>(
     isLoad: false,
 
     getStatistics: async (dateStart, dateEnd, pointId) => {
+      if (!isAppOnline()) return;
+      const requestId = ++latestStatisticsRequestId;
       set({ isLoad: true });
 
       try {
@@ -54,14 +58,14 @@ export const useStatisticsStore = createWithEqualityFn<StatisticsStore>(
 
         const json = await request;
 
+        if (requestId !== latestStatisticsRequestId || !isAppOnline()) return;
+
         set({
           svod: Array.isArray(json?.avg_orders) ? json.avg_orders : [],
           currentUserId: json?.user_id == null ? '' : `${json.user_id}`,
         });
       } finally {
-        window.setTimeout(() => {
-          set({ isLoad: false });
-        }, 500);
+        if (requestId === latestStatisticsRequestId) set({ isLoad: false });
       }
     },
   }),

@@ -138,6 +138,7 @@ function CourierCard({ row, globalFontSize, title, icon, description }: CourierC
 
 export default function StatisticsPage() {
   const {
+    isOnline,
     isLoad,
     globalFontSize,
     snackbar,
@@ -160,7 +161,10 @@ export default function StatisticsPage() {
 
   return (
     <Meta title="Статистика">
-      <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isLoad}>
+      <Backdrop
+        style={{ zIndex: 9999, color: '#fff' }}
+        open={isOnline && isLoad && displayRows.length === 0}
+      >
         <CircularProgress color="inherit" />
       </Backdrop>
 
@@ -206,6 +210,7 @@ export default function StatisticsPage() {
                 <div className="price__segmentedRangeControl">
                   <button
                     type="button"
+                    disabled={!isOnline}
                     className="price__segmentButton"
                     onClick={() => openPicker('start')}
                   >
@@ -219,6 +224,7 @@ export default function StatisticsPage() {
 
                   <button
                     type="button"
+                    disabled={!isOnline}
                     className="price__segmentButton price__segmentButton--end"
                     onClick={() => openPicker('end')}
                   >
@@ -229,6 +235,7 @@ export default function StatisticsPage() {
                 </div>
 
                 <Button
+                  disabled={!isOnline}
                   variant="contained"
                   onClick={getStat}
                   className="statistics__submit price__heroSubmit"

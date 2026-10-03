@@ -9,11 +9,8 @@ const mocks = vi.hoisted(() => ({
   isAuthenticated: true,
 }));
 
-vi.mock('next/dynamic', () => ({
-  default: () =>
-    function DynamicPriceScreen() {
-      return <div data-testid="price-screen" />;
-    },
+vi.mock('@/widgets/price-screen/ui/PriceScreen', () => ({
+  default: () => <div data-testid="price-screen" />,
 }));
 
 vi.mock('@/components/meta', () => ({

@@ -1,28 +1,11 @@
-import * as React from 'react';
-import Button from '@mui/material/Button';
-import DialogTitle from '@mui/material/DialogTitle';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
 import { useOrdersStore } from '@/entities/order/model/order.store';
-import { useHeaderStore } from '@/features/header/model/header.store';
+import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 
 export default function AlertOrder() {
-  const [showErrOrder, textErrOrder, closeErrOrder] = useOrdersStore((state) => [
-    state.showErrOrder,
-    state.textErrOrder,
-    state.closeErrOrder,
-  ]);
-  const [globalFontSize] = useHeaderStore((state) => [state.globalFontSize]);
+  // Единственное место показа ошибок заказа для списка, карты и других страниц.
+  const showErrOrder = useOrdersStore((state) => state.showErrOrder);
+  const textErrOrder = useOrdersStore((state) => state.textErrOrder);
+  const closeErrOrder = useOrdersStore((state) => state.closeErrOrder);
 
-  return (
-    <Dialog onClose={closeErrOrder} open={showErrOrder}>
-      <DialogTitle style={{ fontSize: globalFontSize }}>{textErrOrder}</DialogTitle>
-
-      <DialogActions>
-        <Button onClick={closeErrOrder} style={{ fontSize: globalFontSize }} autoFocus>
-          Хорошо
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
+  return <ErrorModal open={showErrOrder} errorText={textErrOrder} onClose={closeErrOrder} />;
 }

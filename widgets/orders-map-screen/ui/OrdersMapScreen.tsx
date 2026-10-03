@@ -1,49 +1,67 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  YMaps,
-  Map,
-  Placemark,
-  TrafficControl,
-  ZoomControl,
-  useYMaps,
-} from '@pbe/react-yandex-maps';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+import { YMaps, Map, Placemark, useYMaps } from '@pbe/react-yandex-maps';
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import Slider from '@mui/material/Slider';
 import Typography from '@mui/material/Typography';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationOffIcon from '@mui/icons-material/LocationOff';
 import PinDropIcon from '@mui/icons-material/PinDrop';
 
 import { useHeaderStore } from '@/features/header/model/header.store';
+import { useSettingsStore } from '@/entities/settings';
 import { useOrdersStore } from '@/entities/order/model/order.store';
-import {
-  isAppOnline,
-  useConnectivityStore,
-} from '@/features/offline/model/connectivity.store';
+import { isAppOnline, useConnectivityStore } from '@/features/offline/model/connectivity.store';
 import type { HomeLocation } from '@/entities/order/model/order.types';
 import {
   groupOrdersByMapLocation,
   type OrderMapGroup,
 } from '@/entities/order/model/orderMapGroups';
 import { escapeHtml, sanitizeCssColor, sanitizeCssIdent } from '@/shared/lib/escapeHtml';
+import { devLog } from '@/shared/lib/devLog';
+import { ensureOfflineMapAssets } from '@/shared/lib/offline/offlineMapAssets';
 import { appDarkSuccessPalette } from '@/shared/styles/appPalette';
 import { roboto } from '@/shared/ui/Font';
+import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 import { OrdersFilterSheet } from '@/widgets/order/ui/components/OrdersFilterSheet';
 import { OrderConfirmModal } from '@/widgets/order/ui/components/OrderConfirmModal';
-import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 import { useOrdersMapScreen } from '../model/useOrdersMapScreen';
-import { getMapEdgeIndicators, type MapViewport } from '../model/mapViewport';
-import { OrdersMapOfflineList } from './OrdersMapOfflineList';
+import { OrdersMapCompass } from './OrdersMapCompass';
+import { OrdersMapRasterFilter } from './OrdersMapRasterFilter';
+import { OrdersOfflineMap } from './OrdersOfflineMap';
 
 const YANDEX_MAPS_API_KEY = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY ?? '';
-
-function isYandexMapsApiLoaded(): boolean {
-  return typeof window !== 'undefined' && Boolean((window as { ymaps?: unknown }).ymaps);
-}
+const ONLINE_MAP_RETRY_DELAY_MS = 4000;
+const ONLINE_MAP_MAX_ATTEMPTS = 8;
+const subscribeToClientMount = () => () => undefined;
 
 type YMapsTemplateApi = {
   templateLayoutFactory: {
     createClass: (template: string, overrides?: Record<string, unknown>) => unknown;
   };
+};
+
+type LegacyMapInstance = {
+  getZoom: () => number;
+  setZoom: (zoom: number, options?: { duration?: number }) => void;
+  events: {
+    add: (event: string, handler: () => void) => void;
+    remove: (event: string, handler: () => void) => void;
+  };
+};
+
+type TrafficProvider = { setMap: (map: LegacyMapInstance | null) => void };
+
+type YMapsTrafficApi = {
+  traffic: { provider: { Actual: new (...args: unknown[]) => TrafficProvider } };
 };
 
 type IconLayoutInstance = {
@@ -337,7 +355,7 @@ const OrdersMapHomePoint = memo(function OrdersMapHomePoint({
   getHome: () => void;
   yMapsApi: YMapsTemplateApi;
 }) {
-  const isDarkMap = useHeaderStore((state) => state.night_map || state.darkTheme);
+  const isDarkMap = useHeaderStore((state) => state.darkTheme);
   const fill = sanitizeCssColor(isDarkMap ? '#f0f8ff' : '#000', '#000');
   const fontClass = sanitizeCssIdent(roboto.variable, 'font');
   const homeLayout = useMemo(
@@ -408,30 +426,17 @@ const OrdersMapObjects = memo(function OrdersMapObjects({
   orders,
   groups,
   getHome,
-  onMapApiReady,
 }: {
   header: ReturnType<typeof useOrdersMapScreen>['header'];
   orders: ReturnType<typeof useOrdersMapScreen>['orders'];
   groups: OrderMapGroup[];
   getHome: () => void;
-  onMapApiReady: () => void;
 }) {
   const yMapsApi = useYMaps(['templateLayoutFactory']) as YMapsTemplateApi | null;
   const home = orders.home;
 
-  useEffect(() => {
-    if (yMapsApi) {
-      onMapApiReady();
-    }
-  }, [onMapApiReady, yMapsApi]);
-
   return (
     <>
-      <TrafficControl options={{ size: 'small', position: { top: 150, right: 20 } } as any} />
-      {header.is_scaleMap ? (
-        <ZoomControl options={{ size: 'large', position: { top: 200, right: 20 } } as any} />
-      ) : null}
-
       {yMapsApi && home ? (
         <>
           <OrdersMapHomePoint
@@ -465,218 +470,117 @@ const OrdersMapObjects = memo(function OrdersMapObjects({
   );
 });
 
-const COMPASS_DIRECTIONS = [
-  'север',
-  'северо-восток',
-  'восток',
-  'юго-восток',
-  'юг',
-  'юго-запад',
-  'запад',
-  'северо-запад',
-];
-
-function getOrderCountLabel(count: number): string {
-  const lastTwoDigits = count % 100;
-  const lastDigit = count % 10;
-
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-    return `${count} заказов`;
-  }
-
-  if (lastDigit === 1) {
-    return `${count} заказ`;
-  }
-
-  if (lastDigit >= 2 && lastDigit <= 4) {
-    return `${count} заказа`;
-  }
-
-  return `${count} заказов`;
-}
-
-const OrdersMapCompass = memo(function OrdersMapCompass({
-  groups,
-  viewport,
-  globalFontSize,
-  onCenter,
+function OrdersMapOnlineControls({
+  map,
+  initialZoom,
+  showZoomControls,
 }: {
-  groups: OrderMapGroup[];
-  viewport: MapViewport | null;
-  globalFontSize: number;
-  onCenter: (coordinate: [number, number]) => void;
+  map: LegacyMapInstance | null;
+  initialZoom: number;
+  showZoomControls: boolean;
 }) {
-  const indicators = useMemo(() => getMapEdgeIndicators(groups, viewport), [groups, viewport]);
-  const countFontSize = Math.min(18, Math.max(12, globalFontSize - 2));
+  const yMapsApi = useYMaps(['traffic.provider.Actual']) as YMapsTrafficApi | null;
+  const providerRef = useRef<TrafficProvider | null>(null);
+  const [trafficVisible, setTrafficVisible] = useState(false);
+  const [trafficErrorOpen, setTrafficErrorOpen] = useState(false);
+  const [zoomValue, setZoomValue] = useState(initialZoom);
 
-  if (indicators.length === 0) {
-    return null;
-  }
+  useEffect(() => {
+    if (!map || !yMapsApi?.traffic?.provider?.Actual) return undefined;
 
-  return (
-    <div className="orders-map-compass" aria-label="Заказы за пределами карты">
-      {indicators.map((indicator) => (
-        <button
-          key={indicator.sector}
-          type="button"
-          className="orders-map-compass__indicator"
-          style={{ left: `${indicator.left}%`, top: `${indicator.top}%` }}
-          aria-label={`Показать ${getOrderCountLabel(indicator.orderCount)}, направление ${
-            COMPASS_DIRECTIONS[indicator.sector]
-          }`}
-          onClick={() => onCenter(indicator.target.coordinate)}
-        >
-          <span
-            className="orders-map-compass__arrow"
-            style={{ transform: `rotate(${indicator.angle}deg)` }}
-            aria-hidden="true"
-          />
-          <span className="orders-map-compass__count" style={{ fontSize: countFontSize }}>
-            {indicator.orderCount}
-          </span>
-          <span className="orders-map-compass__statuses" aria-hidden="true">
-            {indicator.statusColors.slice(0, 3).map((color) => (
-              <span
-                key={color}
-                className="orders-map-compass__status"
-                style={{ backgroundColor: sanitizeCssColor(color) }}
-              />
-            ))}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-});
+    const provider = new yMapsApi.traffic.provider.Actual({}, { infoLayerShown: true });
+    providerRef.current = provider;
 
-export function OrdersMapScreen() {
-  const {
-    setMapInstance,
-    viewport,
-    header,
-    orders,
-    iconColor,
-    getHome,
-    centerOnCoordinate,
-    handleConfirm,
-  } = useOrdersMapScreen();
-  const groups = useMemo(() => groupOrdersByMapLocation(orders.orders), [orders.orders]);
-  const isOnline = useConnectivityStore((state) => state.isOnline);
-  const [isMapApiReady, setIsMapApiReady] = useState(() => isYandexMapsApiLoaded());
-  const handleMapApiReady = useCallback(() => setIsMapApiReady(true), []);
-  const isDarkMap = header.night_map || header.darkTheme;
-  const activeTypeColor = header.darkTheme ? appDarkSuccessPalette.text : 'green';
-  // Yandex Maps grabs its script from the network, so the map cannot appear at all
-  // when the app starts offline.
-  const isOfflineFallback = !isOnline && !isMapApiReady;
+    return () => {
+      provider.setMap(null);
+      providerRef.current = null;
+    };
+  }, [map, yMapsApi]);
 
-  if (isOfflineFallback) {
-    return (
-      <>
-        <OrdersFilterSheet />
+  useEffect(() => {
+    if (!map) return undefined;
 
-        <OrdersMapOfflineList
-          groups={groups}
-          typeText={orders.type.text}
-          globalFontSize={header.globalFontSize}
-          onOpenOrders={orders.showOrdersMap}
-        />
+    const updateZoom = () => {
+      const zoom = map.getZoom();
+      if (Number.isFinite(zoom)) setZoomValue(zoom);
+    };
+    updateZoom();
+    map.events.add('boundschange', updateZoom);
+    return () => map.events.remove('boundschange', updateZoom);
+  }, [map]);
 
-        <OrderConfirmModal
-          open={orders.modalConfirm}
-          orderId={orders.order_finish_id}
-          typeConfirm={orders.type_confirm}
-          busy={orders.isClick || orders.is_load}
-          onClose={() => orders.setActiveConfirm(false, null, true, null, null)}
-          onConfirm={handleConfirm}
-        />
+  const toggleTraffic = () => {
+    const provider = providerRef.current;
+    if (!map || !provider) {
+      setTrafficErrorOpen(true);
+      return;
+    }
 
-        <ErrorModal
-          open={orders.showErrOrder}
-          errorText={orders.textErrOrder}
-          onClose={orders.closeErrOrder}
-        />
-      </>
-    );
-  }
+    try {
+      provider.setMap(trafficVisible ? null : map);
+      setTrafficVisible(!trafficVisible);
+    } catch (error) {
+      devLog('orders_map_traffic_unavailable', 'Не удалось переключить пробки', error);
+      setTrafficErrorOpen(true);
+    }
+  };
 
   return (
     <>
-      <OrdersFilterSheet />
-
-      <div className="location_svg">
-        <Button onClick={orders.set_type_location} aria-label="Показать мою геопозицию">
-          {orders.type_location === 'location' ? (
-            <LocationOnIcon style={{ color: iconColor }} />
-          ) : orders.type_location === 'watch' ? (
-            <PinDropIcon style={{ color: iconColor }} />
-          ) : (
-            <LocationOffIcon style={{ color: iconColor }} />
-          )}
-        </Button>
-      </div>
-
-      {orders.home ? (
-        <div className="orders-map-stage">
-          <div
-            className="orders-map-stage__map"
-            data-map-theme={isDarkMap ? 'dark' : 'light'}
-            style={{
-              backgroundColor: isDarkMap ? '#070A0E' : undefined,
-              filter: isDarkMap
-                ? 'invert(92%) hue-rotate(180deg) brightness(72%) contrast(92%) saturate(70%)'
-                : undefined,
+      <button
+        type="button"
+        className="orders-map-traffic"
+        aria-label={trafficVisible ? 'Скрыть пробки на карте' : 'Показать пробки на карте'}
+        aria-pressed={trafficVisible}
+        onClick={toggleTraffic}
+      >
+        <svg viewBox="0 0 512 512" aria-hidden="true" fill="currentColor">
+          <path d="M223.9 32l-76.2 0c-29.4 0-55.1 20.1-62.1 48.6L1.4 420.5C-6.1 450.7 16.8 480 48 480l175.9 0 0-64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 64 176.1 0c31.2 0 54.1-29.3 46.6-59.5L426.5 80.6C419.4 52.1 393.8 32 364.3 32l-76.4 0 0 64c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-64zm64 192l0 64c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32s32 14.3 32 32z" />
+        </svg>
+      </button>
+      {showZoomControls ? (
+        <div className="orders-map-zoom">
+          <Slider
+            orientation="vertical"
+            aria-label="Масштаб карты"
+            min={10}
+            max={20}
+            step={1}
+            value={Math.min(20, Math.max(10, zoomValue))}
+            onChange={(_, value) => {
+              if (typeof value === 'number') setZoomValue(value);
             }}
-          >
-            <YMaps
-              query={{
-                lang: 'ru_RU',
-                ...(YANDEX_MAPS_API_KEY ? { apikey: YANDEX_MAPS_API_KEY } : {}),
-              }}
-            >
-              <Map
-                key={orders.home.center.join(',')}
-                defaultState={orders.home as HomeLocation}
-                instanceRef={setMapInstance}
-                width="100%"
-                height="100vh"
-                style={{ minHeight: '100vh' }}
-                modules={['control.ZoomControl', 'control.TrafficControl']}
-              >
-                <OrdersMapObjects
-                  header={header}
-                  orders={orders}
-                  groups={groups}
-                  getHome={getHome}
-                  onMapApiReady={handleMapApiReady}
-                />
-              </Map>
-            </YMaps>
-          </div>
-
-          <OrdersMapCompass
-            groups={groups}
-            viewport={viewport}
-            globalFontSize={header.globalFontSize}
-            onCenter={centerOnCoordinate}
+            onChangeCommitted={(_, value) => {
+              if (typeof value === 'number') map?.setZoom(value, { duration: 100 });
+            }}
           />
         </div>
       ) : null}
+      <ErrorModal
+        open={trafficErrorOpen}
+        errorText="Пробки сейчас недоступны на сайте. Попробуйте позже."
+        onClose={() => setTrafficErrorOpen(false)}
+      />
+    </>
+  );
+}
 
+function OrdersMapOfflineControls({
+  orders,
+  globalFontSize,
+  iconColor,
+  activeTypeColor,
+}: {
+  orders: ReturnType<typeof useOrdersMapScreen>['orders'];
+  globalFontSize: number;
+  iconColor: string;
+  activeTypeColor: string;
+}) {
+  return (
+    <>
       <div
-        style={{
-          position: 'absolute',
-          zIndex: 10,
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          width: '90%',
-          left: '5%',
-          bottom: 50,
-          backgroundColor: '#000',
-          opacity: 0.7,
-          borderRadius: 60,
-        }}
+        className="orders-map-type-controls orders-map-type-controls--offline"
+        style={{ fontSize: globalFontSize }}
       >
         <Button
           className="noselect"
@@ -713,18 +617,293 @@ export function OrdersMapScreen() {
         </Button>
       </div>
 
-      <div
-        style={{
-          position: 'absolute',
-          zIndex: 10,
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          width: '90%',
-          left: '5%',
-          bottom: 90,
-        }}
-      >
+      <div className="orders-map-limit-controls">
+        <Typography
+          style={{ fontSize: globalFontSize, fontWeight: 'bold', color: iconColor }}
+          component="span"
+        >
+          {orders.limit}
+        </Typography>
+        {orders.limit_count?.length > 0 ? (
+          <Typography
+            style={{ fontSize: globalFontSize, fontWeight: 'bold', color: iconColor }}
+            component="span"
+          >
+            {orders.limit_count}
+          </Typography>
+        ) : null}
+      </div>
+    </>
+  );
+}
+
+export function OrdersMapScreen() {
+  const {
+    setMapInstance,
+    viewport,
+    header,
+    orders,
+    iconColor,
+    getHome,
+    centerOnCoordinate,
+    handleConfirm,
+  } = useOrdersMapScreen();
+  const groups = useMemo(() => groupOrdersByMapLocation(orders.orders), [orders.orders]);
+  const pointId = useSettingsStore((state) => state.pointId);
+  const isOnline = useConnectivityStore((state) => state.isOnline);
+  const hasMounted = useSyncExternalStore(
+    subscribeToClientMount,
+    () => true,
+    () => false
+  );
+  const [onlineMapAttempt, setOnlineMapAttempt] = useState(0);
+  const [onlineMapReady, setOnlineMapReady] = useState(false);
+  const [onlineMapError, setOnlineMapError] = useState<string | null>(null);
+  const [onlineMapInstance, setOnlineMapInstance] = useState<LegacyMapInstance | null>(null);
+  const onlineMapReadyTimerRef = useRef<number | null>(null);
+  const isDarkMap = header.darkTheme;
+  const activeTypeColor = header.darkTheme ? appDarkSuccessPalette.text : 'green';
+  const isOfflineFallback = hasMounted && !isOnline;
+
+  useEffect(() => {
+    if (!isOnline) {
+      if (onlineMapReadyTimerRef.current !== null) {
+        window.clearTimeout(onlineMapReadyTimerRef.current);
+        onlineMapReadyTimerRef.current = null;
+      }
+
+      let cancelled = false;
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setOnlineMapReady(false);
+          setOnlineMapAttempt(0);
+        }
+      });
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void ensureOfflineMapAssets().catch((error) => {
+      devLog('offline_map_cache_failed', 'Не удалось сохранить офлайн-карту', error);
+    });
+
+    return undefined;
+  }, [isOnline]);
+
+  useEffect(() => {
+    if (!hasMounted || !isOnline || onlineMapReady) {
+      return undefined;
+    }
+
+    if (onlineMapAttempt >= ONLINE_MAP_MAX_ATTEMPTS - 1) {
+      return undefined;
+    }
+
+    const retryTimer = window.setTimeout(() => {
+      setOnlineMapAttempt((attempt) => attempt + 1);
+    }, ONLINE_MAP_RETRY_DELAY_MS);
+
+    return () => window.clearTimeout(retryTimer);
+  }, [hasMounted, isOnline, onlineMapAttempt, onlineMapReady]);
+
+  useEffect(
+    () => () => {
+      if (onlineMapReadyTimerRef.current !== null) {
+        window.clearTimeout(onlineMapReadyTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const handleOnlineMapInstance = useCallback(
+    (instance: any) => {
+      setMapInstance(instance);
+      setOnlineMapInstance(instance);
+
+      if (!instance) {
+        if (onlineMapReadyTimerRef.current !== null) {
+          window.clearTimeout(onlineMapReadyTimerRef.current);
+          onlineMapReadyTimerRef.current = null;
+        }
+
+        return;
+      }
+
+      instance.container?.fitToViewport?.();
+
+      if (onlineMapReadyTimerRef.current !== null) {
+        window.clearTimeout(onlineMapReadyTimerRef.current);
+      }
+
+      onlineMapReadyTimerRef.current = window.setTimeout(() => {
+        instance.container?.fitToViewport?.();
+        setOnlineMapReady(true);
+        onlineMapReadyTimerRef.current = null;
+      }, 500);
+    },
+    [setMapInstance]
+  );
+
+  if (isOfflineFallback) {
+    return (
+      <>
+        <OrdersFilterSheet />
+
+        <OrdersOfflineMap
+          pointId={pointId}
+          groups={groups}
+          home={orders.home}
+          dark={isDarkMap}
+          theme={header.theme}
+          mapScale={header.mapScale}
+          showZoomControls={header.is_scaleMap}
+          typeText={orders.type.text}
+          globalFontSize={header.globalFontSize}
+          onOpenOrders={orders.showOrdersMap}
+          onHomeClick={getHome}
+        />
+
+        <OrdersMapOfflineControls
+          orders={orders}
+          globalFontSize={header.globalFontSize}
+          iconColor={iconColor}
+          activeTypeColor={activeTypeColor}
+        />
+
+        <OrderConfirmModal
+          open={orders.modalConfirm}
+          orderId={orders.order_finish_id}
+          typeConfirm={orders.type_confirm}
+          busy={orders.isClick || orders.is_load}
+          onClose={() => orders.setActiveConfirm(false, null, true, null, null)}
+          onConfirm={handleConfirm}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <OrdersFilterSheet />
+
+      {orders.home ? (
+        <div className="orders-map-stage">
+          {!onlineMapReady && !orders.is_load ? (
+            <div className="orders-map-stage__loading">
+              {onlineMapError && onlineMapAttempt >= ONLINE_MAP_MAX_ATTEMPTS - 1 ? (
+                <Typography>{onlineMapError}</Typography>
+              ) : (
+                <CircularProgress aria-label="Загрузка карты" size={36} />
+              )}
+            </div>
+          ) : null}
+
+          <div
+            className={`orders-map-stage__map orders-map-stage__online-map${
+              onlineMapReady ? ' orders-map-stage__online-map--ready' : ''
+            }`}
+            data-map-theme={isDarkMap ? 'dark' : 'light'}
+            style={{
+              backgroundColor: isDarkMap ? '#2e3c4e' : undefined,
+            }}
+          >
+            {isDarkMap ? <OrdersMapRasterFilter /> : null}
+            <YMaps
+              key={`orders-online-map-${onlineMapAttempt}`}
+              query={{
+                lang: 'ru_RU',
+                ...(YANDEX_MAPS_API_KEY ? { apikey: YANDEX_MAPS_API_KEY } : {}),
+              }}
+            >
+              <Map
+                key={`${onlineMapAttempt}:${orders.home.center.join(',')}`}
+                defaultState={orders.home as HomeLocation}
+                instanceRef={handleOnlineMapInstance}
+                onError={(error) =>
+                  setOnlineMapError(
+                    error instanceof Error ? error.message : 'Не удалось открыть карту'
+                  )
+                }
+                width="100%"
+                height="100%"
+                style={{ height: '100%' }}
+                modules={['traffic.provider.Actual']}
+              >
+                <OrdersMapObjects
+                  header={header}
+                  orders={orders}
+                  groups={groups}
+                  getHome={getHome}
+                />
+              </Map>
+              <OrdersMapOnlineControls
+                map={onlineMapInstance}
+                initialZoom={orders.home.zoom}
+                showZoomControls={header.is_scaleMap}
+              />
+            </YMaps>
+          </div>
+
+          <div className="location_svg">
+            <Button onClick={orders.set_type_location} aria-label="Показать мою геопозицию">
+              {orders.type_location === 'location' ? (
+                <LocationOnIcon style={{ color: iconColor }} />
+              ) : orders.type_location === 'watch' ? (
+                <PinDropIcon style={{ color: iconColor }} />
+              ) : (
+                <LocationOffIcon style={{ color: iconColor }} />
+              )}
+            </Button>
+          </div>
+
+          <OrdersMapCompass
+            groups={groups}
+            viewport={viewport}
+            globalFontSize={header.globalFontSize}
+            onCenter={centerOnCoordinate}
+          />
+        </div>
+      ) : null}
+
+      <div className="orders-map-type-controls" style={{ fontSize: header.globalFontSize }}>
+        <Button
+          className="noselect"
+          style={{
+            flex: 3,
+            color: orders.type.id === 1 ? activeTypeColor : '#fff',
+            fontWeight: 'bold',
+          }}
+          onClick={() => orders.setType({ id: 1, text: 'Активные' }, -1)}
+        >
+          Активные
+        </Button>
+        <Button
+          className="noselect"
+          style={{
+            flex: 1,
+            color: orders.type.id === 2 ? activeTypeColor : '#fff',
+            fontWeight: 'bold',
+          }}
+          onClick={() => orders.setType({ id: 2, text: 'Мои отмеченные' }, -1)}
+        >
+          Мои
+        </Button>
+        <Button
+          className="noselect"
+          style={{
+            flex: 3,
+            color: orders.type.id === 5 ? activeTypeColor : '#fff',
+            fontWeight: 'bold',
+          }}
+          onClick={() => orders.setType({ id: 5, text: 'У других курьеров' }, -1)}
+        >
+          У других
+        </Button>
+      </div>
+
+      <div className="orders-map-limit-controls">
         <Typography
           style={{ fontSize: header.globalFontSize, fontWeight: 'bold', color: iconColor }}
           component="span"
@@ -748,12 +927,6 @@ export function OrdersMapScreen() {
         busy={orders.isClick || orders.is_load}
         onClose={() => orders.setActiveConfirm(false, null, true, null, null)}
         onConfirm={handleConfirm}
-      />
-
-      <ErrorModal
-        open={orders.showErrOrder}
-        errorText={orders.textErrOrder}
-        onClose={orders.closeErrOrder}
       />
     </>
   );

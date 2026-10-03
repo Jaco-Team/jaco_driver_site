@@ -16,7 +16,7 @@ export const OrderStats: React.FC<OrderStatsProps> = ({ limit, limitCount, globa
       {hasLimitCount ? (
         <Typography
           className="listStats__count"
-          style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}
+          style={{ fontSize: globalFontSize, fontWeight: 'bold', color: 'var(--app-text)' }}
           component="span"
         >
           {limitCount}
@@ -25,7 +25,7 @@ export const OrderStats: React.FC<OrderStatsProps> = ({ limit, limitCount, globa
 
       <Typography
         className="listStats__limit"
-        style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}
+        style={{ fontSize: globalFontSize, fontWeight: 'bold', color: 'var(--app-text)' }}
         component="span"
       >
         {limit}

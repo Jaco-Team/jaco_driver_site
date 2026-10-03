@@ -93,7 +93,7 @@ export function OrdersMapOfflineList({
           <WifiOffRoundedIcon />
         </Box>
 
-        <Box sx={{ minWidth: 0, }}>
+        <Box sx={{ minWidth: 0 }}>
           <Typography
             component="div"
             sx={{

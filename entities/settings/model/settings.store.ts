@@ -68,9 +68,10 @@ interface SettingsActions {
     mapScale: number,
     night_map: boolean,
     dark_theme: boolean,
+    app_theme: 'system' | 'light' | 'dark',
     is_scaleMap: boolean
   ) => Promise<{ st: boolean; text?: string; data?: any; status?: number; errors?: any }>;
-  getMySetting: (token: string) => Promise<SettingsResponse>;
+  getMySetting: (token: string, force?: boolean) => Promise<SettingsResponse>;
   setPointId: (id: number | null) => void;
 }
 
@@ -202,6 +203,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       mapScale: number,
       night_map: boolean,
       dark_theme: boolean,
+      app_theme: 'system' | 'light' | 'dark',
       is_scaleMap: boolean
     ) => {
       if (get().isClick === false) {
@@ -221,6 +223,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         mapScale,
         night_map,
         dark_theme,
+        app_theme,
         is_scaleMap,
       });
 
@@ -300,10 +303,10 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       });
     },
 
-    getMySetting: async (_token: string) => {
+    getMySetting: async (_token: string, force = false) => {
       const current = get();
 
-      if (current.settings && (current.settingsSynced || !isAppOnline())) {
+      if (current.settings && (!isAppOnline() || (current.settingsSynced && !force))) {
         return current.settings;
       }
 

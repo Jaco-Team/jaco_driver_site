@@ -6,6 +6,9 @@ import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 
 import { log } from '@/components/analytics';
+import { useAuthStore } from '@/features/auth/model/auth.store';
+import { useHeaderStore } from '@/features/header/model/header.store';
+import { SnackbarNotification } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
 
 import MyTextInput from '@/shared/ui/MyTextInput';
 import PasswordInput from '@/shared/ui/PasswordInput';
@@ -15,6 +18,9 @@ import { roboto } from '@/shared/ui/Font';
 import { useAuthPage } from '../model/useAuthPage';
 
 export default function AuthPage() {
+  const authNotice = useAuthStore((state) => state.authNotice);
+  const setAuthNotice = useAuthStore((state) => state.setAuthNotice);
+  const globalFontSize = useHeaderStore((state) => state.globalFontSize);
   const {
     loginWithSso,
     loginFN,
@@ -34,6 +40,17 @@ export default function AuthPage() {
 
   return (
     <Meta title="Авторизация">
+      <SnackbarNotification
+        state={{
+          open: Boolean(authNotice),
+          vertical: 'top',
+          horizontal: 'center',
+          severity: 'success',
+          message: authNotice ?? '',
+        }}
+        onClose={() => setAuthNotice(null)}
+        fontSize={globalFontSize}
+      />
       <Grid
         container
         spacing={3}
@@ -57,12 +74,19 @@ export default function AuthPage() {
             <div className="auth__fieldGroup">
               <MyTextInput
                 label="Номер телефона"
+                ariaLabel="Номер телефона"
+                name="username"
+                autoComplete="username"
+                inputMode="tel"
                 type={'text'}
                 value={myLogin}
                 onChange={(e) => setMyLogin(e.target.value)}
               />
               <PasswordInput
                 label="Пароль"
+                ariaLabel="Пароль"
+                name="password"
+                autoComplete="current-password"
                 value={myPWD}
                 onChange={(e) => setMyPWD(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && loginFN()}

@@ -58,7 +58,9 @@ export function OrdersFilterSheet() {
             height: 'auto',
             bottom: 0,
             top: 'auto',
-            backgroundColor: 'background.paper',
+            backgroundColor: (theme) =>
+              theme.palette.mode === 'dark' ? appDarkPalette.surface : '#FFFFFF',
+            backgroundImage: 'none',
             overflow: 'hidden',
             border: '1px solid',
             borderColor: (theme) =>
@@ -159,11 +161,19 @@ export function OrdersFilterSheet() {
                   '&:hover': {
                     backgroundColor: (theme) =>
                       selected
-                        ? `${theme.palette.primary.dark} !important`
+                        ? `${theme.palette.primary.main} !important`
                         : theme.palette.mode === 'dark'
                           ? appDarkPalette.surfaceRaised
                           : appPalette.soft,
                     boxShadow: 'none',
+                  },
+                  '&:active': {
+                    backgroundColor: (theme) =>
+                      selected
+                        ? `${theme.palette.primary.dark} !important`
+                        : theme.palette.mode === 'dark'
+                          ? appDarkPalette.surfaceRaised
+                          : appPalette.soft,
                   },
                 }}
               >

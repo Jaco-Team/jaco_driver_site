@@ -32,11 +32,13 @@ interface AuthState {
   isSubmitting: boolean;
   isSessionRefreshing: boolean;
   loginErr: string;
+  authNotice: string | null;
   session: AuthSession;
 }
 
 interface AuthActions {
   setLoginErr: (err: string) => void;
+  setAuthNotice: (message: string | null) => void;
   setAuthenticated: (user: User) => void;
   setUnauthorized: () => void;
   login: (login: string, pwd: string, captchaToken?: string) => Promise<AuthResult>;
@@ -78,21 +80,6 @@ function unauthorizedSession(): AuthSession {
 function initialSession(): AuthSession {
   if (readExplicitUnauthorized()) {
     return unauthorizedSession();
-  }
-
-  const token = `${getAuthToken() ?? ''}`.trim();
-
-  if (
-    typeof window !== 'undefined' &&
-    typeof navigator !== 'undefined' &&
-    navigator.onLine === false &&
-    token
-  ) {
-    return {
-      isAuth: true,
-      token,
-      user: null,
-    };
   }
 
   return { isAuth: 'load', token: '', user: null };
@@ -139,15 +126,20 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
     isSubmitting: false,
     isSessionRefreshing: false,
     loginErr: '',
+    authNotice: null,
     session: initialSession(),
 
     setLoginErr: (err: string) => {
       set({ loginErr: err });
     },
 
+    setAuthNotice: (message: string | null) => {
+      set({ authNotice: message });
+    },
+
     setAuthenticated: (user: User) => {
       setExplicitUnauthorized(false);
-      set({ session: sessionFromUser(user) });
+      set({ session: sessionFromUser(user), authNotice: null });
     },
 
     setUnauthorized: () => {
@@ -178,6 +170,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
         set({
           isSubmitting: false,
           loginErr: '',
+          authNotice: null,
           session: authData,
         });
 

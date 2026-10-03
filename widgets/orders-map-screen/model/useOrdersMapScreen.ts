@@ -32,9 +32,6 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
     modalConfirm: state.modalConfirm,
     order_finish_id: state.order_finish_id,
     type_confirm: state.type_confirm,
-    showErrOrder: state.showErrOrder,
-    textErrOrder: state.textErrOrder,
-    closeErrOrder: state.closeErrOrder,
     setActiveConfirm: state.setActiveConfirm,
     actionFinishOrder: state.actionFinishOrder,
     actionCencelOrder: state.actionCencelOrder,
@@ -134,7 +131,7 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
     };
   }, [mapInstance]);
 
-  const iconColor = header.night_map || header.darkTheme ? '#f0f8ff' : '#000';
+  const iconColor = header.darkTheme ? '#f0f8ff' : '#000';
 
   return {
     mapRef,

@@ -2,6 +2,7 @@ import type { Point } from '@/entities/point';
 
 export type TypeDataMap = 'norm' | 'full' | 'min';
 export type TypeShowDel = 'full' | 'min' | 'max';
+export type AppThemePreference = 'system' | 'light' | 'dark';
 export type ThemeType =
   'classic' | 'transparent' | 'transparent_white' | 'white' | 'white_border' | 'black';
 
@@ -14,6 +15,7 @@ export interface SettingsData {
   action_centered_map?: number | string;
   night_map?: number | string;
   dark_theme?: number | string | boolean;
+  app_theme?: AppThemePreference;
   is_scaleMap?: number | string;
   driver_avg_time?: number | string | boolean;
   driver_page_stat_time?: number | string | boolean;
@@ -46,6 +48,7 @@ export interface SaveSettingsPayload {
   action_centered_map: number;
   night_map: number;
   dark_theme: number;
+  app_theme: AppThemePreference;
   is_scaleMap: number;
   color: string;
   fontSize: number;

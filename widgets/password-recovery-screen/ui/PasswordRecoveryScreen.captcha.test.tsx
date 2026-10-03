@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('next/image', () => ({
+  // The test mock intentionally renders the browser element instead of Next Image.
+  // eslint-disable-next-line @next/next/no-img-element
   default: ({ alt }: { alt: string }) => <img alt={alt} />,
 }));
 

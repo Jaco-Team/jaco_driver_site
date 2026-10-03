@@ -231,7 +231,7 @@ export function RecommendationRouteMapDrawer({
   onClose,
 }: RecommendationRouteMapDrawerProps) {
   const theme = useTheme();
-  const isDarkMap = useHeaderStore((state) => state.night_map || state.darkTheme);
+  const isDarkMap = useHeaderStore((state) => state.darkTheme);
   const bounds = useMemo(() => getRouteBounds(points), [points]);
   const titleSize = clampFontSize(fontSize + 3, 17, 22);
   const bodySize = clampFontSize(fontSize, 14, 18);

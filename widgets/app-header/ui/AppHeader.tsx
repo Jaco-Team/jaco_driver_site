@@ -13,6 +13,7 @@ import Button from '@mui/material/Button';
 import CachedIcon from '@mui/icons-material/Cached';
 import CalculateRoundedIcon from '@mui/icons-material/CalculateRounded';
 import CircularProgress from '@mui/material/CircularProgress';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import Divider from '@mui/material/Divider';
 import FilterAlt from '@mui/icons-material/FilterAlt';
 import HeadsetMicRoundedIcon from '@mui/icons-material/HeadsetMicRounded';
@@ -31,7 +32,6 @@ import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
-import WifiOffRoundedIcon from '@mui/icons-material/WifiOffRounded';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import AppBar from '@mui/material/AppBar';
@@ -42,8 +42,7 @@ import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import PayModel from '@/components/PayModel';
 import { roboto } from '@/shared/config/fonts';
-import { formatPhoneNumber } from '@/shared/lib/formatters/formatPhoneNumber';
-import { appDarkPalette, appPalette } from '@/shared/styles/appPalette';
+import { appDarkPalette, appPalette, appSuccessPalette } from '@/shared/styles/appPalette';
 import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined';
 import { OrderMapDrawer } from '@/widgets/order/ui/components/OrderMapDrawer';
 import { useAppHeader } from '../model/useAppHeader';
@@ -76,11 +75,24 @@ const routeTitles: Record<string, string> = {
   '/settings': 'Настройки',
 };
 
+function formatContactPhoneNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  const normalizedDigits =
+    digits.length === 11 && (digits.startsWith('7') || digits.startsWith('8'))
+      ? digits.slice(1)
+      : digits;
+
+  if (normalizedDigits.length !== 10) return phone;
+
+  return `+7 (${normalizedDigits.slice(0, 3)}) ${normalizedDigits.slice(3, 6)}-${normalizedDigits.slice(6, 8)}-${normalizedDigits.slice(8, 10)}`;
+}
+
 function OrderTypeDrawer() {
-  const [isOpenMenu, setOpenMenu, setCloseMenu, types, setType] = useOrdersStore((state) => [
+  const [isOpenMenu, setOpenMenu, setCloseMenu, type, types, setType] = useOrdersStore((state) => [
     state.isOpenMenu,
     state.setOpenMenu,
     state.setCloseMenu,
+    state.type,
     state.types,
     state.setType,
   ]);
@@ -93,23 +105,151 @@ function OrderTypeDrawer() {
       onClose={setCloseMenu}
       onOpen={setOpenMenu}
       disableSwipeToOpen
+      slotProps={{
+        paper: {
+          style: {
+            backgroundColor: 'var(--app-surface)',
+            backgroundImage: 'none',
+          },
+          sx: {
+            maxHeight: '75%',
+            overflow: 'hidden',
+            borderTopLeftRadius: '28px',
+            borderTopRightRadius: '28px',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: (theme) =>
+              `0 -18px 42px ${theme.palette.mode === 'dark' ? appDarkPalette.shadowStrong : appPalette.shadowStrong}`,
+          },
+        },
+      }}
     >
-      <List className={`monthList ${roboto.variable}`}>
-        {types.map((item, index: number) => (
-          <ListItem disablePadding key={index} onClick={() => setType(item)}>
-            <ListItemButton>
-              <ListItemText
-                primary={item.text}
-                sx={{
-                  '& .MuiTypography-root': {
-                    fontSize: globalFontSize,
-                  },
-                }}
-              />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+      <Box
+        className={roboto.variable}
+        sx={{
+          backgroundColor: 'var(--app-surface)',
+        }}
+      >
+        <Box
+          sx={{
+            height: 22,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Box
+            sx={{
+              width: 62,
+              height: 6,
+              borderRadius: 999,
+              bgcolor: 'divider',
+            }}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            minHeight: 46,
+            display: 'grid',
+            gridTemplateColumns: '44px 1fr 44px',
+            alignItems: 'center',
+            px: 1.5,
+            pb: 1,
+          }}
+        >
+          <Box />
+          <Typography
+            component="div"
+            sx={{
+              fontSize: Math.max(globalFontSize + 2, 18),
+              fontWeight: 500,
+              lineHeight: 1.35,
+              textAlign: 'center',
+              color: 'text.primary',
+            }}
+          >
+            Список заказов
+          </Typography>
+          <IconButton
+            aria-label="Закрыть"
+            onClick={setCloseMenu}
+            sx={{ width: 44, height: 44, color: 'text.secondary' }}
+          >
+            <CloseRoundedIcon />
+          </IconButton>
+        </Box>
+
+        <Divider />
+
+        <List
+          disablePadding
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+            px: 2,
+            pt: 1.5,
+            pb: 'calc(env(safe-area-inset-bottom, 0px) + 28px)',
+          }}
+        >
+          {types.map((item) => {
+            const isSelected = type.id === item.id;
+
+            return (
+              <ListItem disablePadding key={item.id}>
+                <ListItemButton
+                  selected={isSelected}
+                  onClick={() => setType(item)}
+                  style={{
+                    backgroundColor: isSelected ? 'var(--app-surface-alt)' : 'var(--app-surface)',
+                  }}
+                  sx={{
+                    position: 'relative',
+                    minHeight: 56,
+                    justifyContent: 'center',
+                    px: 3,
+                    border: '1px solid',
+                    borderColor: isSelected ? 'secondary.main' : 'divider',
+                    borderRadius: '12px',
+                    boxShadow: (theme) =>
+                      `0 1px 3px ${theme.palette.mode === 'dark' ? appDarkPalette.shadowSoft : appPalette.shadowSoft}`,
+                    '&&.Mui-selected': {
+                      borderColor: 'secondary.main',
+                    },
+                  }}
+                >
+                  <ListItemText
+                    primary={item.text}
+                    sx={{
+                      m: 0,
+                      textAlign: 'center',
+                      '& .MuiTypography-root': {
+                        color: 'text.primary',
+                        fontSize: globalFontSize,
+                        fontWeight: 500,
+                        lineHeight: 1.4,
+                      },
+                    }}
+                  />
+                  {isSelected ? (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        right: 2,
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: appSuccessPalette.main,
+                      }}
+                    />
+                  ) : null}
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </List>
+      </Box>
     </SwipeableDrawer>
   );
 }
@@ -136,7 +276,7 @@ function DeletedOrdersDrawer() {
           fontSize: globalFontSize,
           paddingTop: 10,
           paddingBottom: 10,
-          color: '#000',
+          color: 'var(--app-text)',
           textAlign: 'center',
           fontWeight: 'bold',
         }}
@@ -189,7 +329,7 @@ function OrdersLoadingBackdrop() {
   );
 }
 
-function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
+function HeaderMenuDrawer({ onLogout, isOnline }: { onLogout: () => void; isOnline: boolean }) {
   const [
     isOpenMenu,
     setOpenMenu,
@@ -262,7 +402,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
       ? {
           label: 'Директор',
           phone: phones.phone_upr,
-          formattedPhone: formatPhoneNumber(phones.phone_upr),
+          formattedPhone: formatContactPhoneNumber(phones.phone_upr),
           icon: <BusinessCenterRoundedIcon />,
           eventName: 'call_director',
           logTitle: 'Звонок директору',
@@ -272,7 +412,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
       ? {
           label: 'Менеджер',
           phone: phones.phone_man,
-          formattedPhone: formatPhoneNumber(phones.phone_man),
+          formattedPhone: formatContactPhoneNumber(phones.phone_man),
           icon: <SupportAgentRoundedIcon />,
           eventName: 'call_manager',
           logTitle: 'Звонок менеджеру',
@@ -282,7 +422,7 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
       ? {
           label: 'Контакт-центр',
           phone: phones.phone_center,
-          formattedPhone: formatPhoneNumber(phones.phone_center),
+          formattedPhone: formatContactPhoneNumber(phones.phone_center),
           icon: <HeadsetMicRoundedIcon />,
           eventName: 'call_contact_center',
           logTitle: 'Звонок в Контакт-центр',
@@ -299,10 +439,9 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
       sx={{
         '& .MuiDrawer-paper': {
           width: 'min(86vw, 340px)',
-          background: (theme) =>
-            theme.palette.mode === 'dark'
-              ? `linear-gradient(180deg, ${appDarkPalette.surfaceAlt} 0%, ${appDarkPalette.surface} 34%)`
-              : 'linear-gradient(180deg, #f6f9fc 0%, #ffffff 34%)',
+          backgroundColor: (theme) =>
+            theme.palette.mode === 'dark' ? appDarkPalette.background : appPalette.surface,
+          backgroundImage: 'none',
           boxShadow: `0 28px 60px ${appPalette.shadowStrong}`,
           overflow: 'hidden',
         },
@@ -357,6 +496,9 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
             flexDirection: 'column',
             flex: 1,
             overflowY: 'auto',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
             px: 2,
             py: 2,
             gap: 1.75,
@@ -371,8 +513,13 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                 px: 2,
                 py: 1.75,
                 borderRadius: '24px',
-                border: `1px solid ${appPalette.softStrong}`,
-                background: `linear-gradient(135deg, ${appPalette.soft} 0%, rgba(31, 61, 86, 0.03) 100%)`,
+                border: '1px solid',
+                borderColor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(142, 169, 191, 0.20)'
+                    : appPalette.softStrong,
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'dark' ? appDarkPalette.surfaceAlt : appPalette.surfaceAlt,
                 boxShadow: '0 6px 16px rgba(15, 23, 42, 0.08)',
               }}
             >
@@ -456,23 +603,51 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
                         borderRadius: '24px',
                         border: '1px solid',
                         borderColor: isSelected ? 'secondary.main' : 'divider',
-                        bgcolor: isSelected ? 'action.selected' : 'background.paper',
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? isSelected
+                              ? appDarkPalette.surfaceAlt
+                              : appDarkPalette.surface
+                            : isSelected
+                              ? appPalette.surfaceAlt
+                              : '#FFFFFF',
                         color: 'text.primary',
-                        boxShadow: isSelected
-                          ? '0 14px 30px rgba(66, 98, 125, 0.12)'
-                          : '0 10px 22px rgba(15, 23, 42, 0.04)',
+                        boxShadow: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? isSelected
+                              ? `0 5px 11px ${appDarkPalette.shadowSoft}`
+                              : '0 5px 11px rgba(0, 0, 0, 0.08)'
+                            : isSelected
+                              ? '0 14px 30px rgba(66, 98, 125, 0.12)'
+                              : '0 10px 22px rgba(15, 23, 42, 0.04)',
                         overflow: 'hidden',
                         '&.Mui-selected': {
-                          bgcolor: 'action.selected',
+                          bgcolor: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? appDarkPalette.surfaceAlt
+                              : appPalette.surfaceAlt,
                           borderColor: 'secondary.main',
                           color: 'text.primary',
-                          boxShadow: '0 14px 30px rgba(66, 98, 125, 0.12)',
+                          boxShadow: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? `0 5px 11px ${appDarkPalette.shadowSoft}`
+                              : '0 14px 30px rgba(66, 98, 125, 0.12)',
                         },
                         '&.Mui-selected:hover': {
-                          bgcolor: 'rgba(66, 98, 125, 0.18)',
+                          bgcolor: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? appDarkPalette.surfaceAlt
+                              : appPalette.surfaceAlt,
                         },
                         '&:hover': {
-                          bgcolor: isSelected ? 'rgba(66, 98, 125, 0.18)' : 'action.hover',
+                          bgcolor: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? isSelected
+                                ? appDarkPalette.surfaceAlt
+                                : appDarkPalette.surface
+                              : isSelected
+                                ? appPalette.surfaceAlt
+                                : '#FFFFFF',
                         },
                         '& .MuiListItemIcon-root': {
                           color: isSelected ? 'secondary.main' : 'text.secondary',
@@ -608,34 +783,43 @@ function HeaderMenuDrawer({ onLogout }: { onLogout: () => void }) {
           <Button
             variant="outlined"
             startIcon={<LogoutRoundedIcon />}
+            disabled={!isOnline}
             onClick={() => {
+              if (!isOnline) return;
               setCloseMenu();
               onLogout();
             }}
             sx={{
+              minHeight: 56,
               justifyContent: 'flex-start',
-              px: 1.75,
-              py: 1.2,
+              px: 2,
+              py: 1.375,
               borderRadius: '24px',
               borderColor: (theme) =>
                 theme.palette.mode === 'dark'
                   ? appDarkPalette.brandSoftStrong
                   : appPalette.brandSoftStrong,
               bgcolor: 'background.paper',
-              color: 'primary.main',
+              color: (theme) =>
+                theme.palette.mode === 'dark' ? appDarkPalette.brand : appPalette.brand,
               fontSize: globalFontSize,
               fontWeight: 700,
               textTransform: 'none',
               boxShadow: '0 10px 22px rgba(15, 23, 42, 0.04)',
+              '& .MuiButton-startIcon': { marginLeft: 0, marginRight: '12px' },
               '&:hover': {
                 borderColor: (theme) =>
                   theme.palette.mode === 'dark'
                     ? appDarkPalette.brandSoftStrong
                     : appPalette.brandSoftStrong,
                 bgcolor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? appDarkPalette.brandSoft
-                    : appPalette.brandSoft,
+                  theme.palette.mode === 'dark' ? appDarkPalette.brandSoft : appPalette.brandSoft,
+              },
+              '&.Mui-disabled': {
+                borderColor: 'divider',
+                bgcolor: 'action.disabledBackground',
+                color: 'text.disabled',
+                boxShadow: 'none',
               },
             }}
           >
@@ -662,7 +846,13 @@ export function AppHeader() {
 
   return (
     <Box>
-      <AppBar>
+      <AppBar
+        sx={{
+          backgroundColor: (theme) =>
+            theme.palette.mode === 'dark' ? appDarkPalette.brandHeader : appPalette.brand,
+          backgroundImage: 'none',
+        }}
+      >
         <Toolbar>
           <IconButton
             size="large"
@@ -683,35 +873,6 @@ export function AppHeader() {
           >
             {pageTitle}
           </Typography>
-          {!isOnline && (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.75,
-                mr: isOrdersActionsVisible ? 0.5 : 0,
-                px: 1,
-                py: 0.5,
-                minHeight: 44,
-                borderRadius: '16px',
-                bgcolor: 'rgba(0, 0, 0, 0.18)',
-                flexShrink: 0,
-              }}
-            >
-              <WifiOffRoundedIcon sx={{ fontSize: Math.max(globalFontSize + 2, 18) }} />
-              <Typography
-                component="span"
-                sx={{
-                  fontSize: Math.max(Math.min(globalFontSize - 1, 15), 12),
-                  fontWeight: 700,
-                  lineHeight: 1.2,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Нет интернета
-              </Typography>
-            </Box>
-          )}
           {isOrdersActionsVisible && (
             <div>
               <Button
@@ -727,11 +888,40 @@ export function AppHeader() {
             </div>
           )}
         </Toolbar>
+        {!isOnline && (
+          <Box
+            role="status"
+            aria-live="assertive"
+            data-testid="offline-status-banner"
+            sx={{
+              mx: '8px',
+              my: '6px',
+              minHeight: '36px',
+              px: '16px',
+              py: '8px',
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '8px',
+              bgcolor: appPalette.brandDeep,
+              color: '#fff',
+              fontSize: '14px',
+              fontWeight: 700,
+              textAlign: 'center',
+              pointerEvents: 'none',
+            }}
+          >
+            Нет подключения к интернету
+          </Box>
+        )}
       </AppBar>
+
+      {!isOnline && <Box aria-hidden="true" sx={{ height: '48px' }} />}
 
       <OrderMapDrawer />
       <OrderTypeDrawer />
-      <HeaderMenuDrawer onLogout={handleLogout} />
+      <HeaderMenuDrawer onLogout={handleLogout} isOnline={isOnline} />
       <DeletedOrdersDrawer />
       <AlertOrder />
       <OrdersLoadingBackdrop />

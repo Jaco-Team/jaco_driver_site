@@ -3,7 +3,6 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { SectionTitle } from '@/shared/ui/SectionTitle/SectionTitle';
 import { SxProps, Theme } from '@mui/material/styles';
-import { appDarkPalette } from '@/shared/styles/appPalette';
 
 interface SettingsSectionProps {
   children: React.ReactNode;
@@ -16,7 +15,7 @@ interface SettingsSectionProps {
 export const SettingsSection: React.FC<SettingsSectionProps> = ({
   children,
   marginTop = 10,
-  padding = 20,
+  padding = 16,
   className,
   sx,
 }) => {
@@ -30,15 +29,9 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
           p: `${padding}px`,
           borderRadius: '24px',
           border: '1px solid',
-          borderColor: 'divider',
-          background: (theme) =>
-            theme.palette.mode === 'dark'
-              ? `linear-gradient(180deg, ${appDarkPalette.surfaceAlt} 0%, ${appDarkPalette.surface} 100%)`
-              : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-          boxShadow: (theme) =>
-            theme.palette.mode === 'dark'
-              ? '0 14px 30px rgba(0, 0, 0, 0.28)'
-              : '0 14px 30px rgba(31, 43, 54, 0.08)',
+          borderColor: 'var(--settings-card-border)',
+          background: 'var(--settings-card-surface)',
+          boxShadow: '0 14px 30px var(--settings-card-shadow)',
           ...sx,
         }}
       >
@@ -72,18 +65,12 @@ export const SettingsSectionWithPreview: React.FC<SettingsSectionWithPreviewProp
         className="settingsCard"
         elevation={0}
         sx={{
-          p: '20px',
+          p: '16px',
           borderRadius: '24px',
           border: '1px solid',
-          borderColor: 'divider',
-          background: (theme) =>
-            theme.palette.mode === 'dark'
-              ? `linear-gradient(180deg, ${appDarkPalette.surfaceAlt} 0%, ${appDarkPalette.surface} 100%)`
-              : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-          boxShadow: (theme) =>
-            theme.palette.mode === 'dark'
-              ? '0 14px 30px rgba(0, 0, 0, 0.28)'
-              : '0 14px 30px rgba(31, 43, 54, 0.08)',
+          borderColor: 'var(--settings-card-border)',
+          background: 'var(--settings-card-surface)',
+          boxShadow: '0 14px 30px var(--settings-card-shadow)',
           position: 'relative',
         }}
       >
@@ -91,13 +78,12 @@ export const SettingsSectionWithPreview: React.FC<SettingsSectionWithPreviewProp
         {previewContent ? (
           previewContent
         ) : (
-          <div className="settingsPreviewLayer" style={{ height: previewHeight }}>
-            <div
-              className={`settingsPreviewSurface ${previewClassName ?? ''}`.trim()}
-              style={{ width: '100%', height: '100%' }}
-              role="img"
-              aria-label="Пример карты"
-            />
+          <div
+            className={`settingsPreviewSurface ${previewClassName ?? ''}`.trim()}
+            style={{ minHeight: previewHeight }}
+            role="radiogroup"
+            aria-label={title}
+          >
             {children}
           </div>
         )}

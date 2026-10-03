@@ -145,6 +145,7 @@ export function buildSaveSettingsPayload(params: {
   mapScale: number;
   night_map: boolean;
   dark_theme: boolean;
+  app_theme: 'system' | 'light' | 'dark';
   is_scaleMap: boolean;
 }): SaveSettingsPayload {
   return {
@@ -154,6 +155,7 @@ export function buildSaveSettingsPayload(params: {
     action_centered_map: params.centered_map ? 1 : 0,
     night_map: params.night_map ? 1 : 0,
     dark_theme: params.dark_theme ? 1 : 0,
+    app_theme: params.app_theme,
     is_scaleMap: params.is_scaleMap ? 1 : 0,
     color: params.color,
     fontSize: parseInt(String(params.fontSize)),

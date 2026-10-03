@@ -19,7 +19,7 @@ export function GraphScheduleCard({
   chooseDate,
   icon,
 }: GraphScheduleCardProps) {
-  const scheduleTableMinWidth = Math.max(760, 220 + dates.length * 64);
+  const scheduleTableWidth = dates.length > 0 ? `${180 + dates.length * 64}px` : '100%';
 
   return (
     <div className="graph__content">
@@ -27,11 +27,13 @@ export function GraphScheduleCard({
         <GraphSectionHeader icon={icon} title="Таблица смен" />
 
         <div className="graph__tableShell">
-          <TableContainer className="graph__tableContainer" id="tableGraph">
+          <TableContainer
+            className="graph__tableContainer graph__tableContainer--schedule"
+            id="tableGraph"
+          >
             <Table
-              stickyHeader
-              className="graph__scheduleTable"
-              sx={{ minWidth: scheduleTableMinWidth }}
+              className={`graph__scheduleTable${dates.length === 0 ? ' graph__scheduleTable--empty' : ''}`}
+              sx={{ width: scheduleTableWidth, minWidth: scheduleTableWidth, tableLayout: 'fixed' }}
             >
               <TableHead>
                 <TableRow>

@@ -1,6 +1,6 @@
 # Jaco Driver Project Rules
 
-`README.md` is still mostly boilerplate. Use this file as the primary project guide for future work in this repository.
+Project documentation lives in [docs/README.md](./docs/README.md). Keep this root file as the instruction entrypoint for development tools.
 
 ## Product Context
 
@@ -21,7 +21,7 @@
 
 - Next.js 16 with the pages router
 - React 19
-- MUI 7
+- MUI 9
 - Sass/SCSS for screen styling
 - Zustand for app state and API actions
   -Axios for API requests
@@ -39,7 +39,7 @@
 - `shared/lib/*`: helpers, formatters, analytics re-exports, utilities
 - `shared/ui/*`: reusable UI primitives
 - `styles/*.scss`: existing screen/global SCSS kept during migration
-- `ui/*`: legacy shared UI bucket during migration
+- `shared/styles/*`: current theme and palette tokens
 - `components/meta.tsx`: document title and app icons
 - `features/auth/model/auth.store.ts`: auth/session state and actions
 
@@ -60,12 +60,12 @@
   - token in `localStorage`
   - session resolved via `features/auth/model/auth.store.ts`
 - `modules/` удален: активные экраны живут в `widgets/*-screen/ui`, состояние и API — в `entities/*`.
-- `ui/*` and `styles/*` may remain during migration, but new reusable primitives should prefer `shared/ui/*` and new shared helpers should prefer `shared/lib/*`.
+- `styles/*` may remain during migration, but new reusable primitives should prefer `shared/ui/*` and new shared helpers should prefer `shared/lib/*`.
 
 ## Design System
 
 - Primary brand color stays `#CC0033`.
-- Secondary project palette is `Graphite Steel` from `ui/palette.js` and `styles/settings.scss`.
+- Secondary project palette is `Graphite Steel` from `shared/styles/appPalette.ts` and `styles/settings.scss`.
 - Use the brand red for:
   - top app bar / header
   - primary CTA buttons
@@ -175,7 +175,7 @@
 
 ## Styling Rules
 
-- Prefer SCSS tokens from `styles/settings.scss` and JS tokens from `ui/palette.js`.
+- Prefer SCSS tokens from `styles/settings.scss` and theme tokens from `shared/styles/appPalette.ts`.
 - Avoid random hardcoded colors. If a new one is necessary, it should fit the existing palette.
 - Use inline styles only for small MUI-specific runtime values. Put reusable visual logic in SCSS.
 - When MUI selected/hover states fight the intended design, override `.Mui-selected` explicitly.

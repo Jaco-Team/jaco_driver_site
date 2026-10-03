@@ -7,6 +7,7 @@ export type {
   SettingsPointOption,
   SettingsResponse,
   ThemeType,
+  AppThemePreference,
   TypeDataMap,
   TypeShowDel,
 } from './model/types';

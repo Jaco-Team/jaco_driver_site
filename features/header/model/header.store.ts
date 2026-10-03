@@ -8,7 +8,7 @@ import {
   saveDriverPosition,
 } from '@/entities/settings/api/settings.api';
 import { useAuthStore } from '@/features/auth/model/auth.store';
-import { type SettingsData, useSettingsStore } from '@/entities/settings';
+import { type AppThemePreference, type SettingsData, useSettingsStore } from '@/entities/settings';
 import { readDriverPosition } from '@/shared/lib/geolocation';
 import { isAppOnline, markAppOffline } from '@/features/offline/model/connectivity.store';
 import { readOfflineCache, writeOfflineCache } from '@/shared/lib/offline/cache';
@@ -26,6 +26,9 @@ interface HeaderState {
   is_need_page_stat: boolean;
   night_map: boolean;
   darkTheme: boolean;
+  appTheme: AppThemePreference;
+  previewAppTheme: AppThemePreference | null;
+  deviceDarkTheme: boolean;
   darkThemeSource: 'device' | 'settings';
   globalFontSize: number;
   theme: string;
@@ -39,6 +42,10 @@ interface HeaderActions {
   setGlobalFontSize: (fontSize: number) => void;
   setTheme: (theme: string) => void;
   setDarkTheme: (darkTheme: boolean) => void;
+  applyServerAppTheme: (preference: AppThemePreference) => void;
+  setAppTheme: (preference: AppThemePreference) => void;
+  setPreviewAppTheme: (preference: AppThemePreference) => void;
+  clearPreviewAppTheme: () => void;
   setDeviceDarkTheme: (darkTheme: boolean) => void;
   followDeviceTheme: (darkTheme: boolean) => void;
   setGlobalMapScale: (mapScale: string) => void;
@@ -113,6 +120,10 @@ function normalizeGlobalFontSize(
   return Math.min(MAX_GLOBAL_FONT_SIZE, Math.max(MIN_GLOBAL_FONT_SIZE, parsed));
 }
 
+function resolveDarkTheme(preference: AppThemePreference, deviceDarkTheme: boolean): boolean {
+  return preference === 'system' ? deviceDarkTheme : preference === 'dark';
+}
+
 export const useHeaderStore = createWithEqualityFn<HeaderStore>(
   (set, get) => ({
     isOpenMenu: false,
@@ -126,6 +137,9 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     is_need_page_stat: false,
     night_map: false,
     darkTheme: false,
+    appTheme: 'system',
+    previewAppTheme: null,
+    deviceDarkTheme: false,
     darkThemeSource: 'device',
     globalFontSize: DEFAULT_GLOBAL_FONT_SIZE,
     theme: 'white',
@@ -138,6 +152,17 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
       const hasField = (field: keyof SettingsData) => hasSettingValue(settings[field]);
       const nextPointId = normalizePointId(settings.point_id);
       const hasDarkThemeSetting = hasField('dark_theme');
+      const appTheme: AppThemePreference =
+        settings.app_theme === 'system' ||
+        settings.app_theme === 'light' ||
+        settings.app_theme === 'dark'
+          ? settings.app_theme
+          : hasDarkThemeSetting
+            ? normalizeBoolLike(settings.dark_theme)
+              ? 'dark'
+              : 'light'
+            : 'system';
+      const effectiveTheme = currentState.previewAppTheme ?? appTheme;
 
       set({
         pointId: nextPointId ?? currentState.pointId,
@@ -150,10 +175,9 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
         night_map: hasField('night_map')
           ? normalizeBoolLike(settings.night_map)
           : currentState.night_map,
-        darkTheme: hasDarkThemeSetting
-          ? normalizeBoolLike(settings.dark_theme)
-          : currentState.darkTheme,
-        darkThemeSource: hasDarkThemeSetting ? 'settings' : 'device',
+        appTheme,
+        darkTheme: resolveDarkTheme(effectiveTheme, currentState.deviceDarkTheme),
+        darkThemeSource: effectiveTheme === 'system' ? 'device' : 'settings',
         is_scaleMap: hasField('is_scaleMap')
           ? normalizeBoolLike(settings.is_scaleMap)
           : currentState.is_scaleMap,
@@ -176,17 +200,64 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     setDarkTheme: (darkTheme: boolean) => {
-      set({ darkTheme, darkThemeSource: 'settings' });
+      set({
+        darkTheme,
+        appTheme: darkTheme ? 'dark' : 'light',
+        previewAppTheme: null,
+        darkThemeSource: 'settings',
+      });
+    },
+
+    applyServerAppTheme: (appTheme) => {
+      const effectiveTheme = get().previewAppTheme ?? appTheme;
+      set({
+        appTheme,
+        darkTheme: resolveDarkTheme(effectiveTheme, get().deviceDarkTheme),
+        darkThemeSource: effectiveTheme === 'system' ? 'device' : 'settings',
+      });
+    },
+
+    setAppTheme: (appTheme) => {
+      set({
+        appTheme,
+        previewAppTheme: null,
+        darkTheme: resolveDarkTheme(appTheme, get().deviceDarkTheme),
+        darkThemeSource: appTheme === 'system' ? 'device' : 'settings',
+      });
+    },
+
+    setPreviewAppTheme: (previewAppTheme) => {
+      set({
+        previewAppTheme,
+        darkTheme: resolveDarkTheme(previewAppTheme, get().deviceDarkTheme),
+        darkThemeSource: previewAppTheme === 'system' ? 'device' : 'settings',
+      });
+    },
+
+    clearPreviewAppTheme: () => {
+      const { appTheme, deviceDarkTheme } = get();
+      set({
+        previewAppTheme: null,
+        darkTheme: resolveDarkTheme(appTheme, deviceDarkTheme),
+        darkThemeSource: appTheme === 'system' ? 'device' : 'settings',
+      });
     },
 
     setDeviceDarkTheme: (darkTheme: boolean) => {
-      if (get().darkThemeSource === 'device') {
-        set({ darkTheme });
-      }
+      set({
+        deviceDarkTheme: darkTheme,
+        ...((get().previewAppTheme ?? get().appTheme) === 'system' ? { darkTheme } : {}),
+      });
     },
 
     followDeviceTheme: (darkTheme: boolean) => {
-      set({ darkTheme, darkThemeSource: 'device' });
+      set({
+        darkTheme,
+        deviceDarkTheme: darkTheme,
+        appTheme: 'system',
+        previewAppTheme: null,
+        darkThemeSource: 'device',
+      });
     },
 
     setGlobalMapScale: (mapScale: string) => {

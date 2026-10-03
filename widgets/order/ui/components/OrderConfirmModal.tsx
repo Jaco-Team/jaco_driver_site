@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -93,7 +93,18 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
   const titleFontSize = clampFontSize(globalFontSize + 4, 18, 24);
   const bodyFontSize = clampFontSize(globalFontSize, 14, 18);
   const actionFontSize = clampFontSize(globalFontSize + 1, 14, 18);
-  const config = getConfig(typeConfirm, orderId, isDarkTheme);
+  const currentConfig = getConfig(typeConfirm, orderId, isDarkTheme);
+  const configKey = `${typeConfirm}:${orderId}:${isDarkTheme}`;
+  const [lastOpenConfig, setLastOpenConfig] = useState(() => ({
+    key: open && typeConfirm ? configKey : null,
+    value: currentConfig,
+  }));
+
+  if (open && typeConfirm && lastOpenConfig.key !== configKey) {
+    setLastOpenConfig({ key: configKey, value: currentConfig });
+  }
+
+  const config = open ? currentConfig : lastOpenConfig.value;
 
   return (
     <SwipeableDrawer
@@ -115,7 +126,9 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
             height: 'auto',
             bottom: 0,
             top: 'auto',
-            backgroundColor: 'background.paper',
+            backgroundColor: (theme) =>
+              theme.palette.mode === 'dark' ? appDarkPalette.surface : '#FFFFFF',
+            backgroundImage: 'none',
             overflow: 'hidden',
             border: '1px solid',
             borderColor: (theme) =>
@@ -136,7 +149,7 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
         sx={{
           px: 2.5,
           pt: 1.15,
-          pb: 'calc(env(safe-area-inset-bottom, 0px) + 28px)',
+          pb: 'calc(max(env(safe-area-inset-bottom, 0px), 24px) + 28px)',
         }}
       >
         <Box
@@ -230,16 +243,14 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
               fontWeight: 700,
               fontSize: actionFontSize,
               backgroundColor: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? appDarkPalette.surfaceAlt
-                  : appPalette.surfaceAlt,
+                theme.palette.mode === 'dark' ? appDarkPalette.surfaceAlt : appPalette.surfaceAlt,
+              border: '1px solid',
+              borderColor: 'divider',
               color: 'text.primary',
               boxShadow: 'none',
               '&:hover': {
                 backgroundColor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? appDarkPalette.surfaceRaised
-                    : appPalette.soft,
+                  theme.palette.mode === 'dark' ? appDarkPalette.surfaceRaised : appPalette.soft,
                 boxShadow: 'none',
               },
             }}
@@ -249,6 +260,7 @@ export const OrderConfirmModal: React.FC<OrderConfirmModalProps> = ({
           <Button
             fullWidth
             disableElevation
+            disableFocusRipple
             variant="contained"
             disabled={busy}
             autoFocus

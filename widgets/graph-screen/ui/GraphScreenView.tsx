@@ -15,6 +15,7 @@ import { GraphScheduleCard } from '@/widgets/graph-screen/ui/GraphScheduleCard';
 import type { GraphScreenViewProps } from '../model/GraphScreen.type';
 
 export function GraphScreenView({
+  isOnline,
   globalFontSize,
   fontClassName,
   month,
@@ -63,6 +64,7 @@ export function GraphScreenView({
               >
                 <Grid className="graph__monthActionItem">
                   <Button
+                    disabled={!isOnline}
                     variant="outlined"
                     className="graph__monthButton"
                     style={{ fontSize: globalFontSize }}
@@ -130,6 +132,7 @@ export function GraphScreenView({
 
       <GraphErrorDrawer
         open={Boolean(errorModal)}
+        isOnline={isOnline}
         errorModal={errorModal}
         globalFontSize={globalFontSize}
         fontClassName={fontClassName}

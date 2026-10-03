@@ -5,11 +5,18 @@ import { useFeedbackStore } from './feedback.store';
 const mocks = vi.hoisted(() => ({
   getFeedbacks: vi.fn(),
   saveFeedbacks: vi.fn(),
+  isOnline: true,
+  markAppOffline: vi.fn(),
 }));
 
 vi.mock('@/entities/feedback/api/feedback.api', () => ({
   getFeedbacks: mocks.getFeedbacks,
   saveFeedbacks: mocks.saveFeedbacks,
+}));
+
+vi.mock('@/features/offline/model/connectivity.store', () => ({
+  isAppOnline: () => mocks.isOnline,
+  markAppOffline: mocks.markAppOffline,
 }));
 
 const sampleFeedbacks = [
@@ -62,6 +69,7 @@ function resetStore() {
 describe('feedback store', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.isOnline = true;
     resetStore();
   });
 
@@ -117,5 +125,42 @@ describe('feedback store', () => {
     expect(useFeedbackStore.getState().title).toBe('');
     expect(useFeedbackStore.getState().feedbacks).toHaveLength(2);
     expect(useFeedbackStore.getState().snackbar.message).toBe('Отзыв успешно создан!');
+  });
+
+  it('clears the previously loaded list without keeping feedback offline', async () => {
+    useFeedbackStore.setState({
+      feedbacks: sampleFeedbacks,
+      feedbacksAll: sampleFeedbacks,
+      isLoad: true,
+    });
+
+    useFeedbackStore.getState().clearFeedbacks();
+
+    expect(useFeedbackStore.getState().feedbacks).toEqual([]);
+    expect(useFeedbackStore.getState().feedbacksAll).toEqual([]);
+    expect(useFeedbackStore.getState().isLoad).toBe(false);
+  });
+
+  it('does not show a feedback loading error when the app is offline', async () => {
+    mocks.isOnline = false;
+    mocks.getFeedbacks.mockRejectedValue(new Error('Network Error'));
+
+    await useFeedbackStore.getState().getFeedbacks();
+
+    expect(useFeedbackStore.getState().snackbar.open).toBe(false);
+    expect(useFeedbackStore.getState().isLoad).toBe(false);
+    expect(mocks.markAppOffline).not.toHaveBeenCalled();
+  });
+
+  it('marks the app offline when an online feedback request fails because of the network', async () => {
+    mocks.getFeedbacks.mockRejectedValue(
+      Object.assign(new Error('Network Error'), { code: 'ERR_NETWORK' })
+    );
+
+    await useFeedbackStore.getState().getFeedbacks();
+
+    expect(useFeedbackStore.getState().snackbar.open).toBe(false);
+    expect(useFeedbackStore.getState().isLoad).toBe(false);
+    expect(mocks.markAppOffline).toHaveBeenCalledTimes(1);
   });
 });

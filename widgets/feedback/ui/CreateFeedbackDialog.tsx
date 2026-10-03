@@ -10,6 +10,7 @@ import {
   Divider,
   TextField,
 } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
 
 import { useFeedbackStore } from '@/widgets/feedback/model/feedback.store';
 import { feedbackTypes } from '@/entities/feedback/model/types';
@@ -84,11 +85,12 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
             maxHeight: '86vh',
-            backgroundColor: 'background.paper',
+            backgroundColor: 'var(--app-surface)',
+            backgroundImage: 'none',
             overflow: 'hidden',
             border: '1px solid',
             borderColor: 'divider',
-            boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+            boxShadow: '0 24px 44px var(--app-shadow)',
           },
         },
       }}
@@ -118,7 +120,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
               width: 62,
               height: 6,
               borderRadius: 999,
-              backgroundColor: 'rgba(31, 43, 54, 0.2)',
+              backgroundColor: 'divider',
             }}
           />
         </Box>
@@ -210,13 +212,14 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
             '& .MuiOutlinedInput-root': {
               borderRadius: '16px',
               minHeight: 54,
+              backgroundColor: 'var(--app-surface)',
             },
             '& .MuiOutlinedInput-input': {
               fontSize: bodyFontSize,
               py: 1.15,
             },
             '& .MuiInputBase-input::placeholder': {
-              color: '#8a94a0',
+              color: 'text.secondary',
               opacity: 1,
             },
           }}
@@ -240,13 +243,14 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
             mb: 2,
             '& .MuiOutlinedInput-root': {
               borderRadius: '16px',
+              backgroundColor: 'var(--app-surface)',
             },
             '& .MuiOutlinedInput-input': {
               fontSize: bodyFontSize,
               lineHeight: 1.4,
             },
             '& .MuiInputBase-input::placeholder': {
-              color: '#8a94a0',
+              color: 'text.secondary',
               opacity: 1,
             },
           }}
@@ -273,7 +277,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
             borderRadius: '16px',
             border: '1px dashed',
             borderColor: 'divider',
-            backgroundColor: 'background.paper',
+            backgroundColor: 'var(--app-surface)',
             minHeight: 86,
             display: 'flex',
             alignItems: 'center',
@@ -310,11 +314,34 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
               checked={is_need_notification}
               onChange={(event) => setForm('is_need_notification', event.target.checked)}
               disabled={isSaving}
-              sx={{
-                '& .MuiSvgIcon-root': {
-                  fontSize: checkboxIconFontSize,
-                },
-              }}
+              icon={
+                <Box
+                  component="span"
+                  sx={{
+                    width: checkboxIconFontSize,
+                    height: checkboxIconFontSize,
+                    border: '2px solid var(--app-border)',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              }
+              checkedIcon={
+                <Box
+                  component="span"
+                  sx={{
+                    width: checkboxIconFontSize,
+                    height: checkboxIconFontSize,
+                    display: 'grid',
+                    placeItems: 'center',
+                    borderRadius: '4px',
+                    backgroundColor: 'var(--app-brand)',
+                    color: '#ffffff',
+                  }}
+                >
+                  <CheckIcon sx={{ fontSize: checkboxIconFontSize - 5 }} />
+                </Box>
+              }
             />
           }
           label="Уведомить о решении"
@@ -322,7 +349,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
             mb: 1.6,
             '& .MuiFormControlLabel-label': {
               fontSize: bodyFontSize,
-              color: '#404850',
+              color: 'text.primary',
             },
           }}
         />

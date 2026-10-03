@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   normalizeBooleanSetting,
   useSettingsStore,
   type SettingsResponse,
+  type AppThemePreference,
   type ThemeType,
   type TypeDataMap,
   type TypeShowDel,
 } from '@/entities/settings';
 import { useHeaderStore } from '@/features/header/model/header.store';
-import { useSession } from '@/features/auth/model/auth.store';
+import { useAuthStore, useSession } from '@/features/auth/model/auth.store';
+import { logoutAndClearSession } from '@/features/auth/model/logoutSession';
 import type { SnackbarState } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
 import type { UseSettingsFormReturn } from './useSettingsForm.type';
 
@@ -38,7 +41,9 @@ function getDeviceDarkTheme(): boolean {
 }
 
 export const useSettingsForm = (): UseSettingsFormReturn => {
+  const router = useRouter();
   const session = useSession();
+  const isDemoAccount = session.user?.login?.trim() === '79990000001';
   const [saveMySetting, getMySetting, isSaving, pointId, points, setPointId] = useSettingsStore(
     (state) => [
       state.saveMySetting,
@@ -51,45 +56,55 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
   );
   const [
     globalFontSize,
-    currentHeaderDarkTheme,
+    currentAppTheme,
     setGlobalFontSize,
     setTheme,
-    setHeaderDarkTheme,
-    followDeviceTheme,
+    setHeaderAppTheme,
+    applyServerAppTheme,
+    setPreviewAppTheme,
+    clearPreviewAppTheme,
     setGlobalMapScale,
   ] = useHeaderStore((state) => [
-      state.globalFontSize,
-      state.darkTheme,
-      state.setGlobalFontSize,
-      state.setTheme,
-      state.setDarkTheme,
-      state.followDeviceTheme,
-      state.setGlobalMapScale,
-    ]);
+    state.globalFontSize,
+    state.appTheme,
+    state.setGlobalFontSize,
+    state.setTheme,
+    state.setAppTheme,
+    state.applyServerAppTheme,
+    state.setPreviewAppTheme,
+    state.clearPreviewAppTheme,
+    state.setGlobalMapScale,
+  ]);
 
   const [isLoad, setIsLoad] = useState<boolean>(false);
   const [groupTypeTime, setGroupTypeTime] = useState<TypeDataMap>('norm');
   const [typeShowDel, setTypeShowDel] = useState<TypeShowDel>('min');
   const [updateInterval, setUpdateInterval] = useState<number>(30);
   const [centeredMap, setCenteredMap] = useState<boolean>(false);
-  const [nightMap, setNightMap] = useState<boolean>(false);
-  const [darkTheme, setDarkThemeState] = useState<boolean>(currentHeaderDarkTheme);
+  const [appTheme, setAppThemeState] = useState<AppThemePreference>(currentAppTheme);
   const [isScaleMap, setIsScaleMap] = useState<boolean>(false);
   const [color, setColor] = useState<string>('#000000');
   const [groupTypeTheme, setGroupTypeTheme] = useState<ThemeType>('white');
   const [fontSize, setFontSize] = useState<number>(16);
   const [mapScale, setMapScale] = useState<number>(1);
   const [snackbarState, setSnackbarState] = useState<SnackbarState>(initialSnackbarState);
-  const persistedDarkThemeRef = useRef({
-    hasValue: false,
-    value: currentHeaderDarkTheme,
-  });
+  const [isDeleteSheetOpen, setIsDeleteSheetOpen] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const hasLocalThemeChoiceRef = useRef(false);
 
   useEffect(() => {
+    if (!hasLocalThemeChoiceRef.current) {
+      setAppThemeState(currentAppTheme);
+    }
+  }, [currentAppTheme]);
+
+  useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       if (session?.isAuth !== true) return;
 
-      const res = (await getMySetting(session?.token ?? '')) as SettingsResponse;
+      const res = (await getMySetting(session?.token ?? '', true)) as SettingsResponse;
+      if (cancelled) return;
       if (res?.color && res?.color?.length > 0) {
         setColor(res.color as string);
       }
@@ -99,20 +114,18 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
           : parseInt(String(res.point_id), 10)
       );
       setCenteredMap(parseInt(String(res.action_centered_map)) === 1);
-      setNightMap(parseInt(String(res.night_map)) === 1);
       const hasDarkTheme = hasSavedDarkTheme(res.dark_theme);
-      const nextDarkTheme = hasDarkTheme
-        ? normalizeBooleanSetting(res.dark_theme)
-        : getDeviceDarkTheme();
-      persistedDarkThemeRef.current = {
-        hasValue: hasDarkTheme,
-        value: nextDarkTheme,
-      };
-      setDarkThemeState(nextDarkTheme);
-      if (hasDarkTheme) {
-        setHeaderDarkTheme(nextDarkTheme);
-      } else {
-        followDeviceTheme(nextDarkTheme);
+      const nextAppTheme: AppThemePreference =
+        res.app_theme === 'system' || res.app_theme === 'light' || res.app_theme === 'dark'
+          ? res.app_theme
+          : hasDarkTheme
+            ? normalizeBooleanSetting(res.dark_theme)
+              ? 'dark'
+              : 'light'
+            : 'system';
+      applyServerAppTheme(nextAppTheme);
+      if (!hasLocalThemeChoiceRef.current) {
+        setAppThemeState(nextAppTheme);
       }
       setIsScaleMap(parseInt(String(res.is_scaleMap)) === 1);
       setUpdateInterval(parseInt(String(res.update_interval ?? 30)));
@@ -127,35 +140,21 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     if (!isLoad) {
       void fetchData();
     }
-  }, [
-    followDeviceTheme,
-    getMySetting,
-    isLoad,
-    session?.isAuth,
-    session?.token,
-    setHeaderDarkTheme,
-    setPointId,
-  ]);
+    return () => {
+      cancelled = true;
+    };
+  }, [applyServerAppTheme, getMySetting, isLoad, session?.isAuth, session?.token, setPointId]);
 
-  useEffect(
-    () => () => {
-      const persistedTheme = persistedDarkThemeRef.current;
+  useEffect(() => () => clearPreviewAppTheme(), [clearPreviewAppTheme]);
 
-      if (persistedTheme.hasValue) {
-        setHeaderDarkTheme(persistedTheme.value);
-      } else {
-        followDeviceTheme(getDeviceDarkTheme());
-      }
-    },
-    [followDeviceTheme, setHeaderDarkTheme]
-  );
-
-  const setDarkTheme = (nextDarkTheme: boolean): void => {
-    setDarkThemeState(nextDarkTheme);
-    setHeaderDarkTheme(nextDarkTheme);
+  const setAppTheme = (nextAppTheme: AppThemePreference): void => {
+    hasLocalThemeChoiceRef.current = true;
+    setAppThemeState(nextAppTheme);
+    setPreviewAppTheme(nextAppTheme);
   };
 
   const handleSave = async (): Promise<void> => {
+    const darkTheme = appTheme === 'dark' || (appTheme === 'system' && getDeviceDarkTheme());
     const result = await saveMySetting(
       session?.token,
       groupTypeTime,
@@ -166,22 +165,23 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
       fontSize,
       groupTypeTheme,
       mapScale,
-      nightMap,
       darkTheme,
+      darkTheme,
+      appTheme,
       isScaleMap
     );
 
     if (result?.st) {
       setGlobalFontSize(fontSize);
       setTheme(groupTypeTheme);
-      persistedDarkThemeRef.current = { hasValue: true, value: darkTheme };
-      setHeaderDarkTheme(darkTheme);
+      setHeaderAppTheme(appTheme);
+      hasLocalThemeChoiceRef.current = false;
       setGlobalMapScale(String(mapScale));
       setSnackbarState((prev) => ({
         ...prev,
         open: true,
         severity: 'success',
-        message: 'Сохранено',
+        message: 'Настройки сохранены',
       }));
       return;
     }
@@ -198,9 +198,26 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     setSnackbarState((prev) => ({ ...prev, open: false }));
   };
 
+  const confirmDemoAccountDeletion = async (): Promise<void> => {
+    if (!isDemoAccount || isDeletingAccount) return;
+
+    setIsDeletingAccount(true);
+    try {
+      await logoutAndClearSession();
+      useAuthStore.getState().setAuthNotice('Аккаунт удалён');
+      setIsDeleteSheetOpen(false);
+      router.push('/auth');
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   return {
     // Состояния
     session,
+    isDemoAccount,
+    isDeleteSheetOpen,
+    isDeletingAccount,
     isSaving,
     pointId,
     points,
@@ -209,8 +226,7 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     typeShowDel,
     updateInterval,
     centeredMap,
-    nightMap,
-    darkTheme,
+    appTheme,
     isScaleMap,
     color,
     groupTypeTheme,
@@ -225,8 +241,7 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     setTypeShowDel,
     setUpdateInterval,
     setCenteredMap,
-    setNightMap,
-    setDarkTheme,
+    setAppTheme,
     setIsScaleMap,
     setColor,
     setGroupTypeTheme,
@@ -236,5 +251,7 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     // Действия
     handleSave,
     closeSnackbar,
+    setIsDeleteSheetOpen,
+    confirmDemoAccountDeletion,
   };
 };

@@ -109,6 +109,17 @@ describe('OrderMapDrawer', () => {
     });
   });
 
+  it.each(['light', 'dark'] as const)('keeps the order inside a framed card in %s mode', (mode) => {
+    renderDrawer(mode);
+
+    expect(screen.getByTestId('order-card')).toHaveStyle({
+      borderRadius: '16px',
+      borderWidth: '1px',
+      padding: '16px',
+      marginTop: '16px',
+    });
+  });
+
   it('shows a spinner over the card while a request is in flight', () => {
     mocks.orderState.is_load = true;
 

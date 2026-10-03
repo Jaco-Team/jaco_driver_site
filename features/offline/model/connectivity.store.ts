@@ -2,12 +2,8 @@ import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 
 import { log } from '@/components/analytics';
-import { http } from '@/shared/api/connector';
-import { apiRoutes } from '@/shared/api/routes';
-import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
 
 const CHECK_INTERVAL_MS = 15_000;
-const CHECK_TIMEOUT_MS = 5_000;
 
 interface ConnectivityState {
   isOnline: boolean;
@@ -22,8 +18,6 @@ interface ConnectivityActions {
 type ConnectivityStore = ConnectivityState & ConnectivityActions;
 
 let watchStarted = false;
-let interceptorBound = false;
-let probeInFlight: Promise<boolean> | null = null;
 
 function readNavigatorOnline(): boolean {
   if (typeof navigator === 'undefined') {
@@ -35,7 +29,9 @@ function readNavigatorOnline(): boolean {
 
 export const useConnectivityStore = createWithEqualityFn<ConnectivityStore>(
   (set, get) => ({
-    isOnline: readNavigatorOnline(),
+    // The server and the first browser render must be identical for hydration.
+    // useConnectivityWatch probes navigator immediately after the app mounts.
+    isOnline: true,
 
     setOnline: (isOnline) => {
       if (get().isOnline === isOnline) {
@@ -50,60 +46,14 @@ export const useConnectivityStore = createWithEqualityFn<ConnectivityStore>(
     },
 
     probeConnectivity: async () => {
-      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-        get().setOnline(false);
-        return false;
-      }
-
-      if (probeInFlight) {
-        return probeInFlight;
-      }
-
-      probeInFlight = (async () => {
-        try {
-          await http.get(apiRoutes.auth.me, {
-            timeout: CHECK_TIMEOUT_MS,
-            validateStatus: () => true,
-          });
-          get().setOnline(true);
-          return true;
-        } catch (error) {
-          if (isConnectivityError(error)) {
-            get().setOnline(false);
-            return false;
-          }
-
-          get().setOnline(true);
-          return true;
-        } finally {
-          probeInFlight = null;
-        }
-      })();
-
-      return probeInFlight;
+      const isOnline = readNavigatorOnline();
+      get().setOnline(isOnline);
+      return isOnline;
     },
 
     startConnectivityWatch: () => {
       if (typeof window === 'undefined') {
         return () => undefined;
-      }
-
-      if (!interceptorBound) {
-        interceptorBound = true;
-
-        http.interceptors.response.use(
-          (response) => {
-            get().setOnline(true);
-            return response;
-          },
-          (error) => {
-            if (isConnectivityError(error)) {
-              get().setOnline(false);
-            }
-
-            return Promise.reject(error);
-          }
-        );
       }
 
       if (watchStarted) {
@@ -144,9 +94,9 @@ export function isAppOnline(): boolean {
 }
 
 export function markAppOffline(): void {
-  useConnectivityStore.getState().setOnline(false);
+  useConnectivityStore.getState().setOnline(readNavigatorOnline());
 }
 
 export function markAppOnline(): void {
-  useConnectivityStore.getState().setOnline(true);
+  useConnectivityStore.getState().setOnline(readNavigatorOnline());
 }

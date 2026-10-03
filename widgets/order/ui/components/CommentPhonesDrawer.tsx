@@ -1,11 +1,11 @@
 import React from 'react';
-import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import Typography from '@mui/material/Typography';
 import PhoneIcon from '@mui/icons-material/Phone';
+import type { Theme } from '@mui/material/styles';
 
 import { log, logTel } from '@/components/analytics';
 import type { ExtractedPhone } from '@/shared/lib/extractPhones';
@@ -38,10 +38,15 @@ const callIconButtonSx = {
   height: CALL_BUTTON_HEIGHT,
   flexShrink: 0,
   alignSelf: 'center',
-  backgroundColor: appPalette.soft,
-  color: appPalette.primary,
+  position: 'relative',
+  border: '1px solid',
+  borderColor: 'divider',
+  backgroundColor: (theme: Theme) =>
+    theme.palette.mode === 'dark' ? 'rgba(142, 169, 191, 0.10)' : appPalette.soft,
+  color: 'secondary.main',
   '&:hover': {
-    backgroundColor: appPalette.softStrong,
+    backgroundColor: (theme: Theme) =>
+      theme.palette.mode === 'dark' ? 'rgba(142, 169, 191, 0.10)' : appPalette.soft,
   },
 } as const;
 
@@ -82,19 +87,29 @@ export function CommentPhonesControl({ phones, onOpenMultiple }: CommentPhonesCo
       }}
       sx={callIconButtonSx}
     >
-      <Badge
-        badgeContent={phones.length}
-        overlap="circular"
+      <PhoneIcon />
+      <Box
+        component="span"
+        aria-hidden="true"
         sx={{
-          '& .MuiBadge-badge': {
-            backgroundColor: 'primary.main',
-            color: 'primary.contrastText',
-            fontWeight: 700,
-          },
+          position: 'absolute',
+          top: -3,
+          right: -3,
+          display: 'grid',
+          placeItems: 'center',
+          minWidth: 18,
+          height: 18,
+          px: 0.5,
+          borderRadius: 999,
+          backgroundColor: 'primary.main',
+          color: 'primary.contrastText',
+          fontSize: 11,
+          fontWeight: 700,
+          lineHeight: 1,
         }}
       >
-        <PhoneIcon />
-      </Badge>
+        {phones.length}
+      </Box>
     </IconButton>
   );
 }
@@ -126,6 +141,7 @@ export function CommentPhonesDrawer({
             bottom: 0,
             top: 'auto',
             backgroundColor: 'background.paper',
+            backgroundImage: 'none',
             overflow: 'hidden',
             border: '1px solid',
             borderColor: (theme) =>
@@ -164,10 +180,7 @@ export function CommentPhonesDrawer({
               width: 62,
               height: 6,
               borderRadius: 999,
-              backgroundColor: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? 'rgba(217, 224, 230, 0.28)'
-                  : 'rgba(31, 43, 54, 0.2)',
+              backgroundColor: 'divider',
             }}
           />
         </Box>
@@ -179,6 +192,7 @@ export function CommentPhonesDrawer({
             fontWeight: 700,
             lineHeight: 1.2,
             color: 'text.primary',
+            textAlign: 'center',
             mb: 2,
           }}
         >
@@ -202,8 +216,10 @@ export function CommentPhonesDrawer({
                 height: CALL_BUTTON_HEIGHT,
                 minHeight: CALL_BUTTON_HEIGHT,
                 borderRadius: '12px',
+                border: '1px solid',
+                borderColor: 'divider',
                 textTransform: 'none',
-                fontWeight: 600,
+                fontWeight: 500,
                 fontSize: actionFontSize,
                 backgroundColor: (theme) =>
                   theme.palette.mode === 'dark' ? appDarkPalette.surfaceAlt : '#E0E0E0',
@@ -211,7 +227,7 @@ export function CommentPhonesDrawer({
                 boxShadow: 'none',
                 '&:hover': {
                   backgroundColor: (theme) =>
-                    theme.palette.mode === 'dark' ? appDarkPalette.surfaceRaised : '#d5d5d5',
+                    theme.palette.mode === 'dark' ? appDarkPalette.surfaceAlt : '#E0E0E0',
                   boxShadow: 'none',
                 },
               }}

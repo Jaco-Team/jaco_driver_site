@@ -14,8 +14,10 @@ import { MetricRow } from './MetricRow';
 
 export default function PricePage() {
   const {
+    isOnline,
     globalFontSize,
     isStatLoading,
+    statPrice,
     startDateLabel,
     endDateLabel,
     totalPriceLabel,
@@ -35,7 +37,10 @@ export default function PricePage() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
-      <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isStatLoading}>
+      <Backdrop
+        style={{ zIndex: 9999, color: '#fff' }}
+        open={isOnline && isStatLoading && !statPrice}
+      >
         <CircularProgress color="inherit" />
       </Backdrop>
 
@@ -50,7 +55,12 @@ export default function PricePage() {
               </div>
 
               <div className="price__segmentedRangeControl">
-                <button type="button" className="price__segmentButton" onClick={openStartPicker}>
+                <button
+                  type="button"
+                  disabled={!isOnline}
+                  className="price__segmentButton"
+                  onClick={openStartPicker}
+                >
                   <span className="price__segmentLabel">С</span>
                   <span className="price__segmentValue" style={{ fontSize: globalFontSize }}>
                     {startDateLabel}
@@ -61,6 +71,7 @@ export default function PricePage() {
 
                 <button
                   type="button"
+                  disabled={!isOnline}
                   className="price__segmentButton price__segmentButton--end"
                   onClick={openEndPicker}
                 >
@@ -73,48 +84,52 @@ export default function PricePage() {
           </div>
         </Grid>
 
-        <Grid size={12}>
-          <div className="price__content">
-            <section className="price__card price__card--plain">
-              <div className="price__total" style={{ fontSize: totalPriceFontSize }}>
-                {totalPriceLabel}
-              </div>
+        {isOnline && statPrice ? (
+          <Grid size={12}>
+            <div className="price__content">
+              <section className="price__card price__card--plain">
+                <div className="price__total" style={{ fontSize: totalPriceFontSize }}>
+                  {totalPriceLabel}
+                </div>
 
-              <div className="price__metrics">
-                {summaryRows.map((row) => (
-                  <MetricRow
-                    key={row.label}
-                    label={row.label}
-                    value={row.value}
-                    description={row.description}
-                    emphasize={row.emphasize}
-                    hideDivider={row.hideDivider}
-                    globalFontSize={globalFontSize}
-                  />
-                ))}
-              </div>
-            </section>
-          </div>
-        </Grid>
+                <div className="price__metrics">
+                  {summaryRows.map((row) => (
+                    <MetricRow
+                      key={row.label}
+                      label={row.label}
+                      value={row.value}
+                      description={row.description}
+                      emphasize={row.emphasize}
+                      hideDivider={row.hideDivider}
+                      globalFontSize={globalFontSize}
+                    />
+                  ))}
+                </div>
+              </section>
+            </div>
+          </Grid>
+        ) : null}
 
-        <Grid size={12}>
-          <div className="price__content">
-            <section className="price__card price__card--compact price__card--plain">
-              <div className="price__metrics">
-                {settlementRows.map((row, index) => (
-                  <MetricRow
-                    key={`${row.label}-${index}`}
-                    label={row.label}
-                    value={row.value}
-                    emphasize={row.emphasize}
-                    hideDivider={row.hideDivider || index === settlementRows.length - 1}
-                    globalFontSize={globalFontSize}
-                  />
-                ))}
-              </div>
-            </section>
-          </div>
-        </Grid>
+        {isOnline && statPrice ? (
+          <Grid size={12}>
+            <div className="price__content">
+              <section className="price__card price__card--compact price__card--plain">
+                <div className="price__metrics">
+                  {settlementRows.map((row, index) => (
+                    <MetricRow
+                      key={`${row.label}-${index}`}
+                      label={row.label}
+                      value={row.value}
+                      emphasize={row.emphasize}
+                      hideDivider={row.hideDivider || index === settlementRows.length - 1}
+                      globalFontSize={globalFontSize}
+                    />
+                  ))}
+                </div>
+              </section>
+            </div>
+          </Grid>
+        ) : null}
       </Grid>
 
       <SwipeableDrawer

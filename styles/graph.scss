@@ -21,9 +21,9 @@
     margin-bottom: 14px;
     border-radius: 24px;
     overflow: hidden;
-    border: 1px solid rgba(66, 98, 125, 0.12);
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+    border: 1px solid var(--app-border);
+    background: #ffffff;
+    box-shadow: 0 7px 15px rgba(15, 23, 42, 0.08);
   }
 
   & .MuiListItemButton-root {
@@ -41,9 +41,8 @@
   }
 
   & .active {
-    border-color: rgba(66, 98, 125, 0.22);
-    background: linear-gradient(180deg, rgba(66, 98, 125, 0.12) 0%, #ffffff 100%);
-    box-shadow: 0 16px 32px rgba(66, 98, 125, 0.12);
+    border-color: $colorSecondary;
+    background: #f0f2f5;
   }
 
   & .active .MuiTypography-root {
@@ -223,10 +222,39 @@
     overflow: auto;
   }
 
+  & .graph__tableContainer--schedule {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
   & .graph__scheduleTable,
   & .graph__issuesTable {
     border-collapse: separate;
     border-spacing: 0;
+  }
+
+  & .graph__scheduleTable .MuiTableHead-root,
+  & .graph__scheduleTable .MuiTableHead-root .MuiTableRow-root {
+    background: $colorSurfaceSoft;
+  }
+
+  & .graph__scheduleTable .MuiTableRow-root .MuiTableCell-root:first-child {
+    width: 180px;
+    min-width: 180px;
+  }
+
+  & .graph__scheduleTable--empty .MuiTableRow-root .MuiTableCell-root:first-child {
+    width: 100%;
+    min-width: 0;
+  }
+
+  & .graph__scheduleTable .MuiTableRow-root .MuiTableCell-root:not(:first-child) {
+    width: 64px;
+    min-width: 64px;
   }
 
   & .graph__issuesTable {
@@ -238,9 +266,15 @@
   & .graph__issuesTable .MuiTableCell-root {
     padding: 14px 16px;
     border-bottom: 1px solid #f0ebed;
+    border-right: 1px solid var(--app-border);
     background: #fff;
     @include font_custom(1rem, 500, #312126);
     box-sizing: border-box;
+  }
+
+  & .graph__scheduleTable .MuiTableCell-root:last-child,
+  & .graph__issuesTable .MuiTableCell-root:last-child {
+    border-right: 0;
   }
 
   & .graph__tableHeadCell {
@@ -248,6 +282,11 @@
     @include font_custom(0.94rem, 800, rgba(68, 84, 97, 0.88));
     text-align: center;
     white-space: nowrap;
+  }
+
+  & .graph__scheduleTable .graph__tableHeadCell:first-child,
+  & .graph__issuesTable .graph__tableHeadCell {
+    text-align: left;
   }
 
   & .graph__tableHeadCell--weekend {
@@ -263,8 +302,15 @@
 
   & .graph__employeeHeaderCell,
   & .graph__employeeCell {
-    min-width: 220px;
+    // Keep the header and employee cells aligned with the table's 180px column.
+    width: 180px;
+    min-width: 180px;
     text-align: left !important;
+  }
+
+  & .graph__scheduleTable--empty .graph__employeeHeaderCell {
+    width: 100%;
+    min-width: 0;
   }
 
   & .graph__employeeCell {
@@ -405,9 +451,7 @@
     }
 
     & .graph__heroText,
-    & .graph__cardDescription,
-    & .graph__scheduleTable .MuiTableCell-root,
-    & .graph__issuesTable .MuiTableCell-root {
+    & .graph__cardDescription {
       font-size: 0.95rem !important;
     }
 
@@ -452,6 +496,8 @@
     max-height: calc(100% - $MyScale400_mobile);
     border-radius: 28px 28px 0 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--app-surface);
+    color: var(--app-text);
   }
 
   & .MuiDialogContent-root {
@@ -462,7 +508,7 @@
     width: 56px;
     min-height: 6px;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.16);
+    background: var(--app-border);
     margin: 0 auto 24px;
   }
 }
@@ -473,11 +519,15 @@
   }
 
   .monthList {
-    & .MuiListItem-root,
-    & .active {
+    & .MuiListItem-root {
       border-color: var(--app-border);
       background: var(--app-surface);
       box-shadow: 0 14px 30px var(--app-shadow);
+    }
+
+    & .active {
+      border-color: #7e9bb3;
+      background: var(--app-surface-alt);
     }
 
     & .MuiTypography-root,
@@ -487,6 +537,20 @@
   }
 
   .graphScreen {
+    & .graph__scheduleTable .MuiTableHead-root,
+    & .graph__scheduleTable .MuiTableHead-root .MuiTableRow-root {
+      background: var(--app-surface-raised);
+    }
+
+    & .graph__eyebrow {
+      color: var(--app-text-muted);
+    }
+
+    & .graph__cardIcon {
+      background: var(--app-steel-soft);
+      color: #7e9bb3;
+    }
+
     & .graph__hero,
     & .graph__card,
     & .graph__monthButton.MuiButton-root,
@@ -513,7 +577,32 @@
     }
 
     & .graph__tableHeadCell,
-    & .graph__hoursCell--filled,
+    & .graph__hoursCell--filled {
+      background: var(--app-surface-raised) !important;
+    }
+
+    & .graph__tableHeadCell {
+      color: var(--app-text-muted) !important;
+    }
+
+    & .graph__tableHeadCell--weekend {
+      background: var(--app-surface-alt) !important;
+      color: var(--app-brand) !important;
+    }
+
+    & .graph__tableHeadCell--today {
+      background: #2b3b4a !important;
+      color: var(--app-text) !important;
+    }
+
+    & .graph__hoursCell--filled {
+      color: var(--app-text);
+    }
+
+    & .graph__employeeCell--current {
+      background: rgba(142, 169, 191, 0.2) !important;
+    }
+
     & .graph__emptyCell {
       background: var(--app-surface-alt) !important;
     }

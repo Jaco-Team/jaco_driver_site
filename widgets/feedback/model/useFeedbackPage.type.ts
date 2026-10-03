@@ -8,6 +8,7 @@ export interface UseFeedbackPageResult {
   setAddModal: (value: boolean) => void;
   feedbacks: Feedback[];
   isLoad: boolean;
+  loadError: string | null;
   snackbar: SnackbarState;
   selectedFeedback: Feedback | null;
   bottomSheetOpen: boolean;

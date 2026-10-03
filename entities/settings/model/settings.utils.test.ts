@@ -203,6 +203,7 @@ describe('settings.utils', () => {
         mapScale: 1.5,
         night_map: false,
         dark_theme: true,
+        app_theme: 'dark' as const,
         is_scaleMap: true,
       };
 
@@ -215,6 +216,7 @@ describe('settings.utils', () => {
         action_centered_map: 1,
         night_map: 0,
         dark_theme: 1,
+        app_theme: 'dark',
         is_scaleMap: 1,
         color: '#FF0000',
         fontSize: 14,

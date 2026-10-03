@@ -1,11 +1,17 @@
 import React, { useState, memo, useMemo, useEffect } from 'react';
 import { Card, CardContent, Typography, Chip, Box, Button, styled } from '@mui/material';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
+import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import Tooltip, { tooltipClasses, type TooltipProps } from '@mui/material/Tooltip';
 
 import type { DrinkItem, Order } from '@/entities/order/model/order.types';
 import { extractPhonesFromText } from '@/shared/lib/extractPhones';
-import { appDarkSuccessPalette, appSuccessPalette } from '@/shared/styles/appPalette';
+import {
+  appDarkPalette,
+  appDarkSuccessPalette,
+  appPalette,
+  appSuccessPalette,
+} from '@/shared/styles/appPalette';
 import {
   CommentPhonesControl,
   CommentPhonesDrawer,
@@ -38,8 +44,10 @@ const StyledCard = styled(Card, {
   shouldForwardProp: (prop) => prop !== 'isDeleted',
 })<{ isDeleted?: boolean }>(({ isDeleted, theme }) => ({
   borderRadius: 16,
+  border: `1px solid ${theme.palette.divider}`,
   boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
   backgroundColor: isDeleted ? ORDER_CARD_DELETED_BG : theme.palette.background.paper,
+  backgroundImage: 'none',
   color: isDeleted ? '#fff' : theme.palette.text.primary,
   padding: 16,
   transition: 'all 0.3s ease',
@@ -82,48 +90,42 @@ const ActionButton = styled(Button)({
 });
 
 const PhoneButton = styled(ActionButton)(({ theme }) => ({
-  backgroundColor: theme.palette.action.selected,
+  backgroundColor: theme.palette.mode === 'dark' ? appDarkPalette.surfaceAlt : '#E0E0E0',
+  border: `1px solid ${theme.palette.divider}`,
   color: theme.palette.text.primary,
   width: '100%',
   textTransform: 'none',
   fontWeight: 500,
   boxShadow: 'none',
   '&:hover': {
-    backgroundColor: theme.palette.action.hover,
+    backgroundColor: theme.palette.mode === 'dark' ? appDarkPalette.surfaceAlt : '#E0E0E0',
     boxShadow: 'none',
   },
 }));
 
 const DriverInfoBox = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.action.selected,
+  backgroundColor:
+    theme.palette.mode === 'dark' ? appDarkPalette.surfaceRaised : appPalette.surfaceAlt,
   color: theme.palette.text.primary,
   borderRadius: 8,
   height: ORDER_CARD_BUTTON_HEIGHT,
   minHeight: ORDER_CARD_BUTTON_HEIGHT,
-  padding: '0 16px',
+  padding: '4px 12px',
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: '0.875rem',
-  lineHeight: 1.2,
-  fontWeight: 500,
+  justifyContent: 'flex-start',
+  gap: 10,
   boxSizing: 'border-box',
   overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
 }));
 
-const TakeButton = styled(ActionButton)(({ theme }) => {
-  const success = theme.palette.mode === 'dark' ? appDarkSuccessPalette : appSuccessPalette;
-
-  return {
-    backgroundColor: success.main,
-    color: success.onMain,
-    width: '100%',
-    '&:hover': {
-      backgroundColor: success.dark,
-    },
-  };
+const TakeButton = styled(ActionButton)({
+  backgroundColor: appSuccessPalette.main,
+  color: appSuccessPalette.onMain,
+  width: '100%',
+  '&:hover': {
+    backgroundColor: appSuccessPalette.dark,
+  },
 });
 
 const CancelButton = styled(ActionButton)({
@@ -161,11 +163,19 @@ const PayButton = styled(ActionButton)({
   },
 });
 
-const ChipStyled = styled(Chip)({
+const ChipStyled = styled(Chip, {
+  shouldForwardProp: (prop) => prop !== 'labelFontSize',
+})<{ labelFontSize: number }>(({ labelFontSize }) => ({
   fontWeight: 500,
-  marginRight: 8,
-  marginBottom: 8,
-});
+  height: 'auto',
+  minHeight: 28,
+  borderRadius: 14,
+  '& .MuiChip-label': {
+    padding: '3px 12px',
+    fontSize: Math.max(labelFontSize - 2, 12),
+    lineHeight: `${Math.max(labelFontSize + 2, 16)}px`,
+  },
+}));
 
 const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
   <Tooltip {...props} classes={{ popper: className }} />
@@ -182,17 +192,23 @@ const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
 }));
 
 // Компонент для отображения чипов позиций (вынесен для мемоизации)
-const OrderChips = memo(({ item }: { item: Order }) => {
+const OrderChips = memo(({ item, globalFontSize }: { item: Order; globalFontSize: number }) => {
   const [openTooltip, setOpenTooltip] = useState(false);
 
   return (
-    <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+    <Box sx={{ mb: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
       {toFlagInt(item.count_other) > 0 && (
-        <ChipStyled label="Роллы" size="small" sx={{ backgroundColor: '#2196F3', color: '#fff' }} />
+        <ChipStyled
+          label="Роллы"
+          labelFontSize={globalFontSize}
+          size="small"
+          sx={{ backgroundColor: '#2196F3', color: '#fff' }}
+        />
       )}
       {toFlagInt(item.count_pasta) > 0 && (
         <ChipStyled
           label={`Паста x${item.count_pasta}`}
+          labelFontSize={globalFontSize}
           size="small"
           sx={{ backgroundColor: '#9c27b0', color: '#fff' }}
         />
@@ -200,6 +216,7 @@ const OrderChips = memo(({ item }: { item: Order }) => {
       {toFlagInt(item.count_pizza) > 0 && (
         <ChipStyled
           label={`Пицца x${item.count_pizza}`}
+          labelFontSize={globalFontSize}
           size="small"
           sx={{ backgroundColor: '#f44336', color: '#fff' }}
         />
@@ -220,15 +237,12 @@ const OrderChips = memo(({ item }: { item: Order }) => {
         >
           <ChipStyled
             label={`Напиток x${item.count_drink}`}
+            labelFontSize={globalFontSize}
             size="small"
             onClick={() => setOpenTooltip(true)}
             sx={{
-              backgroundColor: (theme) =>
-                theme.palette.mode === 'dark' ? appDarkSuccessPalette.main : appSuccessPalette.main,
-              color: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? appDarkSuccessPalette.onMain
-                  : appSuccessPalette.onMain,
+              backgroundColor: appSuccessPalette.main,
+              color: appSuccessPalette.onMain,
               cursor: 'pointer',
             }}
           />
@@ -392,13 +406,7 @@ export const OrderCard = memo<OrderCardProps>(
           sx={
             is_map
               ? {
-                  boxShadow: 'none',
-                  borderRadius: 0,
-                  padding: 0,
-                  backgroundColor: isDeleted ? ORDER_CARD_DELETED_BG : 'transparent',
-                  '&:hover': {
-                    boxShadow: 'none',
-                  },
+                  mt: 2,
                 }
               : undefined
           }
@@ -410,7 +418,7 @@ export const OrderCard = memo<OrderCardProps>(
             </Typography>
 
             {/* Количество позиций */}
-            <OrderChips item={item} />
+            <OrderChips item={item} globalFontSize={globalFontSize} />
 
             {/* Адрес */}
             <InfoRow>
@@ -576,7 +584,38 @@ export const OrderCard = memo<OrderCardProps>(
               />
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <DriverInfoBox>Водитель: {item.driver_name}</DriverInfoBox>
+                <DriverInfoBox aria-label={`Водитель: ${item.driver_name}`}>
+                  <PersonOutlinedIcon
+                    sx={{ flexShrink: 0, fontSize: 20, color: 'secondary.main' }}
+                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0, gap: '4px' }}>
+                    <Typography
+                      component="span"
+                      noWrap
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: Math.min(Math.max(globalFontSize - 4, 11), 13),
+                        lineHeight: 1.1,
+                        flexShrink: 0,
+                      }}
+                    >
+                      Водитель:
+                    </Typography>
+                    <Typography
+                      component="span"
+                      noWrap
+                      sx={{
+                        color: 'text.primary',
+                        fontWeight: 500,
+                        fontSize: Math.min(Math.max(globalFontSize - 1, 13), 17),
+                        lineHeight: 1.1,
+                        minWidth: 0,
+                      }}
+                    >
+                      {item.driver_name}
+                    </Typography>
+                  </Box>
+                </DriverInfoBox>
                 <PhoneButton variant="contained" disableElevation href={`tel:${item.driver_login}`}>
                   {item.driver_login}
                 </PhoneButton>

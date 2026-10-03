@@ -9,11 +9,8 @@ const mocks = vi.hoisted(() => ({
   isAuthenticated: true,
 }));
 
-vi.mock('next/dynamic', () => ({
-  default: () =>
-    function DynamicStatisticsScreen() {
-      return <div data-testid="statistics-screen" />;
-    },
+vi.mock('@/widgets/statistics-screen/ui/StatisticsScreen', () => ({
+  default: () => <div data-testid="statistics-screen" />,
 }));
 
 vi.mock('@/components/meta', () => ({

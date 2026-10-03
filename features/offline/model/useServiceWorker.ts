@@ -4,11 +4,13 @@ import { devLog } from '@/shared/lib/devLog';
 
 const SERVICE_WORKER_URL = '/sw.js';
 const UPDATE_INTERVAL_MS = 60 * 60 * 1000;
+const DISABLED_CACHE_PREFIXES = ['jaco-pages-', 'jaco-assets-', 'jaco-offline-app-'];
 
-// The service worker caches hashed build assets, so in dev it would serve stale
-// chunks and break HMR. Opt in with NEXT_PUBLIC_ENABLE_SW=1 to test locally.
+// A service worker must not control next dev: cached development chunks and
+// navigations conflict with Turbopack HMR and can trigger repeated full reloads.
+// Offline behavior is tested with a production build instead.
 function isServiceWorkerEnabled(): boolean {
-  return process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_SW === '1';
+  return process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_ENABLE_SW !== '0';
 }
 
 export function useServiceWorker(): void {
@@ -18,7 +20,7 @@ export function useServiceWorker(): void {
     }
 
     if (!isServiceWorkerEnabled()) {
-      void navigator.serviceWorker
+      const unregisterWorkers = navigator.serviceWorker
         .getRegistrations()
         .then((registrations) =>
           Promise.all(
@@ -26,8 +28,23 @@ export function useServiceWorker(): void {
               .filter((item) => item.active?.scriptURL.endsWith(SERVICE_WORKER_URL))
               .map((item) => item.unregister())
           )
-        )
-        .catch(() => undefined);
+        );
+      const clearRuntimeCaches =
+        'caches' in window
+          ? caches
+              .keys()
+              .then((keys) =>
+                Promise.all(
+                  keys
+                    .filter((key) =>
+                      DISABLED_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix))
+                    )
+                    .map((key) => caches.delete(key))
+                )
+              )
+          : Promise.resolve([]);
+
+      void Promise.all([unregisterWorkers, clearRuntimeCaches]).catch(() => undefined);
 
       return;
     }

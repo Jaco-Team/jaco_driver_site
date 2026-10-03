@@ -3,17 +3,24 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { log } from '@/components/analytics';
-import { logoutWeb } from '@/features/auth/api/auth.api';
-import { useAuthStore, useSession } from '@/features/auth/model/auth.store';
+import { useSession } from '@/features/auth/model/auth.store';
+import { logoutAndClearSession } from '@/features/auth/model/logoutSession';
 import { useSettingsStore } from '@/entities/settings';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
-import { clearOfflineCache } from '@/shared/lib/offline/cache';
 import { devLog } from '@/shared/lib/devLog';
 import type { UseAppHeaderResult } from './useAppHeader.type';
 
 type RouteTitles = Record<string, string>;
+
+export function resolvePageTitle(
+  pathname: string,
+  routeTitles: RouteTitles,
+  activePageTitle: string
+): string {
+  return routeTitles[pathname] || activePageTitle || '';
+}
 
 export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
   const router = useRouter();
@@ -70,7 +77,7 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
       let pointId: string | number | null | undefined;
 
       try {
-        const settings = await getMySetting(sessionToken);
+        const settings = await getMySetting(sessionToken, true);
         applySettings(settings);
         pointId = settings?.point_id;
       } catch (error) {
@@ -91,7 +98,22 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
     myCurrentLocation,
     session?.isAuth,
     sessionToken,
+    isOnline,
   ]);
+
+  useEffect(() => {
+    if (session?.isAuth !== true) return;
+
+    const refreshTheme = () => {
+      if (!useConnectivityStore.getState().isOnline) return;
+      void getMySetting(sessionToken, true)
+        .then(applySettings)
+        .catch((error) => devLog('header_theme_refresh_failed', 'Theme refresh failed', error));
+    };
+
+    window.addEventListener('focus', refreshTheme);
+    return () => window.removeEventListener('focus', refreshTheme);
+  }, [applySettings, getMySetting, session?.isAuth, sessionToken]);
 
   useEffect(() => {
     if (session?.isAuth !== true) {
@@ -125,32 +147,27 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
   }, [checkMyPos, getMyAvgTime, session?.isAuth, sessionToken]);
 
   const handleLogout = () => {
-    void logoutWeb()
-      .catch((error) => {
-        devLog('logout_request_failed', 'Logout request failed', error);
-      })
-      .finally(() => {
-        useAuthStore.getState().setUnauthorized();
-        useOrdersStore.setState({ token: '', orders: [], sourceOrders: [], showOrders: [] });
-        useHeaderStore.setState({ token: '', phones: null });
-        clearOfflineCache();
+    if (!isOnline) {
+      return;
+    }
 
-        let pushed = false;
-        const go = () => {
-          if (pushed) {
-            return;
-          }
+    void logoutAndClearSession().finally(() => {
+      let pushed = false;
+      const go = () => {
+        if (pushed) {
+          return;
+        }
 
-          pushed = true;
-          router.push('/auth', { scroll: false });
-        };
+        pushed = true;
+        router.push('/auth', { scroll: false });
+      };
 
-        log('logout', 'Выход из аккаунта', undefined, { callback: go });
-        setTimeout(go, 200);
-      });
+      log('logout', 'Выход из аккаунта', undefined, { callback: go });
+      setTimeout(go, 200);
+    });
   };
 
-  const pageTitle = activePageRU || routeTitles[pathname] || '';
+  const pageTitle = resolvePageTitle(pathname, routeTitles, activePageRU);
   const isOrdersActionsVisible = pathname === '/list_orders' || pathname === '/map_orders';
 
   return {

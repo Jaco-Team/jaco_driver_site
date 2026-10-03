@@ -9,6 +9,7 @@ interface SaveButtonProps {
   fontSize?: number;
   buttonText?: string;
   savingText?: string;
+  disabled?: boolean;
 }
 
 export const SaveButton: React.FC<SaveButtonProps> = ({
@@ -17,6 +18,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   fontSize = 14,
   buttonText = 'Сохранить',
   savingText = 'Сохраняем...',
+  disabled = false,
 }) => {
   const baseFontSize = Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 14;
   const actionFontSize = Math.min(Math.max(baseFontSize + 1, 15), 24);
@@ -29,7 +31,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
         style={{ padding: 0, backgroundColor: 'transparent' }}
       >
         <Button
-          disabled={isSaving}
+          disabled={isSaving || disabled}
           onClick={onClick}
           color="primary"
           variant="contained"

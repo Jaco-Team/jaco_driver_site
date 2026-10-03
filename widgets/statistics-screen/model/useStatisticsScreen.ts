@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import dayjs, { type Dayjs } from 'dayjs';
 import 'dayjs/locale/ru';
@@ -9,6 +9,8 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import { useSession } from '@/features/auth/model/auth.store';
 import { log } from '@/components/analytics';
 import type { ActiveStatisticsPicker, UseStatisticsScreenResult } from './useStatisticsScreen.type';
+import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
+import { useRetryOnlineRequest } from '@/features/offline/model/useRetryOnlineRequest';
 
 const MAX_SPAN_DAYS = 93;
 const fmt = (date: Dayjs) => dayjs(date).format('YYYY-MM-DD');
@@ -107,9 +109,14 @@ function reasonsToMessage(
 
 export function useStatisticsScreen(): UseStatisticsScreenResult {
   const session = useSession();
+  const isOnline = useConnectivityStore((state) => state.isOnline);
 
   const [initialStartDate] = useState(() => dayjs().startOf('day').subtract(6, 'day'));
   const [initialEndDate] = useState(() => dayjs().startOf('day'));
+  const requestedRangeRef = useRef({
+    start: fmt(initialStartDate),
+    end: fmt(initialEndDate),
+  });
 
   const [dateStart, setDateStart] = useState(initialStartDate);
   const [dateEnd, setDateEnd] = useState(initialEndDate);
@@ -160,13 +167,29 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
   );
   const closeSnackbar = useCallback(() => setSnackbar((prev) => ({ ...prev, open: false })), []);
 
+  const refreshStatistics = useCallback(
+    () => getStatistics(requestedRangeRef.current.start, requestedRangeRef.current.end, pointId),
+    [getStatistics, pointId]
+  );
+
+  useRetryOnlineRequest(session?.isAuth === true && isOnline, refreshStatistics);
+
   useEffect(() => {
-    if (session?.isAuth !== true) {
-      return;
+    if (isOnline || !activePicker) {
+      return undefined;
     }
 
-    void getStatistics(fmt(initialStartDate), fmt(initialEndDate), pointId);
-  }, [getStatistics, initialEndDate, initialStartDate, pointId, session?.isAuth]);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setActivePicker(null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activePicker, isOnline]);
 
   const openPicker = useCallback((type: Exclude<ActiveStatisticsPicker, null>) => {
     setActivePicker(type);
@@ -218,8 +241,10 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
         showSnackbar(normalizedMessage);
       }
 
-      if (session?.isAuth === true) {
-        void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e), pointId);
+      if (session?.isAuth === true && isOnline) {
+        void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e), pointId).catch(
+          () => undefined
+        );
       }
 
       closePicker();
@@ -230,6 +255,7 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
       dateEnd,
       dateStart,
       getStatistics,
+      isOnline,
       pointId,
       session?.isAuth,
       showSnackbar,
@@ -254,15 +280,18 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
 
     setDateStart(normalizedRange.s);
     setDateEnd(normalizedRange.e);
+    requestedRangeRef.current = { start: fmt(normalizedRange.s), end: fmt(normalizedRange.e) };
 
     if (normalizedMessage) {
       showSnackbar(normalizedMessage);
     }
 
-    if (session?.isAuth === true) {
-      void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e), pointId);
+    if (session?.isAuth === true && isOnline) {
+      void getStatistics(fmt(normalizedRange.s), fmt(normalizedRange.e), pointId).catch(
+        () => undefined
+      );
     }
-  }, [dateEnd, dateStart, getStatistics, pointId, session?.isAuth, showSnackbar]);
+  }, [dateEnd, dateStart, getStatistics, isOnline, pointId, session?.isAuth, showSnackbar]);
 
   const pickerMinDate = activePicker === 'start' ? startMinAllowed : endMinAllowed;
   const pickerMaxDate = activePicker === 'start' ? startMaxAllowed : endMaxAllowed;
@@ -283,6 +312,7 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
   }, [activePicker]);
 
   return {
+    isOnline,
     isLoad,
     globalFontSize,
     snackbar: {
@@ -293,7 +323,7 @@ export function useStatisticsScreen(): UseStatisticsScreenResult {
     },
     dateStartLabel: formatDate(dateStart),
     dateEndLabel: formatDate(dateEnd),
-    displayRows,
+    displayRows: isOnline ? displayRows : [],
     activePicker,
     activePickerTitle,
     pickerValue,

@@ -52,6 +52,8 @@ ENV NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY=$NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# The online API 2.1 map needs its browser key at build time.
+RUN test -n "$NEXT_PUBLIC_YANDEX_MAPS_API_KEY" || (echo "NEXT_PUBLIC_YANDEX_MAPS_API_KEY is required for the production build" >&2; exit 1)
 RUN npm run build
 
 FROM base AS runner

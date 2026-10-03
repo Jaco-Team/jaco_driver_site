@@ -24,11 +24,11 @@ function GraphErrorField({ label, value, globalFontSize }: GraphErrorFieldProps)
     >
       <Typography
         component="span"
-        style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}
+        style={{ fontSize: globalFontSize, fontWeight: 'bold', color: 'var(--app-text)' }}
       >
         {label}
       </Typography>
-      <Typography component="span" style={{ fontSize: globalFontSize, color: '#000' }}>
+      <Typography component="span" style={{ fontSize: globalFontSize, color: 'var(--app-text)' }}>
         {' '}
         {value}
       </Typography>
@@ -43,6 +43,7 @@ function GraphAppealBlock({
   globalFontSize,
   appealText,
   isSubmittingAppeal,
+  isOnline,
   onChangeAppealText,
   onSubmit,
 }: GraphAppealBlockProps) {
@@ -65,18 +66,26 @@ function GraphAppealBlock({
       >
         <Typography
           component="span"
-          style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}
+          style={{ fontSize: globalFontSize, fontWeight: 'bold', color: 'var(--app-text)' }}
         >
           {title}
         </Typography>
         <TextareaAutosize
-          style={{ width: '100%', minHeight: 50 }}
+          disabled={!isOnline || isSubmittingAppeal}
+          style={{
+            width: '100%',
+            minHeight: 50,
+            backgroundColor: 'var(--app-surface-alt)',
+            color: 'var(--app-text)',
+            border: '1px solid var(--app-border)',
+            borderRadius: 12,
+          }}
           value={appealText}
           onChange={(event) => onChangeAppealText(event.target.value)}
         />
 
         <Button
-          disabled={isSubmittingAppeal}
+          disabled={!isOnline || isSubmittingAppeal}
           onClick={onSubmit}
           sx={{
             color: 'primary.contrastText',
@@ -106,11 +115,11 @@ function GraphAppealBlock({
     >
       <Typography
         component="span"
-        style={{ fontSize: globalFontSize, fontWeight: 'bold', color: '#000' }}
+        style={{ fontSize: globalFontSize, fontWeight: 'bold', color: 'var(--app-text)' }}
       >
         {title}
       </Typography>
-      <Typography component="span" style={{ fontSize: globalFontSize, color: '#000' }}>
+      <Typography component="span" style={{ fontSize: globalFontSize, color: 'var(--app-text)' }}>
         {text}
       </Typography>
     </div>
@@ -119,6 +128,7 @@ function GraphAppealBlock({
 
 export function GraphErrorDrawer({
   open,
+  isOnline,
   errorModal,
   globalFontSize,
   fontClassName,
@@ -145,7 +155,10 @@ export function GraphErrorDrawer({
 
         {!orderError ? null : (
           <>
-            <Typography component="span" style={{ color: '#000', fontSize: globalFontSize }}>
+            <Typography
+              component="span"
+              style={{ color: 'var(--app-text)', fontSize: globalFontSize }}
+            >
               Ошибка по заказу №{orderError.order_id}
             </Typography>
 
@@ -180,6 +193,8 @@ export function GraphErrorDrawer({
             )}
 
             {orderError.imgs.map((item, key) => (
+              // Error attachments have dynamic external URLs and natural dimensions.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={key}
                 alt=""
@@ -195,6 +210,7 @@ export function GraphErrorDrawer({
               globalFontSize={globalFontSize}
               appealText={appealText}
               isSubmittingAppeal={isSubmittingAppeal}
+              isOnline={isOnline}
               onChangeAppealText={onChangeAppealText}
               onSubmit={onSubmitOrderAppeal}
             />
@@ -207,6 +223,7 @@ export function GraphErrorDrawer({
                 globalFontSize={globalFontSize}
                 appealText={appealText}
                 isSubmittingAppeal={isSubmittingAppeal}
+                isOnline={isOnline}
                 onChangeAppealText={onChangeAppealText}
                 onSubmit={onSubmitOrderAppeal}
               />
@@ -216,7 +233,7 @@ export function GraphErrorDrawer({
 
         {!cameraError ? null : (
           <>
-            <Typography style={{ color: '#000', fontSize: globalFontSize }}>
+            <Typography style={{ color: 'var(--app-text)', fontSize: globalFontSize }}>
               Ошибка №{cameraError.id}
             </Typography>
 
@@ -241,6 +258,8 @@ export function GraphErrorDrawer({
             )}
 
             {cameraError.imgs.map((item, key) => (
+              // Camera attachments have dynamic external URLs and natural dimensions.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={key}
                 alt=""
@@ -256,6 +275,7 @@ export function GraphErrorDrawer({
               globalFontSize={globalFontSize}
               appealText={appealText}
               isSubmittingAppeal={isSubmittingAppeal}
+              isOnline={isOnline}
               onChangeAppealText={onChangeAppealText}
               onSubmit={onSubmitCameraAppeal}
             />
@@ -268,6 +288,7 @@ export function GraphErrorDrawer({
                 globalFontSize={globalFontSize}
                 appealText={appealText}
                 isSubmittingAppeal={isSubmittingAppeal}
+                isOnline={isOnline}
                 onChangeAppealText={onChangeAppealText}
                 onSubmit={onSubmitCameraAppeal}
               />

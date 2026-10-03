@@ -26,9 +26,22 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
   const metaFontSize = clampFeedbackFontSize(modalBaseFontSize - 1, 13, 18);
   const chipFontSize = clampFeedbackFontSize(modalBaseFontSize - 1, 13, 19);
 
-  if (!open && isImageViewerOpen) {
-    setImageViewerOpen(false);
-  }
+  React.useEffect(() => {
+    if (open) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setImageViewerOpen(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   const getStatusColor = (status: number) => {
     switch (status) {
@@ -76,9 +89,11 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
             maxHeight: '86vh',
+            backgroundColor: 'var(--app-surface)',
+            backgroundImage: 'none',
             border: '1px solid',
             borderColor: 'divider',
-            boxShadow: '0 24px 44px rgba(31, 43, 54, 0.2)',
+            boxShadow: '0 24px 44px var(--app-shadow)',
             overflow: 'hidden',
           },
         },
@@ -100,7 +115,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
             width: 62,
             height: 6,
             borderRadius: 999,
-            backgroundColor: 'rgba(31, 43, 54, 0.2)',
+            backgroundColor: 'divider',
           }}
         />
       </Box>
@@ -212,7 +227,8 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
                 minHeight: 220,
                 height: 320,
                 borderRadius: '16px',
-                border: '1px solid rgba(66, 98, 125, 0.2)',
+                border: '1px solid',
+                borderColor: 'divider',
                 backgroundImage: `url(${feedback.link})`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',

@@ -143,9 +143,7 @@ export function OrderMapDrawer() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: isDarkTheme
-                ? 'rgba(24, 35, 45, 0.72)'
-                : 'rgba(255, 255, 255, 0.72)',
+              backgroundColor: isDarkTheme ? 'rgba(24, 35, 45, 0.72)' : 'rgba(255, 255, 255, 0.72)',
               zIndex: 2,
             }}
           >

@@ -4,10 +4,12 @@
  * are not stored here: they live in localStorage (shared/lib/offline/cache.ts).
  */
 
-const VERSION = 'v2';
+const VERSION = 'v38';
 const PAGE_CACHE = `jaco-pages-${VERSION}`;
 const ASSET_CACHE = `jaco-assets-${VERSION}`;
-const EXPECTED_CACHES = [PAGE_CACHE, ASSET_CACHE];
+const OFFLINE_APP_CACHE = 'jaco-offline-app-v2';
+const YANDEX_OFFLINE_TILE_CACHE = 'jaco-yandex-offline-tiles-v1';
+const EXPECTED_CACHES = [PAGE_CACHE, ASSET_CACHE, OFFLINE_APP_CACHE, YANDEX_OFFLINE_TILE_CACHE];
 
 const OFFLINE_URL = '/offline.html';
 const PRECACHE_URLS = [
@@ -16,6 +18,12 @@ const PRECACHE_URLS = [
   '/favicon.ico',
   '/icon.svg',
   '/apple-touch-icon.png',
+  '/offline-map/runtime/maplibre-gl.mjs?v=6.11.2',
+  '/offline-map/runtime/maplibre-gl-shared.mjs?v=6.11.2',
+  '/offline-map/runtime/maplibre-gl-worker.mjs?v=6.11.2',
+  '/offline-map/runtime/maplibre-gl.css',
+  '/offline-map/offline-orders-map.mjs?v=25',
+  '/offline-map/yandex-logo-ru.svg',
 ];
 
 const PUBLIC_ASSET_PATTERN = /\.(?:png|jpe?g|webp|gif|svg|ico|webmanifest|css|woff2?)$/i;
@@ -31,8 +39,8 @@ function isBypassedRequest(url) {
   );
 }
 
-function isImmutableAsset(url) {
-  return url.pathname.startsWith('/_next/static/') && !url.pathname.includes('/development/');
+function isNextStaticAsset(url) {
+  return url.pathname.startsWith('/_next/static/');
 }
 
 function isPublicAsset(url) {
@@ -42,6 +50,10 @@ function isPublicAsset(url) {
 // next/image serves optimized files from a query string, without a file extension.
 function isOptimizedImage(url) {
   return url.pathname === '/_next/image';
+}
+
+function isOfflineMapAsset(url) {
+  return url.pathname.startsWith('/offline-map/');
 }
 
 async function putInCache(cacheName, request, response) {
@@ -61,8 +73,11 @@ async function handleNavigation(request) {
     return response;
   } catch (error) {
     const cache = await caches.open(PAGE_CACHE);
+    const appCache = await caches.open(OFFLINE_APP_CACHE);
     const cached =
-      (await cache.match(request)) || (await cache.match(request, { ignoreSearch: true }));
+      (await cache.match(request, { ignoreVary: true })) ||
+      (await cache.match(request, { ignoreSearch: true, ignoreVary: true })) ||
+      (await appCache.match(request, { ignoreSearch: true, ignoreVary: true }));
 
     if (cached) {
       return cached;
@@ -78,18 +93,37 @@ async function handleNavigation(request) {
   }
 }
 
-async function handleCacheFirst(request) {
-  const cache = await caches.open(ASSET_CACHE);
-  const cached = await cache.match(request);
+async function handleOfflineMapAsset(request) {
+  const cached = await caches.match(request);
 
   if (cached) {
     return cached;
   }
 
   const response = await fetch(request);
-  await putInCache(ASSET_CACHE, request, response);
+  await putInCache(OFFLINE_APP_CACHE, request, response);
 
   return response;
+}
+
+async function handleNetworkFirst(request, cacheName) {
+  try {
+    const response = await fetch(request);
+    await putInCache(cacheName, request, response);
+    return response;
+  } catch (error) {
+    const cache = await caches.open(cacheName);
+    const appCache = await caches.open(OFFLINE_APP_CACHE);
+    const cached =
+      (await cache.match(request)) ||
+      (await appCache.match(request, { ignoreSearch: true, ignoreVary: true }));
+
+    if (cached) {
+      return cached;
+    }
+
+    throw error;
+  }
 }
 
 async function handleStaleWhileRevalidate(request) {
@@ -118,9 +152,7 @@ self.addEventListener('install', (event) => {
     (async () => {
       const cache = await caches.open(ASSET_CACHE);
 
-      await Promise.allSettled(
-        PRECACHE_URLS.map((url) => cache.add(new Request(url, { cache: 'reload' })))
-      );
+      await cache.addAll(PRECACHE_URLS.map((url) => new Request(url, { cache: 'reload' })));
 
       await self.skipWaiting();
     })()
@@ -167,8 +199,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (isImmutableAsset(url)) {
-    event.respondWith(handleCacheFirst(request));
+  if (isOfflineMapAsset(url)) {
+    event.respondWith(handleOfflineMapAsset(request));
+    return;
+  }
+
+  if (isNextStaticAsset(url)) {
+    event.respondWith(handleNetworkFirst(request, ASSET_CACHE));
     return;
   }
 

@@ -15,10 +15,7 @@ function toBooleanFlag(value: unknown): boolean {
   return toInteger(value) === 1;
 }
 
-function toCoordinates(
-  latitude: unknown,
-  longitude: unknown
-): RecommendationCoordinates | null {
+function toCoordinates(latitude: unknown, longitude: unknown): RecommendationCoordinates | null {
   const lat = Number(latitude);
   const lon = Number(longitude);
 

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   hideDelOrders: vi.fn(),
   checkPayOrder: vi.fn(),
   isOnline: true,
+  pointId: 12 as number | null,
 }));
 
 vi.mock('@/shared/lib/geolocation', () => ({
@@ -28,8 +29,11 @@ vi.mock('@/entities/order/api/order.api', () => ({
   getPayQr: mocks.getPayQr,
   hideDelOrders: mocks.hideDelOrders,
   checkPayOrder: mocks.checkPayOrder,
-  normalizeOrdersResponse: (response: { home?: { latitude?: number; longitude?: number } }) => ({
-    orders: [],
+  normalizeOrdersResponse: (response: {
+    orders?: unknown[];
+    home?: { latitude?: number; longitude?: number };
+  }) => ({
+    orders: response?.orders ?? [],
     update_interval: 30,
     limit: '',
     limit_count: '',
@@ -56,7 +60,7 @@ vi.mock('@/shared/lib/offline/cache', () => ({
 
 vi.mock('@/entities/settings', () => ({
   useSettingsStore: {
-    getState: () => ({ pointId: 12 }),
+    getState: () => ({ pointId: mocks.pointId }),
   },
 }));
 
@@ -84,6 +88,7 @@ describe('orders store actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.isOnline = true;
+    mocks.pointId = 12;
     mocks.readDriverPosition.mockResolvedValue({
       latitude: '53.5',
       longitude: '49.4',
@@ -107,6 +112,18 @@ describe('orders store actions', () => {
       modalConfirm: true,
       type_confirm: 'take',
       order_finish_id: 866503,
+      type: { id: 1, text: 'Активные' },
+      types: [],
+      types_dop: [
+        { id: 1, text: 'В очереди' },
+        { id: 2, text: 'Готовится' },
+        { id: 3, text: 'Собран' },
+      ],
+      type_dop: ['1', '2', '3'],
+      orders: [],
+      sourceOrders: [],
+      ordersByContext: {},
+      ordersRefreshPending: false,
     });
   });
 
@@ -156,6 +173,20 @@ describe('orders store actions', () => {
     expect(useOrdersStore.getState().isOpenOrderMap).toBe(true);
     expect(useOrdersStore.getState().showErrOrder).toBe(true);
     expect(useOrdersStore.getState().textErrOrder).toContain('Нет доступа к геолокации');
+  });
+
+  it('shows an offline error on the first tap without opening confirmation or calling the API', () => {
+    mocks.isOnline = false;
+    useOrdersStore.setState({ modalConfirm: false });
+
+    useOrdersStore.getState().setActiveConfirm(true, 866503, true, 'finish', false);
+
+    const state = useOrdersStore.getState();
+    expect(state.modalConfirm).toBe(false);
+    expect(state.showErrOrder).toBe(true);
+    expect(state.textErrOrder).toContain('Нет интернета');
+    expect(mocks.readDriverPosition).not.toHaveBeenCalled();
+    expect(mocks.actionOrder).not.toHaveBeenCalled();
   });
 
   it('continues take without coordinates after a GPS timeout', async () => {
@@ -304,5 +335,181 @@ describe('orders store actions', () => {
 
     expect(useOrdersStore.getState().orders).toEqual([cached]);
     expect(useOrdersStore.getState().showErrOrder).toBe(false);
+  });
+
+  it('switches order tabs from the matching point cache while offline', () => {
+    const active = { id: 1, addr: 'Активный' } as any;
+    const mine = { id: 2, addr: 'Мой' } as any;
+    mocks.isOnline = false;
+    useOrdersStore.setState({
+      type: { id: 1, text: 'Активные' },
+      orders: [active],
+      sourceOrders: [active],
+      ordersByContext: {
+        '12:1': [active],
+        '12:2': [mine],
+      },
+    });
+
+    useOrdersStore.getState().setType({ id: 2, text: 'Мои отмеченные' });
+
+    expect(useOrdersStore.getState().orders).toEqual([mine]);
+    expect(useOrdersStore.getState().sourceOrders).toEqual([mine]);
+    expect(mocks.fetchOrders).not.toHaveBeenCalled();
+  });
+
+  it('restores orders for the selected point from cache while offline', () => {
+    const firstPointOrder = { id: 10, addr: 'Первая точка' } as any;
+    const secondPointOrder = { id: 20, addr: 'Вторая точка' } as any;
+    mocks.isOnline = false;
+    useOrdersStore.setState({
+      orders: [firstPointOrder],
+      sourceOrders: [firstPointOrder],
+      ordersByContext: {
+        '12:1': [firstPointOrder],
+        '13:1': [secondPointOrder],
+      },
+      showOrders: [firstPointOrder],
+      isOpenOrderMap: true,
+    });
+
+    mocks.pointId = 13;
+    useOrdersStore.getState().switchPoint(13);
+
+    expect(useOrdersStore.getState().orders).toEqual([secondPointOrder]);
+    expect(useOrdersStore.getState().showOrders).toEqual([]);
+    expect(useOrdersStore.getState().isOpenOrderMap).toBe(false);
+    expect(mocks.fetchOrders).not.toHaveBeenCalled();
+  });
+
+  it('applies the saved active-order status filter without a network request', () => {
+    const queued = { id: 1, status: 'В очереди' } as any;
+    const collected = { id: 2, status: 'Собран' } as any;
+    mocks.isOnline = false;
+    useOrdersStore.setState({
+      type: { id: 1, text: 'Активные' },
+      types_dop: [
+        { id: 1, text: 'В очереди' },
+        { id: 2, text: 'Готовится' },
+        { id: 3, text: 'Собран' },
+      ],
+      type_dop: ['1', '2', '3'],
+      orders: [queued, collected],
+      sourceOrders: [queued, collected],
+    });
+
+    useOrdersStore.getState().setTypeDop(['3']);
+
+    expect(useOrdersStore.getState().orders).toEqual([collected]);
+    expect(useOrdersStore.getState().type_dop).toEqual(['3']);
+    expect(mocks.fetchOrders).not.toHaveBeenCalled();
+  });
+
+  it('does not let a slower response from the previous point replace current orders', async () => {
+    let resolveFirst: (value: { st: boolean; orders: unknown[] }) => void = () => undefined;
+    let resolveSecond: (value: { st: boolean; orders: unknown[] }) => void = () => undefined;
+    const firstResponse = new Promise<{ st: boolean; orders: unknown[] }>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondResponse = new Promise<{ st: boolean; orders: unknown[] }>((resolve) => {
+      resolveSecond = resolve;
+    });
+
+    mocks.fetchOrders.mockImplementation(({ point_id }: { point_id?: number }) =>
+      point_id === 13 ? secondResponse : firstResponse
+    );
+
+    const firstRequest = useOrdersStore.getState().getOrders();
+    mocks.pointId = 13;
+    useOrdersStore.getState().switchPoint(13);
+
+    resolveSecond({ st: true, orders: [{ id: 200, addr: 'Текущая точка' }] });
+    await vi.waitFor(() => {
+      expect(useOrdersStore.getState().orders.map((order) => order.id)).toEqual([200]);
+    });
+
+    resolveFirst({ st: true, orders: [{ id: 100, addr: 'Старая точка' }] });
+    await firstRequest;
+
+    expect(useOrdersStore.getState().orders.map((order) => order.id)).toEqual([200]);
+    expect(useOrdersStore.getState().ordersByContext['12:1']?.[0]?.id).toBe(100);
+    expect(useOrdersStore.getState().ordersByContext['13:1']?.[0]?.id).toBe(200);
+  });
+
+  it('refreshes every cached order tab after loading a selected point', async () => {
+    const pointId = 99;
+    const staleOtherOrder = { id: 5, addr: 'Старый заказ другого курьера' } as any;
+    mocks.pointId = pointId;
+    useOrdersStore.setState({
+      type: { id: 1, text: 'Активные' },
+      types: [
+        { id: 1, text: 'Активные' },
+        { id: 2, text: 'Мои отмеченные' },
+        { id: 5, text: 'У других курьеров' },
+      ],
+      ordersByContext: {
+        [`${pointId}:5`]: [staleOtherOrder],
+      },
+    });
+    mocks.fetchOrders.mockImplementation(({ type_orders }: { type_orders?: number }) =>
+      Promise.resolve({
+        st: true,
+        orders: [{ id: Number(type_orders) * 100, addr: `Категория ${type_orders}` }],
+      })
+    );
+
+    await useOrdersStore.getState().getOrders(false);
+
+    await vi.waitFor(() => {
+      expect(useOrdersStore.getState().ordersByContext[`${pointId}:2`]?.[0]?.id).toBe(200);
+      expect(useOrdersStore.getState().ordersByContext[`${pointId}:5`]?.[0]?.id).toBe(500);
+    });
+
+    expect(mocks.fetchOrders).toHaveBeenCalledWith({ point_id: pointId, type_orders: 2 });
+    expect(mocks.fetchOrders).toHaveBeenCalledWith({ point_id: pointId, type_orders: 5 });
+  });
+
+  it('refreshes «У других» again before switching offline', async () => {
+    const pointId = 101;
+    let now = 100_000;
+    let otherOrderId = 501;
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    mocks.pointId = pointId;
+    useOrdersStore.setState({
+      type: { id: 1, text: 'Активные' },
+      types: [
+        { id: 1, text: 'Активные' },
+        { id: 5, text: 'У других курьеров' },
+      ],
+      ordersByContext: { [`${pointId}:5`]: [{ id: 500 } as any] },
+    });
+    mocks.fetchOrders.mockImplementation(({ type_orders }: { type_orders?: number }) =>
+      Promise.resolve({
+        st: true,
+        orders: [{ id: type_orders === 5 ? otherOrderId : 100 }],
+      })
+    );
+
+    try {
+      await useOrdersStore.getState().getOrders(false);
+      await vi.waitFor(() => {
+        expect(useOrdersStore.getState().ordersByContext[`${pointId}:5`]?.[0]?.id).toBe(501);
+        expect(useOrdersStore.getState().is_check).toBe(false);
+      });
+
+      now += 46_000;
+      otherOrderId = 502;
+      await useOrdersStore.getState().getOrders(false);
+      await vi.waitFor(() => {
+        expect(useOrdersStore.getState().ordersByContext[`${pointId}:5`]?.[0]?.id).toBe(502);
+      });
+
+      mocks.isOnline = false;
+      useOrdersStore.getState().setType({ id: 5, text: 'У других курьеров' });
+      expect(useOrdersStore.getState().orders[0]?.id).toBe(502);
+      expect(mocks.fetchOrders).toHaveBeenCalledTimes(4);
+    } finally {
+      nowSpy.mockRestore();
+    }
   });
 });

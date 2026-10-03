@@ -4,6 +4,7 @@ import type { StatisticsSummaryRow } from '@/entities/statistics';
 export type ActiveStatisticsPicker = 'start' | 'end' | null;
 
 export interface UseStatisticsScreenResult {
+  isOnline: boolean;
   isLoad: boolean;
   globalFontSize: number;
   snackbar: {

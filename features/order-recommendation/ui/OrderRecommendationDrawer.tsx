@@ -194,7 +194,9 @@ export function OrderRecommendationDrawer({
                         {item.reason}
                       </Typography>
                       {(item.pickup_at || item.deliver_at) && (
-                        <Typography sx={{ fontSize: helperSize, color: 'text.secondary', mt: 0.75 }}>
+                        <Typography
+                          sx={{ fontSize: helperSize, color: 'text.secondary', mt: 0.75 }}
+                        >
                           {item.pickup_at ? `Забрать: ${item.pickup_at}` : ''}
                           {item.pickup_at && item.deliver_at ? ' · ' : ''}
                           {item.deliver_at ? `Доставить: ${item.deliver_at}` : ''}

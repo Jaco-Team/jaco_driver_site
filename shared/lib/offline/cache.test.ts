@@ -1,11 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import {
-  OFFLINE_CACHE_KEY,
-  clearOfflineCache,
-  readOfflineCache,
-  writeOfflineCache,
-} from './cache';
+import { OFFLINE_CACHE_KEY, clearOfflineCache, readOfflineCache, writeOfflineCache } from './cache';
 
 describe('offline cache', () => {
   afterEach(() => {

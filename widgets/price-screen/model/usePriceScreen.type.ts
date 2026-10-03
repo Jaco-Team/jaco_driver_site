@@ -17,6 +17,7 @@ export interface UsePriceScreenResult {
   statPrice: PriceStat | null;
   giveHistory: PriceGiveHistoryRow[];
   isStatLoading: boolean;
+  isOnline: boolean;
   globalFontSize: number;
   startDateLabel: string;
   endDateLabel: string;

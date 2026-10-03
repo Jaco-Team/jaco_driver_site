@@ -9,6 +9,7 @@ import '../styles/order_card.scss';
 import '../styles/auth.scss';
 import '../styles/settings.scss';
 import '../styles/setting_style.scss';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useEffect, useMemo } from 'react';
 import Head from 'next/head';

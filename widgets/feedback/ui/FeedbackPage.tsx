@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { roboto } from '@/shared/ui/Font';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -16,8 +16,10 @@ import {
   clampFeedbackFontSize,
   normalizeFeedbackFontSize,
 } from '@/widgets/feedback/model/feedbackTypography';
+import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
 
 const FeedbackPage: React.FC = () => {
+  const isOnline = useConnectivityStore((state) => state.isOnline);
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
   const normalizedGlobalFontSize = normalizeFeedbackFontSize(globalFontSize);
   const listTitleFontSize = clampFeedbackFontSize(normalizedGlobalFontSize + 1, 14, 24);
@@ -31,6 +33,7 @@ const FeedbackPage: React.FC = () => {
     setAddModal,
     feedbacks,
     isLoad,
+    loadError,
     snackbar,
     selectedFeedback,
     bottomSheetOpen,
@@ -39,7 +42,13 @@ const FeedbackPage: React.FC = () => {
     handleCloseSnackbar,
   } = useFeedbackPage();
 
-  if (isLoad) {
+  useEffect(() => {
+    if (!isOnline && addModal) {
+      setAddModal(false);
+    }
+  }, [addModal, isOnline, setAddModal]);
+
+  if (isOnline && isLoad && feedbacks.length === 0) {
     return (
       <Box
         className={roboto.variable}
@@ -71,33 +80,35 @@ const FeedbackPage: React.FC = () => {
         }}
       >
         <CreateFeedbackDialog
-          open={addModal}
+          open={isOnline && addModal}
           onClose={() => setAddModal(false)}
           globalFontSize={normalizedGlobalFontSize}
         />
 
-        <Fab
-          onClick={() => setAddModal(true)}
-          sx={{
-            backgroundColor: 'primary.main',
-            color: 'primary.contrastText',
-            position: 'fixed',
-            right: 14,
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
-            width: 72,
-            height: 72,
-            borderRadius: '50%',
-            boxShadow: '0 22px 34px rgba(146, 0, 36, 0.32)',
-            zIndex: 1000,
-            '&:hover': {
-              backgroundColor: 'primary.dark',
-              boxShadow: '0 24px 36px rgba(146, 0, 36, 0.36)',
-            },
-          }}
-          aria-label="Создать предложение"
-        >
-          <AddRoundedIcon sx={{ fontSize: createFabIconFontSize }} />
-        </Fab>
+        {isOnline ? (
+          <Fab
+            onClick={() => setAddModal(true)}
+            sx={{
+              backgroundColor: 'primary.main',
+              color: 'primary.contrastText',
+              position: 'fixed',
+              right: 14,
+              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+              width: 72,
+              height: 72,
+              borderRadius: '50%',
+              boxShadow: '0 22px 34px rgba(146, 0, 36, 0.32)',
+              zIndex: 1000,
+              '&:hover': {
+                backgroundColor: 'primary.dark',
+                boxShadow: '0 24px 36px rgba(146, 0, 36, 0.36)',
+              },
+            }}
+            aria-label="Создать предложение"
+          >
+            <AddRoundedIcon sx={{ fontSize: createFabIconFontSize }} />
+          </Fab>
+        ) : null}
 
         <FeedbackFilters globalFontSize={normalizedGlobalFontSize} />
 
@@ -148,10 +159,10 @@ const FeedbackPage: React.FC = () => {
               }}
             >
               <Typography sx={{ fontSize: emptyTitleFontSize, fontWeight: 700, mb: 0.6 }}>
-                Ничего не найдено
+                {loadError ? 'Не удалось загрузить данные' : 'Ничего не найдено'}
               </Typography>
               <Typography sx={{ fontSize: emptyTextFontSize, color: 'text.secondary' }}>
-                Попробуйте изменить фильтр или текст поиска
+                {loadError ?? 'Попробуйте изменить фильтр или текст поиска'}
               </Typography>
             </Box>
           </Grid>

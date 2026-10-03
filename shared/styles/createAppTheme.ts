@@ -14,8 +14,8 @@ export function createAppTheme(darkMode: boolean) {
         contrastText: isDark ? appDarkPalette.onBrand : '#FFFFFF',
       },
       secondary: {
-        main: appPalette.primary,
-        dark: appPalette.primaryDark,
+        main: isDark ? appDarkPalette.primary : appPalette.primary,
+        dark: isDark ? appDarkPalette.primaryDark : appPalette.primaryDark,
         contrastText: isDark ? appDarkPalette.onBrand : '#FFFFFF',
       },
       error: {

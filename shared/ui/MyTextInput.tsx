@@ -14,6 +14,10 @@ interface MyTextInputProps {
   rows?: number;
   maxLength?: number;
   inputMode?: 'text' | 'numeric' | 'tel';
+  placeholder?: string;
+  name?: string;
+  autoComplete?: string;
+  ariaLabel?: string;
 }
 
 export default function MyTextInput({
@@ -29,10 +33,17 @@ export default function MyTextInput({
   rows = 1,
   maxLength,
   inputMode,
+  placeholder,
+  name,
+  autoComplete,
+  ariaLabel,
 }: MyTextInputProps) {
   return (
     <TextField
       label={label}
+      placeholder={placeholder}
+      name={name}
+      autoComplete={autoComplete}
       value={value}
       onChange={onChange}
       onBlur={onBlur}
@@ -47,6 +58,7 @@ export default function MyTextInput({
         htmlInput: {
           maxLength,
           inputMode,
+          'aria-label': ariaLabel,
         },
         ...(startAdornment || endAdornment
           ? {

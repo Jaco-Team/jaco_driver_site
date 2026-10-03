@@ -6,6 +6,8 @@ import { useSession } from '@/features/auth/model/auth.store';
 import { usePriceStore } from '@/entities/price';
 import { useSettingsStore } from '@/entities/settings';
 import { useHeaderStore } from '@/features/header/model/header.store';
+import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
+import { useRetryOnlineRequest } from '@/features/offline/model/useRetryOnlineRequest';
 import { devLog } from '@/shared/lib/devLog';
 import { log } from '@/components/analytics';
 import type {
@@ -20,6 +22,7 @@ const UI_DATE_FORMAT = 'D MMMM YYYY';
 
 export function usePriceScreen(): UsePriceScreenResult {
   const session = useSession();
+  const isOnline = useConnectivityStore((state) => state.isOnline);
 
   const [startDate, setStartDate] = useState(dayjs().startOf('day'));
   const [endDate, setEndDate] = useState(dayjs().startOf('day'));
@@ -50,15 +53,24 @@ export function usePriceScreen(): UsePriceScreenResult {
   const startDateApi = useMemo(() => startDate.format(API_DATE_FORMAT), [startDate]);
   const endDateApi = useMemo(() => endDate.format(API_DATE_FORMAT), [endDate]);
 
-  useEffect(() => {
-    if (session?.isAuth !== true) {
-      return;
-    }
-
-    void getStatBetween(startDateApi, endDateApi, pointId).catch((error) => {
+  const refreshPrice = useCallback(async () => {
+    try {
+      await getStatBetween(startDateApi, endDateApi, pointId);
+    } catch (error) {
       devLog('price_stats_load_failed', 'Price stats load failed', error);
-    });
-  }, [endDateApi, getStatBetween, pointId, session?.isAuth, startDateApi]);
+      throw error;
+    }
+  }, [endDateApi, getStatBetween, pointId, startDateApi]);
+
+  useRetryOnlineRequest(session?.isAuth === true && isOnline, refreshPrice);
+
+  useEffect(
+    () =>
+      useConnectivityStore.subscribe((state) => {
+        if (!state.isOnline) setActivePicker(null);
+      }),
+    []
+  );
 
   const openPicker = useCallback((type: Exclude<ActivePricePicker, null>) => {
     setActivePicker(type);
@@ -207,6 +219,7 @@ export function usePriceScreen(): UsePriceScreenResult {
   }, [activePicker]);
 
   return {
+    isOnline,
     statPrice,
     giveHistory,
     isStatLoading,

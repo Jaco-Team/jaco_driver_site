@@ -3,27 +3,54 @@ import { useCallback, useEffect, useState } from 'react';
 import { useFeedbackStore } from '@/widgets/feedback/model/feedback.store';
 import type { Feedback } from '@/entities/feedback/model/types';
 import type { UseFeedbackPageResult } from './useFeedbackPage.type';
+import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
+import { useRetryOnlineRequest } from '@/features/offline/model/useRetryOnlineRequest';
 
 export function useFeedbackPage(): UseFeedbackPageResult {
-  const { addModal, setAddModal, feedbacks, getFeedbacks, isLoad, snackbar, hideSnackbar } =
-    useFeedbackStore();
+  const isOnline = useConnectivityStore((state) => state.isOnline);
+  const {
+    addModal,
+    setAddModal,
+    feedbacks,
+    getFeedbacks,
+    clearFeedbacks,
+    isLoad,
+    loadError,
+    snackbar,
+    hideSnackbar,
+  } = useFeedbackStore();
 
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
 
-  const getFeedbacksFetch = useCallback(async () => {
-    try {
-      await getFeedbacks();
-    } catch (error) {
-      console.error('Failed to fetch feedbacks:', error);
-    }
-  }, [getFeedbacks]);
+  const getFeedbacksFetch = useCallback(() => getFeedbacks(), [getFeedbacks]);
+
+  useRetryOnlineRequest(isOnline, getFeedbacksFetch);
 
   useEffect(() => {
-    void getFeedbacksFetch();
-  }, [getFeedbacksFetch]);
+    if (isOnline) {
+      return;
+    }
+
+    clearFeedbacks();
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setBottomSheetOpen(false);
+        setSelectedFeedback(null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clearFeedbacks, isOnline]);
 
   const handleCardClick = (feedback: Feedback) => {
+    if (!isOnline) {
+      return;
+    }
+
     setSelectedFeedback(feedback);
     setBottomSheetOpen(true);
   };
@@ -40,8 +67,9 @@ export function useFeedbackPage(): UseFeedbackPageResult {
   return {
     addModal,
     setAddModal,
-    feedbacks,
+    feedbacks: isOnline ? feedbacks : [],
     isLoad,
+    loadError: isOnline ? loadError : null,
     snackbar,
     selectedFeedback,
     bottomSheetOpen,

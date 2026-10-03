@@ -18,6 +18,7 @@ export interface UserSettings {
   action_centered_map?: number | string;
   night_map?: number | string;
   dark_theme?: number | string | boolean;
+  app_theme?: 'system' | 'light' | 'dark';
   is_scaleMap?: number | string;
   fontSize?: number;
   theme?: string;

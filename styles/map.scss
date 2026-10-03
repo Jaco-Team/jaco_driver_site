@@ -359,13 +359,422 @@
   width: 100%;
   height: 100vh;
   min-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
   overflow: hidden;
+  background: var(--app-background);
 }
 
 .orders-map-stage__map {
   width: 100%;
+  height: 100%;
+}
+
+.orders-map-stage__online-map {
+  position: absolute;
+  inset: 0;
+}
+
+.orders-map-stage__loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: var(--app-text-muted);
+}
+
+.orders-map-stage__online-map {
+  z-index: 2;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.orders-map-stage__online-map--ready {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.orders-map-road-filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+// The same raster filter is used by the API 2.1 ground pane and offline tiles.
+// Markers, traffic, controls, and attribution stay outside it.
+.orders-map-stage__online-map[data-map-theme='dark'] [class*='-ground-pane'],
+.orders-offline-map-stage[data-map-theme='dark'] .maplibregl-canvas {
+  filter: invert(78%) sepia(15%) hue-rotate(175deg) brightness(92%) contrast(96%) saturate(115%)
+    url('#orders-map-dark-roads');
+}
+
+.orders-map-traffic {
+  position: absolute;
+  z-index: 3;
+  top: 124px;
+  right: 16px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--app-text);
+  cursor: pointer;
+
+  svg {
+    width: 25px;
+    height: 25px;
+  }
+
+  &[aria-pressed='true'] {
+    color: #22c55e;
+  }
+}
+
+.orders-map-stage__online-map[data-map-theme='dark']
+  .orders-map-traffic:not([aria-pressed='true']) {
+  color: #f0f8ff;
+}
+
+.orders-map-zoom {
+  position: absolute;
+  z-index: 3;
+  top: 192px;
+  right: 16px;
+  display: grid;
+  width: 44px;
+  height: clamp(190px, 32dvh, 300px);
+  place-items: center;
+
+  .MuiSlider-root {
+    height: 100%;
+    color: #dce4e8;
+  }
+
+  .MuiSlider-rail,
+  .MuiSlider-track {
+    width: 4px;
+    border: 0;
+    opacity: 1;
+  }
+
+  .MuiSlider-rail {
+    background: rgba(220, 228, 232, 0.45);
+  }
+
+  .MuiSlider-track {
+    background: #dce4e8;
+  }
+
+  .MuiSlider-thumb {
+    width: 20px;
+    height: 20px;
+    background: #f0f4f6;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+
+    &::before {
+      box-shadow: none;
+    }
+  }
+}
+
+.orders-map-stage__online-map[data-map-theme='light'] .orders-map-zoom {
+  .MuiSlider-rail {
+    background: rgba(67, 80, 90, 0.5);
+  }
+
+  .MuiSlider-track {
+    background: #72828e;
+  }
+}
+
+.orders-offline-map-stage {
+  position: relative;
+  width: 100%;
   height: 100vh;
   min-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--app-background);
+}
+
+.orders-offline-map-stage__map {
+  width: 100%;
+  height: 100%;
+}
+
+.orders-offline-map-status,
+.orders-offline-map-error {
+  position: absolute;
+  z-index: 90;
+  top: 116px;
+  left: 50%;
+  width: min(360px, calc(100% - 32px));
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--app-surface) 94%, transparent);
+  box-shadow: 0 8px 20px var(--app-shadow);
+  color: var(--app-text);
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.orders-offline-map-error {
+  color: $colorMain;
+}
+
+.orders-offline-map-stage__fallback {
+  position: absolute;
+  z-index: 85;
+  inset: 0;
+  overflow-y: auto;
+  background: var(--app-background);
+}
+
+.offline-order-marker {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #000;
+  font: inherit;
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.offline-order-marker__icon {
+  position: relative;
+  z-index: 1;
+  display: block;
+  flex: 0 0 auto;
+
+  & svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.offline-order-marker__label {
+  max-width: 150px;
+  margin-left: -5px;
+  padding: 0 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.35;
+}
+
+.offline-order-marker__label--transparent {
+  background: transparent;
+  color: #000;
+}
+
+.offline-order-marker__label--transparent_white {
+  background: transparent;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.72);
+}
+
+.offline-order-marker__label--white,
+.offline-order-marker__label--white_border {
+  margin-left: 5px;
+  padding-block: 2px;
+  background: #fff;
+  color: $colorText;
+}
+
+.offline-order-marker__label--white_border {
+  border: 1px solid #000;
+}
+
+.offline-order-marker__label--black {
+  margin-left: 5px;
+  padding-block: 2px;
+  border: 1px solid #000;
+  background: #000;
+  color: #fff;
+}
+
+.offline-order-marker__count {
+  display: grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: $colorMain;
+  color: #fff;
+  font-size: 12px;
+}
+
+.offline-home-marker {
+  display: grid;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.9));
+  cursor: pointer;
+
+  & svg {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+:root[data-app-theme='dark'] .offline-home-marker {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+}
+
+.orders-map-type-controls {
+  position: absolute;
+  z-index: 100;
+  bottom: calc(50px + env(safe-area-inset-bottom));
+  left: 5%;
+  display: flex;
+  width: 90%;
+  height: 52px;
+  align-items: stretch;
+  justify-content: space-between;
+  overflow: hidden;
+  border-radius: 60px;
+  background: rgba(0, 0, 0, 0.78);
+
+  & .MuiButton-root {
+    min-height: 52px;
+    padding: 0 8px;
+    border-radius: 0;
+    font-size: inherit;
+  }
+}
+
+.orders-map-type-controls--offline {
+  background: #05080d;
+}
+
+.orders-map-limit-controls {
+  position: absolute;
+  z-index: 100;
+  bottom: calc(114px + env(safe-area-inset-bottom));
+  left: 5%;
+  display: flex;
+  width: 90%;
+  justify-content: space-around;
+}
+
+.offline-map-zoom {
+  position: absolute;
+  z-index: 20;
+  top: 192px;
+  right: 16px;
+  display: grid;
+  width: 44px;
+  height: clamp(190px, 32dvh, 300px);
+  place-items: center;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.offline-map-zoom__rail {
+  position: relative;
+  width: 44px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: none;
+
+  &::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    width: 4px;
+    border-radius: 2px;
+    background: rgba(220, 228, 232, 0.45);
+    content: '';
+  }
+
+  &::after {
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    width: 4px;
+    height: var(--zoom-progress, 0%);
+    border-radius: 2px;
+    background: #dce4e8;
+    content: '';
+  }
+}
+
+.offline-map-zoom__handle {
+  position: absolute;
+  z-index: 1;
+  left: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f0f4f6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  transform: translateY(-50%);
+}
+
+.orders-offline-map-stage[data-map-theme='light'] .offline-map-zoom__rail {
+  &::before {
+    background: rgba(67, 80, 90, 0.5);
+  }
+
+  &::after {
+    background: #72828e;
+  }
+}
+
+.offline-map-attribution {
+  position: absolute;
+  z-index: 20;
+  bottom: 6px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #17212b;
+  font:
+    12px/1.2 Arial,
+    sans-serif;
+
+  & a {
+    display: flex;
+    min-height: 24px;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 1px 4px rgba(31, 43, 54, 0.22);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  & img {
+    display: block;
+    width: auto;
+    height: 20px;
+  }
 }
 
 .orders-map-compass {
@@ -454,20 +863,32 @@
   color: #fff;
 }
 
+:root[data-app-theme='dark'] {
+  .map-marker-statuses {
+    border-color: var(--app-border);
+    background: var(--app-surface-raised);
+  }
+
+  .map-marker-status-overflow {
+    color: var(--app-text);
+  }
+}
+
 .location_svg {
   position: absolute;
   z-index: 100;
-  top: 8%;
-  right: 1%;
+  top: 72px;
+  right: 16px;
 
   & button {
-    width: 50px;
-    height: 50px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 8px;
 
     & svg {
       width: 100%;
       height: 100%;
-      transition-duration: 1s;
     }
   }
 }

@@ -97,11 +97,7 @@ export function OrderRecommendationControl({
           disabled={disabled}
           onClick={handleRequest}
           startIcon={
-            isLoading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              <AutoAwesomeRoundedIcon />
-            )
+            isLoading ? <CircularProgress size={20} color="inherit" /> : <AutoAwesomeRoundedIcon />
           }
           sx={{
             minHeight: 48,

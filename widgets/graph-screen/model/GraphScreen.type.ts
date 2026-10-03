@@ -10,6 +10,7 @@ import type {
 } from '@/entities/graph/model/types';
 
 export interface GraphScreenViewProps {
+  isOnline: boolean;
   globalFontSize: number;
   fontClassName: string;
   month: string;
@@ -61,6 +62,7 @@ export interface GraphMonthPickerDrawerProps {
 
 export interface GraphErrorDrawerProps {
   open: boolean;
+  isOnline: boolean;
   errorModal: GraphErrorModal;
   globalFontSize: number;
   fontClassName: string;
@@ -85,6 +87,7 @@ export interface GraphAppealBlockProps {
   globalFontSize: number;
   appealText: string;
   isSubmittingAppeal: boolean;
+  isOnline: boolean;
   onChangeAppealText: (value: string) => void;
   onSubmit: () => void;
 }

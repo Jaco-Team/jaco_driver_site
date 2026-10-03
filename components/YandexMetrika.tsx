@@ -98,6 +98,8 @@ export default function YandexMetrika({
       <noscript>
         <div>
           {counterIds.map((id) => (
+            // The noscript tracking pixel must stay a plain image.
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               key={id}
               src={`https://mc.yandex.ru/watch/${id}`}

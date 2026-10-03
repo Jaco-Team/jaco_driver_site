@@ -13,6 +13,7 @@ import {
 import { normalizeOrderRow, filterOrdersByTypes } from './order.utils';
 import { getOrderMapLocationKey } from './orderMapGroups';
 import { getApiErrorInfo } from '@/shared/api/errors';
+import { getAuthToken } from '@/shared/api/token';
 import { log } from '@/components/analytics';
 import { devLog } from '@/shared/lib/devLog';
 import { describeGeolocationError, readDriverPosition } from '@/shared/lib/geolocation';
@@ -24,6 +25,7 @@ import {
 } from '@/features/offline/model/connectivity.store';
 import { readOfflineCache, writeOfflineCache } from '@/shared/lib/offline/cache';
 import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
+import { scheduleOfflineYandexMapSync } from '@/shared/lib/offline/yandexOfflineMap';
 import {
   fetchOrders,
   actionOrder as apiActionOrder,
@@ -38,6 +40,25 @@ const cachedOrders = readOfflineCache()?.orders ?? null;
 
 function getSelectedPointId(): number | null {
   return useSettingsStore.getState().pointId;
+}
+
+function getOrdersContextKey(typeId: number, pointId = getSelectedPointId()): string {
+  return `${pointId ?? 'all'}:${typeId}`;
+}
+
+const initialOrdersByContext: Record<string, Order[]> = {
+  ...(cachedOrders?.ordersByContext ?? {}),
+};
+let ordersWarmupPromise: Promise<void> | null = null;
+let pendingOrdersWarmup: { pointId: number | null; activeTypeId: number } | null = null;
+const inactiveOrdersSyncedAt = new Map<string, number>();
+const INACTIVE_ORDERS_REFRESH_INTERVAL_MS = 45_000;
+let activeOrdersRequestContextKey = '';
+let ordersRequestSequence = 0;
+let latestOrdersRequestId = 0;
+
+if (cachedOrders && !initialOrdersByContext[getOrdersContextKey(cachedOrders.type.id)]) {
+  initialOrdersByContext[getOrdersContextKey(cachedOrders.type.id)] = cachedOrders.sourceOrders;
 }
 
 function isApiOk(st: unknown): boolean {
@@ -68,6 +89,7 @@ function formatOrderError(error: unknown): string {
 function persistOrdersSnapshot(state: {
   orders: Order[];
   sourceOrders: Order[];
+  ordersByContext: Record<string, Order[]>;
   type: OrderType;
   type_dop: string[];
   update_interval: number;
@@ -81,6 +103,7 @@ function persistOrdersSnapshot(state: {
     orders: {
       orders: state.orders,
       sourceOrders: state.sourceOrders,
+      ordersByContext: state.ordersByContext,
       type: state.type,
       type_dop: state.type_dop,
       update_interval: state.update_interval,
@@ -109,6 +132,7 @@ interface OrdersStore {
   // State
   orders: Order[];
   sourceOrders: Order[];
+  ordersByContext: Record<string, Order[]>;
   isOpenMenu: boolean;
   update_interval: number;
   limit: string;
@@ -138,6 +162,7 @@ interface OrdersStore {
   driver_pay: boolean;
   typeToStatus: Record<number, string>;
   is_check: boolean;
+  ordersRefreshPending: boolean;
   location_driver: [number, number] | null;
   location_driver_time_text: string;
   home: HomeLocation | null;
@@ -167,6 +192,7 @@ interface OrdersStore {
   MyCurrentLocation: () => Promise<void>;
   showOrdersMap: (id: number | string) => void;
   setType: (type: OrderType, pointId?: number) => void;
+  switchPoint: (pointId: number | null) => void;
   setCloseMenu: () => void;
   setOpenMenu: () => void;
   actionFinishOrder: (order_id: number, is_map?: boolean) => Promise<void>;
@@ -201,6 +227,112 @@ interface OrdersStore {
 }
 
 export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
+  const syncOfflineMap = (
+    pointId: number | null,
+    home: HomeLocation | null,
+    additionalOrders: Order[] = []
+  ): void => {
+    const token = getAuthToken();
+    if (!token || pointId === null || !home || !isAppOnline()) return;
+
+    const prefix = `${pointId}:`;
+    const uniqueOrders = new Map<string, Order>();
+    const pointOrders = Object.entries(get().ordersByContext)
+      .filter(([key]) => key.startsWith(prefix))
+      .flatMap(([, orders]) => orders);
+
+    for (const order of [...pointOrders, ...additionalOrders]) {
+      const key = `${order.id}:${order.xy?.latitude ?? ''}:${order.xy?.longitude ?? ''}`;
+      uniqueOrders.set(key, order);
+    }
+
+    void scheduleOfflineYandexMapSync({
+      authToken: token,
+      pointId,
+      home,
+      orders: [...uniqueOrders.values()],
+    }).catch((error) => {
+      devLog('offline_map_sync_error', 'Offline map background sync error', error);
+    });
+  };
+
+  const warmOrdersCache = (pointId: number | null, activeTypeId: number): void => {
+    if (ordersWarmupPromise) {
+      pendingOrdersWarmup = { pointId, activeTypeId };
+      return;
+    }
+
+    if (!isAppOnline() || getSelectedPointId() !== pointId) {
+      return;
+    }
+
+    const now = Date.now();
+    const inactiveTypes = get().types.filter((item) => item.id !== activeTypeId);
+    const unsyncedTypes = inactiveTypes.filter(
+      (item) => !inactiveOrdersSyncedAt.has(getOrdersContextKey(item.id, pointId))
+    );
+    const staleTypes = inactiveTypes.filter((item) => {
+      const lastSync = inactiveOrdersSyncedAt.get(getOrdersContextKey(item.id, pointId)) ?? 0;
+      return now - lastSync >= INACTIVE_ORDERS_REFRESH_INTERVAL_MS;
+    });
+    // Сначала обновляем все вкладки, включая устаревшие данные из прошлого
+    // запуска. После прогрева обновляем по одной вкладке за цикл.
+    const typesToWarm =
+      unsyncedTypes.length > 0
+        ? unsyncedTypes.sort((a, b) => Number(b.id === 5) - Number(a.id === 5))
+        : staleTypes
+            .sort((a, b) => {
+              if (a.id === 5 || b.id === 5) return Number(b.id === 5) - Number(a.id === 5);
+              return (
+                (inactiveOrdersSyncedAt.get(getOrdersContextKey(a.id, pointId)) ?? 0) -
+                (inactiveOrdersSyncedAt.get(getOrdersContextKey(b.id, pointId)) ?? 0)
+              );
+            })
+            .slice(0, 1);
+
+    if (typesToWarm.length === 0) {
+      return;
+    }
+
+    ordersWarmupPromise = (async () => {
+      for (const item of typesToWarm) {
+        if (!isAppOnline() || getSelectedPointId() !== pointId) break;
+
+        try {
+          const response = await fetchOrders({
+            point_id: pointId ?? undefined,
+            type_orders: item.id,
+          });
+          if (!isAppOnline() || getSelectedPointId() !== pointId) break;
+
+          const normalized = normalizeOrdersResponse(response);
+          const contextKey = getOrdersContextKey(item.id, pointId);
+          const ordersByContext = {
+            ...get().ordersByContext,
+            [contextKey]: normalized.orders,
+          };
+
+          set({ ordersByContext });
+          persistOrdersSnapshot({ ...get(), ordersByContext });
+          inactiveOrdersSyncedAt.set(contextKey, Date.now());
+        } catch (error) {
+          devLog('orders_cache_warmup_error', 'Orders cache warmup error', error);
+        }
+      }
+
+      if (getSelectedPointId() === pointId) syncOfflineMap(pointId, get().home);
+    })().finally(() => {
+      ordersWarmupPromise = null;
+
+      const pending = pendingOrdersWarmup;
+      pendingOrdersWarmup = null;
+
+      if (pending && isAppOnline() && getSelectedPointId() === pending.pointId) {
+        warmOrdersCache(pending.pointId, pending.activeTypeId);
+      }
+    });
+  };
+
   const resolveDriverCoords = async (): Promise<{
     latitude: string;
     longitude: string;
@@ -228,6 +360,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     }
 
     if (!isAppOnline()) {
+      if (get().modalConfirm) get().setActiveConfirm(false);
       get().openErrOrder(formatOrderError(new Error('offline')));
       return;
     }
@@ -251,6 +384,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
   return {
     orders: cachedOrders?.orders ?? [],
     sourceOrders: cachedOrders?.sourceOrders ?? cachedOrders?.orders ?? [],
+    ordersByContext: initialOrdersByContext,
     isOpenMenu: false,
     update_interval: cachedOrders?.update_interval ?? 30,
     limit: cachedOrders?.limit ?? '',
@@ -280,6 +414,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     driver_pay: cachedOrders?.driver_pay ?? false,
     typeToStatus: TYPE_STATUS_MAP,
     is_check: false,
+    ordersRefreshPending: false,
     location_driver: null,
     location_driver_time_text: '',
     home: cachedOrders?.home ?? null,
@@ -295,6 +430,11 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     },
 
     setActiveConfirm: (active, order_finish_id, is_map, type_confirm, order_finish_is_delete) => {
+      if (active && !isAppOnline()) {
+        get().openErrOrder(formatOrderError(new Error('offline')));
+        return;
+      }
+
       if (active) {
         log('confirm_modal_open', 'Открытие модалки подтверждения заказа');
       } else {
@@ -366,8 +506,11 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
 
     getOrders: async (is_reload = false) => {
       const { type_dop, types_dop, type, is_check } = get();
+      const pointId = getSelectedPointId();
+      const contextKey = getOrdersContextKey(type.id, pointId);
 
-      if (is_check) {
+      if (is_check && activeOrdersRequestContextKey === contextKey) {
+        set({ ordersRefreshPending: true });
         return;
       }
 
@@ -376,7 +519,10 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         return;
       }
 
-      set({ is_check: true });
+      const requestId = ++ordersRequestSequence;
+      latestOrdersRequestId = requestId;
+      activeOrdersRequestContextKey = contextKey;
+      set({ is_check: true, ordersRefreshPending: false });
 
       if (is_reload) {
         set({ is_load: true });
@@ -384,47 +530,61 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
 
       try {
         const response = await fetchOrders({
-          point_id: getSelectedPointId() ?? undefined,
-          type_orders: get().type.id,
+          point_id: pointId ?? undefined,
+          type_orders: type.id,
         });
 
         const normalized = normalizeOrdersResponse(response);
         let orders = normalized.orders;
+        const ordersByContext = {
+          ...get().ordersByContext,
+          [contextKey]: normalized.orders,
+        };
+        const isCurrentContext = getOrdersContextKey(get().type.id) === contextKey;
 
         if (type.id === 1 && type_dop.length !== types_dop.length) {
           orders = filterOrdersByTypes(orders, type_dop, get().typeToStatus);
         }
 
-        const nextHome = hasHomeMoved(get().home, normalized.home)
-          ? normalized.home
-          : get().home;
+        const nextHome = hasHomeMoved(get().home, normalized.home) ? normalized.home : get().home;
 
         set({
-          orders,
-          sourceOrders: normalized.orders,
-          update_interval: normalized.update_interval,
-          limit: normalized.limit,
-          limit_count: normalized.limit_count,
-          del_orders: normalized.del_orders,
-          driver_pay: normalized.driver_pay,
-          driver_need_gps: normalized.driver_need_gps,
-          ...(hasHomeMoved(get().home, normalized.home) ? { home: normalized.home } : {}),
+          ordersByContext,
+          ...(isCurrentContext
+            ? {
+                orders,
+                sourceOrders: normalized.orders,
+                update_interval: normalized.update_interval,
+                limit: normalized.limit,
+                limit_count: normalized.limit_count,
+                del_orders: normalized.del_orders,
+                driver_pay: normalized.driver_pay,
+                driver_need_gps: normalized.driver_need_gps,
+                ...(hasHomeMoved(get().home, normalized.home) ? { home: normalized.home } : {}),
+              }
+            : {}),
         });
 
         persistOrdersSnapshot({
-          orders,
-          sourceOrders: normalized.orders,
-          type: get().type,
-          type_dop: get().type_dop,
-          update_interval: normalized.update_interval,
-          limit: normalized.limit,
-          limit_count: normalized.limit_count,
-          home: nextHome,
-          driver_pay: normalized.driver_pay,
-          driver_need_gps: normalized.driver_need_gps,
+          ...get(),
+          ordersByContext,
+          ...(isCurrentContext
+            ? {
+                orders,
+                sourceOrders: normalized.orders,
+                update_interval: normalized.update_interval,
+                limit: normalized.limit,
+                limit_count: normalized.limit_count,
+                home: nextHome,
+                driver_pay: normalized.driver_pay,
+                driver_need_gps: normalized.driver_need_gps,
+              }
+            : {}),
         });
 
         log('orders_fetch_success', 'Получение списка заказов');
+        syncOfflineMap(pointId, nextHome, normalized.orders);
+        warmOrdersCache(pointId, type.id);
       } catch (err) {
         devLog('orders_fetch_error', 'Orders fetch error', err);
         log('orders_fetch_fail', 'Ошибка при получении списка заказов');
@@ -432,7 +592,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         if (isConnectivityError(err)) {
           markAppOffline();
 
-          if (get().orders.length === 0) {
+          if (getOrdersContextKey(get().type.id) === contextKey && get().orders.length === 0) {
             get().openErrOrder(formatOrderError(err));
           }
         } else {
@@ -441,10 +601,21 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       }
 
       setTimeout(() => {
+        if (requestId !== latestOrdersRequestId) {
+          return;
+        }
+
+        const shouldRefreshCurrent = get().ordersRefreshPending;
+        activeOrdersRequestContextKey = '';
         set({
           is_check: false,
+          ordersRefreshPending: false,
           ...(get().isClick ? {} : { is_load: false }),
         });
+
+        if (shouldRefreshCurrent) {
+          void get().getOrders(false);
+        }
       }, 300);
     },
 
@@ -565,15 +736,49 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     },
 
     setType: (type) => {
+      const cached = get().ordersByContext[getOrdersContextKey(type.id)];
+      const orders = cached
+        ? type.id === 1 && get().type_dop.length !== get().types_dop.length
+          ? filterOrdersByTypes(cached, get().type_dop, get().typeToStatus)
+          : cached
+        : [];
+
+      set({
+        type,
+        orders,
+        sourceOrders: cached ?? [],
+        isOpenMenu: false,
+      });
+      persistOrdersSnapshot({ ...get(), type });
+
       if (!isAppOnline()) {
-        set({ isOpenMenu: false });
-        get().openErrOrder(formatOrderError(new Error('offline')));
         return;
       }
 
-      set({ type, isOpenMenu: false });
-      persistOrdersSnapshot({ ...get(), type });
       get().getOrders(false);
+    },
+
+    switchPoint: (pointId) => {
+      const { type, type_dop, types_dop, typeToStatus, ordersByContext } = get();
+      const cached = ordersByContext[getOrdersContextKey(type.id, pointId)];
+      const sourceOrders = cached ?? [];
+      const orders =
+        type.id === 1 && type_dop.length !== types_dop.length
+          ? filterOrdersByTypes(sourceOrders, type_dop, typeToStatus)
+          : sourceOrders;
+
+      set({
+        orders,
+        sourceOrders,
+        showOrders: [],
+        isOpenOrderMap: false,
+        ordersRefreshPending: false,
+      });
+      persistOrdersSnapshot({ ...get(), orders, sourceOrders });
+
+      if (isAppOnline()) {
+        void get().getOrders(true);
+      }
     },
 
     setCloseMenu: () => set({ isOpenMenu: false }),

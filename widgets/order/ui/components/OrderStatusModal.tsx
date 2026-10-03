@@ -12,27 +12,22 @@ import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 
 import { useOrdersStore } from '@/entities/order/model/order.store';
-import {
-  appDarkPalette,
-  appDarkSuccessPalette,
-  appPalette,
-  appSuccessPalette,
-} from '@/shared/styles/appPalette';
+import { appDarkPalette, appPalette, appSuccessPalette } from '@/shared/styles/appPalette';
 
-const SELECTED_TYPE_BG_LIGHT = '#e3f2fd';
-const SELECTED_TYPE_TEXT_LIGHT = '#1976d2';
-const SELECTED_TYPE_BG_DARK = 'rgba(117, 147, 173, 0.18)';
-const SELECTED_TYPE_TEXT_DARK = '#9CC0DD';
+const SELECTED_TYPE_BG_LIGHT = appPalette.surfaceAlt;
+const SELECTED_TYPE_TEXT_LIGHT = appPalette.text;
+const SELECTED_TYPE_BG_DARK = appDarkPalette.surfaceAlt;
+const SELECTED_TYPE_TEXT_DARK = appDarkPalette.text;
 
 const HeaderBox = styled(Box)(({ theme }) => ({
   position: 'sticky',
   top: 0,
   zIndex: 1,
-  backgroundColor: theme.palette.background.paper,
+  backgroundColor: theme.palette.mode === 'dark' ? appDarkPalette.surface : '#FFFFFF',
 }));
 
 const TitleText = styled(Typography)(({ theme }) => ({
-  fontWeight: 600,
+  fontWeight: 500,
   textAlign: 'center',
   color: theme.palette.mode === 'dark' ? theme.palette.text.primary : '#333',
 }));
@@ -41,17 +36,17 @@ const StyledListItemButton = styled(ListItemButton)(({ theme }) => {
   const isDark = theme.palette.mode === 'dark';
 
   return {
-    padding: theme.spacing(2, 3),
-    margin: theme.spacing(0.5, 2),
-    backgroundColor: isDark ? appDarkPalette.surfaceAlt : '#fff',
+    minHeight: 56,
+    padding: theme.spacing(0, 3),
+    backgroundColor: isDark ? appDarkPalette.surface : '#FFFFFF',
+    border: `1px solid ${isDark ? appDarkPalette.border : appPalette.border}`,
     borderRadius: 12,
     justifyContent: 'center',
     textAlign: 'center',
-    boxShadow: isDark ? `0 1px 3px ${appDarkPalette.shadowSoft}` : '0 1px 3px rgba(0, 0, 0, 0.08)',
+    boxShadow: `0 1px 3px ${isDark ? appDarkPalette.shadowSoft : appPalette.shadowSoft}`,
     transition: 'all 0.2s ease',
     '&:hover': {
-      backgroundColor: isDark ? appDarkPalette.surfaceRaised : '#fff',
-      opacity: 0.9,
+      backgroundColor: isDark ? appDarkPalette.surfaceRaised : '#FFFFFF',
     },
     '&:active': {
       backgroundColor: isDark ? appDarkPalette.surfaceRaised : '#f0f0f0',
@@ -65,8 +60,7 @@ const ActiveBadge = styled(Box)(({ theme }) => ({
   width: 8,
   height: 8,
   borderRadius: '50%',
-  backgroundColor:
-    theme.palette.mode === 'dark' ? appDarkSuccessPalette.main : appSuccessPalette.main,
+  backgroundColor: appSuccessPalette.main,
 }));
 
 interface OrderStatusModalProps {
@@ -110,15 +104,15 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
             height: 'auto',
             bottom: 0,
             top: 'auto',
-            backgroundColor: 'background.paper',
+            backgroundColor: (theme) =>
+              theme.palette.mode === 'dark' ? appDarkPalette.surface : '#FFFFFF',
+            backgroundImage: 'none',
             overflow: 'hidden',
             border: '1px solid',
             borderColor: (theme) =>
-              theme.palette.mode === 'dark' ? theme.palette.divider : appPalette.softStrong,
+              theme.palette.mode === 'dark' ? appDarkPalette.border : appPalette.softStrong,
             boxShadow: (theme) =>
-              theme.palette.mode === 'dark'
-                ? `0 24px 44px ${appDarkPalette.shadow}`
-                : '0 24px 44px rgba(31, 43, 54, 0.2)',
+              `0 -18px 42px ${theme.palette.mode === 'dark' ? appDarkPalette.shadowStrong : appPalette.shadowStrong}`,
           },
         },
       }}
@@ -126,8 +120,7 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
       <Box
         sx={{
           px: 0,
-          pt: 1.15,
-          pb: 'calc(env(safe-area-inset-bottom, 0px) + 28px)',
+          pt: 0,
         }}
       >
         <HeaderBox>
@@ -136,7 +129,8 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
               width: '100%',
               display: 'flex',
               justifyContent: 'center',
-              pb: 1,
+              height: 22,
+              alignItems: 'center',
               cursor: 'pointer',
             }}
             onClick={onClose}
@@ -148,44 +142,69 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
                 height: 6,
                 borderRadius: 999,
                 backgroundColor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(217, 224, 230, 0.28)'
-                    : 'rgba(31, 43, 54, 0.2)',
+                  theme.palette.mode === 'dark' ? appDarkPalette.border : appPalette.softStrong,
               }}
             />
           </Box>
 
-          <Box sx={{ position: 'relative', px: 3, pb: 1, backgroundColor: (theme) => {
-                    const isDark = theme.palette.mode === 'dark';
-                    return isDark ? appDarkPalette.surface : '#fff';
-                  }, }}>
+          <Box
+            sx={{
+              minHeight: 46,
+              display: 'grid',
+              gridTemplateColumns: '44px 1fr 44px',
+              alignItems: 'center',
+              px: 1.5,
+              pb: 1,
+              backgroundColor: (theme) => {
+                const isDark = theme.palette.mode === 'dark';
+                return isDark ? appDarkPalette.surface : '#fff';
+              },
+            }}
+          >
+            <Box />
+            <TitleText variant="h6" style={{ fontSize: globalFontSize + 2, lineHeight: 1.35 }}>
+              Список заказов
+            </TitleText>
             <IconButton
               onClick={onClose}
-              size="small"
               aria-label="Закрыть"
               sx={{
-                position: 'absolute',
-                top: 0,
-                right: 12,
                 width: 44,
                 height: 44,
+                color: 'text.secondary',
               }}
             >
               <CloseIcon />
             </IconButton>
-            <TitleText variant="h6" style={{ fontSize: globalFontSize + 2, lineHeight: 1.2 }}>
-              Список заказов
-            </TitleText>
           </Box>
-          <Divider sx={{ mt: 1 }} />
+          <Divider />
         </HeaderBox>
 
-        <List sx={{ p: 0, pt: 1 }}>
+        <List
+          disablePadding
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+            px: 2,
+            pt: 1.5,
+            pb: 'calc(env(safe-area-inset-bottom, 0px) + 28px)',
+          }}
+        >
           {types.map((orderType: any) => (
-            <ListItem key={orderType.id} sx={{ p: 0, position: 'relative' }}>
+            <ListItem disablePadding key={orderType.id}>
               <StyledListItemButton
+                selected={type?.id === orderType.id}
                 onClick={() => handleStatusClick(orderType)}
                 sx={{
+                  borderColor: (theme) =>
+                    type?.id === orderType.id
+                      ? theme.palette.mode === 'dark'
+                        ? appDarkPalette.primary
+                        : appPalette.primary
+                      : theme.palette.mode === 'dark'
+                        ? appDarkPalette.border
+                        : appPalette.border,
                   backgroundColor: (theme) => {
                     const isDark = theme.palette.mode === 'dark';
 
@@ -193,7 +212,13 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
                       return isDark ? SELECTED_TYPE_BG_DARK : SELECTED_TYPE_BG_LIGHT;
                     }
 
-                    return isDark ? appDarkPalette.surface : '#fff';
+                    return isDark ? appDarkPalette.surface : '#FFFFFF';
+                  },
+                  '&&.Mui-selected, &&.Mui-selected:hover': {
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? SELECTED_TYPE_BG_DARK
+                        : SELECTED_TYPE_BG_LIGHT,
                   },
                   position: 'relative',
                 }}
@@ -207,7 +232,7 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
                       sx: {
                         '&&': {
                           fontSize: globalFontSize,
-                          fontWeight: type?.id === orderType.id ? 600 : 500,
+                          fontWeight: 500,
                           textAlign: 'center',
                           color: (theme) => {
                             const isDark = theme.palette.mode === 'dark';

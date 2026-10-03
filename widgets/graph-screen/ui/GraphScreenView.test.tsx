@@ -9,6 +9,7 @@ describe('GraphScreenView', () => {
   it('renders empty graph states without crashing', () => {
     render(
       <GraphScreenView
+        isOnline
         globalFontSize={16}
         fontClassName=""
         month=""
@@ -47,6 +48,7 @@ describe('GraphScreenView', () => {
   it('marks the current user row in the schedule table', () => {
     const { container } = render(
       <GraphScreenView
+        isOnline
         globalFontSize={16}
         fontClassName=""
         month="Апрель 2026"

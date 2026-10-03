@@ -2,6 +2,8 @@ import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import { Feedback, FeedbackStore, SnackbarState } from '@/entities/feedback/model/types';
 import { getFeedbacks, saveFeedbacks } from '@/entities/feedback/api/feedback.api';
+import { isAppOnline, markAppOffline } from '@/features/offline/model/connectivity.store';
+import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
 
 const initialSnackbar: SnackbarState = {
   open: false,
@@ -10,6 +12,8 @@ const initialSnackbar: SnackbarState = {
   severity: 'success',
   message: '',
 };
+
+let feedbackRequestId = 0;
 
 function filterFeedbackList(feedbacks: Feedback[], search: string, status: number): Feedback[] {
   const searchValue = search.trim().toLowerCase();
@@ -31,6 +35,7 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
     feedbacks: [],
     feedbacksAll: [],
     isLoad: false,
+    loadError: null,
     isSaving: false,
     addModal: false,
     status: 0,
@@ -61,6 +66,11 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
       set({ addModal: load });
     },
 
+    clearFeedbacks: () => {
+      feedbackRequestId += 1;
+      set({ feedbacks: [], feedbacksAll: [], isLoad: false, loadError: null });
+    },
+
     setSnackbar: (snackbar) => {
       set((state) => ({
         snackbar: { ...state.snackbar, ...snackbar, open: true },
@@ -82,18 +92,42 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
     },
 
     getFeedbacks: async () => {
-      set({ isLoad: true });
+      const requestId = ++feedbackRequestId;
+      if (get().feedbacksAll.length === 0) set({ isLoad: true, loadError: null });
       try {
         const res = await getFeedbacks();
+
+        if (requestId !== feedbackRequestId) {
+          return true;
+        }
+
+        if (!isAppOnline()) {
+          get().clearFeedbacks();
+          return false;
+        }
+
         const { search, status } = get();
         set({
           feedbacks: filterFeedbackList(res.data, search, status),
           feedbacksAll: res.data,
           isLoad: false,
+          loadError: null,
         });
+        return true;
       } catch (error: any) {
+        if (requestId !== feedbackRequestId) {
+          return true;
+        }
+
+        if (!isAppOnline() || isConnectivityError(error) || error?.response?.status >= 500) {
+          if (isConnectivityError(error)) markAppOffline();
+          set({ isLoad: false, loadError: 'Не удалось загрузить данные' });
+          return false;
+        }
+
         set({
           isLoad: false,
+          loadError: 'Не удалось загрузить данные',
           snackbar: {
             open: true,
             vertical: 'top',
@@ -102,6 +136,7 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
             message: error.response?.data?.message || 'Ошибка загрузки отзывов',
           },
         });
+        return true;
       }
     },
 

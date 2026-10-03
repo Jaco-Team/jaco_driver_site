@@ -1,6 +1,12 @@
 @use './settings' as *;
 
 .settingsPage {
+  --settings-card-surface: var(--app-surface);
+  --settings-card-border: var(--app-border);
+  --settings-card-shadow: var(--app-shadow);
+  --settings-preview-surface: var(--app-surface-alt);
+  --settings-text: var(--app-text);
+  --settings-text-muted: var(--app-text-muted);
   width: 100%;
   max-width: 860px;
   margin: 0 auto;
@@ -9,24 +15,209 @@
 }
 
 .settingsPage__intro {
-  border-radius: 24px;
-  border: 1px solid var(--app-border);
-  background: linear-gradient(180deg, var(--app-surface) 0%, var(--app-background) 100%);
-  box-shadow: 0 14px 30px var(--app-shadow);
+  border-radius: 20px;
+  border: 1px solid var(--settings-card-border);
+  background: var(--settings-card-surface);
+  box-shadow: 0 14px 30px var(--settings-card-shadow);
   padding: 18px 18px 16px;
 }
 
 .settingsPage__introTitle {
   margin: 0;
-  color: var(--app-text);
+  color: var(--settings-text);
   font-weight: 800;
   line-height: 1.16;
 }
 
 .settingsPage__introText {
   margin: 8px 0 0;
-  color: var(--app-text-muted);
+  color: var(--settings-text-muted);
   line-height: 1.35;
+}
+
+.settingsPage__themeHint {
+  margin-top: 6px;
+  color: var(--settings-text-muted);
+  line-height: 20px;
+}
+
+.settingsPage__dangerText {
+  margin: 7px 0 16px;
+  color: var(--settings-text-muted);
+  line-height: 1.4;
+}
+
+.settingsPage__dangerButton.MuiButton-root {
+  min-width: 0;
+  min-height: 24px;
+  padding: 0;
+  justify-content: flex-start;
+  color: var(--app-brand);
+  font-weight: 700;
+  text-transform: none;
+}
+
+.settingsPage__dangerButton.MuiButton-root:hover {
+  background: transparent;
+  opacity: 0.7;
+}
+
+.settingsPage__cafeTrigger.MuiButton-root {
+  display: flex;
+  width: 100%;
+  min-height: 58px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--app-border);
+  border-radius: 18px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  text-transform: none;
+}
+
+.settingsPage__cafeTrigger.MuiButton-root:hover {
+  background: var(--app-surface);
+}
+
+:root[data-app-theme='dark'] .settingsPage__cafeTrigger.MuiButton-root,
+:root[data-app-theme='dark'] .settingsPage__cafeTrigger.MuiButton-root:hover {
+  background: var(--app-surface-alt);
+}
+
+.settingsPage__cafeTriggerLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settingsPage__cafeTriggerArrow {
+  width: 0;
+  height: 0;
+  flex-shrink: 0;
+  margin-right: 10px;
+  border-right: 5px solid transparent;
+  border-left: 5px solid transparent;
+  border-top: 6px solid var(--app-text-muted);
+}
+
+.settingsCafeSheet.MuiDrawer-paper {
+  border-radius: 28px 28px 0 0;
+  background: var(--app-surface);
+  color: var(--app-text);
+  box-shadow: 0 -20px 44px var(--app-shadow);
+}
+
+.settingsCafeSheet__content {
+  padding: 8px 20px calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
+
+.settingsCafeSheet__handle {
+  width: 62px;
+  height: 6px;
+  margin: 0 auto 14px;
+  border-radius: 99px;
+  background: var(--app-border);
+}
+
+.settingsCafeSheet__title {
+  margin-bottom: 18px;
+  text-align: center;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.settingsCafeSheet__list.MuiList-root {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0;
+  overscroll-behavior: contain;
+}
+
+.settingsCafeSheet__option.MuiListItemButton-root {
+  min-height: 58px;
+  border-bottom: 1px solid var(--app-border);
+  color: var(--app-text);
+  line-height: 1.3;
+}
+
+.settingsCafeSheet__option.MuiListItemButton-root.Mui-selected {
+  border-left: 3px solid var(--app-brand);
+  background: var(--app-brand-soft);
+  font-weight: 700;
+}
+
+.settingsPage .settingsCard.settingsCard--danger h2 {
+  color: var(--app-danger-text);
+}
+
+.settingsDeleteSheet.MuiDrawer-paper {
+  border-radius: 28px 28px 0 0;
+  background: var(--app-surface);
+  color: var(--app-text);
+  box-shadow: 0 -20px 44px var(--app-shadow);
+}
+
+.settingsDeleteSheet__content {
+  padding: 8px 20px calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
+
+.settingsDeleteSheet__handle {
+  width: 62px;
+  height: 6px;
+  margin: 0 auto 14px;
+  border-radius: 99px;
+  background: var(--app-border);
+}
+
+.settingsDeleteSheet__title {
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.settingsDeleteSheet__text {
+  margin-top: 8px;
+  color: var(--app-text-muted);
+  line-height: 1.45;
+}
+
+.settingsDeleteSheet__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.settingsDeleteSheet__actions .MuiButton-root {
+  flex: 1;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border-radius: 15px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-alt);
+  color: var(--app-text);
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: none;
+}
+
+.settingsDeleteSheet__actions .MuiButton-root:last-child {
+  border-color: transparent;
+  background: var(--app-brand);
+  color: #fff;
+}
+
+.settingsPage .settingsCard h2,
+.settingsPage .MuiFormLabel-root,
+.settingsPage .MuiFormControlLabel-label {
+  color: var(--settings-text);
 }
 
 .settingsCard {
@@ -34,6 +225,10 @@
   overflow: visible;
   padding: 20px;
   box-sizing: border-box;
+}
+
+.settingsCard--danger {
+  margin-bottom: 48px;
 }
 
 .settingsCard .MuiSlider-root {
@@ -105,90 +300,67 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
   border-radius: 20px;
-  border: 1px solid var(--app-border);
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
-}
-
-.settingsPreviewLayer {
-  position: relative;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+  border: 1px solid var(--settings-card-border);
+  background: var(--settings-preview-surface);
+  padding: 12px;
   margin-top: 6px;
 }
 
-.settings_preview--map {
-  // background-image: url('/map.png');
-  background-color: #e5e5e5;
-}
-
-.settings_preview--map-2 {
-  // background-image: url('/map_2.png');
-  background-color: #e5e5e5;
-}
-
-.settingsPreviewMarker,
-.settingsPreviewMarkerYa {
+.settingsPreviewChoice {
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: absolute;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
   cursor: pointer;
-  width: fit-content;
-  max-width: 88%;
-  transition:
-    transform 0.18s ease,
-    filter 0.18s ease;
+  gap: 8px;
 }
 
-.settingsPreviewMarker {
-  top: 20%;
-  left: 14%;
+.settingsPreviewChoice:hover {
+  background: color-mix(in srgb, var(--settings-card-surface) 38%, transparent);
 }
 
-.settingsPreviewMarkerYa {
-  top: 20%;
-  left: 12%;
+.settingsPreviewChoice:focus-visible {
+  outline: 2px solid var(--app-brand);
+  outline-offset: -2px;
 }
 
-.settingsPreviewMarker svg {
-  width: 24px;
-  height: 24px;
+.settingsPreviewChoice--marker {
+  min-height: 54px;
+}
+
+.settingsPreviewChoice svg {
+  width: 22px;
+  height: 28px;
   flex-shrink: 0;
 }
 
-.settingsPreviewMarkerYa svg {
-  width: 50px;
-  height: 50px;
-  position: absolute;
-  top: -10%;
-  left: -4%;
-  // transform: translateY(-50%);
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 2px rgba(31, 43, 54, 0.22));
+.settingsPreviewChoice--classic svg {
+  width: 28px;
+  height: 42px;
 }
 
-.settingsPreviewMarkerYa .settingsToken {
-  margin-left: 5px;
-  padding-left: 34px;
-}
-
-.settingsPreviewMarker:hover,
-.settingsPreviewMarkerYa:hover {
-  transform: translateY(-1px);
+.settingsPreviewChoice--classic .settingsToken {
+  margin-left: 4px;
 }
 
 .settingsToken {
   white-space: nowrap;
-  margin-left: 6px;
+  max-width: 84%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border-radius: 10px;
-  padding: 3px 10px;
-  font-size: 1rem;
-  line-height: 1.24;
+  padding: 3px 9px;
+  font-size: 14px;
+  line-height: 18px;
   border: 1px solid transparent;
   transition:
     border-color 0.18s ease,
@@ -203,12 +375,6 @@
 .settingsToken--transparentWhite {
   background-color: transparent;
   color: #ffffff;
-}
-
-:root[data-app-theme='dark'] {
-  .settingsToken--transparentWhite {
-    color: #1f2b36;
-  }
 }
 
 .settingsToken--white {
@@ -229,7 +395,7 @@
 }
 
 .settingsToken--ya {
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.85);
   color: #1f2b36;
   border-radius: 12px;
 }
@@ -258,23 +424,8 @@
     font-size: 0.77rem;
   }
 
-  .settingsPreviewMarker {
-    left: 10%;
-    max-width: 86%;
-  }
-
-  .settingsPreviewMarkerYa {
-    left: 9%;
-    max-width: 86%;
-  }
-
-  .settingsToken {
-    padding-left: 9px;
-    padding-right: 9px;
-    font-size: 0.92rem;
-  }
-
-  .settingsPreviewMarkerYa .settingsToken {
-    padding-left: 32px;
+  .settingsPreviewChoice {
+    padding-left: 12px;
+    padding-right: 12px;
   }
 }

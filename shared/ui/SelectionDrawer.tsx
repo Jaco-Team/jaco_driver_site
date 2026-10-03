@@ -39,8 +39,10 @@ export function SelectionDrawer<TItem>({
         '& .MuiDrawer-paper': {
           borderTopLeftRadius: 30,
           borderTopRightRadius: 30,
-          background: 'linear-gradient(180deg, #f8fbff 0%, #ffffff 24%)',
-          boxShadow: '0 -20px 44px rgba(15, 23, 42, 0.18)',
+          backgroundColor: 'var(--app-surface)',
+          backgroundImage: 'none',
+          color: 'var(--app-text)',
+          boxShadow: '0 -20px 44px var(--app-shadow)',
           overflow: 'hidden',
         },
       }}

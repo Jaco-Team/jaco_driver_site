@@ -554,7 +554,7 @@
   }
 
   .auth__panel {
-    background: rgba(16, 21, 27, 0.94);
+    background: var(--app-surface);
     border-color: var(--app-border);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.54);
   }
@@ -577,6 +577,10 @@
       color: var(--app-text-muted);
     }
 
+    .MuiInputLabel-root.Mui-focused {
+      color: var(--app-text-muted);
+    }
+
     .MuiOutlinedInput-root {
       background: var(--app-surface-alt);
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
@@ -589,6 +593,11 @@
 
     .MuiOutlinedInput-notchedOutline {
       border-color: var(--app-border);
+    }
+
+    .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+      border-color: #cc0033;
+      border-width: 2px;
     }
 
     .MuiOutlinedInput-input {

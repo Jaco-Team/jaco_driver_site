@@ -67,7 +67,17 @@ Dev-режим монтирует текущую папку проекта в к
 
 В git лежат только публичные URL: `.env.production` и `.env.development`.
 Ключи Карт и Sentry — в `.env.production.local` / `.env.development.local` (не коммитятся)
-и в GitHub Actions secrets для CI.
+или в секретах окружения CI/сервера.
+Для офлайн-карты сайта ключ продукта Tiles API хранится только на сервере:
+
+```dotenv
+YANDEX_TILES_API_KEY=ключ_продукта_Tiles_API
+```
+
+Он не заменяет `NEXT_PUBLIC_YANDEX_MAPS_API_KEY`: первый используется серверным
+прокси для загрузки офлайн-тайлов и передаётся контейнеру во время запуска,
+второй — браузерным JavaScript API обычной онлайн-карты и встраивается во время
+сборки.
 
 Для production-сборки образа, чтобы ключи попали в `NEXT_PUBLIC_*` на этапе `next build`:
 
@@ -81,7 +91,10 @@ docker compose --env-file .env.production --env-file .env.production.local up --
 docker compose --env-file .env.production --env-file .env.production.local -f compose.prod.yaml up -d --build
 ```
 
-Если образ уже собран в CI с секретами, на сервере достаточно `docker compose pull` — ключи уже внутри образа.
+Если образ уже собран в CI, публичные `NEXT_PUBLIC_*` значения уже находятся в
+сборке. Серверный `YANDEX_TILES_API_KEY` в образ не встраивается: его всё равно
+нужно передать запущенному production-контейнеру через `.env.production.local`
+или секрет окружения.
 
 Если backend работает на хост-машине и frontend должен обращаться к нему из браузера на этой же машине, `http://localhost:8080` обычно подходит.
 

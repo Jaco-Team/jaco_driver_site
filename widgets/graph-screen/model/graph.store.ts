@@ -13,11 +13,13 @@ import {
 } from '@/entities/graph/model/graph.utils';
 import { useSettingsStore } from '@/entities/settings';
 import { log } from '@/components/analytics';
+import { isAppOnline } from '@/features/offline/model/connectivity.store';
 import type { GraphStore, GraphStoreState } from './graph.store.type';
 
 let graphLoadPromise: Promise<void> | null = null;
 let graphLoadKey = '';
 let graphLoadPendingCount = 0;
+let graphRequestId = 0;
 
 const initialGraphState = {
   selectedPointId: '',
@@ -122,7 +124,9 @@ export const useGraphStore = createWithEqualityFn<GraphStore>(
     },
 
     loadGraph: async (date, pointId) => {
+      if (!isAppOnline()) return;
       await ensureSettingsLoaded();
+      if (!isAppOnline()) return;
 
       const nextPointId = resolveGraphPointId(pointId);
       const nextKey = `${date}:${nextPointId}`;
@@ -137,11 +141,14 @@ export const useGraphStore = createWithEqualityFn<GraphStore>(
       }
 
       graphLoadKey = nextKey;
+      const requestId = ++graphRequestId;
       graphLoadPromise = (async () => {
         const response = await fetchGraph(date, nextPointId || undefined);
+        if (requestId !== graphRequestId || !isAppOnline()) return;
+        const snapshot = normalizeGraphResponse(response, date);
 
         set({
-          ...normalizeGraphResponse(response, date),
+          ...snapshot,
           selectedPointId: nextPointId,
         });
       })();

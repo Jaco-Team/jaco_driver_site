@@ -36,7 +36,20 @@ export const SnackbarNotification: React.FC<SnackbarNotificationProps> = ({
       onClose={onClose}
       autoHideDuration={autoHideDuration}
     >
-      <Alert onClose={onClose} severity={severity} sx={{ width: '100%', fontSize }}>
+      <Alert
+        onClose={onClose}
+        severity={severity}
+        sx={{
+          width: '100%',
+          fontSize,
+          ...(severity === 'success'
+            ? {
+                color: '#fff',
+                '& .MuiAlert-icon, & .MuiAlert-action, & .MuiIconButton-root': { color: '#fff' },
+              }
+            : {}),
+        }}
+      >
         {message}
       </Alert>
     </Snackbar>

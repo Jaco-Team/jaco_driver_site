@@ -559,6 +559,12 @@
     &:hover {
       background: var(--app-brand-dark);
     }
+
+    &.Mui-disabled {
+      color: var(--app-text-muted);
+      background: var(--app-surface-alt);
+      box-shadow: none;
+    }
   }
 
   & .statistics__card {

@@ -39,6 +39,7 @@ export interface FeedbackStore {
   feedbacks: Feedback[];
   feedbacksAll: Feedback[];
   isLoad: boolean;
+  loadError: string | null;
   isSaving: boolean;
   addModal: boolean;
   status: FeedbackStatus;
@@ -52,8 +53,9 @@ export interface FeedbackStore {
   setSearch: (search: string) => void;
   setIsLoad: (load: boolean) => void;
   setAddModal: (load: boolean) => void;
+  clearFeedbacks: () => void;
   changeStatus: (status: FeedbackStatus) => void;
-  getFeedbacks: () => Promise<void>;
+  getFeedbacks: () => Promise<boolean>;
   saveFeedbacks: () => Promise<void>;
 }
 

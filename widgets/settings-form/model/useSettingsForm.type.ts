@@ -3,10 +3,13 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { Point } from '@/entities/point';
 import type { AuthSession } from '@/features/auth/model/auth.store';
 import type { SnackbarState } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
-import type { ThemeType, TypeDataMap, TypeShowDel } from '@/entities/settings';
+import type { AppThemePreference, ThemeType, TypeDataMap, TypeShowDel } from '@/entities/settings';
 
 export interface UseSettingsFormReturn {
   session: AuthSession;
+  isDemoAccount: boolean;
+  isDeleteSheetOpen: boolean;
+  isDeletingAccount: boolean;
   isSaving: boolean;
   pointId: number | null;
   points: Point[];
@@ -15,8 +18,7 @@ export interface UseSettingsFormReturn {
   typeShowDel: TypeShowDel;
   updateInterval: number;
   centeredMap: boolean;
-  nightMap: boolean;
-  darkTheme: boolean;
+  appTheme: AppThemePreference;
   isScaleMap: boolean;
   color: string;
   groupTypeTheme: ThemeType;
@@ -29,8 +31,7 @@ export interface UseSettingsFormReturn {
   setTypeShowDel: Dispatch<SetStateAction<TypeShowDel>>;
   setUpdateInterval: Dispatch<SetStateAction<number>>;
   setCenteredMap: Dispatch<SetStateAction<boolean>>;
-  setNightMap: Dispatch<SetStateAction<boolean>>;
-  setDarkTheme: (darkTheme: boolean) => void;
+  setAppTheme: (preference: AppThemePreference) => void;
   setIsScaleMap: Dispatch<SetStateAction<boolean>>;
   setColor: Dispatch<SetStateAction<string>>;
   setGroupTypeTheme: Dispatch<SetStateAction<ThemeType>>;
@@ -38,4 +39,6 @@ export interface UseSettingsFormReturn {
   setMapScale: Dispatch<SetStateAction<number>>;
   handleSave: () => Promise<void>;
   closeSnackbar: () => void;
+  setIsDeleteSheetOpen: Dispatch<SetStateAction<boolean>>;
+  confirmDemoAccountDeletion: () => Promise<void>;
 }
