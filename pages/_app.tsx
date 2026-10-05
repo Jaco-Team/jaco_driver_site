@@ -11,7 +11,7 @@ import '../styles/settings.scss';
 import '../styles/setting_style.scss';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import type { AppProps, NextWebVitalsMetric } from 'next/app';
@@ -26,6 +26,7 @@ import { createAppTheme } from '@/shared/styles/createAppTheme';
 import { devLog } from '@/shared/lib/devLog';
 import YandexMetrika from '@/components/YandexMetrika';
 import { useAuthStore } from '@/features/auth/model/auth.store';
+import { SessionLoading } from '@/features/auth/ui/SessionLoading';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { resolveYandexMetrikaIds } from '@/shared/lib/yandexMetrikaIds';
 import { useConnectivityWatch } from '@/features/offline/model/useConnectivityWatch';
@@ -51,6 +52,11 @@ function MyApp(props: MyAppProps) {
     session?: unknown;
   };
   const router = useRouter();
+  const isCheckingSession = useSyncExternalStore(
+    useAuthStore.subscribe,
+    () => useAuthStore.getState().session.isAuth === 'load',
+    () => true
+  );
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
   const darkTheme = useHeaderStore((state) => state.darkTheme);
   useConnectivityWatch();
@@ -156,7 +162,11 @@ function MyApp(props: MyAppProps) {
       <ThemeProvider theme={muiTheme}>
         <CssBaseline enableColorScheme />
         <YandexMetrika ids={YANDEX_METRIKA_IDS} />
-        <Component {...pagePropsWithoutSession} />
+        {isCheckingSession && !PUBLIC_ROUTES.has(router.pathname) ? (
+          <SessionLoading fontSize={normalizedGlobalFontSize} />
+        ) : (
+          <Component {...pagePropsWithoutSession} />
+        )}
       </ThemeProvider>
     </AppCacheProvider>
   );

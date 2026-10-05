@@ -103,7 +103,8 @@ export async function confirmPasswordRecoveryCode(
   );
 }
 
-export const fetchMe = async (): Promise<User> => connector.rest.get<User>(apiRoutes.auth.me);
+export const fetchMe = async (): Promise<User> =>
+  connector.rest.get<User>(apiRoutes.auth.me, { timeout: 15_000 });
 
 export async function logoutWeb(): Promise<void> {
   try {

@@ -4,7 +4,8 @@
  * are not stored here: they live in localStorage (shared/lib/offline/cache.ts).
  */
 
-const VERSION = 'v42';
+const VERSION = 'v43';
+const NETWORK_TIMEOUT_MS = 15_000;
 const PAGE_CACHE = `jaco-pages-${VERSION}`;
 const ASSET_CACHE = `jaco-assets-${VERSION}`;
 const OFFLINE_APP_CACHE = 'jaco-offline-app-v2';
@@ -61,29 +62,58 @@ async function putInCache(cacheName, request, response) {
     return;
   }
 
-  const cache = await caches.open(cacheName);
-  await cache.put(request, response.clone());
+  try {
+    const cache = await caches.open(cacheName);
+    await cache.put(request, response.clone());
+  } catch {
+    // A full or unavailable cache must not discard a successful network response.
+  }
+}
+
+async function matchCache(request, options) {
+  try {
+    return await caches.match(request, options);
+  } catch {
+    return undefined;
+  }
+}
+
+async function fetchWithTimeout(request) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), NETWORK_TIMEOUT_MS);
+
+  try {
+    return await fetch(request, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 async function handleNavigation(request) {
   try {
-    const response = await fetch(request);
+    const response = await fetchWithTimeout(request);
     await putInCache(PAGE_CACHE, request, response);
 
     return response;
   } catch (error) {
-    const cache = await caches.open(PAGE_CACHE);
-    const appCache = await caches.open(OFFLINE_APP_CACHE);
     const cached =
-      (await cache.match(request, { ignoreVary: true })) ||
-      (await cache.match(request, { ignoreSearch: true, ignoreVary: true })) ||
-      (await appCache.match(request, { ignoreSearch: true, ignoreVary: true }));
+      (await matchCache(request, { cacheName: PAGE_CACHE, ignoreVary: true })) ||
+      (await matchCache(request, {
+        cacheName: PAGE_CACHE,
+        ignoreSearch: true,
+        ignoreVary: true,
+      })) ||
+      (await matchCache(request, {
+        cacheName: OFFLINE_APP_CACHE,
+        ignoreSearch: true,
+        ignoreVary: true,
+      }));
 
     if (cached) {
       return cached;
     }
 
-    const offline = await caches.match(OFFLINE_URL);
+    const offline = await matchCache(OFFLINE_URL);
 
     if (offline) {
       return offline;
@@ -96,43 +126,37 @@ async function handleNavigation(request) {
 async function handleOfflineMapAsset(request) {
   // Cache Storage contains decoded static files, independent of Accept-Encoding.
   // Keep query strings intact: they identify the runtime version.
-  const cached = await caches.match(request, { ignoreVary: true });
+  const cached = await matchCache(request, { ignoreVary: true });
 
   if (cached) {
     return cached;
   }
 
-  const response = await fetch(request);
+  const response = await fetchWithTimeout(request);
   await putInCache(OFFLINE_APP_CACHE, request, response);
 
   return response;
 }
 
-async function handleNetworkFirst(request, cacheName) {
-  try {
-    const response = await fetch(request);
-    await putInCache(cacheName, request, response);
-    return response;
-  } catch (error) {
-    const cache = await caches.open(cacheName);
-    const appCache = await caches.open(OFFLINE_APP_CACHE);
-    const cached =
-      (await cache.match(request, { ignoreVary: true })) ||
-      (await appCache.match(request, { ignoreSearch: true, ignoreVary: true }));
+async function handleNextStaticAsset(request) {
+  const cached =
+    (await matchCache(request, { cacheName: ASSET_CACHE, ignoreVary: true })) ||
+    (await matchCache(request, { cacheName: OFFLINE_APP_CACHE, ignoreVary: true }));
 
-    if (cached) {
-      return cached;
-    }
-
-    throw error;
+  // Next.js chunk URLs include a build ID or content hash and are immutable.
+  if (cached) {
+    return cached;
   }
+
+  const response = await fetchWithTimeout(request);
+  await putInCache(ASSET_CACHE, request, response);
+  return response;
 }
 
 async function handleStaleWhileRevalidate(request) {
-  const cache = await caches.open(ASSET_CACHE);
-  const cached = await cache.match(request, { ignoreVary: true });
+  const cached = await matchCache(request, { cacheName: ASSET_CACHE, ignoreVary: true });
 
-  const revalidate = fetch(request)
+  const revalidate = fetchWithTimeout(request)
     .then((response) => putInCache(ASSET_CACHE, request, response).then(() => response))
     .catch(() => undefined);
 
@@ -207,7 +231,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isNextStaticAsset(url)) {
-    event.respondWith(handleNetworkFirst(request, ASSET_CACHE));
+    event.respondWith(handleNextStaticAsset(request));
     return;
   }
 

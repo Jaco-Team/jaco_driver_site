@@ -63,6 +63,25 @@ body {
     background-color 0.18s ease,
     color 0.18s ease;
 }
+
+.session-loading {
+  box-sizing: border-box;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  color: var(--app-text);
+}
+
+.session-loading__text {
+  margin: 0;
+  line-height: 1.45;
+  text-align: center;
+}
 .MuiDrawer-paper li a,
 .MuiDrawer-paper li span {
   text-decoration: none;

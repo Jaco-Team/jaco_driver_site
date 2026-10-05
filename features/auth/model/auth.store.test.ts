@@ -151,4 +151,31 @@ describe('auth store', () => {
     expect(useAuthStore.getState().session.isAuth).toBe(true);
     expect(mocks.clearAuthToken).not.toHaveBeenCalled();
   });
+
+  it.each(['ECONNABORTED', 'ETIMEDOUT'])(
+    'keeps the token and finishes session loading on %s',
+    async (code) => {
+      mocks.getAuthToken.mockReturnValue('token-1');
+      mocks.fetchMe.mockRejectedValue({ code, message: 'timeout of 15000ms exceeded' });
+
+      const result = await useAuthStore.getState().refreshSession();
+
+      expect(result).toMatchObject({ st: true, isAuth: true, token: 'token-1' });
+      expect(useAuthStore.getState().isSessionRefreshing).toBe(false);
+      expect(useAuthStore.getState().session.isAuth).toBe(true);
+      expect(mocks.clearAuthToken).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([401, 403])('clears the session when /me returns HTTP %s', async (status) => {
+    mocks.getAuthToken.mockReturnValue('token-1');
+    mocks.fetchMe.mockRejectedValue({ response: { status } });
+
+    const result = await useAuthStore.getState().refreshSession();
+
+    expect(result).toMatchObject({ st: false, isAuth: false, token: '' });
+    expect(useAuthStore.getState().isSessionRefreshing).toBe(false);
+    expect(useAuthStore.getState().session.isAuth).toBe(false);
+    expect(mocks.clearAuthToken).toHaveBeenCalledOnce();
+  });
 });
