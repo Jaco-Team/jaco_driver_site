@@ -26,7 +26,7 @@ export async function hasOfflineMapAssets(): Promise<boolean> {
   const cache = await caches.open(OFFLINE_APP_CACHE_NAME);
   const responses = await Promise.all(
     [...OFFLINE_MAP_ASSET_PATHS, ...OFFLINE_APP_ROUTES].map((path) =>
-      cache.match(getAssetRequest(path))
+      cache.match(getAssetRequest(path), { ignoreVary: true })
     )
   );
 
@@ -42,7 +42,7 @@ async function cacheOfflineAppAssets(): Promise<void> {
 
   for (const path of OFFLINE_MAP_ASSET_PATHS) {
     const request = getAssetRequest(path);
-    const cached = await cache.match(request);
+    const cached = await cache.match(request, { ignoreVary: true });
 
     if (cached) {
       continue;

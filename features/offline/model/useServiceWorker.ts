@@ -49,23 +49,43 @@ export function useServiceWorker(): void {
       return;
     }
 
-    let intervalId: number | undefined;
+    let disposed = false;
+    let registration: ServiceWorkerRegistration | null = null;
+    let pendingUpdate: Promise<unknown> | null = null;
 
-    void navigator.serviceWorker
-      .register(SERVICE_WORKER_URL, { scope: '/', updateViaCache: 'none' })
-      .then((registration) => {
-        intervalId = window.setInterval(() => {
-          void registration.update().catch(() => undefined);
-        }, UPDATE_INTERVAL_MS);
-      })
-      .catch((error) => {
-        devLog('service_worker_register_failed', 'Service worker registration failed', error);
-      });
+    const updateWorker = () => {
+      if (disposed || navigator.onLine === false || pendingUpdate) return;
+
+      const task = registration
+        ? registration.update()
+        : navigator.serviceWorker
+            .register(SERVICE_WORKER_URL, { scope: '/', updateViaCache: 'none' })
+            .then((nextRegistration) => {
+              registration = nextRegistration;
+            });
+
+      pendingUpdate = task
+        .catch((error) => {
+          devLog('service_worker_register_failed', 'Service worker update failed', error);
+        })
+        .finally(() => {
+          pendingUpdate = null;
+        });
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') updateWorker();
+    };
+
+    window.addEventListener('online', updateWorker);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    const intervalId = window.setInterval(updateWorker, UPDATE_INTERVAL_MS);
+    updateWorker();
 
     return () => {
-      if (intervalId) {
-        window.clearInterval(intervalId);
-      }
+      disposed = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener('online', updateWorker);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, []);
 }

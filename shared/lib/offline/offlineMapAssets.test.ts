@@ -22,6 +22,9 @@ describe('offline application assets', () => {
 
     await expect(hasOfflineMapAssets()).resolves.toBe(true);
     expect(open).toHaveBeenCalledWith(OFFLINE_APP_CACHE_NAME);
+    for (const [request] of match.mock.calls) {
+      expect(match).toHaveBeenCalledWith(request, { ignoreVary: true });
+    }
 
     for (const path of OFFLINE_MAP_ASSET_PATHS) {
       expect(matchedUrls).toContain(new URL(path, window.location.origin).href);

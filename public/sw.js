@@ -4,7 +4,7 @@
  * are not stored here: they live in localStorage (shared/lib/offline/cache.ts).
  */
 
-const VERSION = 'v38';
+const VERSION = 'v39';
 const PAGE_CACHE = `jaco-pages-${VERSION}`;
 const ASSET_CACHE = `jaco-assets-${VERSION}`;
 const OFFLINE_APP_CACHE = 'jaco-offline-app-v2';
@@ -94,7 +94,9 @@ async function handleNavigation(request) {
 }
 
 async function handleOfflineMapAsset(request) {
-  const cached = await caches.match(request);
+  // Cache Storage contains decoded static files, independent of Accept-Encoding.
+  // Keep query strings intact: they identify the runtime version.
+  const cached = await caches.match(request, { ignoreVary: true });
 
   if (cached) {
     return cached;
@@ -115,7 +117,7 @@ async function handleNetworkFirst(request, cacheName) {
     const cache = await caches.open(cacheName);
     const appCache = await caches.open(OFFLINE_APP_CACHE);
     const cached =
-      (await cache.match(request)) ||
+      (await cache.match(request, { ignoreVary: true })) ||
       (await appCache.match(request, { ignoreSearch: true, ignoreVary: true }));
 
     if (cached) {
@@ -128,7 +130,7 @@ async function handleNetworkFirst(request, cacheName) {
 
 async function handleStaleWhileRevalidate(request) {
   const cache = await caches.open(ASSET_CACHE);
-  const cached = await cache.match(request);
+  const cached = await cache.match(request, { ignoreVary: true });
 
   const revalidate = fetch(request)
     .then((response) => putInCache(ASSET_CACHE, request, response).then(() => response))
