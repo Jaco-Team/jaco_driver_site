@@ -68,6 +68,15 @@ Dev-режим монтирует текущую папку проекта в к
 В git лежат только публичные URL: `.env.production` и `.env.development`.
 Ключи Карт и Sentry — в `.env.production.local` / `.env.development.local` (не коммитятся)
 или в секретах окружения CI/сервера.
+
+В GitHub Actions workflow [build.yml](../.github/workflows/build.yml) требует
+`NEXT_PUBLIC_YANDEX_MAPS_API_KEY` на этапе сборки. Задайте браузерный ключ в
+репозитории `Jaco-Team/jaco_driver_site`: `Settings → Secrets and variables → Actions`
+как repository secret или variable с этим именем. Secret имеет приоритет.
+Job не привязан к GitHub Environment, поэтому ключ, сохранённый только в
+environment secrets, ему недоступен. Локальный `.env.production.local` в CI
+не загружается. После настройки ключа повторите упавший запуск workflow.
+
 Для офлайн-карты сайта ключ продукта Tiles API хранится только на сервере:
 
 ```dotenv

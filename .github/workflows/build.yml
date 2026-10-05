@@ -16,10 +16,20 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_YANDEX_MAPS_API_KEY: ${{ secrets.NEXT_PUBLIC_YANDEX_MAPS_API_KEY || vars.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Check frontend build configuration
+        shell: bash
+        run: |
+          if [[ -z "${NEXT_PUBLIC_YANDEX_MAPS_API_KEY//[[:space:]]/}" ]]; then
+            echo "::error::NEXT_PUBLIC_YANDEX_MAPS_API_KEY is missing. Set it in repository Settings > Secrets and variables > Actions (secret or variable). This job does not use environment secrets; local .env.production.local is excluded from the Docker image."
+            exit 1
+          fi
 
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -32,7 +42,7 @@ jobs:
             --build-arg NEXT_PUBLIC_LEGACY_API_ORIGIN=https://apidriver.jacochef.ru \
             --build-arg NEXT_PUBLIC_MEDIA_ORIGIN=https://apidriver.jacochef.ru \
             --build-arg NEXT_PUBLIC_YANDEX_METRIKA_ID="${{ secrets.NEXT_PUBLIC_YANDEX_METRIKA_ID }}" \
-            --build-arg NEXT_PUBLIC_YANDEX_MAPS_API_KEY="${{ secrets.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }}" \
+            --build-arg NEXT_PUBLIC_YANDEX_MAPS_API_KEY \
             --build-arg NEXT_PUBLIC_SENTRY_DSN="${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}" \
             --build-arg NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY="${{ secrets.NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}" \
             -t $IMAGE_NAME .
