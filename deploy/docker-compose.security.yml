@@ -1,5 +1,7 @@
 services:
   driver-frontend-new:
+    environment:
+      YANDEX_TILES_API_KEY: ${YANDEX_TILES_API_KEY:?Set the YANDEX_TILES_API_KEY Actions secret for deployment}
     read_only: true
     security_opt:
       - no-new-privileges:true

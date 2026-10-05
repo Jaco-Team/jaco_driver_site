@@ -77,7 +77,7 @@ Job не привязан к GitHub Environment, поэтому ключ, сох
 environment secrets, ему недоступен. Локальный `.env.production.local` в CI
 не загружается. После настройки ключа повторите упавший запуск workflow.
 
-Для офлайн-карты сайта ключ продукта Tiles API хранится только на сервере:
+Для офлайн-карты ключ продукта Tiles API передаётся серверному контейнеру при запуске:
 
 ```dotenv
 YANDEX_TILES_API_KEY=ключ_продукта_Tiles_API
@@ -104,6 +104,37 @@ docker compose --env-file .env.production --env-file .env.production.local -f co
 сборке. Серверный `YANDEX_TILES_API_KEY` в образ не встраивается: его всё равно
 нужно передать запущенному production-контейнеру через `.env.production.local`
 или секрет окружения.
+
+### Деплой через GitHub Actions
+
+Workflow запускает на сервере сервис `driver-frontend-new` из
+`/home/deploy/deploy/driver-frontend/docker-compose.yml` с дополнительным файлом
+`docker-compose.security.yml`. Ручное создание серверного env-файла для Tiles API
+не требуется.
+
+В репозитории `Jaco-Team/jaco_driver_site` откройте
+`Settings → Secrets and variables → Actions → New repository secret` и добавьте
+`YANDEX_TILES_API_KEY` с ключом, имеющим доступ к продукту Tiles API.
+`NEXT_PUBLIC_YANDEX_MAPS_API_KEY` настраивает онлайн-карту при сборке.
+Значения ключей не коммитятся.
+
+При `AUTO_DEPLOY_FRONTEND=true` workflow проверяет наличие Tiles-ключа до сборки,
+передаёт secret в SSH-шаг через `envs`, а дополнительный compose-файл подставляет
+его в окружение `driver-frontend-new`. Ключ не передаётся в `docker build` и не
+встраивается в образ. SSH-скрипт останавливается при ошибке любой deploy-команды.
+
+После публикации обновлённого workflow и настройки secret запустите workflow
+заново. Docker Compose пересоздаст контейнер при изменении значения ключа.
+При ручном запуске серверного Compose `YANDEX_TILES_API_KEY` должен быть доступен
+в окружении запуска: дополнительный compose-файл завершается ошибкой, если
+переменная пуста.
+
+Ответ `503` от `POST /api/offline-map/session` с сообщением
+«На сервере не настроен ключ Yandex Tiles API.» означает, что сервер не получил
+`YANDEX_TILES_API_KEY` или значение после удаления пробелов короче 20 символов.
+Он возвращается до проверки авторизации и до обращения к Яндексу. Фоновое
+сохранение карты запускается после обновления заказов, поэтому запрос повторяется,
+пока ключ не настроен. Онлайн-карта при этом продолжает работать.
 
 Если backend работает на хост-машине и frontend должен обращаться к нему из браузера на этой же машине, `http://localhost:8080` обычно подходит.
 

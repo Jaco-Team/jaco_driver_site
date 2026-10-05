@@ -24,10 +24,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check frontend build configuration
+        env:
+          AUTO_DEPLOY_FRONTEND: ${{ vars.AUTO_DEPLOY_FRONTEND }}
+          YANDEX_TILES_API_KEY: ${{ secrets.YANDEX_TILES_API_KEY }}
         shell: bash
         run: |
           if [[ -z "${NEXT_PUBLIC_YANDEX_MAPS_API_KEY//[[:space:]]/}" ]]; then
             echo "::error::NEXT_PUBLIC_YANDEX_MAPS_API_KEY is missing. Set it in repository Settings > Secrets and variables > Actions (secret or variable). This job does not use environment secrets; local .env.production.local is excluded from the Docker image."
+            exit 1
+          fi
+          tiles_key="${YANDEX_TILES_API_KEY//[[:space:]]/}"
+          if [[ "$AUTO_DEPLOY_FRONTEND" == 'true' && ${#tiles_key} -lt 20 ]]; then
+            echo "::error::YANDEX_TILES_API_KEY is missing or too short. Set a repository Actions secret for the runtime offline map API before deploying."
             exit 1
           fi
 
@@ -65,11 +73,15 @@ jobs:
       - name: Deploy frontend over SSH
         if: ${{ vars.AUTO_DEPLOY_FRONTEND == 'true' }}
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        env:
+          YANDEX_TILES_API_KEY: ${{ secrets.YANDEX_TILES_API_KEY }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: YANDEX_TILES_API_KEY
           script: |
+            set -eu
             cd /home/deploy/deploy/driver-frontend
 
             docker compose \
