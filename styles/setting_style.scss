@@ -1,5 +1,46 @@
 @use './settings' as *;
 
+.offlineCitySettings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__details,
+  &__progress {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__ready {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--app-text);
+  }
+
+  &__progressLabel,
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__progressLabel {
+    justify-content: space-between;
+  }
+  &__actions {
+    flex-wrap: wrap;
+    .MuiButton-root {
+      min-height: 44px;
+    }
+    .MuiIconButton-root {
+      width: 44px;
+      height: 44px;
+    }
+  }
+}
+
 .settingsPage {
   --settings-card-surface: var(--app-surface);
   --settings-card-border: var(--app-border);

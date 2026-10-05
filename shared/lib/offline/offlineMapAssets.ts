@@ -1,3 +1,5 @@
+import { OFFLINE_MAP_RUNTIME_URL } from './offlineMapRuntime';
+
 export const OFFLINE_APP_CACHE_NAME = 'jaco-offline-app-v2';
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
 const OFFLINE_APP_ROUTES = IS_DEVELOPMENT
@@ -6,12 +8,12 @@ const OFFLINE_APP_ROUTES = IS_DEVELOPMENT
 let ensurePromise: Promise<void> | null = null;
 
 export const OFFLINE_MAP_ASSET_PATHS = [
-  '/offline-map/offline-orders-map.mjs?v=25',
+  OFFLINE_MAP_RUNTIME_URL,
   '/offline-map/yandex-logo-ru.svg',
-  '/offline-map/runtime/maplibre-gl.mjs?v=6.11.2',
-  '/offline-map/runtime/maplibre-gl-shared.mjs?v=6.11.2',
-  '/offline-map/runtime/maplibre-gl-worker.mjs?v=6.11.2',
-  '/offline-map/runtime/maplibre-gl.css',
+  '/offline-map/runtime/maplibre-gl.mjs?v=6.12.0',
+  '/offline-map/runtime/maplibre-gl-shared.mjs?v=6.12.0',
+  '/offline-map/runtime/maplibre-gl-worker.mjs?v=6.12.0',
+  '/offline-map/runtime/maplibre-gl.css?v=6.12.0',
 ];
 
 function getAssetRequest(path: string): Request {

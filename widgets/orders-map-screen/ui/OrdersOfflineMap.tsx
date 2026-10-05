@@ -3,124 +3,23 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { HomeLocation } from '@/entities/order/model/order.types';
 import type { OrderMapGroup } from '@/entities/order/model/orderMapGroups';
 import { sanitizeCssColor } from '@/shared/lib/escapeHtml';
+import { devLog } from '@/shared/lib/devLog';
+import { getOfflineMapRegionId } from '@/shared/lib/offline/offlineMapRegionId';
+import {
+  loadOfflineMapRuntime,
+  type OfflineMapHandle,
+  type OfflineRuntimeGroup,
+} from '@/shared/lib/offline/offlineMapRuntime';
 import type { MapViewport } from '../model/mapViewport';
 import { OrdersMapCompass } from './OrdersMapCompass';
 import { OrdersMapRasterFilter } from './OrdersMapRasterFilter';
 import { OrdersMapOfflineList } from './OrdersMapOfflineList';
 
-interface OfflineRuntimeGroup {
-  key: string;
-  coordinate: [number, number];
-  orderId: number;
-  idText: string;
-  address: string;
-  label: string;
-  color: string;
-  count: number;
-  isLocation: boolean;
-}
-
-interface OfflineMapHandle {
-  destroy: () => void;
-  updateGroups: (groups: OfflineRuntimeGroup[]) => void;
-  centerOnCoordinate: (coordinate: [number, number]) => void;
-}
-
-interface OfflineMapRuntime {
-  version?: string;
-  mount: (options: {
-    container: HTMLElement;
-    signal?: AbortSignal;
-    pointId?: number | null;
-    center?: [number, number];
-    zoom?: number;
-    groups: OfflineRuntimeGroup[];
-    dark: boolean;
-    theme: string;
-    mapScale: string;
-    globalFontSize: number;
-    showZoomControls: boolean;
-    onOrderClick: (id: number) => void;
-    onHomeClick: () => void;
-    onViewportChange: (viewport: MapViewport) => void;
-    onReady: () => void;
-    onError: (error: unknown) => void;
-  }) => Promise<OfflineMapHandle>;
-}
-
-declare global {
-  interface Window {
-    JacoOfflineOrdersMap?: OfflineMapRuntime;
-  }
-}
-
-const RUNTIME_SCRIPT_ID = 'jaco-offline-orders-map-runtime';
-const RUNTIME_VERSION = '25';
-const RUNTIME_SCRIPT_URL = `/offline-map/offline-orders-map.mjs?v=${RUNTIME_VERSION}`;
-let runtimePromise: Promise<OfflineMapRuntime> | null = null;
-
-function loadOfflineMapRuntime(): Promise<OfflineMapRuntime> {
-  if (window.JacoOfflineOrdersMap?.version === RUNTIME_VERSION) {
-    return Promise.resolve(window.JacoOfflineOrdersMap);
-  }
-
-  if (runtimePromise) {
-    return runtimePromise;
-  }
-
-  const loadPromise = new Promise<OfflineMapRuntime>((resolve, reject) => {
-    let existing = document.getElementById(RUNTIME_SCRIPT_ID) as HTMLScriptElement | null;
-
-    // `runtimePromise` is the only valid in-flight load. If it is empty, a tag
-    // already present in the document belongs to an earlier failed attempt and
-    // its `load` event will never fire again.
-    if (existing) {
-      existing.remove();
-      existing = null;
-      delete window.JacoOfflineOrdersMap;
-    }
-
-    const script = existing ?? document.createElement('script');
-
-    const handleLoad = () => {
-      if (window.JacoOfflineOrdersMap?.version === RUNTIME_VERSION) {
-        resolve(window.JacoOfflineOrdersMap);
-        return;
-      }
-
-      reject(new Error('Модуль офлайн-карты загрузился без API.'));
-    };
-
-    const handleError = () => reject(new Error('Не удалось загрузить модуль офлайн-карты.'));
-
-    script.addEventListener('load', handleLoad, { once: true });
-    script.addEventListener('error', handleError, { once: true });
-
-    if (!existing) {
-      script.id = RUNTIME_SCRIPT_ID;
-      script.type = 'module';
-      script.src = RUNTIME_SCRIPT_URL;
-      script.dataset.runtimeVersion = RUNTIME_VERSION;
-      document.head.append(script);
-    }
-  }).catch((error) => {
-    runtimePromise = null;
-    throw error;
-  });
-
-  runtimePromise = loadPromise;
-  return loadPromise;
-}
-
 function getErrorText(error: unknown): string {
-  const message =
-    error instanceof Error && error.message
-      ? error.message
-      : 'Не удалось открыть сохранённую карту.';
-  const stack = error instanceof Error ? (error.stack ?? '') : '';
-  const source = stack.match(/([\w.-]+\.m?js:\d+:\d+)/)?.[1];
-
-  return `${message} · ${source ?? `runtime-v${RUNTIME_VERSION}`}`;
+  devLog('offline_map_open_failed', 'Не удалось открыть офлайн-карту', error);
+  return error instanceof Error && error.message
+    ? error.message
+    : 'Не удалось открыть сохранённую карту.';
 }
 
 interface OrdersOfflineMapProps {
@@ -223,7 +122,7 @@ export function OrdersOfflineMap({
         runtime.mount({
           container,
           signal: abortController.signal,
-          pointId,
+          pointId: getOfflineMapRegionId(pointId, home),
           center: homeCenter,
           zoom: home?.zoom,
           groups: runtimeGroupsRef.current,
@@ -271,7 +170,7 @@ export function OrdersOfflineMap({
       }
       mapHandle?.destroy();
     };
-  }, [dark, globalFontSize, homeCenter, home?.zoom, mapScale, pointId, showZoomControls, theme]);
+  }, [dark, globalFontSize, home, homeCenter, mapScale, pointId, showZoomControls, theme]);
 
   const centerOnCoordinate = (coordinate: [number, number]) => {
     mapHandleRef.current?.centerOnCoordinate(coordinate);
@@ -301,8 +200,8 @@ export function OrdersOfflineMap({
 
       {error ? (
         <div className="orders-offline-map-stage__fallback">
-          <div className="orders-offline-map-error">{error}</div>
           <OrdersMapOfflineList
+            mapError={error}
             groups={groups}
             typeText={typeText}
             globalFontSize={globalFontSize}

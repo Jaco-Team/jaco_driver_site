@@ -23,6 +23,12 @@ Dev-сайт доступен на `http://localhost:3225`. Основные к�
 Service worker отключён в `next dev`: кэширование изменяемых HMR-ресурсов приводило к устаревшему коду и перезагрузкам. Офлайн-поведение проверяйте через `npm run preview:offline`; команда собирает приложение и запускает standalone-сервер на том же порту.
 Preview собирается отдельно в `.next-preview`, поэтому не перезаписывает dev-сборку. Если dev уже занимает порт 3225, запустите preview на другом: `PORT=3325 npm run preview:offline`. При наличии сети онлайн-карта заказов в preview использует API 2.1; при её отключении — сохранённую офлайн-подложку.
 
+## Обновление зависимостей
+
+После изменения `package.json` выполните `npm install` и сохраните `package-lock.json`. Файлы MapLibre для офлайн-карты синхронизируются с установленным пакетом автоматически перед `dev`, `win` и `build`; отдельно доступна команда `npm run sync:offline-map`. Она обновляет ссылки на модули, CSS и версии кэша, не удаляя скачанные карты городов. Повторный запуск без изменений ничего не перезаписывает. В Docker синхронизация выполняется на этапе сборки, когда исходники уже скопированы.
+
+В `overrides` закреплены исправленная версия gRPC для Firestore и замена `fast-glob` на `tinyglobby` только внутри ESLint-плагина Next.js. Это устраняет уязвимые транзитивные зависимости без отката Firebase и Next.js. Совместимость определения каталогов Next.js проверяется в `tests/tooling/next-eslint-glob.test.mjs`; при обновлении плагина нужно пересмотреть override и эти тесты.
+
 ## API и переменные окружения
 
 Публичные параметры перечислены в [`.env.example`](../.env.example), [`.env.development`](../.env.development) и [`.env.production`](../.env.production). Основные: `NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_API_PROXY`, `NEXT_PUBLIC_MEDIA_ORIGIN`, `NEXT_PUBLIC_YANDEX_MAPS_API_KEY` и параметры Sentry. Серверный `YANDEX_TILES_API_KEY` не должен попадать в `NEXT_PUBLIC_*`; подробности — в [документе о карте](./maps.md).

@@ -1,4 +1,4 @@
-import * as maplibregl from '/offline-map/runtime/maplibre-gl.mjs?v=6.11.2';
+import * as maplibregl from '/offline-map/runtime/maplibre-gl.mjs?v=6.12.0';
 
 const CACHE_NAME = 'jaco-yandex-offline-tiles-v1';
 const METADATA_KEY = 'jaco_yandex_offline_maps_v2';
@@ -47,14 +47,24 @@ async function readOfflineMap(pointId, center) {
       : [];
   const exact =
     pointId === null || pointId === undefined ? null : registry?.regions?.[String(pointId)] || null;
+  const containing = regions.filter(
+    (region) =>
+      !isCoordinate(center) ||
+      (Number(center[0]) >= region.bounds.south &&
+        Number(center[0]) <= region.bounds.north &&
+        Number(center[1]) >= region.bounds.west &&
+        Number(center[1]) <= region.bounds.east)
+  );
+  const cityMap = containing.find((region) => region.cityId);
   const metadata =
-    exact?.expiresAt > Date.now()
+    cityMap ||
+    (exact?.expiresAt > Date.now()
       ? exact
-      : regions.sort((a, b) => distanceToRegion(a, center) - distanceToRegion(b, center))[0];
+      : containing.sort((a, b) => distanceToRegion(a, center) - distanceToRegion(b, center))[0]);
 
   if (!metadata) {
     throw new Error(
-      'Карта этой точки ещё не сохранена. Она сохранится автоматически после загрузки заказов при включённом интернете.'
+      'Карта этой области ещё не сохранена. Скачайте город в настройках при подключённом интернете.'
     );
   }
 
@@ -310,7 +320,10 @@ async function mount({
   }
 
   try {
-    const { cache, metadata } = await readOfflineMap(pointId, center);
+    const coverageCenter = isCoordinate(center)
+      ? center
+      : groups.find((group) => isCoordinate(group.coordinate))?.coordinate;
+    const { cache, metadata } = await readOfflineMap(pointId, coverageCenter);
 
     if (signal?.aborted) {
       throw new DOMException('Загрузка офлайн-карты отменена.', 'AbortError');
@@ -340,8 +353,8 @@ async function mount({
       return { data };
     });
 
-    const requestedCenter = isCoordinate(center)
-      ? [Number(center[1]), Number(center[0])]
+    const requestedCenter = isCoordinate(coverageCenter)
+      ? [Number(coverageCenter[1]), Number(coverageCenter[0])]
       : [
           (metadata.bounds.west + metadata.bounds.east) / 2,
           (metadata.bounds.south + metadata.bounds.north) / 2,
@@ -366,6 +379,12 @@ async function mount({
       zoom: Math.min(cameraMaxZoom, Math.max(cameraMinZoom, initialZoom)),
       minZoom: cameraMinZoom,
       maxZoom: cameraMaxZoom,
+      maxBounds: metadata.cityId
+        ? [
+            [metadata.bounds.west, metadata.bounds.south],
+            [metadata.bounds.east, metadata.bounds.north],
+          ]
+        : undefined,
       attributionControl: false,
       style: {
         version: 8,
@@ -571,7 +590,7 @@ async function mount({
   }
 }
 
-globalThis.JacoOfflineOrdersMap = { version: '25', mount };
+globalThis.JacoOfflineOrdersMap = { version: '27', mount };
 globalThis.dispatchEvent(new Event('jaco-offline-orders-map-ready'));
 
 export { mount };

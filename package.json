@@ -5,8 +5,27 @@
   "engines": {
     "node": ">=24.15.0"
   },
+  "browserslist": {
+    "production": [
+      "chrome >= 111",
+      "edge >= 111",
+      "firefox >= 111",
+      "safari >= 16.4",
+      "ios_saf >= 16.4"
+    ],
+    "development": [
+      "chrome >= 111",
+      "edge >= 111",
+      "firefox >= 111",
+      "safari >= 16.4",
+      "ios_saf >= 16.4"
+    ]
+  },
   "scripts": {
+    "sync:offline-map": "node scripts/sync-offline-map-runtime.mjs",
+    "predev": "npm run sync:offline-map",
     "dev": "PORT=3225 next dev",
+    "prebuild": "npm run sync:offline-map",
     "build": "next build",
     "start": "next start",
     "start:standalone": "node scripts/start-standalone.mjs",
@@ -18,9 +37,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "deploy:local": "next build && pm2 startOrRestart ecosystem.config.js --env local",
-    "deploy:dev": "next build && pm2 startOrRestart ecosystem.config.js --env development",
-    "deploy:prod": "npm update && next build && pm2 startOrRestart ecosystem.config.js --env production",
+    "deploy:local": "npm run build && pm2 startOrRestart ecosystem.config.js --env local",
+    "deploy:dev": "npm run build && pm2 startOrRestart ecosystem.config.js --env development",
+    "deploy:prod": "npm update && npm run build && pm2 startOrRestart ecosystem.config.js --env production",
+    "prewin": "npm run sync:offline-map",
     "win": "next dev -p 3225"
   },
   "dependencies": {
@@ -33,7 +53,7 @@
     "@mui/material-nextjs": "^9.4.0",
     "@mui/x-date-pickers": "^9.14.0",
     "@pbe/react-yandex-maps": "^1.2.5",
-    "@sentry/nextjs": "^11.0.0",
+    "@sentry/nextjs": "^11.4.0",
     "@uiw/color-convert": "^2.10.3",
     "@uiw/react-color-alpha": "^2.10.3",
     "@uiw/react-color-wheel": "^2.10.3",
@@ -41,13 +61,13 @@
     "axios": "^1.20.0",
     "dayjs": "^1.11.23",
     "firebase": "^12.19.0",
-    "maplibre-gl": "^6.11.2",
-    "next": "^16.3.6",
+    "maplibre-gl": "^6.12.0",
+    "next": "^16.3.8",
     "query-string": "^9.5.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "sass": "^1.105.0",
-    "sharp": "^0.35.4",
+    "sass": "^1.105.1",
+    "sharp": "^0.35.5",
     "use-sync-external-store": "^1.7.0",
     "zustand": "^5.0.15"
   },
@@ -57,17 +77,23 @@
     "@testing-library/react": "^16.3.3",
     "@types/react": "^19.3.0",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^16.3.6",
+    "eslint-config-next": "^16.3.8",
     "husky": "^9.1.7",
-    "jsdom": "^30.1.1",
-    "lint-staged": "^17.5.1",
+    "jsdom": "^30.1.2",
+    "lint-staged": "^17.6.0",
     "prettier": "^3.9.9",
     "typescript": "^6.0.3",
-    "vite": "^8.3.1",
-    "vitest": "^5.0.1"
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
   },
   "overrides": {
-    "postcss": "8.5.28"
+    "postcss": "8.5.28",
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "1.14.5"
+    },
+    "@next/eslint-plugin-next": {
+      "fast-glob": "npm:tinyglobby@0.2.17"
+    }
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

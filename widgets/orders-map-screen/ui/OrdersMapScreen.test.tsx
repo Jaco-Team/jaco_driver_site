@@ -71,6 +71,7 @@ const mocks = vi.hoisted(() => {
     setZoom,
     trafficSetMap,
     createClass: vi.fn((template: string) => template),
+    loadOfflineMapRuntime: vi.fn().mockResolvedValue(undefined),
     isOnline: true,
     mapInstance: {
       setCenter,
@@ -161,6 +162,10 @@ vi.mock('@/shared/lib/offline/offlineMapAssets', () => ({
   ensureOfflineMapAssets: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@/shared/lib/offline/offlineMapRuntime', () => ({
+  loadOfflineMapRuntime: mocks.loadOfflineMapRuntime,
+}));
+
 vi.mock('./OrdersOfflineMap', () => ({
   OrdersOfflineMap: ({ onOpenOrders }: { onOpenOrders: (id: number) => void }) => (
     <div data-testid="offline-map">
@@ -194,6 +199,7 @@ describe('OrdersMapScreen', () => {
     expect(screen.getByRole('slider', { name: 'Масштаб карты' })).toBeInTheDocument();
     expect(screen.getByText('1/5')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
+    expect(mocks.loadOfflineMapRuntime).toHaveBeenCalledTimes(1);
   });
 
   it('switches API 2.1 traffic without changing the map controls', () => {
@@ -309,6 +315,8 @@ describe('OrdersMapScreen', () => {
 
     expect(screen.queryByTestId('map')).not.toBeInTheDocument();
     expect(screen.getByTestId('offline-map')).toBeInTheDocument();
+
+    expect(mocks.loadOfflineMapRuntime).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByText('Открыть сохранённый заказ'));
 

@@ -27,6 +27,7 @@ import type { Point } from '@/entities/point';
 import { TypeShowDel } from '@/entities/settings';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
+import { OfflineCityMapsSettings } from '@/features/offline-map/ui/OfflineCityMapsSettings';
 
 export const SettingsForm: React.FC = () => {
   const isOnline = useConnectivityStore((state) => state.isOnline);
@@ -296,6 +297,8 @@ export const SettingsForm: React.FC = () => {
           <SectionTitle title="Карта" fontSize={globalFontSize} />
           <CheckboxField options={mapOptions} fontSize={globalFontSize} />
         </SettingsSection>
+
+        <OfflineCityMapsSettings globalFontSize={globalFontSize} />
 
         <SettingsSection>
           <FontSizeSlider value={fontSize} onChange={setFontSize} fontSize={globalFontSize} />

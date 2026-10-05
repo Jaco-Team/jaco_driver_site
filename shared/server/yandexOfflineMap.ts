@@ -1,4 +1,10 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import {
+  getOfflineMapCity,
+  OFFLINE_CITY_MIN_ZOOM,
+  OFFLINE_CITY_MAX_ZOOM,
+  OFFLINE_CITY_MAX_TILES,
+} from '@/shared/config/offlineMapCities';
 
 const SESSION_TTL_MS = 20 * 60 * 1000;
 const MIN_ALLOWED_ZOOM = 10;
@@ -60,7 +66,8 @@ function coordinateToTile(longitude: number, latitude: number, zoom: number) {
 function buildRanges(
   bounds: OfflineMapSessionBounds,
   minZoom: number,
-  maxZoom: number
+  maxZoom: number,
+  maxTiles = MAX_TILES
 ): TileRange[] | null {
   const values = [bounds.west, bounds.south, bounds.east, bounds.north];
   if (!values.every(Number.isFinite)) return null;
@@ -98,7 +105,7 @@ function buildRanges(
       maxY: bottomRight.y,
     };
     tileCount += (range.maxX - range.minX + 1) * (range.maxY - range.minY + 1);
-    if (tileCount > MAX_TILES) return null;
+    if (tileCount > maxTiles) return null;
     ranges.push(range);
   }
 
@@ -114,9 +121,14 @@ export function createOfflineMapSession(input: {
   bounds: OfflineMapSessionBounds;
   minZoom: number;
   maxZoom: number;
+  cityId?: unknown;
 }): string | null {
-  const pointId = `${input.pointId ?? ''}`.trim();
-  const ranges = buildRanges(input.bounds, input.minZoom, input.maxZoom);
+  const city = input.cityId === undefined ? undefined : getOfflineMapCity(input.cityId);
+  if (input.cityId !== undefined && !city) return null;
+  const pointId = city ? `city:${city.id}` : `${input.pointId ?? ''}`.trim();
+  const ranges = city
+    ? buildRanges(city.bounds, OFFLINE_CITY_MIN_ZOOM, OFFLINE_CITY_MAX_ZOOM, OFFLINE_CITY_MAX_TILES)
+    : buildRanges(input.bounds, input.minZoom, input.maxZoom);
   if (!pointId || pointId.length > 128 || !ranges) return null;
 
   const payload: TileSessionPayload = {

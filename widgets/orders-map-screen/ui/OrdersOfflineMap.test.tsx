@@ -2,12 +2,22 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OrdersOfflineMap } from './OrdersOfflineMap';
+import { OFFLINE_MAP_RUNTIME_VERSION } from '@/shared/lib/offline/offlineMapRuntime';
 
 vi.mock('./OrdersMapOfflineList', () => ({
-  OrdersMapOfflineList: ({ onOpenOrders }: { onOpenOrders: (id: number) => void }) => (
-    <button type="button" onClick={() => onOpenOrders(7)}>
-      Открыть заказ из списка
-    </button>
+  OrdersMapOfflineList: ({
+    onOpenOrders,
+    mapError,
+  }: {
+    onOpenOrders: (id: number) => void;
+    mapError?: string;
+  }) => (
+    <>
+      <div>{mapError}</div>
+      <button type="button" onClick={() => onOpenOrders(7)}>
+        Открыть заказ из списка
+      </button>
+    </>
   ),
 }));
 
@@ -59,7 +69,7 @@ describe('OrdersOfflineMap runtime', () => {
         options.onReady();
         return secondHandle;
       });
-    window.JacoOfflineOrdersMap = { version: '25', mount };
+    window.JacoOfflineOrdersMap = { version: OFFLINE_MAP_RUNTIME_VERSION, mount };
 
     const first = render(<OrdersOfflineMap {...props} />);
     await waitFor(() => expect(firstHandle.updateGroups).toHaveBeenCalledWith([]));
@@ -99,12 +109,45 @@ describe('OrdersOfflineMap runtime', () => {
     expect(retryScript).toBeInstanceOf(HTMLScriptElement);
     expect(retryScript).not.toBe(failedScript);
 
-    window.JacoOfflineOrdersMap = { version: '25', mount };
+    window.JacoOfflineOrdersMap = { version: OFFLINE_MAP_RUNTIME_VERSION, mount };
     fireEvent.load(retryScript!);
 
     await waitFor(() => expect(handle.updateGroups).toHaveBeenCalledWith([]));
     expect(screen.queryByText(/Не удалось загрузить модуль офлайн-карты/)).not.toBeInTheDocument();
     second.unmount();
     expect(handle.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the automatic cafe region without a settings filter', async () => {
+    const handle = createHandle();
+    const mount = vi.fn(async () => handle);
+    window.JacoOfflineOrdersMap = { version: OFFLINE_MAP_RUNTIME_VERSION, mount };
+
+    const view = render(
+      <OrdersOfflineMap
+        {...props}
+        pointId={null}
+        home={{ center: [53.51, 49.42], zoom: 12, controls: [] }}
+      />
+    );
+    await waitFor(() =>
+      expect(mount).toHaveBeenCalledWith(
+        expect.objectContaining({ pointId: 'home:53.510000:49.420000' })
+      )
+    );
+    view.unmount();
+  });
+
+  it('shows the missing-region reason in the list without a stack trace overlay', async () => {
+    const error = new Error('Карта этого кафе ещё не сохранена.');
+    error.stack = 'Error\n at readOfflineMap (offline-orders-map.mjs:56:20)';
+    const mount = vi.fn().mockRejectedValue(error);
+    window.JacoOfflineOrdersMap = { version: OFFLINE_MAP_RUNTIME_VERSION, mount };
+
+    const view = render(<OrdersOfflineMap {...props} />);
+    await screen.findByText(error.message);
+    expect(screen.queryByText(/mjs:56:20/)).not.toBeInTheDocument();
+    expect(document.querySelector('.orders-offline-map-error')).toBeNull();
+    view.unmount();
   });
 });

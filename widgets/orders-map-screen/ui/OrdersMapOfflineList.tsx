@@ -11,6 +11,7 @@ import { sanitizeCssColor } from '@/shared/lib/escapeHtml';
 import { appPalette } from '@/shared/styles/appPalette';
 
 interface OrdersMapOfflineListProps {
+  mapError?: string;
   groups: OrderMapGroup[];
   typeText: string;
   globalFontSize: number;
@@ -41,6 +42,7 @@ function getOrderCountLabel(count: number): string {
 }
 
 export function OrdersMapOfflineList({
+  mapError,
   groups,
   typeText,
   globalFontSize,
@@ -59,7 +61,7 @@ export function OrdersMapOfflineList({
         minHeight: '100vh',
         px: 2,
         pt: 2,
-        pb: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
+        pb: 'calc(env(safe-area-inset-bottom, 0px) + 170px)',
         bgcolor: 'background.default',
       }}
     >
@@ -114,7 +116,14 @@ export function OrdersMapOfflineList({
               color: 'text.secondary',
             }}
           >
-            Нет интернета. Заказы «{typeText}» сохранены — нажмите, чтобы открыть карточку.
+            {mapError || 'Нет интернета.'}
+          </Typography>
+
+          <Typography
+            component="div"
+            sx={{ fontSize: hintFontSize, lineHeight: 1.4, color: 'text.secondary', mt: 0.5 }}
+          >
+            Заказы «{typeText}» доступны из сохранённого списка.
           </Typography>
         </Box>
       </Box>

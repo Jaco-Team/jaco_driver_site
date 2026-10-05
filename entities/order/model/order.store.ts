@@ -233,9 +233,9 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     additionalOrders: Order[] = []
   ): void => {
     const token = getAuthToken();
-    if (!token || pointId === null || !home || !isAppOnline()) return;
+    if (!token || !home || !isAppOnline()) return;
 
-    const prefix = `${pointId}:`;
+    const prefix = `${pointId ?? 'all'}:`;
     const uniqueOrders = new Map<string, Order>();
     const pointOrders = Object.entries(get().ordersByContext)
       .filter(([key]) => key.startsWith(prefix))

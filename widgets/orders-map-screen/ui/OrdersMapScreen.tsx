@@ -28,6 +28,7 @@ import {
 import { escapeHtml, sanitizeCssColor, sanitizeCssIdent } from '@/shared/lib/escapeHtml';
 import { devLog } from '@/shared/lib/devLog';
 import { ensureOfflineMapAssets } from '@/shared/lib/offline/offlineMapAssets';
+import { loadOfflineMapRuntime } from '@/shared/lib/offline/offlineMapRuntime';
 import { appDarkSuccessPalette } from '@/shared/styles/appPalette';
 import { roboto } from '@/shared/ui/Font';
 import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
@@ -687,6 +688,10 @@ export function OrdersMapScreen() {
 
     void ensureOfflineMapAssets().catch((error) => {
       devLog('offline_map_cache_failed', 'Не удалось сохранить офлайн-карту', error);
+    });
+    // Execute modules while online; a cached file alone is not a loaded module.
+    void loadOfflineMapRuntime().catch((error) => {
+      devLog('offline_map_runtime_warmup_failed', 'Не удалось подготовить офлайн-карту', error);
     });
 
     return undefined;

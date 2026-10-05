@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createOfflineMapSession, hasYandexTilesApiKey } from '@/shared/server/yandexOfflineMap';
 
 interface SessionRequestBody {
+  cityId?: unknown;
   pointId?: unknown;
   bounds?: {
     west?: unknown;
@@ -51,6 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
   const session = createOfflineMapSession({
+    cityId: body?.cityId,
     pointId: body?.pointId,
     bounds: {
       west: Number(body?.bounds?.west),

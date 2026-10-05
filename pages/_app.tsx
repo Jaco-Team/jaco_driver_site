@@ -30,6 +30,7 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import { resolveYandexMetrikaIds } from '@/shared/lib/yandexMetrikaIds';
 import { useConnectivityWatch } from '@/features/offline/model/useConnectivityWatch';
 import { useServiceWorker } from '@/features/offline/model/useServiceWorker';
+import { useOfflineCityDownloads } from '@/features/offline-map/model/useOfflineCityDownloads';
 
 const YANDEX_METRIKA_IDS = resolveYandexMetrikaIds();
 
@@ -54,6 +55,7 @@ function MyApp(props: MyAppProps) {
   const darkTheme = useHeaderStore((state) => state.darkTheme);
   useConnectivityWatch();
   useServiceWorker();
+  useOfflineCityDownloads();
   const muiTheme = useMemo(() => createAppTheme(darkTheme), [darkTheme]);
   const normalizedGlobalFontSize =
     Number.isFinite(globalFontSize) && globalFontSize > 0

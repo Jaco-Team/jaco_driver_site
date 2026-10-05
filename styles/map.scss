@@ -509,8 +509,7 @@
   height: 100%;
 }
 
-.orders-offline-map-status,
-.orders-offline-map-error {
+.orders-offline-map-status {
   position: absolute;
   z-index: 90;
   top: 116px;
@@ -525,10 +524,6 @@
   color: var(--app-text);
   text-align: center;
   transform: translateX(-50%);
-}
-
-.orders-offline-map-error {
-  color: $colorMain;
 }
 
 .orders-offline-map-stage__fallback {

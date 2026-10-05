@@ -1,11 +1,21 @@
 import type { HomeLocation, Order } from '@/entities/order/model/order.types';
 import { ensureOfflineMapAssets } from '@/shared/lib/offline/offlineMapAssets';
 import { createOfflineTileFetcher } from '@/shared/lib/offline/offlineTileFetcher';
+import { getOfflineMapRegionId } from './offlineMapRegionId';
+import { loadOfflineMapRuntime } from './offlineMapRuntime';
+import {
+  getOfflineMapCity,
+  findOfflineMapCity,
+  OFFLINE_CITY_MIN_ZOOM,
+  OFFLINE_CITY_MAX_ZOOM,
+  OFFLINE_CITY_MAX_TILES,
+} from '@/shared/config/offlineMapCities';
 
 export const YANDEX_OFFLINE_TILE_CACHE = 'jaco-yandex-offline-tiles-v1';
 export const YANDEX_OFFLINE_METADATA_KEY = 'jaco_yandex_offline_maps_v2';
 export const YANDEX_OFFLINE_MAP_EVENT = 'jaco-offline-map-updated';
 export const YANDEX_OFFLINE_MAX_AGE_MS = 29 * 24 * 60 * 60 * 1000;
+export const YANDEX_OFFLINE_CITY_DOWNLOADS_KEY = 'jaco_offline_city_downloads_v1';
 
 const MIN_ZOOM = 10;
 const MAX_ZOOM = 15;
@@ -30,6 +40,7 @@ export interface OfflineMapTile {
 }
 
 export interface OfflineMapMetadata {
+  cityId?: string;
   pointId: string;
   coverageVersion: number;
   bounds: OfflineMapBounds;
@@ -55,8 +66,109 @@ export interface OfflineMapDownloadProgress {
   completed: number;
   total: number;
   byteSize: number;
-  status: 'downloading' | 'ready' | 'error';
+  status: 'downloading' | 'ready' | 'paused' | 'error';
   error?: string;
+}
+
+export interface PendingCityDownload extends OfflineMapDownloadProgress {
+  cityId: string;
+  updatedAt: number;
+  refreshAfter?: number;
+  autoResume?: boolean;
+}
+
+export function getOfflineCityPlan(cityId: string) {
+  const city = getOfflineMapCity(cityId);
+  if (!city) throw new Error('Город недоступен для скачивания.');
+  const tileCount = listOfflineMapTiles(
+    city.bounds,
+    OFFLINE_CITY_MIN_ZOOM,
+    OFFLINE_CITY_MAX_ZOOM
+  ).length;
+  return {
+    cityId,
+    name: city.name,
+    pointId: `city:${cityId}`,
+    bounds: city.bounds,
+    minZoom: OFFLINE_CITY_MIN_ZOOM,
+    maxZoom: OFFLINE_CITY_MAX_ZOOM,
+    initialZoom: 11,
+    cameraMinZoom: OFFLINE_CITY_MIN_ZOOM - 1,
+    cameraMaxZoom: OFFLINE_CITY_MAX_ZOOM - 1,
+    tileCount,
+    // PNG sizes vary; this is a planning estimate, not a download guarantee.
+    estimatedBytes: tileCount * 40 * 1024,
+  };
+}
+
+export function readPendingCityDownloads(): PendingCityDownload[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const items: unknown = JSON.parse(
+      localStorage.getItem(YANDEX_OFFLINE_CITY_DOWNLOADS_KEY) || '[]'
+    );
+    return Array.isArray(items)
+      ? items.filter((item): item is PendingCityDownload =>
+          Boolean(
+            item &&
+            getOfflineMapCity(item.cityId) &&
+            item.pointId === `city:${item.cityId}` &&
+            ['downloading', 'paused', 'error'].includes(item.status) &&
+            Number.isInteger(item.completed) &&
+            item.completed >= 0 &&
+            Number.isInteger(item.total) &&
+            item.total > 0 &&
+            item.total <= OFFLINE_CITY_MAX_TILES &&
+            item.completed <= item.total &&
+            Number.isFinite(item.byteSize) &&
+            item.byteSize >= 0 &&
+            (item.refreshAfter === undefined || Number.isFinite(item.refreshAfter)) &&
+            (item.autoResume === undefined || typeof item.autoResume === 'boolean') &&
+            (item.error === undefined || typeof item.error === 'string') &&
+            Number.isFinite(item.updatedAt) &&
+            item.updatedAt + YANDEX_OFFLINE_MAX_AGE_MS > Date.now()
+          )
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function savePendingCityDownload(item: PendingCityDownload | null, cityId: string): void {
+  const items = readPendingCityDownloads().filter((entry) => entry.cityId !== cityId);
+  if (item) items.push(item);
+  try {
+    localStorage.setItem(YANDEX_OFFLINE_CITY_DOWNLOADS_KEY, JSON.stringify(items));
+  } catch {
+    throw new Error(
+      'Не удалось сохранить состояние загрузки на устройстве. Проверьте доступ к памяти браузера.'
+    );
+  }
+}
+
+export function setCityDownloadAutoResume(cityId: string, autoResume: boolean): void {
+  const item = readPendingCityDownloads().find((entry) => entry.cityId === cityId);
+  if (item) savePendingCityDownload({ ...item, autoResume }, cityId);
+}
+
+async function waitForPreparation<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
+  signal.throwIfAborted();
+  return new Promise((resolve, reject) => {
+    const onAbort = () => reject(signal.reason);
+    signal.addEventListener('abort', onAbort, { once: true });
+    operation.then(resolve, reject).finally(() => signal.removeEventListener('abort', onAbort));
+  });
+}
+
+function getDownloadError(error: unknown): string {
+  if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+    return 'Недостаточно места для карты. Освободите память и продолжите скачивание.';
+  }
+  if (error instanceof TypeError) {
+    return 'Не удалось загрузить карту. Проверьте подключение к интернету и продолжите скачивание.';
+  }
+  return error instanceof Error ? error.message : 'Не удалось сохранить карту.';
 }
 
 interface SyncInput {
@@ -287,6 +399,31 @@ export function readOfflineMapMetadata(pointId: number | string | null): Offline
   return metadata && metadata.expiresAt > Date.now() ? metadata : null;
 }
 
+export async function validateOfflineCityMaps(): Promise<Record<string, OfflineMapMetadata>> {
+  const snapshot = readOfflineMapRegistry();
+  if (typeof window === 'undefined' || !('caches' in window)) return snapshot.regions;
+  const cache = await caches.open(YANDEX_OFFLINE_TILE_CACHE);
+  const urls = new Set((await cache.keys()).map((request) => request.url));
+  const missing = Object.values(snapshot.regions).filter(
+    (metadata) =>
+      metadata.cityId &&
+      !listOfflineMapTiles(metadata.bounds, metadata.minZoom, metadata.maxZoom).every((tile) =>
+        urls.has(getOfflineTileUrl(tile))
+      )
+  );
+  const current = readOfflineMapRegistry();
+  for (const metadata of missing) {
+    if (
+      current.regions[metadata.pointId]?.savedAt === metadata.savedAt &&
+      current.regions[metadata.pointId]?.lastUsedAt === metadata.lastUsedAt
+    ) {
+      delete current.regions[metadata.pointId];
+    }
+  }
+  if (missing.length) writeRegistry(current);
+  return current.regions;
+}
+
 function writeRegistry(registry: OfflineMapRegistry): void {
   window.localStorage.setItem(YANDEX_OFFLINE_METADATA_KEY, JSON.stringify(registry));
   window.localStorage.removeItem(LEGACY_METADATA_KEY);
@@ -303,8 +440,11 @@ export async function deleteOfflineYandexMap(pointId?: number | string): Promise
     await caches.delete(YANDEX_OFFLINE_TILE_CACHE);
     window.localStorage.removeItem(YANDEX_OFFLINE_METADATA_KEY);
     window.localStorage.removeItem(LEGACY_METADATA_KEY);
+    window.localStorage.removeItem(YANDEX_OFFLINE_CITY_DOWNLOADS_KEY);
   } else {
     const registry = readOfflineMapRegistry();
+    const cityId = String(pointId).startsWith('city:') ? String(pointId).slice(5) : null;
+    if (cityId) savePendingCityDownload(null, cityId);
     delete registry.regions[String(pointId)];
     writeRegistry(registry);
     await removeUnreferencedTiles(registry);
@@ -324,7 +464,9 @@ async function openDownloadSession(
   pointId: string,
   bounds: OfflineMapBounds,
   minZoom: number,
-  maxZoom: number
+  maxZoom: number,
+  cityId?: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const response = await fetch('/api/offline-map/session', {
     method: 'POST',
@@ -332,8 +474,9 @@ async function openDownloadSession(
       Authorization: `Bearer ${authToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ pointId, bounds, minZoom, maxZoom }),
+    body: JSON.stringify({ pointId, bounds, minZoom, maxZoom, cityId }),
     cache: 'no-store',
+    signal,
   });
   const payload = (await response.json().catch(() => ({}))) as { session?: string; error?: string };
 
@@ -361,6 +504,13 @@ async function removeUnreferencedTiles(registry: OfflineMapRegistry): Promise<vo
     }
   }
 
+  for (const pending of readPendingCityDownloads()) {
+    const plan = getOfflineCityPlan(pending.cityId);
+    for (const tile of listOfflineMapTiles(plan.bounds, plan.minZoom, plan.maxZoom)) {
+      retained.add(getOfflineTileUrl(tile));
+    }
+  }
+
   const requests = await cache.keys();
   await Promise.all(
     requests.filter((request) => !retained.has(request.url)).map((request) => cache.delete(request))
@@ -370,7 +520,9 @@ async function removeUnreferencedTiles(registry: OfflineMapRegistry): Promise<vo
 async function pruneOldRegions(registry: OfflineMapRegistry): Promise<OfflineMapRegistry> {
   const regions = Object.values(registry.regions)
     .filter((metadata) => metadata.expiresAt > Date.now())
-    .sort((a, b) => b.lastUsedAt - a.lastUsedAt)
+    .sort(
+      (a, b) => Number(Boolean(b.cityId)) - Number(Boolean(a.cityId)) || b.lastUsedAt - a.lastUsedAt
+    )
     .slice(0, MAX_CACHED_POINTS);
   const next = {
     version: 2 as const,
@@ -391,133 +543,264 @@ async function downloadRegion(options: {
   initialZoom: number;
   cameraMinZoom: number;
   cameraMaxZoom: number;
+  cityId?: string;
+  signal?: AbortSignal;
+  refreshAfter?: number;
 }): Promise<OfflineMapMetadata> {
   const tiles = listOfflineMapTiles(options.bounds, options.minZoom, options.maxZoom);
 
-  if (tiles.length > MAX_TILES) {
+  const maxTiles = options.cityId ? OFFLINE_CITY_MAX_TILES : MAX_TILES;
+  if (tiles.length > maxTiles) {
     throw new Error(
-      `Область точки слишком большая: ${tiles.length} тайлов. Максимум — ${MAX_TILES}.`
+      `Область карты слишком большая: ${tiles.length} тайлов. Максимум — ${maxTiles}.`
     );
   }
 
-  const session = await openDownloadSession(
-    options.authToken,
-    options.pointId,
-    options.bounds,
-    options.minZoom,
-    options.maxZoom
-  );
-  const cache = await caches.open(YANDEX_OFFLINE_TILE_CACHE);
   const controller = new AbortController();
+  const onAbort = () => controller.abort(options.signal?.reason);
+  options.signal?.addEventListener('abort', onAbort, { once: true });
+  if (options.signal?.aborted) onAbort();
   const fetchTile = createOfflineTileFetcher();
   let cursor = 0;
   let completed = 0;
   let byteSize = 0;
   let oldestSavedAt = Date.now();
 
-  const report = (status: OfflineMapDownloadProgress['status'], error?: string) =>
-    dispatchProgress({
+  let lastPersistedAt = 0;
+  let lastReportedAt = 0;
+  const resumedCompleted = options.cityId
+    ? (readPendingCityDownloads().find((item) => item.cityId === options.cityId)?.completed ?? 0)
+    : 0;
+  const report = (status: OfflineMapDownloadProgress['status'], error?: string) => {
+    // Keep saved progress visible while workers recheck already downloaded tiles.
+    if (status === 'downloading' && completed < resumedCompleted) return;
+    const progress: OfflineMapDownloadProgress = {
       pointId: options.pointId,
       completed,
       total: tiles.length,
       byteSize,
       status,
       error,
-    });
-  report('downloading');
+    };
+    if (options.cityId && (status !== 'downloading' || Date.now() - lastPersistedAt >= 1000)) {
+      savePendingCityDownload(
+        status === 'ready'
+          ? null
+          : {
+              ...progress,
+              cityId: options.cityId,
+              updatedAt: Date.now(),
+              refreshAfter: options.refreshAfter,
+              autoResume: readPendingCityDownloads().find((item) => item.cityId === options.cityId)
+                ?.autoResume,
+            },
+        options.cityId
+      );
+      lastPersistedAt = Date.now();
+    }
+    if (status === 'downloading' && completed !== tiles.length && Date.now() - lastReportedAt < 250)
+      return;
+    lastReportedAt = Date.now();
+    dispatchProgress(progress);
+  };
+  let workers: Promise<void>[] = [];
+  try {
+    report('downloading');
+    controller.signal.throwIfAborted();
+    const session = await openDownloadSession(
+      options.authToken,
+      options.pointId,
+      options.bounds,
+      options.minZoom,
+      options.maxZoom,
+      options.cityId,
+      controller.signal
+    );
+    const cache = await caches.open(YANDEX_OFFLINE_TILE_CACHE);
 
-  const worker = async () => {
-    while (cursor < tiles.length) {
-      controller.signal.throwIfAborted();
-      const tile = tiles[cursor];
-      cursor += 1;
-      const cacheRequest = new Request(getOfflineTileUrl(tile));
-      const cached = await cache.match(cacheRequest);
+    const worker = async () => {
+      while (cursor < tiles.length) {
+        controller.signal.throwIfAborted();
+        const tile = tiles[cursor];
+        cursor += 1;
+        const cacheRequest = new Request(getOfflineTileUrl(tile));
+        const cached = await cache.match(cacheRequest);
 
-      if (isFreshCachedTile(cached)) {
-        const savedAt = Number(cached.headers.get('X-Offline-Saved-At'));
+        if (
+          isFreshCachedTile(cached) &&
+          (!options.refreshAfter ||
+            Number(cached.headers.get('X-Offline-Saved-At')) >= options.refreshAfter)
+        ) {
+          const savedAt = Number(cached.headers.get('X-Offline-Saved-At'));
+          oldestSavedAt = Math.min(oldestSavedAt, savedAt);
+          byteSize += Number(cached.headers.get('Content-Length') || 0);
+          completed += 1;
+          report('downloading');
+          continue;
+        }
+
+        const query = new URLSearchParams({
+          x: String(tile.x),
+          y: String(tile.y),
+          z: String(tile.z),
+          session,
+        });
+        let response: Response | undefined;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          response = await fetchTile(`/api/offline-map/yandex-tile?${query}`, controller.signal);
+          if (response.ok || response.status < 500) break;
+          if (attempt < 2) await response.body?.cancel();
+        }
+
+        if (!response?.ok) {
+          const payload = (await response?.json().catch(() => ({}))) as
+            { error?: string } | undefined;
+          throw new Error(
+            payload?.error || `Не удалось загрузить тайл ${tile.z}/${tile.x}/${tile.y}.`
+          );
+        }
+
+        const blob = await response.blob();
+        controller.signal.throwIfAborted();
+        const savedAt = Date.now();
+        await cache.put(
+          cacheRequest,
+          new Response(blob, {
+            headers: {
+              'Content-Type': response.headers.get('Content-Type') || 'image/png',
+              'Content-Length': String(blob.size),
+              'X-Offline-Saved-At': String(savedAt),
+            },
+          })
+        );
         oldestSavedAt = Math.min(oldestSavedAt, savedAt);
-        byteSize += Number(cached.headers.get('Content-Length') || 0);
+        byteSize += blob.size;
         completed += 1;
         report('downloading');
-        continue;
       }
+    };
 
-      if (cached) await cache.delete(cacheRequest);
-
-      const query = new URLSearchParams({
-        x: String(tile.x),
-        y: String(tile.y),
-        z: String(tile.z),
-        session,
-      });
-      const response = await fetchTile(`/api/offline-map/yandex-tile?${query}`, controller.signal);
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(
-          payload.error || `Не удалось загрузить тайл ${tile.z}/${tile.x}/${tile.y}.`
-        );
-      }
-
-      const blob = await response.blob();
-      const savedAt = Date.now();
-      await cache.put(
-        cacheRequest,
-        new Response(blob, {
-          headers: {
-            'Content-Type': response.headers.get('Content-Type') || 'image/png',
-            'Content-Length': String(blob.size),
-            'X-Offline-Saved-At': String(savedAt),
-          },
-        })
-      );
-      oldestSavedAt = Math.min(oldestSavedAt, savedAt);
-      byteSize += blob.size;
-      completed += 1;
-      report('downloading');
-    }
-  };
-
-  const workers = Array.from({ length: DOWNLOAD_WORKERS }, () => worker());
-  try {
+    workers = Array.from({ length: DOWNLOAD_WORKERS }, () => worker());
     await Promise.all(workers);
+    controller.signal.throwIfAborted();
+
+    const metadata: OfflineMapMetadata = {
+      cityId: options.cityId,
+      pointId: options.pointId,
+      coverageVersion: COVERAGE_VERSION,
+      bounds: options.bounds,
+      minZoom: options.minZoom,
+      maxZoom: options.maxZoom,
+      initialZoom: options.initialZoom,
+      cameraMinZoom: options.cameraMinZoom,
+      cameraMaxZoom: options.cameraMaxZoom,
+      tileCount: tiles.length,
+      byteSize,
+      savedAt: oldestSavedAt,
+      expiresAt: oldestSavedAt + YANDEX_OFFLINE_MAX_AGE_MS,
+      lastUsedAt: Date.now(),
+    };
+    const registry = readOfflineMapRegistry();
+    registry.regions[options.pointId] = metadata;
+    writeRegistry(registry);
+    await pruneOldRegions(registry);
+    report('ready');
+    void navigator.storage?.persist?.().catch(() => false);
+
+    return metadata;
   } catch (error) {
     controller.abort();
     await Promise.allSettled(workers);
-    report('error', error instanceof Error ? error.message : 'Не удалось сохранить карту.');
+    report(
+      options.signal?.aborted ? 'paused' : 'error',
+      options.signal?.aborted ? undefined : getDownloadError(error)
+    );
     throw error;
+  } finally {
+    options.signal?.removeEventListener('abort', onAbort);
   }
+}
 
-  const metadata: OfflineMapMetadata = {
-    pointId: options.pointId,
-    coverageVersion: COVERAGE_VERSION,
-    bounds: options.bounds,
-    minZoom: options.minZoom,
-    maxZoom: options.maxZoom,
-    initialZoom: options.initialZoom,
-    cameraMinZoom: options.cameraMinZoom,
-    cameraMaxZoom: options.cameraMaxZoom,
-    tileCount: tiles.length,
-    byteSize,
-    savedAt: oldestSavedAt,
-    expiresAt: oldestSavedAt + YANDEX_OFFLINE_MAX_AGE_MS,
-    lastUsedAt: Date.now(),
+export function downloadOfflineCityMap(
+  cityId: string,
+  authToken: string,
+  signal: AbortSignal,
+  refresh = false
+): Promise<OfflineMapMetadata> {
+  const plan = getOfflineCityPlan(cityId);
+  const pending = readPendingCityDownloads().find((item) => item.cityId === cityId);
+  const refreshAfter = refresh ? Date.now() : pending?.refreshAfter;
+  const initial: PendingCityDownload = {
+    cityId,
+    pointId: plan.pointId,
+    completed: pending?.completed ?? 0,
+    total: plan.tileCount,
+    byteSize: pending?.byteSize ?? 0,
+    status: 'downloading',
+    updatedAt: Date.now(),
+    refreshAfter,
+    autoResume: true,
   };
-  const registry = readOfflineMapRegistry();
-  registry.regions[options.pointId] = metadata;
-  writeRegistry(registry);
-  await pruneOldRegions(registry);
-  report('ready');
-  void navigator.storage?.persist?.().catch(() => false);
-
-  return metadata;
+  savePendingCityDownload(initial, cityId);
+  dispatchProgress(initial);
+  const previousQueue = downloadQueue;
+  const queued = previousQueue.then(async () => {
+    signal.throwIfAborted();
+    if (!authToken) throw new Error('Войдите в аккаунт перед скачиванием карты.');
+    if (!('caches' in window)) throw new Error('Браузер не поддерживает сохранение карты.');
+    const storage = await navigator.storage?.estimate?.();
+    const remainingBytes = refreshAfter
+      ? 8 * 1024 * 1024
+      : Math.max(0, plan.estimatedBytes - initial.byteSize) + 8 * 1024 * 1024;
+    if (storage?.quota && storage.quota - (storage.usage ?? 0) < remainingBytes) {
+      throw new Error('Недостаточно места для карты. Освободите память и повторите скачивание.');
+    }
+    await waitForPreparation(ensureOfflineMapAssets(), signal);
+    signal.throwIfAborted();
+    await waitForPreparation(loadOfflineMapRuntime(), signal);
+    signal.throwIfAborted();
+    return downloadRegion({ ...plan, authToken, signal, refreshAfter });
+  });
+  downloadQueue = queued.catch(() => undefined);
+  return waitForPreparation(previousQueue, signal)
+    .then(() => queued)
+    .catch((error) => {
+      const previous = readPendingCityDownloads().find((item) => item.cityId === cityId) ?? initial;
+      const progress: PendingCityDownload = {
+        ...previous,
+        status: signal.aborted ? 'paused' : 'error',
+        updatedAt: Date.now(),
+        error: signal.aborted ? undefined : getDownloadError(error),
+      };
+      savePendingCityDownload(progress, cityId);
+      dispatchProgress(progress);
+      if (signal.aborted) throw error;
+      throw new Error(progress.error, { cause: error });
+    });
 }
 
 async function syncOnce(input: SyncInput): Promise<OfflineMapMetadata | null> {
   if (typeof window === 'undefined' || !('caches' in window) || navigator.onLine === false) {
     return null;
   }
+
+  if (readPendingCityDownloads().some((item) => item.status === 'downloading')) return null;
+  const city = input.home
+    ? findOfflineMapCity(input.home.center[0], input.home.center[1])
+    : undefined;
+  const cityMap = city ? readOfflineMapMetadata(`city:${city.id}`) : null;
+  const ordersWithinCity =
+    city &&
+    input.orders.every(
+      (order) =>
+        !isCoordinate(order.xy?.latitude, order.xy?.longitude) ||
+        (Number(order.xy?.latitude) >= city.bounds.south &&
+          Number(order.xy?.latitude) <= city.bounds.north &&
+          Number(order.xy?.longitude) >= city.bounds.west &&
+          Number(order.xy?.longitude) <= city.bounds.east)
+    );
+  if (cityMap && ordersWithinCity && cityMap.expiresAt > Date.now() + REFRESH_BEFORE_EXPIRY_MS)
+    return cityMap;
 
   const zoomPlan = getZoomPlan(input.home);
   const desiredBounds = buildOfflineMapBounds(input.home, input.orders, zoomPlan.cameraMinZoom);
@@ -582,7 +865,7 @@ export function scheduleOfflineYandexMapSync(options: {
   home: HomeLocation | null;
   orders: Order[];
 }): Promise<OfflineMapMetadata | null> {
-  const pointId = options.pointId === null ? '' : String(options.pointId);
+  const pointId = getOfflineMapRegionId(options.pointId, options.home);
   const authToken = options.authToken.trim();
 
   if (!pointId || !authToken || typeof window === 'undefined') return Promise.resolve(null);
