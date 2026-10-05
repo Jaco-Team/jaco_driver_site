@@ -86,6 +86,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!tile.ok) {
+      const retryAfter = tile.headers.get('Retry-After');
+      if (tile.status === 429) res.setHeader('Retry-After', retryAfter || '1');
       res.status(tile.status).json({ error: `Yandex Tiles API вернул HTTP ${tile.status}.` });
       return;
     }

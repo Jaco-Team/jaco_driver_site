@@ -140,6 +140,28 @@ describe('offline map API', () => {
     expect(res.send).not.toHaveBeenCalled();
   });
 
+  it.each(['5', null])('forwards the upstream throttling delay (%s)', async (retryAfter) => {
+    const session = createOfflineMapSession({ pointId: 7, bounds, minZoom: 10, maxZoom: 10 })!;
+    const range = verifyOfflineMapSession(session)!.ranges[0];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: new Headers(retryAfter ? { 'Retry-After': retryAfter } : {}),
+      })
+    );
+    const res = response();
+    await tileHandler(
+      request({ query: { session, x: String(range.minX), y: String(range.minY), z: '10' } }),
+      apiResponse(res)
+    );
+
+    expect(res.status).toHaveBeenCalledWith(429);
+    expect(res.setHeader).toHaveBeenCalledWith('Retry-After', retryAfter || '1');
+    expect(res.json).toHaveBeenCalledWith({ error: 'Yandex Tiles API вернул HTTP 429.' });
+  });
+
   it('limits tile requests per client before contacting Yandex', async () => {
     const session = createOfflineMapSession({ pointId: 7, bounds, minZoom: 10, maxZoom: 10 })!;
     const range = verifyOfflineMapSession(session)!.ranges[0];

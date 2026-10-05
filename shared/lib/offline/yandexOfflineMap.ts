@@ -1,5 +1,6 @@
 import type { HomeLocation, Order } from '@/entities/order/model/order.types';
 import { ensureOfflineMapAssets } from '@/shared/lib/offline/offlineMapAssets';
+import { createOfflineTileFetcher } from '@/shared/lib/offline/offlineTileFetcher';
 
 export const YANDEX_OFFLINE_TILE_CACHE = 'jaco-yandex-offline-tiles-v1';
 export const YANDEX_OFFLINE_METADATA_KEY = 'jaco_yandex_offline_maps_v2';
@@ -407,6 +408,8 @@ async function downloadRegion(options: {
     options.maxZoom
   );
   const cache = await caches.open(YANDEX_OFFLINE_TILE_CACHE);
+  const controller = new AbortController();
+  const fetchTile = createOfflineTileFetcher();
   let cursor = 0;
   let completed = 0;
   let byteSize = 0;
@@ -425,6 +428,7 @@ async function downloadRegion(options: {
 
   const worker = async () => {
     while (cursor < tiles.length) {
+      controller.signal.throwIfAborted();
       const tile = tiles[cursor];
       cursor += 1;
       const cacheRequest = new Request(getOfflineTileUrl(tile));
@@ -447,19 +451,10 @@ async function downloadRegion(options: {
         z: String(tile.z),
         session,
       });
-      let response: Response | null = null;
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        response = await fetch(`/api/offline-map/yandex-tile?${query}`, {
-          cache: 'no-store',
-        });
-        if (response.status !== 429) break;
-        await new Promise((resolve) => window.setTimeout(resolve, 1100));
-      }
+      const response = await fetchTile(`/api/offline-map/yandex-tile?${query}`, controller.signal);
 
-      if (!response?.ok) {
-        const payload = response
-          ? ((await response.json().catch(() => ({}))) as { error?: string })
-          : {};
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
         throw new Error(
           payload.error || `Не удалось загрузить тайл ${tile.z}/${tile.x}/${tile.y}.`
         );
@@ -484,9 +479,12 @@ async function downloadRegion(options: {
     }
   };
 
+  const workers = Array.from({ length: DOWNLOAD_WORKERS }, () => worker());
   try {
-    await Promise.all(Array.from({ length: DOWNLOAD_WORKERS }, () => worker()));
+    await Promise.all(workers);
   } catch (error) {
+    controller.abort();
+    await Promise.allSettled(workers);
     report('error', error instanceof Error ? error.message : 'Не удалось сохранить карту.');
     throw error;
   }
