@@ -75,6 +75,7 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
     return () => window.clearTimeout(timer);
   }, [expiresAt, checkedAt]);
   const ready = Boolean(expiresAt && expiresAt > checkedAt);
+  const needsUpgrade = Boolean(ready && plan && metadata && metadata.maxZoom < plan.maxZoom);
   const downloading = job?.status === 'downloading';
   const progress = job?.total ? Math.min(100, Math.floor((job.completed / job.total) * 100)) : 0;
   const deleting = Boolean(state.deletingCityId);
@@ -206,10 +207,10 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
                   <DownloadRoundedIcon />
                 )
               }
-              onClick={() => startDownload(ready && !job)}
+              onClick={() => startDownload(ready && !needsUpgrade && !job)}
               sx={{ fontSize }}
             >
-              {job ? 'Продолжить' : ready ? 'Обновить' : 'Скачать'}
+              {job ? 'Продолжить' : needsUpgrade ? 'Докачать' : ready ? 'Обновить' : 'Скачать'}
             </Button>
           )}
           {(metadata || job) && !downloading ? (

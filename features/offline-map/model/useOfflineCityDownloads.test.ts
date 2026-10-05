@@ -33,6 +33,7 @@ vi.mock('@/features/offline/model/connectivity.store', () => ({
 }));
 vi.mock('@/shared/lib/offline/yandexOfflineMap', () => ({
   YANDEX_OFFLINE_MAP_EVENT: 'city-progress',
+  cancelOfflineMapDetailDownloads: vi.fn(),
 }));
 
 describe('city download lifecycle', () => {

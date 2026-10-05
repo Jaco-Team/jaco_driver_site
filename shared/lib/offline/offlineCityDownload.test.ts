@@ -8,6 +8,7 @@ import {
   readPendingCityDownloads,
   deleteOfflineYandexMap,
   YANDEX_OFFLINE_CITY_DOWNLOADS_KEY,
+  YANDEX_OFFLINE_METADATA_KEY,
   validateOfflineCityMaps,
 } from './yandexOfflineMap';
 
@@ -56,7 +57,8 @@ describe('city map download and resume', () => {
   it('downloads only missing tiles and publishes readiness only on completion', async () => {
     const result = await downloadOfflineCityMap('tolyatti', 'token', new AbortController().signal);
     expect(result.pointId).toBe('city:tolyatti');
-    expect(result.tileCount).toBe(1225);
+    expect(result.tileCount).toBe(4697);
+    expect(result.maxZoom).toBe(15);
     expect(mocks.fetchTile).toHaveBeenCalledTimes(1);
     expect(cache.put).toHaveBeenCalledTimes(1);
     expect(readOfflineMapMetadata('city:tolyatti')).toMatchObject({ cityId: 'tolyatti' });
@@ -77,6 +79,37 @@ describe('city map download and resume', () => {
     await downloadOfflineCityMap('tolyatti', 'token', new AbortController().signal);
     expect(mocks.fetchTile).not.toHaveBeenCalled();
     expect(readPendingCityDownloads()).toEqual([]);
+  });
+
+  it('adds only layer 15 to a previously complete layer-14 package', async () => {
+    const plan = getOfflineCityPlan('tolyatti');
+    const previous = {
+      ...plan,
+      maxZoom: 14,
+      cameraMaxZoom: 13,
+      tileCount: 1225,
+      coverageVersion: 2,
+      savedAt: Date.now(),
+      lastUsedAt: Date.now(),
+      expiresAt: Date.now() + 86400000,
+      byteSize: 3675,
+    };
+    localStorage.setItem(
+      YANDEX_OFFLINE_METADATA_KEY,
+      JSON.stringify({ version: 2, regions: { [plan.pointId]: previous } })
+    );
+    cache.match.mockImplementation(async (request: Request) =>
+      request.url.includes('/yandex/15/') ? undefined : cached
+    );
+    mocks.fetchTile.mockImplementation(async () => new Response('png'));
+    const result = await downloadOfflineCityMap('tolyatti', 'token', new AbortController().signal);
+    expect(result.maxZoom).toBe(15);
+    expect(mocks.fetchTile).toHaveBeenCalledTimes(4697 - 1225);
+    expect(
+      mocks.fetchTile.mock.calls.every(
+        ([url]) => new URL(url, location.origin).searchParams.get('z') === '15'
+      )
+    ).toBe(true);
   });
 
   it('does not reset visible progress while rechecking cached tiles on resume', async () => {

@@ -4,6 +4,7 @@ import { useAuthStore } from '@/features/auth/model/auth.store';
 import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
 import {
   YANDEX_OFFLINE_MAP_EVENT,
+  cancelOfflineMapDetailDownloads,
   type OfflineMapDownloadProgress,
 } from '@/shared/lib/offline/yandexOfflineMap';
 
@@ -21,6 +22,7 @@ export function useOfflineCityDownloads(): void {
     };
     const onPageHide = () => {
       pageActive.current = false;
+      cancelOfflineMapDetailDownloads();
       store.pauseAll(true);
     };
     const onVisible = () => {
@@ -50,9 +52,13 @@ export function useOfflineCityDownloads(): void {
 
   useEffect(() => {
     const store = useOfflineMapStore.getState();
-    if (isAuth === false) store.pauseAll(false);
-    else if (!isOnline) store.pauseAll(true);
-    else if (pageActive.current && isAuth === true && document.visibilityState === 'visible')
+    if (isAuth === false) {
+      cancelOfflineMapDetailDownloads();
+      store.pauseAll(false);
+    } else if (!isOnline) {
+      cancelOfflineMapDetailDownloads();
+      store.pauseAll(true);
+    } else if (pageActive.current && isAuth === true && document.visibilityState === 'visible')
       store.resumePending();
   }, [isOnline, isAuth, busyCityId]);
 }

@@ -78,6 +78,20 @@ describe('offline city settings', () => {
     expect(mocks.state.download).toHaveBeenCalledWith('samara', false);
     expect(mocks.state.remove).not.toHaveBeenCalled();
   });
+  it('upgrades a layer-14 map without refreshing previously saved layers', () => {
+    mocks.state.maps = {
+      'city:samara': {
+        maxZoom: 14,
+        savedAt: Date.now(),
+        expiresAt: Date.now() + 60_000,
+        byteSize: 1024,
+      },
+    };
+    render(<OfflineCityMapsSettings globalFontSize={16} />);
+    expect(screen.getByText('Доступна офлайн')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Докачать' }));
+    expect(mocks.state.download).toHaveBeenCalledWith('samara', false);
+  });
   it('updates availability when the saved map expires without another store update', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-05T10:00:00Z'));

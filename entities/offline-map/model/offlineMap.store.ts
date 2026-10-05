@@ -4,6 +4,7 @@ import { getAuthToken } from '@/shared/api/token';
 import { getOfflineMapCity } from '@/shared/config/offlineMapCities';
 import {
   deleteOfflineYandexMap,
+  cancelOfflineMapDetailDownloads,
   downloadOfflineCityMap,
   getOfflineCityPlan,
   readOfflineMapRegistry,
@@ -104,6 +105,7 @@ export const useOfflineMapStore = create<OfflineMapState>((set, get) => ({
 
   download: async (id, refresh = false) => {
     if (get().busyCityId || get().deletingCityId || !getOfflineMapCity(id)) return;
+    cancelOfflineMapDetailDownloads();
     const controller = new AbortController();
     const plan = getOfflineCityPlan(id);
     set({

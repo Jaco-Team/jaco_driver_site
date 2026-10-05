@@ -1,5 +1,11 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import {
+  getOfflineDetailPlan,
+  OFFLINE_DETAIL_MAX_TILES,
+  OFFLINE_DETAIL_MAX_ZOOM,
+  type OfflineDetailTile,
+} from '@/shared/lib/offline/offlineMapDetails';
+import {
   getOfflineMapCity,
   OFFLINE_CITY_MIN_ZOOM,
   OFFLINE_CITY_MAX_ZOOM,
@@ -67,7 +73,8 @@ function buildRanges(
   bounds: OfflineMapSessionBounds,
   minZoom: number,
   maxZoom: number,
-  maxTiles = MAX_TILES
+  maxTiles = MAX_TILES,
+  allowedMaxZoom = MAX_ALLOWED_ZOOM
 ): TileRange[] | null {
   const values = [bounds.west, bounds.south, bounds.east, bounds.north];
   if (!values.every(Number.isFinite)) return null;
@@ -85,7 +92,7 @@ function buildRanges(
     !Number.isInteger(minZoom) ||
     !Number.isInteger(maxZoom) ||
     minZoom < MIN_ALLOWED_ZOOM ||
-    maxZoom > MAX_ALLOWED_ZOOM ||
+    maxZoom > allowedMaxZoom ||
     minZoom > maxZoom
   ) {
     return null;
@@ -122,13 +129,32 @@ export function createOfflineMapSession(input: {
   minZoom: number;
   maxZoom: number;
   cityId?: unknown;
+  detailTile?: unknown;
 }): string | null {
+  const detail =
+    input.detailTile === undefined
+      ? null
+      : getOfflineDetailPlan(input.detailTile as OfflineDetailTile);
+  if (input.detailTile !== undefined && (!detail || input.cityId !== undefined)) return null;
   const city = input.cityId === undefined ? undefined : getOfflineMapCity(input.cityId);
   if (input.cityId !== undefined && !city) return null;
-  const pointId = city ? `city:${city.id}` : `${input.pointId ?? ''}`.trim();
-  const ranges = city
-    ? buildRanges(city.bounds, OFFLINE_CITY_MIN_ZOOM, OFFLINE_CITY_MAX_ZOOM, OFFLINE_CITY_MAX_TILES)
-    : buildRanges(input.bounds, input.minZoom, input.maxZoom);
+  const pointId = detail?.pointId ?? (city ? `city:${city.id}` : `${input.pointId ?? ''}`.trim());
+  const ranges = detail
+    ? buildRanges(
+        detail.bounds,
+        detail.minZoom,
+        detail.maxZoom,
+        OFFLINE_DETAIL_MAX_TILES,
+        OFFLINE_DETAIL_MAX_ZOOM
+      )
+    : city
+      ? buildRanges(
+          city.bounds,
+          OFFLINE_CITY_MIN_ZOOM,
+          OFFLINE_CITY_MAX_ZOOM,
+          OFFLINE_CITY_MAX_TILES
+        )
+      : buildRanges(input.bounds, input.minZoom, input.maxZoom);
   if (!pointId || pointId.length > 128 || !ranges) return null;
 
   const payload: TileSessionPayload = {

@@ -8,6 +8,7 @@ export interface MapInstance {
   setCenter: (center: number[]) => void | Promise<unknown>;
   getCenter: () => number[] | null;
   getBounds: () => number[][] | null;
+  getZoom?: () => number;
   events: {
     add: (event: string, handler: () => void) => void;
     remove: (event: string, handler: () => void) => void;

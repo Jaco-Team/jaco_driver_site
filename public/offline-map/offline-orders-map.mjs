@@ -43,7 +43,9 @@ async function readOfflineMap(pointId, center) {
 
   const regions =
     registry?.version === 2
-      ? Object.values(registry.regions || {}).filter((region) => region.expiresAt > Date.now())
+      ? Object.values(registry.regions || {}).filter(
+          (region) => region.kind !== 'detail' && region.expiresAt > Date.now()
+        )
       : [];
   const exact =
     pointId === null || pointId === undefined ? null : registry?.regions?.[String(pointId)] || null;
@@ -58,7 +60,7 @@ async function readOfflineMap(pointId, center) {
   const cityMap = containing.find((region) => region.cityId);
   const metadata =
     cityMap ||
-    (exact?.expiresAt > Date.now()
+    (exact?.kind !== 'detail' && exact?.expiresAt > Date.now()
       ? exact
       : containing.sort((a, b) => distanceToRegion(a, center) - distanceToRegion(b, center))[0]);
 
@@ -69,8 +71,46 @@ async function readOfflineMap(pointId, center) {
   }
 
   const cache = await caches.open(CACHE_NAME);
+  const candidates = Object.values(registry?.regions || {}).filter(
+    (region) =>
+      region.kind === 'detail' &&
+      region.expiresAt > Date.now() &&
+      region.minZoom === 16 &&
+      region.maxZoom >= 16 &&
+      region.maxZoom <= 19 &&
+      region.bounds.west < metadata.bounds.east &&
+      region.bounds.east > metadata.bounds.west &&
+      region.bounds.south < metadata.bounds.north &&
+      region.bounds.north > metadata.bounds.south
+  );
+  const urls = candidates.length
+    ? new Set((await cache.keys()).map((request) => request.url))
+    : null;
+  const details = candidates.filter((region) => isCompleteDetailRegion(region, urls));
+  return { cache, metadata, details };
+}
 
-  return { cache, metadata };
+function isCompleteDetailRegion(region, urls) {
+  const toTile = (longitude, latitude, z) => ({
+    x: Math.floor(((longitude + 180) / 360) * 2 ** z),
+    y: Math.floor(((1 - Math.asinh(Math.tan((latitude * Math.PI) / 180)) / Math.PI) / 2) * 2 ** z),
+  });
+  let count = 0;
+  for (let z = region.minZoom; z <= region.maxZoom; z++) {
+    const first = toTile(region.bounds.west, region.bounds.north, z);
+    const last = toTile(region.bounds.east, region.bounds.south, z);
+    if (![first.x, first.y, last.x, last.y].every(Number.isFinite)) return false;
+    for (let x = first.x; x <= last.x; x++) {
+      for (let y = first.y; y <= last.y; y++) {
+        if (
+          ++count > 85 ||
+          !urls.has(new URL(`/offline-map/yandex/${z}/${x}/${y}.png`, location.origin).href)
+        )
+          return false;
+      }
+    }
+  }
+  return count > 0;
 }
 
 function getMarkerScale(value) {
@@ -329,7 +369,7 @@ async function mount({
     const coverageCenter = isCoordinate(center)
       ? center
       : groups.find((group) => isCoordinate(group.coordinate))?.coordinate;
-    const { cache, metadata } = await readOfflineMap(pointId, coverageCenter);
+    const { cache, metadata, details } = await readOfflineMap(pointId, coverageCenter);
 
     if (signal?.aborted) {
       throw new DOMException('Загрузка офлайн-карты отменена.', 'AbortError');
@@ -376,9 +416,28 @@ async function mount({
     const cameraMinZoom = Number.isFinite(Number(metadata.cameraMinZoom))
       ? Number(metadata.cameraMinZoom)
       : Math.max(Number(metadata.minZoom) - 1, initialZoom - 1);
-    const cameraMaxZoom = Number.isFinite(Number(metadata.cameraMaxZoom))
+    const baseMaxZoom = Number.isFinite(Number(metadata.cameraMaxZoom))
       ? Number(metadata.cameraMaxZoom)
       : Math.min(Number(metadata.maxZoom) - 1, initialZoom + 2);
+    const cameraMaxZoom = Math.max(baseMaxZoom, ...details.map((region) => region.maxZoom - 1));
+    const detailSources = Object.fromEntries(
+      details.map((region, index) => [
+        `yandex-detail-${index}`,
+        {
+          type: 'raster',
+          tiles: ['yandex-offline://{z}/{x}/{y}'],
+          tileSize: 256,
+          minzoom: region.minZoom,
+          maxzoom: region.maxZoom,
+          bounds: [
+            region.bounds.west,
+            region.bounds.south,
+            region.bounds.east,
+            region.bounds.north,
+          ],
+        },
+      ])
+    );
     const map = new maplibregl.Map({
       container,
       center: mapCenter,
@@ -395,6 +454,7 @@ async function mount({
       style: {
         version: 8,
         sources: {
+          ...detailSources,
           yandex: {
             type: 'raster',
             tiles: ['yandex-offline://{z}/{x}/{y}'],
@@ -416,6 +476,13 @@ async function mount({
             source: 'yandex',
             paint: { 'raster-fade-duration': 0 },
           },
+          ...Object.keys(detailSources).map((source) => ({
+            id: source,
+            type: 'raster',
+            source,
+            minzoom: 15,
+            paint: { 'raster-fade-duration': 0 },
+          })),
         ],
       },
     });
@@ -523,6 +590,10 @@ async function mount({
       }
 
       const mapError = event.error || new Error('Ошибка офлайн-карты.');
+      if (event.sourceId?.startsWith('yandex-detail-')) {
+        console.warn('[offline-map] Подробный участок недоступен:', mapError);
+        return;
+      }
 
       if (loaded) {
         console.warn('[offline-map] MapLibre warning:', mapError);
@@ -598,7 +669,7 @@ async function mount({
   }
 }
 
-globalThis.JacoOfflineOrdersMap = { version: '28', mount };
+globalThis.JacoOfflineOrdersMap = { version: '29', mount };
 globalThis.dispatchEvent(new Event('jaco-offline-orders-map-ready'));
 
 export { mount };

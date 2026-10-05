@@ -11,6 +11,7 @@ vi.mock('@/shared/api/token', () => ({ getAuthToken: () => 'token' }));
 vi.mock('@/shared/lib/offline/yandexOfflineMap', () => ({
   downloadOfflineCityMap: mocks.download,
   deleteOfflineYandexMap: mocks.remove,
+  cancelOfflineMapDetailDownloads: vi.fn(),
   setCityDownloadAutoResume: mocks.setAutoResume,
   getOfflineCityPlan: (id: string) => ({ pointId: `city:${id}`, tileCount: 5 }),
   readOfflineMapRegistry: () => ({ regions: {} }),

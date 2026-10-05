@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { compile } from 'sass';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { getMarkerOfflineDetailPlans } from '../../shared/lib/offline/offlineMapDetails';
+import { listOfflineMapTiles, getOfflineTileUrl } from '../../shared/lib/offline/yandexOfflineMap';
 
 const root = resolve(import.meta.dirname, '../..');
 const runtimeSource = readFileSync(
@@ -27,6 +29,7 @@ afterEach(() => {
 async function openMap(groups, options = {}) {
   const markers = [];
   const listeners = {};
+  let mapOptions;
   const map = {
     once: vi.fn((event, callback) => {
       listeners[event] = callback;
@@ -58,6 +61,7 @@ async function openMap(groups, options = {}) {
           maxZoom: 14,
           bounds: { west: 49.2, south: 53.4, east: 49.7, north: 53.7 },
         },
+        ...(options.regions || {}),
       },
     })
   );
@@ -67,7 +71,8 @@ async function openMap(groups, options = {}) {
       removeProtocol: vi.fn(),
       addProtocol: vi.fn(),
       Map: class {
-        constructor() {
+        constructor(settings) {
+          mapOptions = settings;
           return map;
         }
       },
@@ -93,7 +98,15 @@ async function openMap(groups, options = {}) {
     localStorage,
     location,
     Event,
-    caches: { open: vi.fn().mockResolvedValue({}) },
+    caches: {
+      open: vi
+        .fn()
+        .mockResolvedValue({
+          keys: async () => (options.cachedUrls || []).map((url) => new Request(url)),
+        }),
+    },
+    URL,
+    Request,
     requestAnimationFrame: vi.fn().mockReturnValue(1),
     cancelAnimationFrame: vi.fn(),
   });
@@ -107,7 +120,7 @@ async function openMap(groups, options = {}) {
     ...options,
   });
   listeners.load();
-  return { markers, handle, onOrderClick };
+  return { markers, handle, onOrderClick, mapOptions };
 }
 
 const order = {
@@ -120,6 +133,31 @@ const order = {
 };
 
 describe('offline marker coordinate anchors', () => {
+  it('overlays completed house-level detail while retaining the base source for uncovered areas', async () => {
+    const plan = getMarkerOfflineDetailPlans([[53.52, 49.42]])[0];
+    const regions = { [plan.pointId]: { ...plan, expiresAt: Date.now() + 60_000 } };
+    const cachedUrls = listOfflineMapTiles(plan.bounds, 16, 19).map(getOfflineTileUrl);
+    const { handle, mapOptions } = await openMap([order], { regions, cachedUrls });
+    expect(mapOptions.maxZoom).toBe(18);
+    expect(mapOptions.style.sources.yandex.maxzoom).toBe(14);
+    expect(mapOptions.style.sources['yandex-detail-0']).toMatchObject({ minzoom: 16, maxzoom: 19 });
+    expect(mapOptions.style.layers.map((layer) => layer.source)).toEqual([
+      'yandex',
+      'yandex-detail-0',
+    ]);
+    handle.destroy();
+  });
+
+  it('ignores a partially missing detail region instead of making the entire map unavailable', async () => {
+    const plan = getMarkerOfflineDetailPlans([[53.52, 49.42]])[0];
+    const { handle, mapOptions } = await openMap([order], {
+      regions: { [plan.pointId]: { ...plan, expiresAt: Date.now() + 60_000 } },
+      cachedUrls: [],
+    });
+    expect(mapOptions.maxZoom).toBe(13);
+    expect(Object.keys(mapOptions.style.sources)).toEqual(['yandex']);
+    handle.destroy();
+  });
   it.each(['transparent', 'white', 'white_border', 'black'])(
     'keeps the circle center at the coordinate with the %s theme',
     async (theme) => {

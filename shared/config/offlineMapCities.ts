@@ -19,8 +19,8 @@ export const OFFLINE_MAP_CITIES: readonly OfflineMapCity[] = [
 ];
 
 export const OFFLINE_CITY_MIN_ZOOM = 10;
-export const OFFLINE_CITY_MAX_ZOOM = 14;
-export const OFFLINE_CITY_MAX_TILES = 4000;
+export const OFFLINE_CITY_MAX_ZOOM = 15;
+export const OFFLINE_CITY_MAX_TILES = 10000;
 
 export function getOfflineMapCity(id: unknown): OfflineMapCity | undefined {
   return OFFLINE_MAP_CITIES.find((city) => city.id === id);

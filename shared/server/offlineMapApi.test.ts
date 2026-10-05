@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import sessionHandler from '@/pages/api/offline-map/session';
 import tileHandler from '@/pages/api/offline-map/yandex-tile';
 import { createOfflineMapSession, verifyOfflineMapSession } from './yandexOfflineMap';
+import { getMarkerOfflineDetailPlans } from '@/shared/lib/offline/offlineMapDetails';
 
 const bounds = { west: 37.6, south: 55.7, east: 37.61, north: 55.71 };
 
@@ -92,6 +93,24 @@ describe('offline map API', () => {
     expect(res.json).not.toHaveBeenCalledWith(
       expect.objectContaining({ session: expect.anything() })
     );
+  });
+
+  it('passes detailed cells through the same authenticated session endpoint', async () => {
+    const plan = getMarkerOfflineDetailPlans([[53.52, 49.42]])[0];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200 }));
+    const res = response();
+    await sessionHandler(
+      request({
+        method: 'POST',
+        headers: { authorization: 'Bearer token' },
+        body: { detailTile: plan.detailTile },
+      }),
+      apiResponse(res)
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = verifyOfflineMapSession(res.json.mock.calls[0][0].session);
+    expect(payload?.pointId).toBe(plan.pointId);
+    expect(payload?.ranges.at(-1)?.z).toBe(19);
   });
 
   it('serves only image tiles inside the signed area', async () => {

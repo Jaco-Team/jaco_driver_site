@@ -83,7 +83,7 @@ describe('service worker network fallbacks', () => {
     await expect(worker.request('/list_orders', 'navigate')).resolves.toBe(offline);
   });
 
-  it.each(['jaco-assets-v43', 'jaco-offline-app-v2'])(
+  it.each(['jaco-assets-v44', 'jaco-offline-app-v2'])(
     'serves an immutable Next.js chunk from %s without waiting for the network',
     async (cacheName) => {
       const worker = createWorker();
@@ -107,7 +107,7 @@ describe('service worker network fallbacks', () => {
     worker.fetchMock.mockResolvedValue(response);
 
     await expect(worker.request('/_next/static/chunks/page-456def.js')).resolves.toBe(response);
-    expect(worker.open).toHaveBeenCalledWith('jaco-assets-v43');
+    expect(worker.open).toHaveBeenCalledWith('jaco-assets-v44');
     expect(worker.put).toHaveBeenCalledTimes(1);
     for (const [, options] of worker.match.mock.calls) {
       expect(options).not.toHaveProperty('ignoreSearch');
@@ -117,7 +117,7 @@ describe('service worker network fallbacks', () => {
   it.each([
     ['/list_orders', 'navigate'],
     ['/_next/static/chunks/page-123abc.js', 'cors'],
-    ['/offline-map/offline-orders-map.mjs?v=28', 'cors'],
+    ['/offline-map/offline-orders-map.mjs?v=29', 'cors'],
   ] as const)('keeps a successful response for %s when the cache is full', async (path, mode) => {
     const worker = createWorker();
     const response = new Response('network response');
@@ -129,7 +129,7 @@ describe('service worker network fallbacks', () => {
 
   it.each([
     ['/_next/static/chunks/page-123abc.js', 'cors'],
-    ['/offline-map/offline-orders-map.mjs?v=28', 'cors'],
+    ['/offline-map/offline-orders-map.mjs?v=29', 'cors'],
     ['/icon.svg', 'cors'],
     ['/list_orders', 'navigate'],
   ] as const)('uses the network for %s when Cache Storage is unavailable', async (path, mode) => {

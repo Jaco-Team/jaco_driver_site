@@ -13,6 +13,7 @@ interface SessionRequestBody {
   };
   minZoom?: unknown;
   maxZoom?: unknown;
+  detailTile?: unknown;
 }
 
 function apiOrigin(): string {
@@ -53,6 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   const session = createOfflineMapSession({
     cityId: body?.cityId,
+    detailTile: body?.detailTile,
     pointId: body?.pointId,
     bounds: {
       west: Number(body?.bounds?.west),

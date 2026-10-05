@@ -8,6 +8,7 @@ import {
   verifyOfflineMapSession,
 } from './yandexOfflineMap';
 import { OFFLINE_MAP_CITIES } from '@/shared/config/offlineMapCities';
+import { getMarkerOfflineDetailPlans } from '@/shared/lib/offline/offlineMapDetails';
 
 const bounds = { west: 37.6, south: 55.7, east: 37.61, north: 55.71 };
 const key = 'test-yandex-tiles-key-long-enough';
@@ -80,12 +81,13 @@ describe('Yandex offline map sessions', () => {
       const session = createOfflineMapSession({ ...input, cityId: city.id });
       const payload = verifyOfflineMapSession(session);
       expect(payload?.pointId).toBe(`city:${city.id}`);
-      expect(payload?.ranges).toHaveLength(5);
+      expect(payload?.ranges).toHaveLength(6);
       const count = payload!.ranges.reduce(
         (sum, range) => sum + (range.maxX - range.minX + 1) * (range.maxY - range.minY + 1),
         0
       );
-      expect(count).toBeLessThanOrEqual(4000);
+      expect(count).toBeLessThanOrEqual(10000);
+      expect(payload?.ranges.at(-1)?.z).toBe(15);
       if (city.id === 'samara') expect(createOfflineMapSession(input)).toBeNull();
     }
   });
@@ -109,5 +111,36 @@ describe('Yandex offline map sessions', () => {
     expect(
       createOfflineMapSession({ pointId: 42, bounds, minZoom: 10, maxZoom: 10, cityId: 'unknown' })
     ).toBeNull();
+  });
+
+  it('permits high zoom only for a validated small city grid cell', () => {
+    const plan = getMarkerOfflineDetailPlans([[53.52, 49.42]])[0];
+    const session = createOfflineMapSession({
+      pointId: 'attack',
+      bounds,
+      minZoom: 0,
+      maxZoom: 30,
+      detailTile: plan.detailTile,
+    });
+    const payload = verifyOfflineMapSession(session)!;
+    expect(payload.pointId).toBe(plan.pointId);
+    expect(payload.ranges.map((range) => range.z)).toEqual([16, 17, 18, 19]);
+    expect(
+      payload.ranges.reduce(
+        (sum, range) => sum + (range.maxX - range.minX + 1) * (range.maxY - range.minY + 1),
+        0
+      )
+    ).toBe(85);
+    expect(createOfflineMapSession({ pointId: 1, bounds, minZoom: 16, maxZoom: 19 })).toBeNull();
+    for (const detailTile of [
+      null,
+      { x: -1, y: 0, maxZoom: 19 },
+      { ...plan.detailTile, maxZoom: 20 },
+      { x: 0, y: 0, maxZoom: 19 },
+    ]) {
+      expect(
+        createOfflineMapSession({ pointId: 1, bounds, minZoom: 10, maxZoom: 15, detailTile })
+      ).toBeNull();
+    }
   });
 });

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useOfflineMapDetails } from '@/features/offline-map/model/useOfflineMapDetails';
 
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersStore } from '@/entities/order/model/order.store';
@@ -50,6 +51,12 @@ export function useOrdersMapScreen(): UseOrdersMapScreenResult {
       setViewport(null);
     }
   }, []);
+
+  const detailCoordinates = useMemo(
+    () => orders.orders.map((order) => [Number(order.xy?.latitude), Number(order.xy?.longitude)]),
+    [orders.orders]
+  );
+  useOfflineMapDetails(mapInstance, detailCoordinates);
 
   const getHome = useCallback(() => {
     if (!orders.home?.center) return;
