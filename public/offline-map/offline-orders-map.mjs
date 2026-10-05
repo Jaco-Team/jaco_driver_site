@@ -113,30 +113,36 @@ function createMarkerIcon(group, size) {
 
 function createOrderMarker(group, options, onOrderClick) {
   const marker = document.createElement('button');
+  const details = document.createElement('span');
   const label = document.createElement('span');
   const scale = getMarkerScale(options.mapScale);
-  const icon = createMarkerIcon(group, (group.isLocation ? 20 : 24) * scale);
+  const size = (group.isLocation ? 20 : 24) * scale;
+  const icon = createMarkerIcon(group, size);
 
   marker.type = 'button';
   marker.className = 'offline-order-marker';
+  marker.style.width = `${size}px`;
+  marker.style.height = `${size}px`;
   marker.setAttribute(
     'aria-label',
     `Открыть заказ ${group.idText || `#${group.orderId}`} по адресу ${
       group.address || 'адрес не указан'
     }`
   );
+  details.className = 'offline-order-marker__details';
   label.className = `offline-order-marker__label offline-order-marker__label--${getLabelTheme(
     options.theme
   )}`;
   label.style.fontSize = `${Number.isFinite(Number(options.globalFontSize)) ? Number(options.globalFontSize) : 16}px`;
   label.textContent = group.label || group.idText || `#${group.orderId}`;
-  marker.append(icon, label);
+  details.append(label);
+  marker.append(icon, details);
 
   if (Number(group.count) > 1) {
     const count = document.createElement('span');
     count.className = 'offline-order-marker__count';
     count.textContent = String(group.count);
-    marker.append(count);
+    details.append(count);
   }
 
   marker.addEventListener('click', () => onOrderClick?.(group.orderId));
@@ -471,7 +477,8 @@ async function mount({
 
         const marker = new maplibregl.Marker({
           element: createOrderMarker(group, { theme, mapScale, globalFontSize }, onOrderClick),
-          anchor: 'bottom',
+          anchor: group.isLocation ? 'bottom' : 'center',
+          subpixelPositioning: true,
         })
           .setLngLat([Number(group.coordinate[1]), Number(group.coordinate[0])])
           .addTo(map);
@@ -497,6 +504,7 @@ async function mount({
         homeMarker = new maplibregl.Marker({
           element: createHomeMarker(map, homeCoordinate, dark, onHomeClick),
           anchor: 'center',
+          subpixelPositioning: true,
         })
           .setLngLat(homeCoordinate)
           .addTo(map);
@@ -590,7 +598,7 @@ async function mount({
   }
 }
 
-globalThis.JacoOfflineOrdersMap = { version: '27', mount };
+globalThis.JacoOfflineOrdersMap = { version: '28', mount };
 globalThis.dispatchEvent(new Event('jaco-offline-orders-map-ready'));
 
 export { mount };

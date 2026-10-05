@@ -4,7 +4,7 @@
  * are not stored here: they live in localStorage (shared/lib/offline/cache.ts).
  */
 
-const VERSION = 'v41';
+const VERSION = 'v42';
 const PAGE_CACHE = `jaco-pages-${VERSION}`;
 const ASSET_CACHE = `jaco-assets-${VERSION}`;
 const OFFLINE_APP_CACHE = 'jaco-offline-app-v2';
@@ -22,7 +22,7 @@ const PRECACHE_URLS = [
   '/offline-map/runtime/maplibre-gl-shared.mjs?v=6.12.0',
   '/offline-map/runtime/maplibre-gl-worker.mjs?v=6.12.0',
   '/offline-map/runtime/maplibre-gl.css?v=6.12.0',
-  '/offline-map/offline-orders-map.mjs?v=27',
+  '/offline-map/offline-orders-map.mjs?v=28',
   '/offline-map/yandex-logo-ru.svg',
 ];
 

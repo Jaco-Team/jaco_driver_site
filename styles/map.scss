@@ -537,7 +537,7 @@
 .offline-order-marker {
   display: flex;
   align-items: center;
-  min-height: 28px;
+  box-sizing: border-box;
   padding: 0;
   border: 0;
   background: transparent;
@@ -546,6 +546,16 @@
   font-weight: 400;
   white-space: nowrap;
   cursor: pointer;
+}
+
+.offline-order-marker__details {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  display: flex;
+  width: max-content;
+  align-items: center;
+  transform: translateY(-50%);
 }
 
 .offline-order-marker__icon {
