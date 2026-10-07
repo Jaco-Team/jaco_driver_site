@@ -82,19 +82,31 @@ export function getAuthErrorMessage(
   }
 
   if (info.status === 429) {
-    return info.message || 'Слишком много попыток. Попробуйте позже.';
+    const { retryAfter } = getAuthSecurityState(error);
+    const generic = /^(too many (attempts|requests)\.?|request failed with status code 429)$/i.test(
+      info.message.trim()
+    );
+
+    if (!generic && info.message !== 'Не удалось выполнить запрос.') {
+      return info.message;
+    }
+
+    return retryAfter > 0
+      ? `Слишком много попыток. Повторите через ${retryAfter} с.`
+      : 'Слишком много попыток. Попробуйте позже.';
   }
 
   return info.message || fallbackMessage;
 }
 
 export function getAuthSecurityState(error: unknown): {
-  captchaRequired: boolean;
+  captchaRequired?: boolean;
   retryAfter: number;
 } {
   const axiosError = error as AxiosError;
   const data = axiosError?.response?.data;
   const record = isRecord(data) ? data : null;
+  const captchaRequired = record?.captcha_required;
   const headerRetryAfter = Number(axiosError?.response?.headers?.['retry-after'] ?? 0);
   const payloadRetryAfter = Number(record?.retry_after ?? 0);
   const retryAfter = Math.max(
@@ -109,7 +121,7 @@ export function getAuthSecurityState(error: unknown): {
   );
 
   return {
-    captchaRequired: Boolean(record?.captcha_required),
+    ...(typeof captchaRequired === 'boolean' ? { captchaRequired } : {}),
     retryAfter,
   };
 }

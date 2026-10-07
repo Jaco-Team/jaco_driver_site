@@ -3,6 +3,7 @@ import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 
 interface MyTextInputProps {
   label?: string;
+  disabled?: boolean;
   value?: string | number;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
@@ -22,6 +23,7 @@ interface MyTextInputProps {
 
 export default function MyTextInput({
   label,
+  disabled,
   value,
   onChange,
   onBlur,
@@ -41,6 +43,7 @@ export default function MyTextInput({
   return (
     <TextField
       label={label}
+      disabled={disabled}
       placeholder={placeholder}
       name={name}
       autoComplete={autoComplete}

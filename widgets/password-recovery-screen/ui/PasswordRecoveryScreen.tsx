@@ -42,11 +42,16 @@ export default function RegistrationPage() {
     confirmRecoveryCode,
     errorText,
     helperText,
+    captchaRequired,
+    showResendCaptcha,
     captchaResetKey,
     setCaptchaToken,
     resetCaptcha,
     retryAfter,
+    sendRetryAfter,
+    passwordChanged,
     canSubmit,
+    canResend,
   } = useRegistrationPage();
 
   return (
@@ -82,22 +87,24 @@ export default function RegistrationPage() {
             </Stepper>
 
             <div className="auth__fieldGroup">
-              {activeStep == 0 ? (
+              {passwordChanged ? null : activeStep === 0 ? (
                 <>
                   <MyTextInput
                     label="Номер телефона"
                     value={myLogin}
                     type={'text'}
+                    disabled={loader}
                     onChange={(e) => setMyLogin(e.target.value)}
                   />
                   <PasswordInput
+                    disabled={loader}
                     label="Новый пароль"
                     value={myPWD}
                     onChange={(e) => setMyPWD(e.target.value)}
                     onKeyPress={submitOnEnter(requestRecoveryCode)}
                   />
                   <PasswordRequirementsList password={myPWD} />
-                  {SMARTCAPTCHA_CLIENT_KEY ? (
+                  {captchaRequired && SMARTCAPTCHA_CLIENT_KEY ? (
                     <YandexSmartCaptcha
                       resetKey={captchaResetKey}
                       onSuccess={setCaptchaToken}
@@ -125,22 +132,48 @@ export default function RegistrationPage() {
               <div className="auth__hint">{helperText}</div>
             )}
 
-            <Button
-              variant="contained"
-              fullWidth
-              className="auth__primaryButton"
-              disabled={!canSubmit || loader}
-              onClick={() => (activeStep === 0 ? requestRecoveryCode() : confirmRecoveryCode())}
-            >
-              {retryAfter > 0
-                ? 'Попробуйте позже'
-                : activeStep === 0
-                  ? 'Получить код'
-                  : 'Подтвердить'}
-            </Button>
+            {!passwordChanged && (
+              <Button
+                variant="contained"
+                fullWidth
+                className="auth__primaryButton"
+                disabled={!canSubmit}
+                onClick={() => (activeStep === 0 ? requestRecoveryCode() : confirmRecoveryCode())}
+              >
+                {retryAfter > 0
+                  ? `Повторить через ${retryAfter} с`
+                  : activeStep === 0
+                    ? 'Получить код'
+                    : 'Подтвердить'}
+              </Button>
+            )}
+
+            {activeStep === 1 && !passwordChanged && (
+              <>
+                {showResendCaptcha && captchaRequired && SMARTCAPTCHA_CLIENT_KEY && sendRetryAfter <= 0 ? (
+                  <>
+                    <div className="auth__hint">Проверка для повторной отправки</div>
+                    <YandexSmartCaptcha
+                      resetKey={captchaResetKey}
+                      onSuccess={setCaptchaToken}
+                      onTokenExpired={resetCaptcha}
+                    />
+                  </>
+                ) : null}
+                <Button
+                  fullWidth
+                  disabled={!canResend}
+                  onClick={() => { void requestRecoveryCode(); }}
+                >
+                  {sendRetryAfter > 0
+                    ? `Отправить код повторно через ${sendRetryAfter} с`
+                    : 'Отправить код повторно'}
+                </Button>
+              </>
+            )}
 
             <div className="auth__linkRow">
-              <span className="auth__linkCaption">Вспомнили пароль?</span>
+              <span className="auth__linkCaption">{passwordChanged ? 'Пароль готов к использованию' : 'Вспомнили пароль?'}</span>
               <Link className="auth__link" href="/auth">
                 Вернуться к авторизации
               </Link>

@@ -32,10 +32,15 @@ export interface UseRegistrationPageResult {
   confirmRecoveryCode: (codeOverride?: string) => Promise<void>;
   errorText: string;
   helperText: string;
+  captchaRequired: boolean;
+  showResendCaptcha: boolean;
   captchaResetKey: number;
   setCaptchaToken: (token: string) => void;
   resetCaptcha: () => void;
   retryAfter: number;
+  sendRetryAfter: number;
+  passwordChanged: boolean;
   canSubmit: boolean;
+  canResend: boolean;
   isPasswordValid: boolean;
 }

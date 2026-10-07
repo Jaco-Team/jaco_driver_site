@@ -178,6 +178,9 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
       } catch (error) {
         const errorInfo = getApiErrorInfo(error);
         const security = getAuthSecurityState(error);
+        const captchaRequired = Boolean(
+          (errorInfo.data as { captcha_required?: unknown } | null)?.captcha_required
+        );
         const errorText = getAuthErrorMessage(error);
         const authData = unauthorizedSession();
         const result = {
@@ -185,7 +188,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
           ...authData,
           text: errorText,
           status: errorInfo.status,
-          captcha_required: security.captchaRequired,
+          captcha_required: captchaRequired,
           retry_after: security.retryAfter,
         };
 
@@ -218,7 +221,9 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
           text: getAuthErrorMessage(error, 'Не удалось отправить код восстановления.'),
           status: errorInfo.status ?? undefined,
           data: errorInfo.data,
-          captcha_required: security.captchaRequired,
+          ...(typeof security.captchaRequired === 'boolean'
+            ? { captcha_required: security.captchaRequired }
+            : {}),
           retry_after: security.retryAfter,
         };
       } finally {
@@ -242,6 +247,8 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
           text: getAuthErrorMessage(error, 'Не удалось подтвердить код восстановления.'),
           status: errorInfo.status ?? undefined,
           data: errorInfo.data,
+          retry_after: getAuthSecurityState(error).retryAfter,
+          locked: errorInfo.status === 429,
         };
       } finally {
         set({ isSubmitting: false });

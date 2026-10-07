@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import PasswordRecoveryScreen from './PasswordRecoveryScreen';
 
@@ -63,9 +63,12 @@ vi.mock('@/shared/ui/Font', () => ({
 
 describe('PasswordRecoveryScreen without captcha key', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mocks.requestPasswordRecoveryCode.mockResolvedValue({ st: true });
+    mocks.confirmPasswordRecoveryCode.mockResolvedValue({ st: false, text: 'Неверный код' });
   });
+
+  afterEach(() => { vi.useRealTimers(); });
 
   it('lets the driver request a code without rendering captcha', async () => {
     render(<PasswordRecoveryScreen />);
@@ -88,4 +91,28 @@ describe('PasswordRecoveryScreen without captcha key', () => {
       expect(mocks.requestPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', 'Password1', '')
     );
   });
+
+  it('shows a resend countdown while allowing code confirmation and updates after background time', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-07T12:00:00Z'));
+    mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({ st: true, resend_after: 30 });
+    render(<PasswordRecoveryScreen />);
+    fireEvent.change(screen.getByLabelText('Номер телефона'), { target: { value: '79870001122' } });
+    fireEvent.change(screen.getByLabelText('Новый пароль'), { target: { value: 'Password1' } });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Получить код' })); });
+    expect(screen.getByRole('button', { name: 'Отправить код повторно через 30 с' })).toBeDisabled();
+    await act(async () => {
+      fireEvent.paste(screen.getByLabelText('Код из смс, цифра 1'), {
+        clipboardData: { getData: () => '123456' },
+      });
+    });
+    expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456');
+    expect(screen.getByRole('button', { name: 'Подтвердить' })).toBeEnabled();
+    act(() => {
+      vi.setSystemTime(new Date('2026-10-07T12:01:00Z'));
+      window.dispatchEvent(new Event('focus'));
+    });
+    expect(screen.getByRole('button', { name: 'Отправить код повторно' })).toBeEnabled();
+  });
+
 });

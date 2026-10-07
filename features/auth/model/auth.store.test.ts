@@ -94,6 +94,39 @@ describe('auth store', () => {
     expect(mocks.clearAuthToken).toHaveBeenCalled();
   });
 
+  it('keeps the legacy login CAPTCHA fallback on a generic throttled response', async () => {
+    mocks.loginToken.mockRejectedValue({
+      response: {
+        status: 429,
+        data: { message: 'Too Many Attempts.' },
+        headers: { 'retry-after': '30' },
+      },
+    });
+
+    const result = await useAuthStore.getState().login('79870001122', 'Password1');
+
+    expect(result).toMatchObject({
+      st: false,
+      status: 429,
+      captcha_required: false,
+      retry_after: 30,
+      text: 'Слишком много попыток. Повторите через 30 с.',
+    });
+  });
+
+  it.each([1, '1'])('retains the legacy login coercion for CAPTCHA flag %s', async (flag) => {
+    mocks.loginToken.mockRejectedValue({
+      response: {
+        status: 422,
+        data: { text: 'Подтвердите CAPTCHA.', captcha_required: flag },
+      },
+    });
+
+    const result = await useAuthStore.getState().login('79870001122', 'Password1');
+
+    expect(result.captcha_required).toBe(true);
+  });
+
   it('maps password recovery send errors including captcha', async () => {
     mocks.sendPasswordRecoveryCode.mockRejectedValue({
       response: {
@@ -114,6 +147,73 @@ describe('auth store', () => {
     expect(result.text).toContain('CAPTCHA');
   });
 
+  it('preserves an explicit false CAPTCHA flag from recovery send errors', async () => {
+    mocks.sendPasswordRecoveryCode.mockRejectedValue({
+      response: {
+        status: 429,
+        data: {
+          text: 'Повторите через 15 с.',
+          captcha_required: false,
+          retry_after: 15,
+        },
+      },
+    });
+
+    const result = await useAuthStore
+      .getState()
+      .requestPasswordRecoveryCode('79870001122', 'Password1');
+
+    expect(result).toMatchObject({
+      st: false,
+      status: 429,
+      text: 'Повторите через 15 с.',
+      captcha_required: false,
+      retry_after: 15,
+    });
+  });
+
+  it('maps recovery throttling without inventing a CAPTCHA flag', async () => {
+    mocks.sendPasswordRecoveryCode.mockRejectedValue({
+      response: {
+        status: 429,
+        data: { message: 'Too Many Attempts.' },
+        headers: { 'retry-after': '30' },
+      },
+    });
+
+    const result = await useAuthStore
+      .getState()
+      .requestPasswordRecoveryCode('79870001122', 'Password1');
+
+    expect(result).toMatchObject({
+      st: false,
+      status: 429,
+      text: 'Слишком много попыток. Повторите через 30 с.',
+      retry_after: 30,
+    });
+    expect(result).not.toHaveProperty('captcha_required');
+    expect(useAuthStore.getState().isSubmitting).toBe(false);
+  });
+
+  it('maps recovery network failures without inventing a CAPTCHA flag', async () => {
+    mocks.sendPasswordRecoveryCode.mockRejectedValue({
+      code: 'ERR_NETWORK',
+      message: 'Network Error',
+    });
+
+    const result = await useAuthStore
+      .getState()
+      .requestPasswordRecoveryCode('79870001122', 'Password1');
+
+    expect(result).toMatchObject({
+      st: false,
+      text: 'Не удалось подключиться к серверу.',
+      retry_after: 0,
+    });
+    expect(result).not.toHaveProperty('captcha_required');
+    expect(useAuthStore.getState().isSubmitting).toBe(false);
+  });
+
   it('confirms a recovery code', async () => {
     mocks.confirmPasswordRecoveryCode.mockResolvedValue({ st: true });
 
@@ -123,6 +223,48 @@ describe('auth store', () => {
 
     expect(result).toEqual({ st: true });
     expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456');
+  });
+
+  it('passes through a locked confirmation response returned with HTTP 200', async () => {
+    const response = {
+      st: false,
+      text: 'Лимит попыток исчерпан. Повторите через 600 с.',
+      locked: true,
+      retry_after: 600,
+    };
+    mocks.confirmPasswordRecoveryCode.mockResolvedValue(response);
+
+    const result = await useAuthStore
+      .getState()
+      .confirmPasswordRecoveryCode('79870001122', '123456');
+
+    expect(result).toBe(response);
+    expect(useAuthStore.getState().isSubmitting).toBe(false);
+  });
+
+  it('maps confirmation HTTP 429 errors with lock and wait metadata', async () => {
+    const data = { message: 'Too Many Attempts.' };
+    mocks.confirmPasswordRecoveryCode.mockRejectedValue({
+      response: {
+        status: 429,
+        data,
+        headers: { 'retry-after': '45' },
+      },
+    });
+
+    const result = await useAuthStore
+      .getState()
+      .confirmPasswordRecoveryCode('79870001122', '123456');
+
+    expect(result).toMatchObject({
+      st: false,
+      status: 429,
+      text: 'Слишком много попыток. Повторите через 45 с.',
+      data,
+      locked: true,
+      retry_after: 45,
+    });
+    expect(useAuthStore.getState().isSubmitting).toBe(false);
   });
 
   it('refreshSession uses /me when a token exists', async () => {
