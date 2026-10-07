@@ -67,37 +67,69 @@ vi.mock('@/shared/ui/Font', () => ({
 
 describe('PasswordRecoveryScreen with captcha key', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mocks.requestPasswordRecoveryCode.mockResolvedValue({ st: true });
+    mocks.confirmPasswordRecoveryCode.mockResolvedValue({ st: false, text: 'Неверный код' });
+    mocks.login.mockResolvedValue({ st: true });
   });
 
-  it('keeps submit disabled until captcha succeeds', async () => {
+  it('keeps the first send disabled until mandatory CAPTCHA succeeds', async () => {
     render(<PasswordRecoveryScreen />);
-
-    fireEvent.change(screen.getByLabelText('Номер телефона'), {
-      target: { value: '79870001122' },
-    });
-    fireEvent.change(screen.getByLabelText('Новый пароль'), {
-      target: { value: 'Password1' },
-    });
-
+    fireEvent.change(screen.getByLabelText('Номер телефона'), { target: { value: '79870001122' } });
+    fireEvent.change(screen.getByLabelText('Новый пароль'), { target: { value: 'Password1' } });
     const submit = screen.getByRole('button', { name: 'Получить код' });
     expect(screen.getByTestId('smart-captcha')).toBeInTheDocument();
+    expect(screen.getByText('Хотя бы одна цифра')).toBeInTheDocument();
+    expect(screen.getByText('Строчная латинская буква')).toBeInTheDocument();
+    expect(screen.getByText('Заглавная латинская буква')).toBeInTheDocument();
     expect(submit).toBeDisabled();
-
-    fireEvent.click(submit);
-    expect(mocks.requestPasswordRecoveryCode).not.toHaveBeenCalled();
-
     fireEvent.click(screen.getByTestId('smart-captcha'));
     expect(submit).toBeEnabled();
-
     fireEvent.click(submit);
-    await waitFor(() =>
-      expect(mocks.requestPasswordRecoveryCode).toHaveBeenCalledWith(
-        '79870001122',
-        'Password1',
-        'captcha-token'
-      )
-    );
+    await waitFor(() => expect(mocks.requestPasswordRecoveryCode).toHaveBeenLastCalledWith(
+      '79870001122', 'Password1', 'captcha-token'
+    ));
+    await screen.findByRole('button', { name: 'Подтвердить' });
+    expect(screen.queryByTestId('smart-captcha')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Отправить код повторно' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить код повторно' }));
+    expect(mocks.requestPasswordRecoveryCode).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Проверка для повторной отправки')).toBeInTheDocument();
+    expect(screen.getByTestId('smart-captcha')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Отправить код повторно' })).toBeDisabled();
+    fireEvent.paste(screen.getByLabelText('Код из смс, цифра 1'), {
+      clipboardData: { getData: () => '123456' },
+    });
+    await waitFor(() => expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456'));
+  });
+
+  it('preserves the code fields after a failed resend and displays its CAPTCHA on the SMS step', async () => {
+    mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({ st: true });
+    mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({
+      st: false, captcha_required: true, text: 'Не удалось подтвердить CAPTCHA.',
+    });
+    render(<PasswordRecoveryScreen />);
+    fireEvent.change(screen.getByLabelText('Номер телефона'), { target: { value: '79870001122' } });
+    fireEvent.change(screen.getByLabelText('Новый пароль'), { target: { value: 'Password1' } });
+    fireEvent.click(screen.getByTestId('smart-captcha'));
+    fireEvent.click(screen.getByRole('button', { name: 'Получить код' }));
+    await screen.findByRole('button', { name: 'Подтвердить' });
+    fireEvent.paste(screen.getByLabelText('Код из смс, цифра 1'), {
+      clipboardData: { getData: () => '12345' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить код повторно' }));
+    expect(mocks.requestPasswordRecoveryCode).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByTestId('smart-captcha'));
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить код повторно' }));
+    await screen.findByText('Не удалось подтвердить CAPTCHA.');
+    expect(screen.queryByLabelText('Номер телефона')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Код из смс, цифра 1')).toHaveValue('1');
+    expect(screen.getByLabelText('Код из смс, цифра 5')).toHaveValue('5');
+    expect(screen.getByTestId('smart-captcha')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Отправить код повторно' })).toBeDisabled();
+    fireEvent.paste(screen.getByLabelText('Код из смс, цифра 1'), {
+      clipboardData: { getData: () => '123456' },
+    });
+    await waitFor(() => expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456'));
   });
 });
