@@ -54,13 +54,17 @@ async function openMap(groups, options = {}) {
     JSON.stringify({
       version: 2,
       regions: {
-        'city:tolyatti': {
-          cityId: 'tolyatti',
-          expiresAt: Date.now() + 60_000,
-          minZoom: 10,
-          maxZoom: 14,
-          bounds: { west: 49.2, south: 53.4, east: 49.7, north: 53.7 },
-        },
+        ...(options.skipCity
+          ? {}
+          : {
+              'city:tolyatti': {
+                cityId: 'tolyatti',
+                expiresAt: Date.now() + 60_000,
+                minZoom: 10,
+                maxZoom: 14,
+                bounds: { west: 49.2, south: 53.4, east: 49.7, north: 53.7 },
+              },
+            }),
         ...(options.regions || {}),
       },
     })
@@ -99,11 +103,9 @@ async function openMap(groups, options = {}) {
     location,
     Event,
     caches: {
-      open: vi
-        .fn()
-        .mockResolvedValue({
-          keys: async () => (options.cachedUrls || []).map((url) => new Request(url)),
-        }),
+      open: vi.fn().mockResolvedValue({
+        keys: async () => (options.cachedUrls || []).map((url) => new Request(url)),
+      }),
     },
     URL,
     Request,
@@ -133,6 +135,23 @@ const order = {
 };
 
 describe('offline marker coordinate anchors', () => {
+  it('rejects a legacy automatically cached point area without a city package', async () => {
+    await expect(
+      openMap([order], {
+        skipCity: true,
+        regions: {
+          12: {
+            pointId: '12',
+            expiresAt: Date.now() + 60_000,
+            minZoom: 10,
+            maxZoom: 14,
+            bounds: { west: 49.2, south: 53.4, east: 49.7, north: 53.7 },
+          },
+        },
+      })
+    ).rejects.toThrow('Скачайте город в настройках');
+  });
+
   it('overlays completed house-level detail while retaining the base source for uncovered areas', async () => {
     const plan = getMarkerOfflineDetailPlans([[53.52, 49.42]])[0];
     const regions = { [plan.pointId]: { ...plan, expiresAt: Date.now() + 60_000 } };

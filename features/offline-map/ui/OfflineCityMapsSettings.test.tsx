@@ -47,6 +47,8 @@ describe('offline city settings', () => {
     mocks.state.jobs = {};
     mocks.state.maps = {};
     mocks.state.busyCityId = null;
+    mocks.state.deletingCityId = null;
+    mocks.state.error = '';
     mocks.state.selectedCityId = 'samara';
     mocks.state.selectCity.mockImplementation((id: string) => {
       mocks.state.selectedCityId = id;
@@ -54,13 +56,37 @@ describe('offline city settings', () => {
   });
   it('offers both cities and starts the selected city package', async () => {
     const { rerender } = render(<OfflineCityMapsSettings globalFontSize={16} />);
-    fireEvent.mouseDown(screen.getByRole('combobox'));
-    expect(await screen.findByRole('option', { name: 'Тольятти' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('option', { name: 'Тольятти' }));
+    expect(screen.getByRole('radio', { name: 'Самара' })).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(screen.getByRole('radio', { name: 'Тольятти' }));
     expect(mocks.state.selectCity).toHaveBeenCalledWith('tolyatti');
     rerender(<OfflineCityMapsSettings globalFontSize={16} />);
     fireEvent.click(screen.getByRole('button', { name: 'Скачать' }));
     expect(mocks.state.download).toHaveBeenCalledWith('tolyatti', false);
+  });
+  it('deletes a saved map only after confirmation in the bottom sheet', async () => {
+    mocks.state.maps = {
+      'city:samara': {
+        maxZoom: 15,
+        savedAt: Date.now(),
+        expiresAt: Date.now() + 60_000,
+        byteSize: 1024,
+      },
+    };
+    render(<OfflineCityMapsSettings globalFontSize={16} />);
+
+    expect(screen.getByTestId('offline-city-trash-icon')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Удалить карту: Самара' }));
+    expect(await screen.findByText('Удалить карту?')).toBeInTheDocument();
+    expect(
+      screen.getByText('Карта «Самара» будет удалена с этого устройства. Её можно скачать снова.')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Нет' })).toBeInTheDocument();
+    expect(mocks.state.remove).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Удалить' }));
+    });
+    expect(mocks.state.remove).toHaveBeenCalledWith('samara');
   });
   it('disables network actions offline', () => {
     mocks.isOnline = false;
@@ -84,11 +110,13 @@ describe('offline city settings', () => {
         maxZoom: 14,
         savedAt: Date.now(),
         expiresAt: Date.now() + 60_000,
-        byteSize: 1024,
+        byteSize: 17_091_789,
       },
     };
     render(<OfflineCityMapsSettings globalFontSize={16} />);
     expect(screen.getByText('Доступна офлайн')).toBeInTheDocument();
+    expect(screen.getByText(/Сохранена ·/)).toBeInTheDocument();
+    expect(screen.queryByText('16,3 МБ')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Докачать' }));
     expect(mocks.state.download).toHaveBeenCalledWith('samara', false);
   });
@@ -101,6 +129,7 @@ describe('offline city settings', () => {
     render(<OfflineCityMapsSettings globalFontSize={16} />);
     expect(screen.getByText('Доступна офлайн')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Обновить' })).toBeInTheDocument();
+    expect(screen.getByTestId('offline-city-refresh-icon')).toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(60_000));
 

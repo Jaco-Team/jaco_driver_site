@@ -484,12 +484,20 @@
 }
 
 .orders-map-stage__online-map[data-map-theme='light'] .orders-map-zoom {
+  .MuiSlider-root {
+    color: #333333;
+  }
+
   .MuiSlider-rail {
-    background: rgba(67, 80, 90, 0.5);
+    background: #d5d4d4;
   }
 
   .MuiSlider-track {
-    background: #72828e;
+    background: #333333;
+  }
+
+  .MuiSlider-thumb {
+    background: #333333;
   }
 }
 
@@ -742,12 +750,16 @@
 
 .orders-offline-map-stage[data-map-theme='light'] .offline-map-zoom__rail {
   &::before {
-    background: rgba(67, 80, 90, 0.5);
+    background: #d5d4d4;
   }
 
   &::after {
-    background: #72828e;
+    background: #333333;
   }
+}
+
+.orders-offline-map-stage[data-map-theme='light'] .offline-map-zoom__handle {
+  background: #333333;
 }
 
 .offline-map-attribution {

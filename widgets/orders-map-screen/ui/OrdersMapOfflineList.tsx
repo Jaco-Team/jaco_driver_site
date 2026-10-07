@@ -139,7 +139,7 @@ export function OrdersMapOfflineList({
             color: 'text.secondary',
           }}
         >
-          Сохраненных заказов нет.
+          Сохранённых заказов нет.
         </Typography>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>

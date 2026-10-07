@@ -47,7 +47,7 @@ declare global {
   }
 }
 
-export const OFFLINE_MAP_RUNTIME_VERSION = '29';
+export const OFFLINE_MAP_RUNTIME_VERSION = '30';
 export const OFFLINE_MAP_RUNTIME_URL = `/offline-map/offline-orders-map.mjs?v=${OFFLINE_MAP_RUNTIME_VERSION}`;
 const SCRIPT_ID = 'jaco-offline-orders-map-runtime';
 let runtimePromise: Promise<OfflineMapRuntime> | null = null;

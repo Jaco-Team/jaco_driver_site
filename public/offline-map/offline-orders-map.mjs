@@ -22,17 +22,7 @@ function safeColor(value) {
   return globalThis.CSS?.supports?.('color', value.trim()) ? value.trim() : fallback;
 }
 
-function distanceToRegion(metadata, center) {
-  if (!isCoordinate(center)) return Number.POSITIVE_INFINITY;
-  const longitude = Number(center[1]);
-  const latitude = Number(center[0]);
-  const regionLongitude = (metadata.bounds.west + metadata.bounds.east) / 2;
-  const regionLatitude = (metadata.bounds.south + metadata.bounds.north) / 2;
-
-  return Math.hypot(longitude - regionLongitude, latitude - regionLatitude);
-}
-
-async function readOfflineMap(pointId, center) {
+async function readOfflineMap(center) {
   let registry;
 
   try {
@@ -47,8 +37,6 @@ async function readOfflineMap(pointId, center) {
           (region) => region.kind !== 'detail' && region.expiresAt > Date.now()
         )
       : [];
-  const exact =
-    pointId === null || pointId === undefined ? null : registry?.regions?.[String(pointId)] || null;
   const containing = regions.filter(
     (region) =>
       !isCoordinate(center) ||
@@ -58,11 +46,7 @@ async function readOfflineMap(pointId, center) {
         Number(center[1]) <= region.bounds.east)
   );
   const cityMap = containing.find((region) => region.cityId);
-  const metadata =
-    cityMap ||
-    (exact?.kind !== 'detail' && exact?.expiresAt > Date.now()
-      ? exact
-      : containing.sort((a, b) => distanceToRegion(a, center) - distanceToRegion(b, center))[0]);
+  const metadata = cityMap;
 
   if (!metadata) {
     throw new Error(
@@ -74,6 +58,7 @@ async function readOfflineMap(pointId, center) {
   const candidates = Object.values(registry?.regions || {}).filter(
     (region) =>
       region.kind === 'detail' &&
+      region.parentCityId === metadata.cityId &&
       region.expiresAt > Date.now() &&
       region.minZoom === 16 &&
       region.maxZoom >= 16 &&
@@ -346,7 +331,6 @@ function getMapViewport(map) {
 async function mount({
   container,
   signal,
-  pointId,
   center,
   zoom = 12,
   groups = [],
@@ -369,7 +353,7 @@ async function mount({
     const coverageCenter = isCoordinate(center)
       ? center
       : groups.find((group) => isCoordinate(group.coordinate))?.coordinate;
-    const { cache, metadata, details } = await readOfflineMap(pointId, coverageCenter);
+    const { cache, metadata, details } = await readOfflineMap(coverageCenter);
 
     if (signal?.aborted) {
       throw new DOMException('Загрузка офлайн-карты отменена.', 'AbortError');
@@ -669,7 +653,7 @@ async function mount({
   }
 }
 
-globalThis.JacoOfflineOrdersMap = { version: '29', mount };
+globalThis.JacoOfflineOrdersMap = { version: '30', mount };
 globalThis.dispatchEvent(new Event('jaco-offline-orders-map-ready'));
 
 export { mount };

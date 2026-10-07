@@ -5,22 +5,16 @@ import {
   Button,
   IconButton,
   LinearProgress,
-  MenuItem,
-  TextField,
+  SvgIcon,
   Tooltip,
   Typography,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
+  SwipeableDrawer,
 } from '@mui/material';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 
 import { useOfflineMapStore } from '@/entities/offline-map/model/offlineMap.store';
 import { useSettingsStore } from '@/entities/settings';
@@ -34,6 +28,45 @@ import { log } from '@/components/analytics';
 
 function formatBytes(value: number): string {
   return `${(value / 1024 / 1024).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} МБ`;
+}
+
+function RefreshCwIcon() {
+  return (
+    <SvgIcon
+      data-testid="offline-city-refresh-icon"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      sx={{ fill: 'none' }}
+    >
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+      <path d="M8 16H3v5" />
+    </SvgIcon>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <SvgIcon
+      data-testid="offline-city-trash-icon"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      sx={{ fill: 'none' }}
+    >
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </SvgIcon>
+  );
 }
 
 export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: number }) {
@@ -92,32 +125,40 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
     <SettingsSection>
       <Box className="offlineCitySettings" sx={{ fontSize }}>
         <SectionTitle title="Офлайн-карты" fontSize={globalFontSize} />
-        <TextField
-          select
-          fullWidth
-          label="Город"
-          value={state.selectedCityId}
-          disabled={!state.hydrated || deleting}
-          onChange={(event) => {
-            state.selectCity(event.target.value);
-            log('offline_city_select', undefined, { city: event.target.value });
-          }}
-          slotProps={{ input: { sx: { fontSize } }, inputLabel: { sx: { fontSize: metaSize } } }}
+        <Typography component="div" sx={{ fontSize: metaSize, color: 'text.secondary' }}>
+          Город
+        </Typography>
+        <Box
+          className="offlineCitySettings__cities"
+          role="radiogroup"
+          aria-label="Город для офлайн-карты"
         >
           {OFFLINE_MAP_CITIES.map((item) => (
-            <MenuItem key={item.id} value={item.id} sx={{ fontSize }}>
+            <Button
+              key={item.id}
+              className="offlineCitySettings__city"
+              role="radio"
+              aria-checked={state.selectedCityId === item.id}
+              disabled={!state.hydrated || deleting}
+              onClick={() => {
+                state.selectCity(item.id);
+                log('offline_city_select', undefined, { city: item.id });
+              }}
+              data-selected={state.selectedCityId === item.id ? 'true' : 'false'}
+              sx={{ fontSize }}
+            >
               {item.name}
-            </MenuItem>
+            </Button>
           ))}
-        </TextField>
+        </Box>
         {plan ? (
           <Box className="offlineCitySettings__details">
             <Typography component="div" sx={{ fontSize: metaSize, color: 'text.secondary' }}>
-              Улицы · примерно {formatBytes(plan.estimatedBytes)}
+              Карта города · примерно {formatBytes(plan.estimatedBytes)}
             </Typography>
             {ready && !job ? (
               <Box className="offlineCitySettings__ready">
-                <CheckCircleOutlineRoundedIcon />
+                <CheckRoundedIcon />
                 <Typography component="span" sx={{ fontSize }}>
                   Доступна офлайн
                 </Typography>
@@ -126,8 +167,7 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
             {metadata ? (
               <Typography component="div" sx={{ fontSize: metaSize, color: 'text.secondary' }}>
                 {ready ? 'Сохранена' : 'Нужно обновить'} ·{' '}
-                {new Date(metadata.savedAt).toLocaleDateString('ru-RU')} ·{' '}
-                {formatBytes(metadata.byteSize)}
+                {new Date(metadata.savedAt).toLocaleDateString('ru-RU')}
               </Typography>
             ) : null}
           </Box>
@@ -152,10 +192,16 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
               variant="determinate"
               value={progress}
               aria-label="Скачивание карты города"
+              sx={{
+                height: 5,
+                borderRadius: '3px',
+                backgroundColor: 'var(--app-border)',
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: '3px',
+                  backgroundColor: 'var(--app-primary)',
+                },
+              }}
             />
-            <Typography component="div" sx={{ fontSize: metaSize, color: 'text.secondary' }}>
-              {job.completed} / {job.total} тайлов · {formatBytes(job.byteSize)}
-            </Typography>
           </Box>
         ) : null}
         {message ? (
@@ -199,13 +245,7 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
               variant="contained"
               disabled={blocked}
               startIcon={
-                job ? (
-                  <PlayArrowRoundedIcon />
-                ) : ready ? (
-                  <RefreshRoundedIcon />
-                ) : (
-                  <DownloadRoundedIcon />
-                )
+                job ? <PlayArrowRoundedIcon /> : ready ? <RefreshCwIcon /> : <DownloadRoundedIcon />
               }
               onClick={() => startDownload(ready && !needsUpgrade && !job)}
               sx={{ fontSize }}
@@ -221,43 +261,62 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
                   disabled={deleting || Boolean(state.busyCityId)}
                   onClick={() => setConfirmDelete(true)}
                 >
-                  <DeleteOutlineRoundedIcon />
+                  <TrashIcon />
                 </IconButton>
               </span>
             </Tooltip>
           ) : null}
         </Box>
       </Box>
-      <Dialog
+      <SwipeableDrawer
+        anchor="bottom"
         open={confirmDelete}
+        onOpen={() => setConfirmDelete(true)}
         onClose={() => {
           if (!deleting) setConfirmDelete(false);
         }}
+        slotProps={{ paper: { className: 'offlineMapDeleteSheet' } }}
       >
-        <DialogTitle sx={{ fontSize: fontSize + 2 }}>Удалить карту?</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ fontSize }}>
-            Карта «{city?.name}» будет удалена с этого устройства. Её можно скачать снова.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button disabled={deleting} onClick={() => setConfirmDelete(false)} sx={{ fontSize }}>
-            Отмена
-          </Button>
-          <Button
-            disabled={deleting}
-            onClick={() => {
-              if (city) {
-                log('offline_city_delete', city.name, { city: city.id });
-                void state.remove(city.id).then(() => setConfirmDelete(false));
-              }
-            }}
-            sx={{ fontSize }}
+        <Box className="offlineMapDeleteSheet__content">
+          <Box className="offlineMapDeleteSheet__handleArea">
+            <Box className="offlineMapDeleteSheet__handle" />
+          </Box>
+          <Box className="offlineMapDeleteSheet__heading">
+            <Box className="offlineMapDeleteSheet__icon">
+              <CancelRoundedIcon />
+            </Box>
+            <Typography
+              className="offlineMapDeleteSheet__title"
+              sx={{ fontSize: Math.min(Math.max(globalFontSize + 4, 18), 24) }}
+            >
+              Удалить карту?
+            </Typography>
+          </Box>
+          <Typography
+            className="offlineMapDeleteSheet__text"
+            sx={{ fontSize: Math.min(Math.max(globalFontSize, 14), 18) }}
           >
-            {deleting ? 'Удаляем...' : 'Удалить'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            Карта «{city?.name}» будет удалена с этого устройства. Её можно скачать снова.
+          </Typography>
+          <Box className="offlineMapDeleteSheet__actions">
+            <Button disabled={deleting} onClick={() => setConfirmDelete(false)} sx={{ fontSize }}>
+              Нет
+            </Button>
+            <Button
+              disabled={deleting}
+              onClick={() => {
+                if (city) {
+                  log('offline_city_delete', city.name, { city: city.id });
+                  void state.remove(city.id).then(() => setConfirmDelete(false));
+                }
+              }}
+              sx={{ fontSize }}
+            >
+              {deleting ? 'Удаляем...' : 'Удалить'}
+            </Button>
+          </Box>
+        </Box>
+      </SwipeableDrawer>
     </SettingsSection>
   );
 }

@@ -21,8 +21,10 @@ function getOrderCoordinate(order: Order): [number, number] | null {
   return [latitude, longitude];
 }
 
-function getOrderMarkerColor(order: Order): string {
-  const color = order.point_color || order.color;
+export function getOrderMarkerColor(order: Order, preferDriverColor = false): string {
+  const color = preferDriverColor
+    ? order.color || order.point_color
+    : order.point_color || order.color;
 
   return typeof color === 'string' && color.trim() ? color.trim() : DEFAULT_MARKER_COLOR;
 }
@@ -46,7 +48,10 @@ export function getOrderMapLocationKey(order: Order): string | null {
   return coordinate.map((value) => value.toFixed(MAP_LOCATION_PRECISION)).join(':');
 }
 
-export function groupOrdersByMapLocation(orders: Order[]): OrderMapGroup[] {
+export function groupOrdersByMapLocation(
+  orders: Order[],
+  preferDriverColor = false
+): OrderMapGroup[] {
   const groups = new Map<string, OrderMapGroup>();
 
   for (const order of orders) {
@@ -57,7 +62,7 @@ export function groupOrdersByMapLocation(orders: Order[]): OrderMapGroup[] {
       continue;
     }
 
-    const color = getOrderMarkerColor(order);
+    const color = getOrderMarkerColor(order, preferDriverColor);
     const existing = groups.get(key);
 
     if (existing) {

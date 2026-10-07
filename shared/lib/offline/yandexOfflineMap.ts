@@ -1,7 +1,6 @@
 import type { HomeLocation, Order } from '@/entities/order/model/order.types';
 import { ensureOfflineMapAssets } from '@/shared/lib/offline/offlineMapAssets';
 import { createOfflineTileFetcher } from '@/shared/lib/offline/offlineTileFetcher';
-import { getOfflineMapRegionId } from './offlineMapRegionId';
 import { loadOfflineMapRuntime } from './offlineMapRuntime';
 import {
   getMarkerOfflineDetailPlans,
@@ -14,7 +13,6 @@ import {
 } from './offlineMapDetails';
 import {
   getOfflineMapCity,
-  findOfflineMapCity,
   OFFLINE_CITY_MIN_ZOOM,
   OFFLINE_CITY_MAX_ZOOM,
   OFFLINE_CITY_MAX_TILES,
@@ -182,15 +180,6 @@ function getDownloadError(error: unknown): string {
   return error instanceof Error ? error.message : 'Не удалось сохранить карту.';
 }
 
-interface SyncInput {
-  authToken: string;
-  pointId: string;
-  home: HomeLocation | null;
-  orders: Order[];
-}
-
-const pendingSyncs = new Map<string, SyncInput>();
-const activeSyncs = new Map<string, Promise<OfflineMapMetadata | null>>();
 let downloadQueue: Promise<unknown> = Promise.resolve();
 let activeDetailSync: Promise<void> | null = null;
 let detailController: AbortController | null = null;
@@ -254,7 +243,7 @@ export function scheduleOfflineMapDetailSync(input: {
         if (
           !Object.values(registry.regions).some(
             (region) =>
-              region.kind !== 'detail' &&
+              region.cityId === plan.parentCityId &&
               region.expiresAt > Date.now() &&
               containsBounds(region.bounds, center)
           )
@@ -534,15 +523,34 @@ export async function validateOfflineCityMaps(): Promise<Record<string, OfflineM
   if (typeof window === 'undefined' || !('caches' in window)) return snapshot.regions;
   const cache = await caches.open(YANDEX_OFFLINE_TILE_CACHE);
   const urls = new Set((await cache.keys()).map((request) => request.url));
-  const missing = Object.values(snapshot.regions).filter(
+  const missingCities = Object.values(snapshot.regions).filter(
     (metadata) =>
       metadata.cityId &&
       !listOfflineMapTiles(metadata.bounds, metadata.minZoom, metadata.maxZoom).every((tile) =>
         urls.has(getOfflineTileUrl(tile))
       )
   );
+  const missingPointIds = new Set(missingCities.map((metadata) => metadata.pointId));
+  const validCityIds = new Set(
+    Object.values(snapshot.regions)
+      .filter(
+        (metadata) =>
+          metadata.cityId &&
+          !metadata.kind &&
+          !missingPointIds.has(metadata.pointId) &&
+          metadata.expiresAt > Date.now()
+      )
+      .map((metadata) => metadata.cityId!)
+  );
+  const obsolete = Object.values(snapshot.regions).filter(
+    (metadata) =>
+      (!metadata.kind && !metadata.cityId) ||
+      (metadata.kind === 'detail' &&
+        (!metadata.parentCityId || !validCityIds.has(metadata.parentCityId)))
+  );
+  const removed = [...missingCities, ...obsolete];
   const current = readOfflineMapRegistry();
-  for (const metadata of missing) {
+  for (const metadata of removed) {
     if (
       current.regions[metadata.pointId]?.savedAt === metadata.savedAt &&
       current.regions[metadata.pointId]?.lastUsedAt === metadata.lastUsedAt
@@ -550,7 +558,10 @@ export async function validateOfflineCityMaps(): Promise<Record<string, OfflineM
       delete current.regions[metadata.pointId];
     }
   }
-  if (missing.length) writeRegistry(current);
+  if (removed.length) {
+    writeRegistry(current);
+    await removeUnreferencedTiles(current);
+  }
   return current.regions;
 }
 
@@ -949,117 +960,4 @@ export function downloadOfflineCityMap(
       if (signal.aborted) throw error;
       throw new Error(progress.error, { cause: error });
     });
-}
-
-async function syncOnce(input: SyncInput): Promise<OfflineMapMetadata | null> {
-  if (typeof window === 'undefined' || !('caches' in window) || navigator.onLine === false) {
-    return null;
-  }
-
-  if (readPendingCityDownloads().some((item) => item.status === 'downloading')) return null;
-  const city = input.home
-    ? findOfflineMapCity(input.home.center[0], input.home.center[1])
-    : undefined;
-  const cityMap = city ? readOfflineMapMetadata(`city:${city.id}`) : null;
-  const ordersWithinCity =
-    city &&
-    input.orders.every(
-      (order) =>
-        !isCoordinate(order.xy?.latitude, order.xy?.longitude) ||
-        (Number(order.xy?.latitude) >= city.bounds.south &&
-          Number(order.xy?.latitude) <= city.bounds.north &&
-          Number(order.xy?.longitude) >= city.bounds.west &&
-          Number(order.xy?.longitude) <= city.bounds.east)
-    );
-  if (cityMap && ordersWithinCity && cityMap.expiresAt > Date.now() + REFRESH_BEFORE_EXPIRY_MS)
-    return cityMap;
-
-  const zoomPlan = getZoomPlan(input.home);
-  const desiredBounds = buildOfflineMapBounds(input.home, input.orders, zoomPlan.cameraMinZoom);
-  if (!desiredBounds) return null;
-
-  await ensureOfflineMapAssets();
-
-  let maxZoom = zoomPlan.maxZoom;
-  let cameraMaxZoom = zoomPlan.cameraMaxZoom;
-  while (
-    maxZoom > zoomPlan.minZoom &&
-    listOfflineMapTiles(desiredBounds, zoomPlan.minZoom, maxZoom).length > MAX_TILES
-  ) {
-    maxZoom -= 1;
-    cameraMaxZoom = Math.min(cameraMaxZoom, maxZoom - 1);
-  }
-
-  const registry = readOfflineMapRegistry();
-  const current = registry.regions[input.pointId];
-  if (
-    current &&
-    current.coverageVersion === COVERAGE_VERSION &&
-    current.expiresAt > Date.now() + REFRESH_BEFORE_EXPIRY_MS &&
-    current.minZoom === zoomPlan.minZoom &&
-    current.maxZoom === maxZoom &&
-    current.initialZoom === zoomPlan.initialZoom &&
-    current.cameraMinZoom === zoomPlan.cameraMinZoom &&
-    current.cameraMaxZoom === cameraMaxZoom &&
-    containsBounds(current.bounds, desiredBounds)
-  ) {
-    current.lastUsedAt = Date.now();
-    writeRegistry(registry);
-    return current;
-  }
-
-  const bounds =
-    current?.coverageVersion === COVERAGE_VERSION &&
-    current.expiresAt &&
-    current.expiresAt > Date.now()
-      ? mergeBounds(current.bounds, desiredBounds)
-      : desiredBounds;
-
-  const queued = downloadQueue.then(() =>
-    downloadRegion({
-      authToken: input.authToken,
-      pointId: input.pointId,
-      bounds,
-      minZoom: zoomPlan.minZoom,
-      maxZoom,
-      initialZoom: zoomPlan.initialZoom,
-      cameraMinZoom: zoomPlan.cameraMinZoom,
-      cameraMaxZoom,
-    })
-  );
-  downloadQueue = queued.catch(() => undefined);
-  return queued;
-}
-
-export function scheduleOfflineYandexMapSync(options: {
-  authToken: string;
-  pointId: number | string | null;
-  home: HomeLocation | null;
-  orders: Order[];
-}): Promise<OfflineMapMetadata | null> {
-  const pointId = getOfflineMapRegionId(options.pointId, options.home);
-  const authToken = options.authToken.trim();
-
-  if (!pointId || !authToken || typeof window === 'undefined') return Promise.resolve(null);
-
-  pendingSyncs.set(pointId, { ...options, pointId, authToken });
-  const active = activeSyncs.get(pointId);
-  if (active) return active;
-
-  const task = (async () => {
-    let result: OfflineMapMetadata | null = null;
-    let next: SyncInput | undefined;
-
-    while ((next = pendingSyncs.get(pointId))) {
-      pendingSyncs.delete(pointId);
-      result = await syncOnce(next);
-    }
-
-    return result;
-  })().finally(() => {
-    activeSyncs.delete(pointId);
-  });
-
-  activeSyncs.set(pointId, task);
-  return task;
 }

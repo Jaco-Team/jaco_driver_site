@@ -13,7 +13,6 @@ import {
 import { normalizeOrderRow, filterOrdersByTypes } from './order.utils';
 import { getOrderMapLocationKey } from './orderMapGroups';
 import { getApiErrorInfo } from '@/shared/api/errors';
-import { getAuthToken } from '@/shared/api/token';
 import { log } from '@/components/analytics';
 import { devLog } from '@/shared/lib/devLog';
 import { describeGeolocationError, readDriverPosition } from '@/shared/lib/geolocation';
@@ -25,7 +24,6 @@ import {
 } from '@/features/offline/model/connectivity.store';
 import { readOfflineCache, writeOfflineCache } from '@/shared/lib/offline/cache';
 import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
-import { scheduleOfflineYandexMapSync } from '@/shared/lib/offline/yandexOfflineMap';
 import {
   fetchOrders,
   actionOrder as apiActionOrder,
@@ -227,35 +225,6 @@ interface OrdersStore {
 }
 
 export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
-  const syncOfflineMap = (
-    pointId: number | null,
-    home: HomeLocation | null,
-    additionalOrders: Order[] = []
-  ): void => {
-    const token = getAuthToken();
-    if (!token || !home || !isAppOnline()) return;
-
-    const prefix = `${pointId ?? 'all'}:`;
-    const uniqueOrders = new Map<string, Order>();
-    const pointOrders = Object.entries(get().ordersByContext)
-      .filter(([key]) => key.startsWith(prefix))
-      .flatMap(([, orders]) => orders);
-
-    for (const order of [...pointOrders, ...additionalOrders]) {
-      const key = `${order.id}:${order.xy?.latitude ?? ''}:${order.xy?.longitude ?? ''}`;
-      uniqueOrders.set(key, order);
-    }
-
-    void scheduleOfflineYandexMapSync({
-      authToken: token,
-      pointId,
-      home,
-      orders: [...uniqueOrders.values()],
-    }).catch((error) => {
-      devLog('offline_map_sync_error', 'Offline map background sync error', error);
-    });
-  };
-
   const warmOrdersCache = (pointId: number | null, activeTypeId: number): void => {
     if (ordersWarmupPromise) {
       pendingOrdersWarmup = { pointId, activeTypeId };
@@ -319,8 +288,6 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
           devLog('orders_cache_warmup_error', 'Orders cache warmup error', error);
         }
       }
-
-      if (getSelectedPointId() === pointId) syncOfflineMap(pointId, get().home);
     })().finally(() => {
       ordersWarmupPromise = null;
 
@@ -583,7 +550,6 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         });
 
         log('orders_fetch_success', 'Получение списка заказов');
-        syncOfflineMap(pointId, nextHome, normalized.orders);
         warmOrdersCache(pointId, type.id);
       } catch (err) {
         devLog('orders_fetch_error', 'Orders fetch error', err);

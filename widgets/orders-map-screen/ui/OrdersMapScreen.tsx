@@ -236,7 +236,7 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
 }: MapPointProps) {
   const item = group.representative;
   const scale = sanitizeCssIdent(String(mapScale).replace('.', '_'), '1');
-  const markerColor = sanitizeCssColor((item?.point_color || item?.color) ?? 'blue');
+  const markerColor = sanitizeCssColor(group.statusColors[0]);
   const rawLabel = String(item?.point_text ?? '');
   const label = escapeHtml(rawLabel);
   const themeClass = sanitizeCssIdent(theme === 'classic' ? 'white' : theme, 'white');
@@ -649,7 +649,10 @@ export function OrdersMapScreen() {
     centerOnCoordinate,
     handleConfirm,
   } = useOrdersMapScreen();
-  const groups = useMemo(() => groupOrdersByMapLocation(orders.orders), [orders.orders]);
+  const groups = useMemo(
+    () => groupOrdersByMapLocation(orders.orders, orders.type.id === 5),
+    [orders.orders, orders.type.id]
+  );
   const pointId = useSettingsStore((state) => state.pointId);
   const isOnline = useConnectivityStore((state) => state.isOnline);
   const hasMounted = useSyncExternalStore(

@@ -178,6 +178,8 @@ export const SettingsForm: React.FC = () => {
           </Typography>
         </SettingsSection>
 
+        <OfflineCityMapsSettings globalFontSize={globalFontSize} />
+
         <SettingsSectionWithPreview
           title="Формат данных на карте"
           fontSize={globalFontSize}
@@ -297,8 +299,6 @@ export const SettingsForm: React.FC = () => {
           <SectionTitle title="Карта" fontSize={globalFontSize} />
           <CheckboxField options={mapOptions} fontSize={globalFontSize} />
         </SettingsSection>
-
-        <OfflineCityMapsSettings globalFontSize={globalFontSize} />
 
         <SettingsSection>
           <FontSizeSlider value={fontSize} onChange={setFontSize} fontSize={globalFontSize} />

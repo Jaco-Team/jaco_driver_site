@@ -175,6 +175,28 @@ describe('city map download and resume', () => {
     expect(readOfflineMapMetadata('city:tolyatti')).toBeNull();
   });
 
+  it('removes a legacy area that was downloaded automatically without a city package', async () => {
+    const plan = getOfflineCityPlan('tolyatti');
+    const legacy = {
+      ...plan,
+      pointId: '12',
+      cityId: undefined,
+      coverageVersion: 2,
+      savedAt: Date.now(),
+      expiresAt: Date.now() + 86400000,
+      lastUsedAt: Date.now(),
+      byteSize: 1000,
+    };
+    localStorage.setItem(
+      YANDEX_OFFLINE_METADATA_KEY,
+      JSON.stringify({ version: 2, regions: { '12': legacy } })
+    );
+
+    await validateOfflineCityMaps();
+
+    expect(readOfflineMapMetadata('12')).toBeNull();
+  });
+
   it('keeps the previous complete map available when an update is paused', async () => {
     cached.headers.set('X-Offline-Saved-At', String(Date.now() - 1000));
     cache.match.mockResolvedValue(cached);

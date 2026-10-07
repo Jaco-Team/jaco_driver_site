@@ -70,9 +70,7 @@ export function OrdersOfflineMap({
           group.representative.point_text ||
           group.representative.id_text ||
           `#${group.representative.id}`,
-        color: sanitizeCssColor(
-          group.representative.point_color || group.representative.color || '#CC0033'
-        ),
+        color: sanitizeCssColor(group.statusColors[0]),
         count: group.count,
         isLocation: Boolean(group.representative.close_time_),
       })),

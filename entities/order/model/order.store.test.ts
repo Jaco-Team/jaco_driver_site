@@ -12,16 +12,6 @@ const mocks = vi.hoisted(() => ({
   checkPayOrder: vi.fn(),
   isOnline: true,
   pointId: 12 as number | null,
-  authToken: null as string | null,
-  scheduleOfflineMap: vi.fn().mockResolvedValue(null),
-}));
-
-vi.mock('@/shared/api/token', () => ({
-  getAuthToken: () => mocks.authToken,
-}));
-
-vi.mock('@/shared/lib/offline/yandexOfflineMap', () => ({
-  scheduleOfflineYandexMapSync: mocks.scheduleOfflineMap,
 }));
 
 vi.mock('@/shared/lib/geolocation', () => ({
@@ -99,7 +89,6 @@ describe('orders store actions', () => {
     vi.clearAllMocks();
     mocks.isOnline = true;
     mocks.pointId = 12;
-    mocks.authToken = null;
     mocks.readDriverPosition.mockResolvedValue({
       latitude: '53.5',
       longitude: '49.4',
@@ -292,9 +281,8 @@ describe('orders store actions', () => {
     expect(useOrdersStore.getState().home?.center).toEqual([53.531521, 49.312353]);
   });
 
-  it('saves the map without requiring a cafe filter or sending point_id to orders', async () => {
+  it('does not send point_id to orders when the cafe filter is not selected', async () => {
     mocks.pointId = null;
-    mocks.authToken = 'test-token';
     useOrdersStore.setState({ is_check: false, isClick: false });
     mocks.fetchOrders.mockResolvedValue({
       st: true,
@@ -304,14 +292,6 @@ describe('orders store actions', () => {
 
     await useOrdersStore.getState().getOrders();
 
-    expect(mocks.scheduleOfflineMap).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pointId: null,
-        authToken: 'test-token',
-        home: expect.objectContaining({ center: [53.531521, 49.312353] }),
-        orders: expect.arrayContaining([expect.objectContaining({ id: 77 })]),
-      })
-    );
     expect(mocks.fetchOrders).toHaveBeenCalledWith({ point_id: undefined, type_orders: 1 });
   });
 

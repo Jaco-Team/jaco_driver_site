@@ -128,6 +128,22 @@ describe('offline detail downloads', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('does not use a legacy point area as the base for detail downloads', async () => {
+    const legacy = readOfflineMapMetadata('city:tolyatti')!;
+    localStorage.setItem(
+      YANDEX_OFFLINE_METADATA_KEY,
+      JSON.stringify({
+        version: 2,
+        regions: { '12': { ...legacy, pointId: '12', cityId: undefined } },
+      })
+    );
+
+    await scheduleOfflineMapDetailSync({ authToken: 'token', coordinates });
+
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mocks.fetchTile).not.toHaveBeenCalled();
+  });
+
   it('caps detail storage separately without evicting the base city', async () => {
     const registry = readOfflineMapRegistry();
     for (let index = 0; index < 3; index++)
