@@ -38,6 +38,14 @@ export interface OrderMapGroup {
   statusColors: string[];
 }
 
+export function getOrderUrgency(order: Order): number {
+  const seconds = Number(order.to_time_sec);
+  if (Number.isFinite(seconds)) return seconds;
+
+  const minutes = Number(order.to_time_sec_min);
+  return Number.isFinite(minutes) ? minutes * 60 : Number.POSITIVE_INFINITY;
+}
+
 export function getOrderMapLocationKey(order: Order): string | null {
   const coordinate = getOrderCoordinate(order);
 
@@ -69,9 +77,11 @@ export function groupOrdersByMapLocation(
       existing.orders.push(order);
       existing.count += 1;
 
-      if (!existing.statusColors.includes(color)) {
-        existing.statusColors.push(color);
+      if (getOrderUrgency(order) < getOrderUrgency(existing.representative)) {
+        existing.representative = order;
       }
+
+      existing.statusColors.push(color);
 
       continue;
     }

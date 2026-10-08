@@ -264,9 +264,31 @@ describe('OrdersMapScreen', () => {
 
     expect(screen.getAllByTestId('placemark')).toHaveLength(3);
     expect(mocks.createClass).toHaveBeenCalledWith(
-      expect.stringContaining('map-marker-count'),
+      expect.stringContaining('map-marker-cluster'),
       expect.any(Object)
     );
+    const groupedTemplates = mocks.createClass.mock.calls
+      .map(([template]) => String(template))
+      .filter((template) => template.includes('map-marker-cluster'));
+    expect(groupedTemplates).not.toHaveLength(0);
+    expect(groupedTemplates.every((template) => !template.includes('span_text_'))).toBe(true);
+  });
+
+  it('shows three order colors and the hidden-order count for a group of five', () => {
+    mocks.orderState.orders = Array.from({ length: 5 }, (_, index) => ({
+      id: index + 20,
+      point_color: index < 2 ? '#cc0033' : `#42627${index}`,
+      point_text: `Заказ ${index + 1}`,
+      xy: { latitude: 55.7, longitude: 37.6 },
+    }));
+
+    render(<OrdersMapScreen />);
+
+    const groupedTemplates = mocks.createClass.mock.calls
+      .map(([template]) => String(template))
+      .filter((template) => template.includes('map-marker-cluster'));
+    expect(groupedTemplates).not.toHaveLength(0);
+    expect(groupedTemplates.every((template) => template.includes('+2'))).toBe(true);
   });
 
   it('shows a grouped edge arrow and centers the map when it is tapped', () => {

@@ -55,6 +55,8 @@ export interface Order {
   point_color?: string;
   color?: string;
   point_text?: string;
+  to_time_sec?: number;
+  to_time_sec_min?: number;
   xy?: OrderCoordinates;
 }
 

@@ -69,11 +69,7 @@ export function getMapEdgeIndicators(
     if (existing) {
       existing.orderCount += group.count;
 
-      for (const color of group.statusColors) {
-        if (!existing.statusColors.includes(color)) {
-          existing.statusColors.push(color);
-        }
-      }
+      existing.statusColors.push(...group.statusColors);
 
       continue;
     }

@@ -35,14 +35,25 @@
     grid-column: 1;
     justify-self: start;
     flex: 0 1 auto;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
+    overflow: hidden;
     padding-left: 0 !important;
     padding-right: 0 !important;
     justify-content: flex-start !important;
     color: var(--app-brand) !important;
     text-align: left;
-    white-space: nowrap;
     @include font_custom(1rem, 500, var(--app-brand));
+  }
+
+  &__statusText {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

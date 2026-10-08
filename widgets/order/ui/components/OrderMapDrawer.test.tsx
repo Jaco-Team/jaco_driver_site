@@ -64,6 +64,8 @@ vi.mock('@/shared/config/fonts', () => ({
   roboto: { variable: 'roboto-variable' },
 }));
 
+const defaultOrder = { ...mocks.orderState.showOrders[0] };
+
 function renderDrawer(mode: 'light' | 'dark' = 'light') {
   return render(
     <ThemeProvider
@@ -87,6 +89,7 @@ describe('OrderMapDrawer', () => {
     mocks.orderState.isOpenOrderMap = true;
     mocks.orderState.isClick = false;
     mocks.orderState.is_load = false;
+    mocks.orderState.showOrders = [{ ...defaultOrder }];
   });
 
   it('anchors the order card to the bottom of the screen, not the top', () => {
@@ -136,6 +139,52 @@ describe('OrderMapDrawer', () => {
 
     expect(mocks.orderState.actionGetOrder).toHaveBeenCalledWith(866503, true);
     expect(mocks.orderState.setActiveConfirm).not.toHaveBeenCalled();
+  });
+
+  it('shows a compact address group and opens only the selected order', () => {
+    const first = {
+      ...mocks.orderState.showOrders[0],
+      id: 900001,
+      id_text: '#900001 В очереди 0%',
+      addr: 'улица Ленина, 85',
+      pd: '1',
+      et: '5',
+      kv: '12',
+      point_text: '11:51 (48 мин.)',
+      point_color: '#22A33A',
+      is_delete: 0,
+    };
+    mocks.orderState.showOrders = [
+      first,
+      {
+        ...first,
+        id: 900002,
+        id_text: '#900002 Готовится 0%',
+        pd: '2',
+        et: '3',
+        kv: '41',
+        point_text: '11:38 (45 мин.)',
+        point_color: '#CC0033',
+      },
+    ];
+
+    renderDrawer();
+
+    expect(screen.getByTestId('order-map-group-title')).toHaveTextContent('2 заказа по адресу');
+    expect(screen.getByTestId('order-map-group-address')).toHaveTextContent('улица Ленина, 85');
+    expect(screen.queryByTestId('order-card')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('order-map-group-order-900002'));
+
+    expect(screen.getAllByTestId('order-card')).toHaveLength(1);
+    expect(screen.getByTestId('order-map-group-back-arrow')).toBeInTheDocument();
+    expect(screen.getByTestId('order-map-group-back-label')).toHaveTextContent(
+      'Все заказы по адресу (2)'
+    );
+
+    fireEvent.click(screen.getByTestId('order-map-group-back'));
+    expect(screen.getByTestId('order-map-group-list')).toBeInTheDocument();
+    expect(screen.queryByTestId('order-card')).not.toBeInTheDocument();
   });
 
   it('opens confirm for cancel and finish, not for take', () => {

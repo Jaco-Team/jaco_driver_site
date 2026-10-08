@@ -39,12 +39,14 @@ export const OrdersHeader: React.FC<OrdersHeaderProps> = ({
 
       <Grid size={12} className="list__summary">
         <Button
+          aria-label={`Выбрать тип заказов: ${typeText}`}
           variant="text"
           onClick={handleFilterClick}
           className="list__statusButton"
           style={{ fontSize: globalFontSize }}
+          title={typeText}
         >
-          {typeText}
+          <span className="list__statusText">{typeText}</span>
         </Button>
 
         <OrderStats limit={limit} limitCount={limitCount} globalFontSize={globalFontSize} />

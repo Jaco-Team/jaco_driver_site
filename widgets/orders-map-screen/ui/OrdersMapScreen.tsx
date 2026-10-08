@@ -20,7 +20,7 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import { useSettingsStore } from '@/entities/settings';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { isAppOnline, useConnectivityStore } from '@/features/offline/model/connectivity.store';
-import type { HomeLocation } from '@/entities/order/model/order.types';
+import type { HomeLocation, Order } from '@/entities/order/model/order.types';
 import {
   groupOrdersByMapLocation,
   type OrderMapGroup,
@@ -237,15 +237,19 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
   const item = group.representative;
   const scale = sanitizeCssIdent(String(mapScale).replace('.', '_'), '1');
   const markerColor = sanitizeCssColor(group.statusColors[0]);
-  const rawLabel = String(item?.point_text ?? '');
+  const rawLabel = getOrderMarkerLabel(item, group.count);
   const label = escapeHtml(rawLabel);
   const themeClass = sanitizeCssIdent(theme === 'classic' ? 'white' : theme, 'white');
   const fontClass = sanitizeCssIdent(roboto.variable, 'font');
   const fontSize = Number.isFinite(globalFontSize) ? globalFontSize : 16;
-  const compactFontSize = Math.min(18, Math.max(12, fontSize - 2));
+  const compactFontSize = group.count > 99 ? 9 : Math.min(14, Math.max(12, fontSize - 4));
+  const numericMapScale = Number(mapScale);
+  const groupMarkerSize = Math.round(
+    26 * (Number.isFinite(numericMapScale) ? Math.min(1.3, Math.max(0.5, numericMapScale)) : 1)
+  );
   const groupCount =
     group.count > 1
-      ? `<span class="map-marker-count" style="font-size:${compactFontSize}px">${group.count}</span>`
+      ? `<span class="map-marker-cluster" style="font-size:${compactFontSize}px;width:${groupMarkerSize}px;height:${groupMarkerSize}px">${group.count > 99 ? '99+' : group.count}</span>`
       : '';
   const statusDots =
     group.count > 1
@@ -266,7 +270,7 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
     () =>
       createMeasuredIconLayout(
         yMapsApi,
-        `<div class="map-img ${fontClass} map-img--group-${group.count > 1 ? 'multiple' : 'single'}"><span class="map-marker-icon"><span class='span_svg_circle_${scale}'><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="none" viewBox="0 0 24 24"><path fill="${markerColor}" d="M11.969 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.47-10-10-10m.03 14.23c-2.34 0-4.23-1.89-4.23-4.23s1.89-4.23 4.23-4.23 4.23 1.89 4.23 4.23-1.89 4.23-4.23 4.23" /></svg></span>${groupCount}${statusDots}</span><span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${label}</span></div>`
+        `<div class="map-img ${fontClass} map-img--group-${group.count > 1 ? 'multiple' : 'single'}"><span class="map-marker-icon">${group.count > 1 ? `${groupCount}${statusDots}` : `<span class='span_svg_circle_${scale}'><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="none" viewBox="0 0 24 24"><path fill="${markerColor}" d="M11.969 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.47-10-10-10m.03 14.23c-2.34 0-4.23-1.89-4.23-4.23s1.89-4.23 4.23-4.23 4.23 1.89 4.23 4.23-1.89 4.23-4.23 4.23" /></svg></span>`}</span>${label ? `<span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${label}</span>` : ''}</div>`
       ),
     [
       fontClass,
@@ -286,7 +290,7 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
     () =>
       createMeasuredIconLayout(
         yMapsApi,
-        `<div class="map-img ${fontClass} map-img--group-${group.count > 1 ? 'multiple' : 'single'}"><span class="map-marker-icon"><span class='span_svg_loc_${scale}'><svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" id="Layer_1" width="80" height="80" version="1" viewBox="0 0 64 64"><path fill="${markerColor}" d="M32 0C18.746 0 8 10.746 8 24c0 5.219 1.711 10.008 4.555 13.93.051.094.059.199.117.289l16 24a4 4 0 0 0 6.656 0l16-24c.059-.09.066-.195.117-.289C54.289 34.008 56 29.219 56 24 56 10.746 45.254 0 32 0m0 32a8 8 0 1 1 0-16 8 8 0 0 1 0 16" /></svg></span>${groupCount}${statusDots}</span><span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${label}</span></div>`
+        `<div class="map-img ${fontClass} map-img--group-${group.count > 1 ? 'multiple' : 'single'}"><span class="map-marker-icon">${group.count > 1 ? `${groupCount}${statusDots}` : `<span class='span_svg_loc_${scale}'><svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" id="Layer_1" width="80" height="80" version="1" viewBox="0 0 64 64"><path fill="${markerColor}" d="M32 0C18.746 0 8 10.746 8 24c0 5.219 1.711 10.008 4.555 13.93.051.094.059.199.117.289l16 24a4 4 0 0 0 6.656 0l16-24c.059-.09.066-.195.117-.289C54.289 34.008 56 29.219 56 24 56 10.746 45.254 0 32 0m0 32a8 8 0 1 1 0-16 8 8 0 0 1 0 16" /></svg></span>`}</span>${label ? `<span class='span_text_${themeClass}' style='font-size: ${fontSize}px'>${label}</span>` : ''}</div>`
       ),
     [
       fontClass,
@@ -346,6 +350,11 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
     />
   );
 });
+
+function getOrderMarkerLabel(item: Order, groupCount: number): string {
+  const ordinaryLabel = String(item?.point_text ?? '');
+  return groupCount > 1 ? '' : ordinaryLabel;
+}
 
 const OrdersMapHomePoint = memo(function OrdersMapHomePoint({
   point,
