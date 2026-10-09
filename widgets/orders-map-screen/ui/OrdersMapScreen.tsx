@@ -197,14 +197,17 @@ const OrdersMapPoints = memo(function OrdersMapPoints({
   }));
 
   useEffect(() => {
-    const interval = window.setInterval(
-      () => {
-        if (isAppOnline()) {
-          getOrders();
-        }
-      },
-      parseInt(`${update_interval}`, 10) * 1000
-    );
+    const updateIntervalSeconds = Number.parseInt(`${update_interval}`, 10);
+
+    if (!Number.isFinite(updateIntervalSeconds) || updateIntervalSeconds <= 0) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      if (isAppOnline()) {
+        getOrders();
+      }
+    }, updateIntervalSeconds * 1000);
 
     return () => window.clearInterval(interval);
   }, [getOrders, update_interval]);
@@ -310,6 +313,16 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
   const lon = Number(item?.xy?.longitude);
   const geometry =
     Number.isFinite(lat) && Number.isFinite(lon) ? ([lat, lon] as [number, number]) : undefined;
+  const markerRevision = JSON.stringify([
+    group.count,
+    label,
+    markerColor,
+    item.close_time_ ? 1 : 0,
+    scale,
+    statusDots,
+    themeClass,
+    fontSize,
+  ]);
 
   if (!geometry) {
     return null;
@@ -318,6 +331,7 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
   if (theme !== 'classic' || group.count > 1) {
     return (
       <Placemark
+        key={markerRevision}
         geometry={geometry}
         onClick={() => showOrdersMap(item.id)}
         instanceRef={(ref: any) => {
@@ -334,6 +348,7 @@ const OrdersMapPoint = memo(function OrdersMapPoint({
 
   return (
     <Placemark
+      key={markerRevision}
       geometry={geometry}
       onClick={() => showOrdersMap(item.id)}
       properties={{ iconCaption: rawLabel }}

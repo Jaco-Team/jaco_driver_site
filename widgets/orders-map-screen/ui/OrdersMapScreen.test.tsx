@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => {
   const getZoom = vi.fn(() => 12);
   const setZoom = vi.fn();
   const trafficSetMap = vi.fn();
+  const placemarkMount = vi.fn();
+  const placemarkUnmount = vi.fn();
 
   return {
     headerState: {
@@ -70,6 +72,8 @@ const mocks = vi.hoisted(() => {
     getZoom,
     setZoom,
     trafficSetMap,
+    placemarkMount,
+    placemarkUnmount,
     createClass: vi.fn((template: string) => template),
     loadOfflineMapRuntime: vi.fn().mockResolvedValue(undefined),
     isOnline: true,
@@ -106,9 +110,15 @@ vi.mock('@pbe/react-yandex-maps', async () => {
 
       return <div data-testid="map">{children}</div>;
     },
-    Placemark: ({ onClick }: { onClick?: () => void }) => (
-      <button type="button" data-testid="placemark" onClick={onClick} />
-    ),
+    Placemark: ({ onClick }: { onClick?: () => void }) => {
+      useEffect(() => {
+        mocks.placemarkMount();
+
+        return () => mocks.placemarkUnmount();
+      }, []);
+
+      return <button type="button" data-testid="placemark" onClick={onClick} />;
+    },
     TrafficControl: () => <div data-testid="traffic-control" />,
     ZoomControl: () => <div data-testid="zoom-control" />,
     useYMaps: () => ({
@@ -185,6 +195,7 @@ describe('OrdersMapScreen', () => {
     vi.clearAllMocks();
     mocks.orderState.type = { id: 1, text: 'Активные' };
     mocks.orderState.orders = [];
+    mocks.orderState.update_interval = 30;
     mocks.isOnline = true;
     mocks.headerState.night_map = false;
     mocks.headerState.darkTheme = false;
@@ -272,6 +283,42 @@ describe('OrdersMapScreen', () => {
       .filter((template) => template.includes('map-marker-cluster'));
     expect(groupedTemplates).not.toHaveLength(0);
     expect(groupedTemplates.every((template) => !template.includes('span_text_'))).toBe(true);
+  });
+
+  it('recreates an order placemark when its remaining-time label changes', () => {
+    mocks.orderState.orders = [
+      {
+        id: 1,
+        point_color: '#cc0033',
+        point_text: '15:59 (64 мин.)',
+        xy: { latitude: 55.7, longitude: 37.6 },
+      },
+    ];
+
+    const { rerender } = render(<OrdersMapScreen />);
+    const mountsBeforeRefresh = mocks.placemarkMount.mock.calls.length;
+    const unmountsBeforeRefresh = mocks.placemarkUnmount.mock.calls.length;
+
+    mocks.orderState.orders = [
+      {
+        ...mocks.orderState.orders[0],
+        point_text: '15:59 (63 мин.)',
+      },
+    ];
+    rerender(<OrdersMapScreen />);
+
+    expect(mocks.placemarkMount).toHaveBeenCalledTimes(mountsBeforeRefresh + 1);
+    expect(mocks.placemarkUnmount).toHaveBeenCalledTimes(unmountsBeforeRefresh + 1);
+  });
+
+  it('does not start order polling when automatic refresh is disabled', () => {
+    mocks.orderState.update_interval = 0;
+    const setIntervalSpy = vi.spyOn(window, 'setInterval');
+
+    render(<OrdersMapScreen />);
+
+    expect(setIntervalSpy.mock.calls.some(([, delay]) => delay === 0)).toBe(false);
+    setIntervalSpy.mockRestore();
   });
 
   it('shows three order colors and the hidden-order count for a group of five', () => {
