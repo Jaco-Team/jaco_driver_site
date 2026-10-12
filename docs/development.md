@@ -31,7 +31,7 @@ Preview собирается отдельно в `.next-preview`, поэтому
 
 ## API и переменные окружения
 
-Публичные параметры перечислены в [`.env.example`](../.env.example), [`.env.development`](../.env.development) и [`.env.production`](../.env.production). Основные: `NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_API_PROXY`, `NEXT_PUBLIC_MEDIA_ORIGIN`, `NEXT_PUBLIC_YANDEX_MAPS_API_KEY` и параметры Sentry. Серверный `YANDEX_TILES_API_KEY` не должен попадать в `NEXT_PUBLIC_*`; подробности — в [документе о карте](./maps.md).
+Имена параметров перечислены в [`.env.example`](../.env.example). Реальные настройки всех окружений хранятся в OpenBao; `.env.development` и `.env.production` удалены из Git. Для локальной разработки используйте приватный `.env.development.local`, который исключён из Git и Docker-контекста. Основные параметры: `NEXT_PUBLIC_API_ORIGIN`, `NEXT_PUBLIC_API_PROXY`, `NEXT_PUBLIC_MEDIA_ORIGIN`, `NEXT_PUBLIC_YANDEX_MAPS_API_KEY` и параметры Sentry. Серверный `YANDEX_TILES_API_KEY` не должен попадать в `NEXT_PUBLIC_*`; подробности — в [документе о карте](./maps.md). Production-процесс описан в [развёртывании через OpenBao](./deployment-openbao.md).
 
 Обычный `npm run dev` использует адрес API из env. Для отдельного запуска с локальным backend, например на порту 8080:
 
