@@ -121,6 +121,7 @@ jobs:
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
+            io.jaco.driver.public-config-sha256=${{ env.VALIDATED_PUBLIC_CONFIG_SHA256 }}
           build-args: |
             NEXT_PUBLIC_API_ORIGIN=${{ env.NEXT_PUBLIC_API_ORIGIN }}
             NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
