@@ -70,8 +70,8 @@
 - `YANDEX_TILES_API_KEY` — серверный ключ Tiles API для офлайн-тайлов; браузеру не передаётся и требуется во время работы сервера.
 
 Секреты не коммитятся. Перед production-сборкой проверьте env и ограничения ключей по домену/источнику; схема передачи переменных описана в [Docker-инструкции](./docker.md).
-Production Docker-сборка завершается ошибкой, если `NEXT_PUBLIC_YANDEX_MAPS_API_KEY` не передан. В CI он берётся из одноимённого GitHub Actions secret или variable репозитория; secret имеет приоритет. Перед сборкой workflow проверяет наличие значения. Локальный `.env.production.local` не попадает в опубликованный образ сам по себе. Офлайн-карта зависит от `YANDEX_TILES_API_KEY`.
-При автоматическом деплое `YANDEX_TILES_API_KEY` берётся из одноимённого repository Actions secret и передаётся в окружение frontend-контейнера через SSH и Compose. Создавать файл с Tiles-ключом на сервере вручную не требуется.
+Production Docker-сборка завершается ошибкой, если `NEXT_PUBLIC_YANDEX_MAPS_API_KEY` не передан. Контроллер получает этот уже публичный браузерный параметр из конкретной версии `projects/driver/prod/frontend-build` в OpenBao и передаёт его в проверенный CI dispatch. Настройки приложения не берутся из repository Actions secrets/variables. Локальные env-файлы исключены из Docker-контекста. Офлайн-карта зависит от отдельного серверного `YANDEX_TILES_API_KEY`.
+При автоматическом деплое контроллер получает `YANDEX_TILES_API_KEY` из выбранной версии `projects/driver/prod/frontend-runtime` в OpenBao и доставляет его только серверному контейнеру. Приватный runtime env и SSH-ключ сервера не передаются в GitHub Actions. Порядок выпуска описан в [развёртывании через OpenBao](./deployment-openbao.md).
 
 ## Проверка карты перед выпуском
 

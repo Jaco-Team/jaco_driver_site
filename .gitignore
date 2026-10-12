@@ -43,3 +43,9 @@ next-env.d.ts
 
 # codex
 .codex
+
+# Jaco: real environment configuration belongs to OpenBao.
+.env
+.env.*
+!.env.example
+!.env.*.example
