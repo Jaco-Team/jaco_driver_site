@@ -1,0 +1,151 @@
+# All real env is sourced by the controller from OpenBao.
+name: Driver Frontend Publish
+on:
+  push:
+    branches: [api-laravel]
+  pull_request:
+    branches: [api-laravel]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        type: string
+        required: true
+      public_config_json:
+        type: string
+        required: true
+      public_config_sha256:
+        type: string
+        required: true
+      public_config_version:
+        type: string
+        required: true
+      build_request_id:
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: driver-frontend-publish-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  IMAGE_REPOSITORY: ghcr.io/jaco-team/jaco-driver-frontend
+  SOURCE_SHA: ${{ inputs.source_sha }}
+  PUBLIC_CONFIG_JSON: ${{ inputs.public_config_json }}
+  PUBLIC_CONFIG_SHA256: ${{ inputs.public_config_sha256 }}
+  PUBLIC_CONFIG_VERSION: ${{ inputs.public_config_version }}
+  BUILD_REQUEST_ID: ${{ inputs.build_request_id }}
+  DISPATCH_WORKFLOW_SHA: ${{ github.workflow_sha }}
+jobs:
+  required_checks:
+    name: Frontend required checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Bound the event and source before checking out code
+        run: |
+          python3 - <<'PYTHON'
+          import os, re
+          if os.environ.get("GITHUB_REPOSITORY") != "Jaco-Team/jaco_driver_site":
+              raise SystemExit("UNREVIEWED_FRONTEND_TARGET")
+          event = os.environ.get("GITHUB_EVENT_NAME")
+          if event not in ("push", "pull_request", "workflow_dispatch"):
+              raise SystemExit("UNREVIEWED_FRONTEND_EVENT")
+          if event == "pull_request":
+              if os.environ.get("GITHUB_BASE_REF") != "api-laravel":
+                  raise SystemExit("UNREVIEWED_FRONTEND_PR_TARGET")
+          elif os.environ.get("GITHUB_REF") != "refs/heads/api-laravel":
+              raise SystemExit("UNREVIEWED_FRONTEND_TARGET")
+          if event == "workflow_dispatch":
+              source = os.environ.get("SOURCE_SHA", "")
+              if not re.fullmatch(r"[a-f0-9]{40}", source) or source != os.environ.get("GITHUB_SHA") or source != os.environ.get("DISPATCH_WORKFLOW_SHA"):
+                  raise SystemExit("DISPATCH_HEAD_MISMATCH")
+          print("Reviewed frontend source selected")
+          PYTHON
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Reject tracked runtime env and exclude env from Docker context
+        run: python3 .github/scripts/jaco-driver/prepare-build-context.py --dockerfile Dockerfile
+      - name: Validate the controller-supplied public snapshot
+        if: github.event_name == 'workflow_dispatch'
+        run: python3 .github/scripts/jaco-driver/prepare-public-build.py
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install existing dependencies
+        run: npm ci
+      - name: Existing frontend lint
+        run: npm run lint
+      - name: Existing frontend typecheck
+        run: npm run typecheck
+      - name: Existing frontend tests
+        run: npm test
+  publish:
+    name: Publish frontend image and metadata
+    needs: required_checks
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/api-laravel' && github.sha == inputs.source_sha && needs.required_checks.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Apply the context guard in the fresh publication checkout
+        run: python3 .github/scripts/jaco-driver/prepare-build-context.py --dockerfile Dockerfile
+      - name: Validate the pinned public snapshot and write public runner env
+        run: python3 .github/scripts/jaco-driver/prepare-public-build.py
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Build and publish with validated public snapshot args only
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: Dockerfile
+          target: runner
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
+            ${{ env.IMAGE_REPOSITORY }}:run-${{ github.run_id }}-${{ github.run_attempt }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            io.jaco.driver.public-config-sha256=${{ env.VALIDATED_PUBLIC_CONFIG_SHA256 }}
+          build-args: |
+            NEXT_PUBLIC_API_ORIGIN=${{ env.NEXT_PUBLIC_API_ORIGIN }}
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_LEGACY_API_ORIGIN=${{ env.NEXT_PUBLIC_LEGACY_API_ORIGIN }}
+            NEXT_PUBLIC_MEDIA_ORIGIN=${{ env.NEXT_PUBLIC_MEDIA_ORIGIN }}
+            NEXT_PUBLIC_YANDEX_METRIKA_ID=${{ env.NEXT_PUBLIC_YANDEX_METRIKA_ID }}
+            NEXT_PUBLIC_YANDEX_MAPS_API_KEY=${{ env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }}
+            NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY=${{ env.NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
+          provenance: mode=min
+          sbom: true
+          cache-from: type=gha,scope=driver-frontend-production
+          cache-to: type=gha,mode=max,scope=driver-frontend-production
+      - name: Write digest, commit, build request and config version evidence
+        env:
+          COMPONENT: frontend
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          REQUIRED_CHECKS_RESULT: ${{ needs.required_checks.result }}
+        run: python3 .github/scripts/jaco-driver/write-release-metadata.py
+      - name: Publish only component metadata for the controller
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: image-metadata
+          path: jaco-release-metadata/component.json
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 30
