@@ -63,7 +63,18 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
     },
 
     setAddModal: (load) => {
-      set({ addModal: load });
+      set(
+        load
+          ? { addModal: true }
+          : {
+              addModal: false,
+              type: 'предложение',
+              title: '',
+              description: '',
+              img: null,
+              is_need_notification: false,
+            }
+      );
     },
 
     clearFeedbacks: () => {

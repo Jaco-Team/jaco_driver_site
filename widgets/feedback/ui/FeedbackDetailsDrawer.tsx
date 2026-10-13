@@ -1,5 +1,14 @@
 import React from 'react';
-import { SwipeableDrawer, Box, IconButton, Typography, Divider, Chip, Dialog } from '@mui/material';
+import {
+  SwipeableDrawer,
+  Box,
+  IconButton,
+  Typography,
+  Divider,
+  Chip,
+  Dialog,
+  CircularProgress,
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Feedback, statusArr } from '@/entities/feedback/model/types';
@@ -12,6 +21,133 @@ interface FeedbackDetailsDrawerProps {
   globalFontSize: number;
 }
 
+interface FeedbackImageCardProps {
+  image: string;
+  index: number;
+  onOpen: () => void;
+}
+
+const FeedbackImageCard: React.FC<FeedbackImageCardProps> = ({ image, index, onOpen }) => {
+  const [loadState, setLoadState] = React.useState<'loading' | 'loaded' | 'error'>('loading');
+  const [retryAttempt, setRetryAttempt] = React.useState(0);
+  const imageNumber = index + 1;
+  const retrySeparator = image.includes('?') ? '&' : '?';
+  const imageSource =
+    retryAttempt === 0 ? image : `${image}${retrySeparator}feedback_retry=${retryAttempt}`;
+
+  const handleClick = () => {
+    if (loadState === 'loaded') {
+      onOpen();
+      return;
+    }
+
+    if (loadState === 'error') {
+      setLoadState('loading');
+      setRetryAttempt((attempt) => attempt + 1);
+    }
+  };
+
+  const ariaLabel =
+    loadState === 'loaded'
+      ? `Открыть изображение ${imageNumber}`
+      : loadState === 'error'
+        ? `Повторить загрузку изображения ${imageNumber}`
+        : `Загружается изображение ${imageNumber}`;
+
+  return (
+    <Box
+      component="button"
+      type="button"
+      aria-label={ariaLabel}
+      onClick={handleClick}
+      sx={{
+        position: 'relative',
+        width: '100%',
+        minHeight: 220,
+        height: 320,
+        p: 0,
+        overflow: 'hidden',
+        borderRadius: '16px',
+        border: '1px solid',
+        borderColor: 'divider',
+        backgroundColor: 'action.hover',
+        cursor: loadState === 'loaded' ? 'zoom-in' : loadState === 'error' ? 'pointer' : 'default',
+        outline: 'none',
+        '&:focus-visible': {
+          outline: '2px solid',
+          outlineColor: 'primary.main',
+          outlineOffset: 2,
+        },
+      }}
+    >
+      <Box
+        component="img"
+        key={imageSource}
+        src={imageSource}
+        alt={`Изображение предложения ${imageNumber}`}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setLoadState('loaded')}
+        onError={() => setLoadState('error')}
+        sx={{
+          display: 'block',
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          opacity: loadState === 'loaded' ? 1 : 0,
+          transition: 'opacity 160ms ease-out',
+          userSelect: 'none',
+          WebkitUserDrag: 'none',
+        }}
+      />
+
+      {loadState === 'loading' ? (
+        <Box
+          role="status"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1.2,
+            color: 'text.secondary',
+          }}
+        >
+          <CircularProgress size={32} />
+          <Typography component="span" sx={{ fontSize: 14, fontWeight: 600 }}>
+            Загрузка изображения…
+          </Typography>
+        </Box>
+      ) : null}
+
+      {loadState === 'error' ? (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0.6,
+            px: 2,
+            color: 'text.secondary',
+          }}
+        >
+          <Typography component="span" sx={{ fontSize: 15, fontWeight: 700 }}>
+            Не удалось загрузить изображение
+          </Typography>
+          <Typography component="span" sx={{ fontSize: 13 }}>
+            Нажмите, чтобы повторить
+          </Typography>
+        </Box>
+      ) : null}
+    </Box>
+  );
+};
+
 export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
   open,
   feedback,
@@ -19,12 +155,20 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
   globalFontSize,
 }) => {
   const [isImageViewerOpen, setImageViewerOpen] = React.useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
   const modalBaseFontSize = clampFeedbackFontSize(globalFontSize, 14, 20);
   const modalTitleFontSize = clampFeedbackFontSize(modalBaseFontSize + 6, 20, 30);
   const sectionTitleFontSize = clampFeedbackFontSize(modalBaseFontSize + 1, 15, 24);
   const bodyFontSize = modalBaseFontSize;
   const metaFontSize = clampFeedbackFontSize(modalBaseFontSize - 1, 13, 18);
   const chipFontSize = clampFeedbackFontSize(modalBaseFontSize - 1, 13, 19);
+  const images = React.useMemo(() => {
+    const imageUrls = [...(Array.isArray(feedback?.images) ? feedback.images : []), feedback?.link]
+      .map((image) => String(image ?? '').trim())
+      .filter(Boolean);
+
+    return imageUrls.filter((image, index) => imageUrls.indexOf(image) === index);
+  }, [feedback]);
 
   React.useEffect(() => {
     if (open) {
@@ -35,6 +179,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
     queueMicrotask(() => {
       if (!cancelled) {
         setImageViewerOpen(false);
+        setSelectedImageIndex(0);
       }
     });
 
@@ -196,7 +341,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
         >
           {feedback.description || 'Нет описания'}
         </Typography>
-        {feedback.link ? (
+        {images.length > 0 ? (
           <>
             <Typography
               sx={{
@@ -212,31 +357,25 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
               Изображение
             </Typography>
             <Box
-              role="button"
-              tabIndex={0}
-              onClick={() => setImageViewerOpen(true)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  setImageViewerOpen(true);
-                }
-              }}
               sx={{
-                width: '100%',
+                display: 'grid',
+                gridTemplateColumns: '1fr',
+                gap: 1.25,
                 maxWidth: 500,
-                minHeight: 220,
-                height: 320,
-                borderRadius: '16px',
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundImage: `url(${feedback.link})`,
-                backgroundSize: 'contain',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-                cursor: 'zoom-in',
-                outline: 'none',
               }}
-            />
+            >
+              {images.map((image, index) => (
+                <FeedbackImageCard
+                  key={`${image}-${index}`}
+                  image={image}
+                  index={index}
+                  onOpen={() => {
+                    setSelectedImageIndex(index);
+                    setImageViewerOpen(true);
+                  }}
+                />
+              ))}
+            </Box>
           </>
         ) : null}
 
@@ -275,7 +414,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
 
       <Dialog
         fullScreen
-        open={isImageViewerOpen}
+        open={isImageViewerOpen && images.length > 0}
         onClose={() => setImageViewerOpen(false)}
         sx={{
           '& .MuiDialog-paper': {
@@ -316,7 +455,7 @@ export const FeedbackDetailsDrawer: React.FC<FeedbackDetailsDrawerProps> = ({
         >
           <Box
             component="img"
-            src={feedback.link ?? ''}
+            src={images[selectedImageIndex] ?? ''}
             alt="Изображение предложения"
             onClick={(event) => event.stopPropagation()}
             sx={{

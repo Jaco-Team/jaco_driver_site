@@ -8,9 +8,11 @@ import {
   Checkbox,
   Button,
   Divider,
+  IconButton,
   TextField,
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { useFeedbackStore } from '@/widgets/feedback/model/feedback.store';
 import { feedbackTypes } from '@/entities/feedback/model/types';
@@ -31,6 +33,14 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
   const { type, title, description, img, is_need_notification, setForm, saveFeedbacks, isSaving } =
     useFeedbackStore();
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const imagePreviews = React.useMemo(
+    () =>
+      (img ?? []).map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+      })),
+    [img]
+  );
   const modalBaseFontSize = clampFeedbackFontSize(globalFontSize, 14, 20);
   const modalTitleFontSize = clampFeedbackFontSize(modalBaseFontSize + 6, 20, 30);
   const sectionTitleFontSize = clampFeedbackFontSize(modalBaseFontSize + 1, 15, 24);
@@ -52,7 +62,10 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
     const files = Array.from(event.target.files ?? []).filter((file) =>
       file.type.toLowerCase().startsWith('image/')
     );
-    setForm('img', files);
+    if (files.length > 0) {
+      setForm('img', [...(img ?? []), ...files]);
+    }
+    event.target.value = '';
   };
 
   const handleDropFiles = (event: React.DragEvent<HTMLDivElement>) => {
@@ -61,12 +74,27 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
       file.type.toLowerCase().startsWith('image/')
     );
     if (files.length > 0) {
-      setForm('img', files);
+      setForm('img', [...(img ?? []), ...files]);
     }
   };
 
+  const handleRemoveImage = (index: number) => {
+    if (isSaving) {
+      return;
+    }
+
+    const nextImages = (img ?? []).filter((_, imageIndex) => imageIndex !== index);
+    setForm('img', nextImages.length > 0 ? nextImages : null);
+  };
+
+  React.useEffect(() => {
+    return () => {
+      imagePreviews.forEach(({ url }) => URL.revokeObjectURL(url));
+    };
+  }, [imagePreviews]);
+
   const fileHintText =
-    img && img.length > 0 ? `Выбрано файлов: ${img.length}` : 'Нажмите, чтобы добавить изображения';
+    img && img.length > 0 ? 'Добавить ещё изображения' : 'Нажмите, чтобы добавить изображения';
 
   return (
     <SwipeableDrawer
@@ -261,6 +289,70 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
         >
           Изображение (опционально)
         </Typography>
+        {imagePreviews.length > 0 ? (
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1.25,
+              overflowX: 'auto',
+              pb: 1.25,
+            }}
+          >
+            {imagePreviews.map(({ file, url }, index) => (
+              <Box key={`${file.name}-${file.lastModified}-${index}`} sx={{ flex: '0 0 104px' }}>
+                <Box sx={{ position: 'relative' }}>
+                  <Box
+                    component="img"
+                    src={url}
+                    alt={file.name}
+                    sx={{
+                      display: 'block',
+                      width: 96,
+                      height: 96,
+                      objectFit: 'cover',
+                      borderRadius: '12px',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      backgroundColor: 'action.hover',
+                    }}
+                  />
+                  <IconButton
+                    aria-label={`Удалить ${file.name}`}
+                    disabled={isSaving}
+                    onClick={() => handleRemoveImage(index)}
+                    size="small"
+                    sx={{
+                      position: 'absolute',
+                      top: 5,
+                      right: 3,
+                      width: 28,
+                      height: 28,
+                      color: 'primary.contrastText',
+                      backgroundColor: 'primary.main',
+                      '&:hover': { backgroundColor: 'primary.dark' },
+                    }}
+                  >
+                    <CloseIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Box>
+                <Typography
+                  title={file.name}
+                  sx={{
+                    mt: 0.5,
+                    maxWidth: 96,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    color: 'text.secondary',
+                    fontSize: helperFontSize,
+                  }}
+                >
+                  {file.name}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        ) : null}
         <Box
           role="button"
           tabIndex={0}

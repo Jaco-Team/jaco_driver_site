@@ -108,6 +108,28 @@ describe('feedback store', () => {
     });
   });
 
+  it('clears the feedback draft when the create dialog closes', () => {
+    useFeedbackStore.setState({
+      addModal: true,
+      type: 'другое',
+      title: 'Черновик',
+      description: 'Описание черновика',
+      img: [{ name: 'one.png' } as File],
+      is_need_notification: true,
+    });
+
+    useFeedbackStore.getState().setAddModal(false);
+
+    expect(useFeedbackStore.getState()).toMatchObject({
+      addModal: false,
+      type: 'предложение',
+      title: '',
+      description: '',
+      img: null,
+      is_need_notification: false,
+    });
+  });
+
   it('creates feedback and reloads the list', async () => {
     mocks.saveFeedbacks.mockResolvedValue({ message: 'Отзыв успешно создан!' });
     mocks.getFeedbacks.mockResolvedValue({ data: sampleFeedbacks });
@@ -125,6 +147,29 @@ describe('feedback store', () => {
     expect(useFeedbackStore.getState().title).toBe('');
     expect(useFeedbackStore.getState().feedbacks).toHaveLength(2);
     expect(useFeedbackStore.getState().snackbar.message).toBe('Отзыв успешно создан!');
+  });
+
+  it('keeps unicode text and every image in the multipart request', async () => {
+    mocks.saveFeedbacks.mockResolvedValue({ message: 'Отзыв успешно создан!' });
+    mocks.getFeedbacks.mockResolvedValue({ data: sampleFeedbacks });
+    const first = new File(['one'], 'one.png', { type: 'image/png' });
+    const second = new File(['two'], 'two.png', { type: 'image/png' });
+
+    useFeedbackStore.setState({
+      type: 'другое',
+      title: 'LOCAL EMOJI TEST 😀🔥👍',
+      description: 'Кавычки: "двойные" Unicode: Привет 世界 café <script>test()</script>',
+      img: [first, second],
+    });
+
+    await useFeedbackStore.getState().saveFeedbacks();
+
+    const formData = mocks.saveFeedbacks.mock.calls[0][0] as FormData;
+    expect(formData.get('title')).toBe('LOCAL EMOJI TEST 😀🔥👍');
+    expect(formData.get('description')).toBe(
+      'Кавычки: "двойные" Unicode: Привет 世界 café <script>test()</script>'
+    );
+    expect(formData.getAll('images[]')).toEqual([first, second]);
   });
 
   it('clears the previously loaded list without keeping feedback offline', async () => {
