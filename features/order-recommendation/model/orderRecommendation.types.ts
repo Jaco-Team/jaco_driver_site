@@ -73,6 +73,7 @@ export interface RecommendationRoute {
 
 export interface OrderRecommendationResult {
   st: boolean;
+  code?: string;
   text?: string;
   title?: string;
   summary?: string;

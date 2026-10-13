@@ -28,6 +28,13 @@ const mocks = vi.hoisted(() => {
       darkTheme: false,
       is_scaleMap: true,
     },
+    settingsState: {
+      pointId: 12,
+      settings: {
+        map_hints: 1,
+        ai_recommend: 0,
+      },
+    },
     orderState: {
       orders: [],
       update_interval: 30,
@@ -165,7 +172,17 @@ vi.mock('@/features/offline/model/connectivity.store', () => ({
 }));
 
 vi.mock('@/entities/settings', () => ({
-  useSettingsStore: (selector: (state: { pointId: number }) => any) => selector({ pointId: 12 }),
+  normalizeBooleanSetting: (value: unknown) => Number(value) === 1 || value === true,
+  useSettingsStore: (selector: (state: typeof mocks.settingsState) => any) =>
+    selector(mocks.settingsState),
+}));
+
+vi.mock('@/features/order-recommendation/ui/OrderRecommendationControl', () => ({
+  OrderRecommendationControl: () => <div data-testid="order-recommendation-control" />,
+}));
+
+vi.mock('@/features/order-recommendation/ui/ActiveOrderRecommendationMapLayer', () => ({
+  ActiveOrderRecommendationMapLayer: () => <div data-testid="order-recommendation-map-layer" />,
 }));
 
 vi.mock('@/shared/lib/offline/offlineMapAssets', () => ({
@@ -199,6 +216,8 @@ describe('OrdersMapScreen', () => {
     mocks.isOnline = true;
     mocks.headerState.night_map = false;
     mocks.headerState.darkTheme = false;
+    mocks.settingsState.settings.map_hints = 1;
+    mocks.settingsState.settings.ai_recommend = 0;
     delete (window as { ymaps?: unknown }).ymaps;
   });
 
@@ -359,6 +378,33 @@ describe('OrdersMapScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: /Показать 2 заказа/ }));
 
     expect(mocks.setCenter).toHaveBeenCalledWith([55.7, 38]);
+  });
+
+  it('hides map edge hints when the courier disables them', () => {
+    mocks.settingsState.settings.map_hints = 0;
+    mocks.orderState.orders = [
+      {
+        id: 4,
+        point_color: '#cc0033',
+        point_text: 'За картой',
+        xy: { latitude: 55.7, longitude: 38 },
+      },
+    ];
+
+    render(<OrdersMapScreen />);
+
+    expect(screen.queryByRole('button', { name: /Показать 1 заказ/ })).not.toBeInTheDocument();
+  });
+
+  it('shows AI recommendations only after the courier enables them', () => {
+    const { rerender } = render(<OrdersMapScreen />);
+
+    expect(screen.queryByTestId('order-recommendation-control')).not.toBeInTheDocument();
+
+    mocks.settingsState.settings.ai_recommend = 1;
+    rerender(<OrdersMapScreen />);
+
+    expect(screen.getByTestId('order-recommendation-control')).toBeInTheDocument();
   });
 
   it('opens cached order cards from the saved offline map', () => {

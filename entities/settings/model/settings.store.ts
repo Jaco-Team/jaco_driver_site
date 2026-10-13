@@ -69,7 +69,9 @@ interface SettingsActions {
     night_map: boolean,
     dark_theme: boolean,
     app_theme: 'system' | 'light' | 'dark',
-    is_scaleMap: boolean
+    is_scaleMap: boolean,
+    map_hints: boolean,
+    ai_recommend: boolean
   ) => Promise<{ st: boolean; text?: string; data?: any; status?: number; errors?: any }>;
   getMySetting: (token: string, force?: boolean) => Promise<SettingsResponse>;
   setPointId: (id: number | null) => void;
@@ -116,6 +118,8 @@ function normalizeSettingsPayload(payload: DriverSettingsPayload): {
   const normalizedSettings = {
     ...settings,
     point_id: pointId,
+    map_hints: settings?.map_hints ?? 1,
+    ai_recommend: settings?.ai_recommend ?? 0,
     type_data_map: normalizeTypeDataMapForUi(settings?.type_data_map),
     type_show_del: normalizeTypeShowDelForUi(settings?.type_show_del),
   } as SettingsResponse;
@@ -204,7 +208,9 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       night_map: boolean,
       dark_theme: boolean,
       app_theme: 'system' | 'light' | 'dark',
-      is_scaleMap: boolean
+      is_scaleMap: boolean,
+      map_hints: boolean,
+      ai_recommend: boolean
     ) => {
       if (get().isClick === false) {
         set({ isClick: true });
@@ -225,6 +231,8 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
         dark_theme,
         app_theme,
         is_scaleMap,
+        map_hints,
+        ai_recommend,
       });
 
       try {

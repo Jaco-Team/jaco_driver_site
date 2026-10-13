@@ -74,9 +74,9 @@ export const OrdersMapCompass = memo(function OrdersMapCompass({
             {indicator.orderCount}
           </span>
           <span className="orders-map-compass__statuses" aria-hidden="true">
-            {indicator.statusColors.slice(0, 3).map((color) => (
+            {indicator.statusColors.slice(0, 3).map((color, index) => (
               <span
-                key={color}
+                key={`${color}:${index}`}
                 className="orders-map-compass__status"
                 style={{ backgroundColor: sanitizeCssColor(color) }}
               />

@@ -2,6 +2,7 @@ import React, { useState, memo, useMemo, useEffect } from 'react';
 import { Card, CardContent, Typography, Chip, Box, Button, styled } from '@mui/material';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import Tooltip, { tooltipClasses, type TooltipProps } from '@mui/material/Tooltip';
 
 import type { DrinkItem, Order } from '@/entities/order/model/order.types';
@@ -59,6 +60,25 @@ const StyledCard = styled(Card, {
 const InfoRow = styled(Box)({
   marginBottom: 8,
   overflowWrap: 'break-word',
+});
+
+const IntercomWarning = styled(Box)(({ theme }) => {
+  const palette = theme.palette.mode === 'dark' ? appDarkPalette : appPalette;
+
+  return {
+    minHeight: 40,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+    padding: '8px 12px',
+    boxSizing: 'border-box',
+    border: `1px solid ${palette.warningBorder}`,
+    borderRadius: 10,
+    backgroundColor: palette.warningSurface,
+    color: palette.warningText,
+    overflowWrap: 'break-word',
+  };
 });
 
 const Label = styled((props: React.ComponentProps<typeof Typography>) => (
@@ -452,16 +472,22 @@ export const OrderCard = memo<OrderCardProps>(
 
             {/* Домофон */}
             {toFlagInt(item.fake_dom) === 0 && (
-              <InfoRow>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: 'text.secondary',
-                  }}
-                >
+              <IntercomWarning role="note" aria-label="Домофон не работает">
+                <WarningAmberRoundedIcon
+                  aria-hidden="true"
+                  sx={(theme) => ({
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? appDarkPalette.warningIcon
+                        : appPalette.warningIcon,
+                    flexShrink: 0,
+                    fontSize: 20,
+                  })}
+                />
+                <Typography variant="body1" sx={{ color: 'inherit', fontWeight: 600 }}>
                   Домофон не работает
                 </Typography>
-              </InfoRow>
+              </IntercomWarning>
             )}
 
             {/* Ко времени */}

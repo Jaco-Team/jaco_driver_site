@@ -17,9 +17,15 @@ import LocationOffIcon from '@mui/icons-material/LocationOff';
 import PinDropIcon from '@mui/icons-material/PinDrop';
 
 import { useHeaderStore } from '@/features/header/model/header.store';
-import { useSettingsStore } from '@/entities/settings';
+import { normalizeBooleanSetting, useSettingsStore } from '@/entities/settings';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { isAppOnline, useConnectivityStore } from '@/features/offline/model/connectivity.store';
+import { OrderRecommendationControl } from '@/features/order-recommendation/ui/OrderRecommendationControl';
+import { useOrderRecommendationStore } from '@/features/order-recommendation/model/orderRecommendation.store';
+import {
+  ActiveOrderRecommendationMapLayer,
+  type RecommendationRouteMapInstance,
+} from '@/features/order-recommendation/ui/ActiveOrderRecommendationMapLayer';
 import type { HomeLocation, Order } from '@/entities/order/model/order.types';
 import {
   groupOrdersByMapLocation,
@@ -57,6 +63,7 @@ type LegacyMapInstance = {
     add: (event: string, handler: () => void) => void;
     remove: (event: string, handler: () => void) => void;
   };
+  geoObjects: RecommendationRouteMapInstance['geoObjects'];
 };
 
 type TrafficProvider = { setMap: (map: LegacyMapInstance | null) => void };
@@ -673,12 +680,45 @@ export function OrdersMapScreen() {
     centerOnCoordinate,
     handleConfirm,
   } = useOrdersMapScreen();
-  const groups = useMemo(
-    () => groupOrdersByMapLocation(orders.orders, orders.type.id === 5),
-    [orders.orders, orders.type.id]
-  );
+  const acceptedOrderIds = useOrderRecommendationStore((state) => state.acceptedOrderIds);
+  const recommendationOrderTypeId = useOrderRecommendationStore((state) => state.orderTypeId);
+  const isRecommendationRouteVisible = useOrderRecommendationStore((state) => state.isRouteVisible);
+  const resetOrderRecommendation = useOrderRecommendationStore((state) => state.reset);
   const pointId = useSettingsStore((state) => state.pointId);
+  const mapHintsEnabled = useSettingsStore((state) =>
+    state.settings?.map_hints === undefined
+      ? true
+      : normalizeBooleanSetting(state.settings.map_hints)
+  );
+  const aiRecommendEnabled = useSettingsStore((state) =>
+    normalizeBooleanSetting(state.settings?.ai_recommend)
+  );
   const isOnline = useConnectivityStore((state) => state.isOnline);
+  const visibleMarkerOrders = useMemo(() => {
+    if (
+      !isOnline ||
+      !aiRecommendEnabled ||
+      !isRecommendationRouteVisible ||
+      recommendationOrderTypeId !== orders.type.id
+    ) {
+      return orders.orders;
+    }
+
+    const hiddenIds = new Set(acceptedOrderIds);
+    return orders.orders.filter((order) => !hiddenIds.has(order.id));
+  }, [
+    acceptedOrderIds,
+    aiRecommendEnabled,
+    isOnline,
+    isRecommendationRouteVisible,
+    orders.orders,
+    orders.type.id,
+    recommendationOrderTypeId,
+  ]);
+  const groups = useMemo(
+    () => groupOrdersByMapLocation(visibleMarkerOrders, orders.type.id === 5),
+    [orders.type.id, visibleMarkerOrders]
+  );
   const hasMounted = useSyncExternalStore(
     subscribeToClientMount,
     () => true,
@@ -689,9 +729,14 @@ export function OrdersMapScreen() {
   const [onlineMapError, setOnlineMapError] = useState<string | null>(null);
   const [onlineMapInstance, setOnlineMapInstance] = useState<LegacyMapInstance | null>(null);
   const onlineMapReadyTimerRef = useRef<number | null>(null);
+  const canResetRecommendationOnUnmountRef = useRef(false);
   const isDarkMap = header.darkTheme;
   const activeTypeColor = header.darkTheme ? appDarkSuccessPalette.text : 'green';
   const isOfflineFallback = hasMounted && !isOnline;
+
+  useEffect(() => {
+    if (!aiRecommendEnabled) resetOrderRecommendation();
+  }, [aiRecommendEnabled, resetOrderRecommendation]);
 
   useEffect(() => {
     if (!isOnline) {
@@ -749,6 +794,17 @@ export function OrdersMapScreen() {
     []
   );
 
+  useEffect(() => {
+    const commitTimer = window.setTimeout(() => {
+      canResetRecommendationOnUnmountRef.current = true;
+    }, 0);
+
+    return () => {
+      window.clearTimeout(commitTimer);
+      if (canResetRecommendationOnUnmountRef.current) resetOrderRecommendation();
+    };
+  }, [resetOrderRecommendation]);
+
   const handleOnlineMapInstance = useCallback(
     (instance: any) => {
       setMapInstance(instance);
@@ -791,6 +847,7 @@ export function OrdersMapScreen() {
           theme={header.theme}
           mapScale={header.mapScale}
           showZoomControls={header.is_scaleMap}
+          showCompass={mapHintsEnabled}
           typeText={orders.type.text}
           globalFontSize={header.globalFontSize}
           onOpenOrders={orders.showOrdersMap}
@@ -869,6 +926,15 @@ export function OrdersMapScreen() {
                   groups={groups}
                   getHome={getHome}
                 />
+                {aiRecommendEnabled && orders.type.id === 1 ? (
+                  <ActiveOrderRecommendationMapLayer
+                    map={onlineMapInstance}
+                    orders={orders.orders}
+                    isDark={isDarkMap}
+                    orderTypeId={orders.type.id}
+                    mapScale={header.mapScale}
+                  />
+                ) : null}
               </Map>
               <OrdersMapOnlineControls
                 map={onlineMapInstance}
@@ -890,12 +956,27 @@ export function OrdersMapScreen() {
             </Button>
           </div>
 
-          <OrdersMapCompass
-            groups={groups}
-            viewport={viewport}
-            globalFontSize={header.globalFontSize}
-            onCenter={centerOnCoordinate}
-          />
+          {mapHintsEnabled ? (
+            <OrdersMapCompass
+              groups={groups}
+              viewport={viewport}
+              globalFontSize={header.globalFontSize}
+              onCenter={centerOnCoordinate}
+            />
+          ) : null}
+
+          {aiRecommendEnabled && orders.type.id === 1 && (
+            <OrderRecommendationControl
+              surface="map"
+              orders={orders.orders}
+              pointId={pointId ? Number(pointId) : null}
+              limit={orders.limit || ''}
+              limitCount={orders.limit_count || ''}
+              globalFontSize={header.globalFontSize}
+              orderTypeId={orders.type.id}
+              disabled={orders.isClick || orders.is_load}
+            />
+          )}
         </div>
       ) : null}
 

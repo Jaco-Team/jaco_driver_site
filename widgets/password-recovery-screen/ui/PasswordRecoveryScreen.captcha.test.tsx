@@ -86,9 +86,13 @@ describe('PasswordRecoveryScreen with captcha key', () => {
     fireEvent.click(screen.getByTestId('smart-captcha'));
     expect(submit).toBeEnabled();
     fireEvent.click(submit);
-    await waitFor(() => expect(mocks.requestPasswordRecoveryCode).toHaveBeenLastCalledWith(
-      '79870001122', 'Password1', 'captcha-token'
-    ));
+    await waitFor(() =>
+      expect(mocks.requestPasswordRecoveryCode).toHaveBeenLastCalledWith(
+        '79870001122',
+        'Password1',
+        'captcha-token'
+      )
+    );
     await screen.findByRole('button', { name: 'Подтвердить' });
     expect(screen.queryByTestId('smart-captcha')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Отправить код повторно' })).toBeEnabled();
@@ -100,13 +104,17 @@ describe('PasswordRecoveryScreen with captcha key', () => {
     fireEvent.paste(screen.getByLabelText('Код из смс, цифра 1'), {
       clipboardData: { getData: () => '123456' },
     });
-    await waitFor(() => expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456'));
+    await waitFor(() =>
+      expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456')
+    );
   });
 
   it('preserves the code fields after a failed resend and displays its CAPTCHA on the SMS step', async () => {
     mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({ st: true });
     mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({
-      st: false, captcha_required: true, text: 'Не удалось подтвердить CAPTCHA.',
+      st: false,
+      captcha_required: true,
+      text: 'Не удалось подтвердить CAPTCHA.',
     });
     render(<PasswordRecoveryScreen />);
     fireEvent.change(screen.getByLabelText('Номер телефона'), { target: { value: '79870001122' } });
@@ -130,6 +138,8 @@ describe('PasswordRecoveryScreen with captcha key', () => {
     fireEvent.paste(screen.getByLabelText('Код из смс, цифра 1'), {
       clipboardData: { getData: () => '123456' },
     });
-    await waitFor(() => expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456'));
+    await waitFor(() =>
+      expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456')
+    );
   });
 });

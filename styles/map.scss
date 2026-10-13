@@ -398,6 +398,19 @@
   pointer-events: auto;
 }
 
+.orders-map-ai-control {
+  position: absolute;
+  z-index: 101;
+  top: 72px;
+  left: 50%;
+  width: min(420px, calc(100% - 128px)) !important;
+  transform: translateX(-50%);
+
+  & .MuiButton-root {
+    box-shadow: 0 2px 8px var(--app-shadow);
+  }
+}
+
 .orders-map-road-filter {
   position: absolute;
   width: 0;

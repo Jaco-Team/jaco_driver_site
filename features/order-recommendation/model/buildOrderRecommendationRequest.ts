@@ -5,6 +5,7 @@ import type {
   RecommendationCoordinates,
   RecommendationLimit,
 } from './orderRecommendation.types';
+import { toRecommendationCoordinates } from './recommendationCoordinates';
 
 function toInteger(value: unknown): number {
   const parsed = parseInt(String(value ?? 0), 10);
@@ -13,13 +14,6 @@ function toInteger(value: unknown): number {
 
 function toBooleanFlag(value: unknown): boolean {
   return toInteger(value) === 1;
-}
-
-function toCoordinates(latitude: unknown, longitude: unknown): RecommendationCoordinates | null {
-  const lat = Number(latitude);
-  const lon = Number(longitude);
-
-  return Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null;
 }
 
 function toLimit(value: string): RecommendationLimit {
@@ -98,7 +92,10 @@ export function buildOrderRecommendationRequest({
           : toBooleanFlag(order.online_pay)
             ? 'online'
             : 'cash',
-      xy: toCoordinates(order.xy?.latitude ?? order.xy?.lat, order.xy?.longitude ?? order.xy?.lon),
+      xy: toRecommendationCoordinates(
+        order.xy?.latitude ?? order.xy?.lat,
+        order.xy?.longitude ?? order.xy?.lon
+      ),
     })),
   };
 }

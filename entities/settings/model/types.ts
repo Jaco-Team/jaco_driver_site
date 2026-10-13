@@ -17,6 +17,8 @@ export interface SettingsData {
   dark_theme?: number | string | boolean;
   app_theme?: AppThemePreference;
   is_scaleMap?: number | string;
+  map_hints?: number | string | boolean;
+  ai_recommend?: number | string | boolean;
   driver_avg_time?: number | string | boolean;
   driver_page_stat_time?: number | string | boolean;
   color?: string;
@@ -50,6 +52,8 @@ export interface SaveSettingsPayload {
   dark_theme: number;
   app_theme: AppThemePreference;
   is_scaleMap: number;
+  map_hints: number;
+  ai_recommend: number;
   color: string;
   fontSize: number;
   theme: string;

@@ -46,6 +46,8 @@ export const SettingsForm: React.FC = () => {
     centeredMap,
     appTheme,
     isScaleMap,
+    mapHints,
+    aiRecommend,
     color,
     groupTypeTheme,
     fontSize,
@@ -58,6 +60,8 @@ export const SettingsForm: React.FC = () => {
     setCenteredMap,
     setAppTheme,
     setIsScaleMap,
+    setMapHints,
+    setAiRecommend,
     setColor,
     setGroupTypeTheme,
     setFontSize,
@@ -88,6 +92,11 @@ export const SettingsForm: React.FC = () => {
       label: 'При взятии, отмене заказа, центрировать карту',
       value: centeredMap,
       onChange: setCenteredMap,
+    },
+    {
+      label: 'Подсказки о заказах за пределами карты',
+      value: mapHints,
+      onChange: setMapHints,
     },
   ];
 
@@ -298,6 +307,26 @@ export const SettingsForm: React.FC = () => {
         <SettingsSection>
           <SectionTitle title="Карта" fontSize={globalFontSize} />
           <CheckboxField options={mapOptions} fontSize={globalFontSize} />
+          <Typography
+            className="settingsPage__themeHint"
+            sx={{ fontSize: Math.min(Math.max(normalizedGlobalFontSize - 1, 12), 20) }}
+          >
+            Круги у края показывают направление и количество заказов за границами карты.
+          </Typography>
+        </SettingsSection>
+
+        <SettingsSection>
+          <SectionTitle title="Помощь с выбором" fontSize={globalFontSize} />
+          <CheckboxField
+            options={[{ label: 'ИИ-подбор заказов', value: aiRecommend, onChange: setAiRecommend }]}
+            fontSize={globalFontSize}
+          />
+          <Typography
+            className="settingsPage__themeHint"
+            sx={{ fontSize: Math.min(Math.max(normalizedGlobalFontSize - 1, 12), 20) }}
+          >
+            Показывать кнопку «Помочь с выбором» в списке заказов и на карте.
+          </Typography>
         </SettingsSection>
 
         <SettingsSection>

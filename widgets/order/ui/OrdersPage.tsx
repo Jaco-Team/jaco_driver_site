@@ -152,16 +152,19 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
           onOpenMenu={setOpenMenu}
         />
 
-        <Grid size={12}>
-          <OrderRecommendationControl
-            orders={orders}
-            pointId={pointId ? Number(pointId) : null}
-            limit={limit || ''}
-            limitCount={limit_count || ''}
-            globalFontSize={globalFontSize}
-            disabled={actionsBusy}
-          />
-        </Grid>
+        {type?.id === 1 && (
+          <Grid size={12}>
+            <OrderRecommendationControl
+              orders={orders}
+              pointId={pointId ? Number(pointId) : null}
+              limit={limit || ''}
+              limitCount={limit_count || ''}
+              globalFontSize={globalFontSize}
+              orderTypeId={type.id}
+              disabled={actionsBusy}
+            />
+          </Grid>
+        )}
 
         <OrdersList
           orders={orders}

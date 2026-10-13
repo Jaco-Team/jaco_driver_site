@@ -4,6 +4,9 @@ export const appPalette = {
   brandDeep: '#7A001F',
   brandSoft: 'rgba(204, 0, 51, 0.08)',
   brandSoftStrong: 'rgba(204, 0, 51, 0.14)',
+  aiSurface: '#FFFFFF',
+  aiRoute: '#CC0033',
+  aiCard: '#F4F7FA',
   primary: '#42627D',
   primaryDark: '#2F465B',
   primaryDeep: '#1F2B36',
@@ -19,6 +22,10 @@ export const appPalette = {
   shadowSoft: 'rgba(17, 27, 36, 0.08)',
   shadow: 'rgba(17, 27, 36, 0.12)',
   shadowStrong: 'rgba(17, 27, 36, 0.18)',
+  warningSurface: '#FFF7E6',
+  warningBorder: '#F1CF82',
+  warningText: '#704500',
+  warningIcon: '#D68400',
   error: '#9c4a3d',
 } as const;
 
@@ -34,6 +41,9 @@ export const appDarkPalette = {
   brandDeep: '#6F182D',
   brandSoft: 'rgba(213, 54, 86, 0.14)',
   brandSoftStrong: 'rgba(213, 54, 86, 0.24)',
+  aiSurface: '#384046',
+  aiRoute: '#D53656',
+  aiCard: '#111820',
   onBrand: '#FFFFFF',
   primary: '#7E9BB3',
   primaryDark: '#66849D',
@@ -42,6 +52,10 @@ export const appDarkPalette = {
   shadowSoft: 'rgba(0, 0, 0, 0.18)',
   shadow: 'rgba(0, 0, 0, 0.30)',
   shadowStrong: 'rgba(0, 0, 0, 0.48)',
+  warningSurface: '#2A2112',
+  warningBorder: 'rgba(242, 181, 68, 0.42)',
+  warningText: '#FFD98A',
+  warningIcon: '#F2B544',
 } as const;
 
 export const appSuccessPalette = {

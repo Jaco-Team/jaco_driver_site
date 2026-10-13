@@ -14,6 +14,7 @@ import { useAuthStore, useSession } from '@/features/auth/model/auth.store';
 import { logoutAndClearSession } from '@/features/auth/model/logoutSession';
 import type { SnackbarState } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
 import type { UseSettingsFormReturn } from './useSettingsForm.type';
+import { useOrderRecommendationStore } from '@/features/order-recommendation/model/orderRecommendation.store';
 
 const initialSnackbarState: SnackbarState = {
   open: false,
@@ -83,6 +84,8 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
   const [centeredMap, setCenteredMap] = useState<boolean>(false);
   const [appTheme, setAppThemeState] = useState<AppThemePreference>(currentAppTheme);
   const [isScaleMap, setIsScaleMap] = useState<boolean>(false);
+  const [mapHints, setMapHints] = useState<boolean>(true);
+  const [aiRecommend, setAiRecommend] = useState<boolean>(false);
   const [color, setColor] = useState<string>('#000000');
   const [groupTypeTheme, setGroupTypeTheme] = useState<ThemeType>('white');
   const [fontSize, setFontSize] = useState<number>(16);
@@ -128,6 +131,8 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
         setAppThemeState(nextAppTheme);
       }
       setIsScaleMap(parseInt(String(res.is_scaleMap)) === 1);
+      setMapHints(res.map_hints === undefined ? true : normalizeBooleanSetting(res.map_hints));
+      setAiRecommend(normalizeBooleanSetting(res.ai_recommend));
       setUpdateInterval(parseInt(String(res.update_interval ?? 30)));
       setTypeShowDel((res.type_show_del as TypeShowDel) ?? 'min');
       setGroupTypeTime((res.type_data_map as TypeDataMap) ?? 'norm');
@@ -168,10 +173,15 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
       darkTheme,
       darkTheme,
       appTheme,
-      isScaleMap
+      isScaleMap,
+      mapHints,
+      aiRecommend
     );
 
     if (result?.st) {
+      if (!aiRecommend) {
+        useOrderRecommendationStore.getState().reset();
+      }
       setGlobalFontSize(fontSize);
       setTheme(groupTypeTheme);
       setHeaderAppTheme(appTheme);
@@ -228,6 +238,8 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     centeredMap,
     appTheme,
     isScaleMap,
+    mapHints,
+    aiRecommend,
     color,
     groupTypeTheme,
     fontSize,
@@ -243,6 +255,8 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     setCenteredMap,
     setAppTheme,
     setIsScaleMap,
+    setMapHints,
+    setAiRecommend,
     setColor,
     setGroupTypeTheme,
     setFontSize,

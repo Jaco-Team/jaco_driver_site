@@ -150,7 +150,10 @@ export default function RegistrationPage() {
 
             {activeStep === 1 && !passwordChanged && (
               <>
-                {showResendCaptcha && captchaRequired && SMARTCAPTCHA_CLIENT_KEY && sendRetryAfter <= 0 ? (
+                {showResendCaptcha &&
+                captchaRequired &&
+                SMARTCAPTCHA_CLIENT_KEY &&
+                sendRetryAfter <= 0 ? (
                   <>
                     <div className="auth__hint">Проверка для повторной отправки</div>
                     <YandexSmartCaptcha
@@ -163,7 +166,9 @@ export default function RegistrationPage() {
                 <Button
                   fullWidth
                   disabled={!canResend}
-                  onClick={() => { void requestRecoveryCode(); }}
+                  onClick={() => {
+                    void requestRecoveryCode();
+                  }}
                 >
                   {sendRetryAfter > 0
                     ? `Отправить код повторно через ${sendRetryAfter} с`
@@ -173,7 +178,9 @@ export default function RegistrationPage() {
             )}
 
             <div className="auth__linkRow">
-              <span className="auth__linkCaption">{passwordChanged ? 'Пароль готов к использованию' : 'Вспомнили пароль?'}</span>
+              <span className="auth__linkCaption">
+                {passwordChanged ? 'Пароль готов к использованию' : 'Вспомнили пароль?'}
+              </span>
               <Link className="auth__link" href="/auth">
                 Вернуться к авторизации
               </Link>

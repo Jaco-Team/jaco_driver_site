@@ -20,6 +20,8 @@ export interface UserSettings {
   dark_theme?: number | string | boolean;
   app_theme?: 'system' | 'light' | 'dark';
   is_scaleMap?: number | string;
+  map_hints?: number | string | boolean;
+  ai_recommend?: number | string | boolean;
   fontSize?: number;
   theme?: string;
   mapScale?: number;

@@ -23,6 +23,7 @@ import {
   useConnectivityStore,
 } from '@/features/offline/model/connectivity.store';
 import { readOfflineCache, writeOfflineCache } from '@/shared/lib/offline/cache';
+import { emitOrderTakeStarted, emitSuccessfulOrderAction } from '@/shared/lib/orderActionEvents';
 import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
 import {
   fetchOrders,
@@ -785,6 +786,10 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
 
       get().closeOrderMap();
       get().setShowPay(false);
+      emitSuccessfulOrderAction({
+        orderId: order_id,
+        type: type === 1 ? 'take' : type === 2 ? 'cancel' : 'finish',
+      });
       await get().getOrders();
     },
 
@@ -877,6 +882,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     actionGetOrder: (order_id, is_map = false) => {
       return runLockedOrderAction(async () => {
         log('confirm_approve', 'Взятие заказа');
+        emitOrderTakeStarted(order_id);
         startOrderAction();
 
         const coords = await resolveDriverCoords();

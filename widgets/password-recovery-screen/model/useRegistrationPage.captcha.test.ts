@@ -53,13 +53,23 @@ describe('useRegistrationPage with captcha key', () => {
     });
     expect(result.current.captchaRequired).toBe(true);
     expect(result.current.canSubmit).toBe(false);
-    await act(async () => { await result.current.requestRecoveryCode(); });
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
     expect(mocks.requestPasswordRecoveryCode).not.toHaveBeenCalled();
     expect(result.current.errorText).toContain('Подтвердите, что вы не робот');
-    act(() => { result.current.setCaptchaToken('first-token'); });
+    act(() => {
+      result.current.setCaptchaToken('first-token');
+    });
     expect(result.current.canSubmit).toBe(true);
-    await act(async () => { await result.current.requestRecoveryCode(); });
-    expect(mocks.requestPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', 'Password1', 'first-token');
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
+    expect(mocks.requestPasswordRecoveryCode).toHaveBeenCalledWith(
+      '79870001122',
+      'Password1',
+      'first-token'
+    );
     expect(result.current.activeStep).toBe(1);
     expect(result.current.showResendCaptcha).toBe(false);
     expect(result.current.canResend).toBe(true);
@@ -67,7 +77,10 @@ describe('useRegistrationPage with captcha key', () => {
 
   it('keeps mandatory CAPTCHA after a generic 429 without CAPTCHA metadata', async () => {
     mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({
-      st: false, status: 429, retry_after: 30, text: 'Повторная отправка будет доступна через 30 с.',
+      st: false,
+      status: 429,
+      retry_after: 30,
+      text: 'Повторная отправка будет доступна через 30 с.',
     });
     const { result } = renderHook(() => useRegistrationPage());
     act(() => {
@@ -75,7 +88,9 @@ describe('useRegistrationPage with captcha key', () => {
       result.current.setMyPWD('Password1');
       result.current.setCaptchaToken('first-token');
     });
-    await act(async () => { await result.current.requestRecoveryCode(); });
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
     expect(result.current.captchaRequired).toBe(true);
     expect(result.current.canSubmit).toBe(false);
     expect(result.current.sendRetryAfter).toBe(30);
@@ -89,23 +104,33 @@ describe('useRegistrationPage with captcha key', () => {
       result.current.setMyPWD('Password1');
       result.current.setCaptchaToken('first-token');
     });
-    await act(async () => { await result.current.requestRecoveryCode(); });
-    act(() => { result.current.setMyCode('123456'); });
-    await act(async () => { await result.current.requestRecoveryCode(); });
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
+    act(() => {
+      result.current.setMyCode('123456');
+    });
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
     expect(mocks.requestPasswordRecoveryCode).toHaveBeenCalledTimes(1);
     expect(result.current.showResendCaptcha).toBe(true);
     expect(result.current.canResend).toBe(false);
     expect(result.current.activeStep).toBe(1);
     expect(result.current.myCode).toBe('123456');
     expect(result.current.canSubmit).toBe(true);
-    await act(async () => { await result.current.confirmRecoveryCode(); });
+    await act(async () => {
+      await result.current.confirmRecoveryCode();
+    });
     expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456');
   });
 
   it('resets a rejected resend token without hiding the existing SMS code', async () => {
     mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({ st: true });
     mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({
-      st: false, captcha_required: true, text: 'Не удалось подтвердить CAPTCHA.',
+      st: false,
+      captcha_required: true,
+      text: 'Не удалось подтвердить CAPTCHA.',
     });
     const { result } = renderHook(() => useRegistrationPage());
     act(() => {
@@ -113,21 +138,33 @@ describe('useRegistrationPage with captcha key', () => {
       result.current.setMyPWD('Password1');
       result.current.setCaptchaToken('first-token');
     });
-    await act(async () => { await result.current.requestRecoveryCode(); });
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
     act(() => {
       result.current.setMyCode('123456');
       result.current.setCaptchaToken('rejected-token');
     });
-    await act(async () => { await result.current.requestRecoveryCode(); });
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
     expect(result.current.activeStep).toBe(1);
     expect(result.current.myCode).toBe('123456');
     expect(result.current.canSubmit).toBe(true);
     expect(result.current.canResend).toBe(false);
     expect(result.current.captchaResetKey).toBe(2);
     expect(result.current.errorText).toBe('Не удалось подтвердить CAPTCHA.');
-    act(() => { result.current.setCaptchaToken('fresh-token'); });
-    await act(async () => { await result.current.requestRecoveryCode(); });
-    expect(mocks.requestPasswordRecoveryCode).toHaveBeenLastCalledWith('79870001122', 'Password1', 'fresh-token');
+    act(() => {
+      result.current.setCaptchaToken('fresh-token');
+    });
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
+    expect(mocks.requestPasswordRecoveryCode).toHaveBeenLastCalledWith(
+      '79870001122',
+      'Password1',
+      'fresh-token'
+    );
     expect(result.current.myCode).toBe('');
     expect(result.current.showResendCaptcha).toBe(false);
   });
@@ -139,15 +176,24 @@ describe('useRegistrationPage with captcha key', () => {
       result.current.setMyPWD('Password1');
       result.current.setCaptchaToken('first-token');
     });
-    await act(async () => { await result.current.requestRecoveryCode(); });
-    await act(async () => { await result.current.requestRecoveryCode(); });
-    act(() => { result.current.setCaptchaToken('expired-token'); });
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
+    act(() => {
+      result.current.setCaptchaToken('expired-token');
+    });
     expect(result.current.canResend).toBe(true);
-    act(() => { result.current.resetCaptcha(); });
+    act(() => {
+      result.current.resetCaptcha();
+    });
     expect(result.current.canResend).toBe(false);
-    await act(async () => { await result.current.requestRecoveryCode(); });
+    await act(async () => {
+      await result.current.requestRecoveryCode();
+    });
     expect(mocks.requestPasswordRecoveryCode).toHaveBeenCalledTimes(1);
     expect(result.current.activeStep).toBe(1);
   });
-
 });

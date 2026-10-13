@@ -61,9 +61,12 @@ export function useRegistrationPage(): UseRegistrationPageResult {
   const sendRetryAfter = remainingSeconds(sendRetryUntil, currentTime);
   const confirmRetryAfter = remainingSeconds(confirmRetryUntil, currentTime);
 
-  useEffect(() => () => {
-    generation.current += 1;
-  }, []);
+  useEffect(
+    () => () => {
+      generation.current += 1;
+    },
+    []
+  );
 
   useEffect(() => {
     const lastDeadline = Math.max(sendRetryUntil, confirmRetryUntil);
@@ -115,9 +118,13 @@ export function useRegistrationPage(): UseRegistrationPageResult {
 
   async function requestRecoveryCode(): Promise<void> {
     if (
-      requestInFlight.current || recoveryConfirmed.current || !myLogin.trim() ||
-      !isPasswordValid || remainingSeconds(sendDeadline.current, Date.now()) > 0
-    ) return;
+      requestInFlight.current ||
+      recoveryConfirmed.current ||
+      !myLogin.trim() ||
+      !isPasswordValid ||
+      remainingSeconds(sendDeadline.current, Date.now()) > 0
+    )
+      return;
 
     const isResend = activeStep === 1;
     const setSendError = isResend ? setErr2 : setErr1;
@@ -127,9 +134,11 @@ export function useRegistrationPage(): UseRegistrationPageResult {
         setSendError('');
         return;
       }
-      setSendError(SMARTCAPTCHA_CLIENT_KEY
-        ? 'Подтвердите, что вы не робот, и повторите отправку.'
-        : 'Проверка безопасности недоступна. Попробуйте позже.');
+      setSendError(
+        SMARTCAPTCHA_CLIENT_KEY
+          ? 'Подтвердите, что вы не робот, и повторите отправку.'
+          : 'Проверка безопасности недоступна. Попробуйте позже.'
+      );
       return;
     }
 
@@ -156,9 +165,11 @@ export function useRegistrationPage(): UseRegistrationPageResult {
         setActiveStep(1);
       } else {
         log('auth_send_sms_fail', 'Ошибка отправки СМС-кода');
-        setSendError(res.captcha_required && !SMARTCAPTCHA_CLIENT_KEY
-          ? 'Проверка безопасности недоступна. Попробуйте позже.'
-          : res.text || 'Не удалось отправить код восстановления.');
+        setSendError(
+          res.captcha_required && !SMARTCAPTCHA_CLIENT_KEY
+            ? 'Проверка безопасности недоступна. Попробуйте позже.'
+            : res.text || 'Не удалось отправить код восстановления.'
+        );
       }
     } catch {
       if (generation.current === requestGeneration) {
@@ -176,9 +187,12 @@ export function useRegistrationPage(): UseRegistrationPageResult {
   async function confirmRecoveryCode(codeOverride?: string): Promise<void> {
     const code = (codeOverride ?? myCode).replace(/\D/g, '').slice(0, 6);
     if (
-      code.length !== 6 || requestInFlight.current || recoveryConfirmed.current ||
+      code.length !== 6 ||
+      requestInFlight.current ||
+      recoveryConfirmed.current ||
       remainingSeconds(confirmDeadline.current, Date.now()) > 0
-    ) return;
+    )
+      return;
 
     requestInFlight.current = true;
     const requestGeneration = generation.current;
@@ -205,9 +219,11 @@ export function useRegistrationPage(): UseRegistrationPageResult {
       }
     } catch {
       if (generation.current === requestGeneration) {
-        setErr2(recoveryConfirmed.current
-          ? 'Пароль изменён. Войдите с новым паролем на странице авторизации.'
-          : 'Не удалось подтвердить код восстановления. Попробуйте ещё раз.');
+        setErr2(
+          recoveryConfirmed.current
+            ? 'Пароль изменён. Войдите с новым паролем на странице авторизации.'
+            : 'Не удалось подтвердить код восстановления. Попробуйте ещё раз.'
+        );
       }
     } finally {
       if (generation.current === requestGeneration) {
@@ -217,32 +233,72 @@ export function useRegistrationPage(): UseRegistrationPageResult {
     }
   }
 
-  const panelTitle = passwordChanged ? 'Пароль изменён'
-    : activeStep === 0 ? 'Восстановление доступа' : 'Подтверждение по SMS';
-  const panelText = passwordChanged ? 'Используйте новый пароль для входа в аккаунт.'
+  const panelTitle = passwordChanged
+    ? 'Пароль изменён'
+    : activeStep === 0
+      ? 'Восстановление доступа'
+      : 'Подтверждение по SMS';
+  const panelText = passwordChanged
+    ? 'Используйте новый пароль для входа в аккаунт.'
     : activeStep === 0
       ? 'Укажите номер телефона и новый пароль. После этого мы отправим код подтверждения.'
       : 'Введите код из SMS, чтобы подтвердить номер и завершить восстановление пароля.';
   const errorText = activeStep === 0 ? err1 : err2;
-  const helperText = activeStep === 0
-    ? 'Если номер зарегистрирован, отправим SMS с кодом.'
-    : 'Используйте код из последнего SMS.';
+  const helperText =
+    activeStep === 0
+      ? 'Если номер зарегистрирован, отправим SMS с кодом.'
+      : 'Используйте код из последнего SMS.';
   const submitOnEnter: SubmitOnEnter = (handler: SubmitHandler) => (event) => {
     if (event.key === 'Enter') handler();
   };
   const retryAfter = activeStep === 0 ? sendRetryAfter : confirmRetryAfter;
-  const canResend = !loader && !passwordChanged && sendRetryAfter <= 0 &&
-    Boolean(myLogin.trim() && isPasswordValid &&
-      (!showResendCaptcha || !captchaRequired || (SMARTCAPTCHA_CLIENT_KEY && captchaToken)));
-  const canSubmit = !loader && !passwordChanged && retryAfter <= 0 &&
-    (activeStep === 1 ? myCode.length === 6
-      : Boolean(myLogin.trim() && isPasswordValid &&
-        (!captchaRequired || (SMARTCAPTCHA_CLIENT_KEY && captchaToken))));
+  const canResend =
+    !loader &&
+    !passwordChanged &&
+    sendRetryAfter <= 0 &&
+    Boolean(
+      myLogin.trim() &&
+      isPasswordValid &&
+      (!showResendCaptcha || !captchaRequired || (SMARTCAPTCHA_CLIENT_KEY && captchaToken))
+    );
+  const canSubmit =
+    !loader &&
+    !passwordChanged &&
+    retryAfter <= 0 &&
+    (activeStep === 1
+      ? myCode.length === 6
+      : Boolean(
+          myLogin.trim() &&
+          isPasswordValid &&
+          (!captchaRequired || (SMARTCAPTCHA_CLIENT_KEY && captchaToken))
+        ));
 
   return {
-    loader, panelTitle, panelText, activeStep, myLogin, setMyLogin, myPWD, setMyPWD,
-    submitOnEnter, requestRecoveryCode, myCode, setMyCode, confirmRecoveryCode,
-    errorText, helperText, captchaRequired, showResendCaptcha, captchaResetKey, setCaptchaToken, resetCaptcha,
-    retryAfter, sendRetryAfter, passwordChanged, canSubmit, canResend, isPasswordValid,
+    loader,
+    panelTitle,
+    panelText,
+    activeStep,
+    myLogin,
+    setMyLogin,
+    myPWD,
+    setMyPWD,
+    submitOnEnter,
+    requestRecoveryCode,
+    myCode,
+    setMyCode,
+    confirmRecoveryCode,
+    errorText,
+    helperText,
+    captchaRequired,
+    showResendCaptcha,
+    captchaResetKey,
+    setCaptchaToken,
+    resetCaptcha,
+    retryAfter,
+    sendRetryAfter,
+    passwordChanged,
+    canSubmit,
+    canResend,
+    isPasswordValid,
   };
 }

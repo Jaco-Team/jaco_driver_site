@@ -67,4 +67,20 @@ describe('buildOrderRecommendationRequest', () => {
     expect(serialized).not.toContain('Иван');
     expect(serialized).not.toContain('79991112233');
   });
+
+  it('does not send invalid order coordinates', () => {
+    const payload = buildOrderRecommendationRequest({
+      orders: [
+        { id: 1, xy: { latitude: 0, longitude: 0 } },
+        { id: 2, xy: { latitude: 91, longitude: 49.3 } },
+      ] as Order[],
+      pointId: 12,
+      limit: '0 / 15 000 ₽',
+      limitCount: '0 / 5',
+      courier: null,
+      now: new Date('2026-10-09T07:00:00.000Z'),
+    });
+
+    expect(payload.orders.map((order) => order.xy)).toEqual([null, null]);
+  });
 });

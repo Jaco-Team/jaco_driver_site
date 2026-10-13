@@ -1,4 +1,5 @@
 import { connector } from '@/shared/api/connector';
+import { apiConfig } from '@/shared/api/config';
 import { getApiErrorInfo } from '@/shared/api/errors';
 import { apiRoutes, getSsoLoginUrl } from '@/shared/api/routes';
 import { setAuthToken } from '@/shared/api/token';
@@ -104,7 +105,7 @@ export async function confirmPasswordRecoveryCode(
 }
 
 export const fetchMe = async (): Promise<User> =>
-  connector.rest.get<User>(apiRoutes.auth.me, { timeout: 15_000 });
+  connector.rest.get<User>(apiRoutes.auth.me, { timeout: apiConfig.sessionTimeoutMs });
 
 export async function logoutWeb(): Promise<void> {
   try {

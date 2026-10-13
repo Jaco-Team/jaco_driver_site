@@ -205,6 +205,8 @@ describe('settings.utils', () => {
         dark_theme: true,
         app_theme: 'dark' as const,
         is_scaleMap: true,
+        map_hints: false,
+        ai_recommend: true,
       };
 
       const result = buildSaveSettingsPayload(params);
@@ -218,6 +220,8 @@ describe('settings.utils', () => {
         dark_theme: 1,
         app_theme: 'dark',
         is_scaleMap: 1,
+        map_hints: 0,
+        ai_recommend: 1,
         color: '#FF0000',
         fontSize: 14,
         theme: 'dark',

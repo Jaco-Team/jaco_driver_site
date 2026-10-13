@@ -20,6 +20,8 @@ export interface UseSettingsFormReturn {
   centeredMap: boolean;
   appTheme: AppThemePreference;
   isScaleMap: boolean;
+  mapHints: boolean;
+  aiRecommend: boolean;
   color: string;
   groupTypeTheme: ThemeType;
   fontSize: number;
@@ -33,6 +35,8 @@ export interface UseSettingsFormReturn {
   setCenteredMap: Dispatch<SetStateAction<boolean>>;
   setAppTheme: (preference: AppThemePreference) => void;
   setIsScaleMap: Dispatch<SetStateAction<boolean>>;
+  setMapHints: Dispatch<SetStateAction<boolean>>;
+  setAiRecommend: Dispatch<SetStateAction<boolean>>;
   setColor: Dispatch<SetStateAction<string>>;
   setGroupTypeTheme: Dispatch<SetStateAction<ThemeType>>;
   setFontSize: Dispatch<SetStateAction<number>>;

@@ -68,7 +68,9 @@ describe('PasswordRecoveryScreen without captcha key', () => {
     mocks.confirmPasswordRecoveryCode.mockResolvedValue({ st: false, text: 'Неверный код' });
   });
 
-  afterEach(() => { vi.useRealTimers(); });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('lets the driver request a code without rendering captcha', async () => {
     render(<PasswordRecoveryScreen />);
@@ -99,8 +101,12 @@ describe('PasswordRecoveryScreen without captcha key', () => {
     render(<PasswordRecoveryScreen />);
     fireEvent.change(screen.getByLabelText('Номер телефона'), { target: { value: '79870001122' } });
     fireEvent.change(screen.getByLabelText('Новый пароль'), { target: { value: 'Password1' } });
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Получить код' })); });
-    expect(screen.getByRole('button', { name: 'Отправить код повторно через 30 с' })).toBeDisabled();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Получить код' }));
+    });
+    expect(
+      screen.getByRole('button', { name: 'Отправить код повторно через 30 с' })
+    ).toBeDisabled();
     await act(async () => {
       fireEvent.paste(screen.getByLabelText('Код из смс, цифра 1'), {
         clipboardData: { getData: () => '123456' },
@@ -114,5 +120,4 @@ describe('PasswordRecoveryScreen without captcha key', () => {
     });
     expect(screen.getByRole('button', { name: 'Отправить код повторно' })).toBeEnabled();
   });
-
 });

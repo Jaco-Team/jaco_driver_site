@@ -1,6 +1,6 @@
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import Box from '@mui/material/Box';
@@ -9,27 +9,30 @@ import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import Typography from '@mui/material/Typography';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
-import { log } from '@/components/analytics';
 import type { Order } from '@/entities/order/model/order.types';
 import { useHeaderStore } from '@/features/header/model/header.store';
-import { appDarkPalette, appPalette } from '@/shared/styles/appPalette';
+import {
+  appDarkPalette,
+  appDarkSuccessPalette,
+  appPalette,
+  appSuccessPalette,
+} from '@/shared/styles/appPalette';
 
 import type { OrderRecommendationResult } from '../model/orderRecommendation.types';
-import {
-  buildRouteMapPoints,
-  buildYandexMapsRouteUrl,
-  routeStopLabel,
-  sortRouteStops,
-} from '../model/routeMapPoints';
-import { RecommendationRouteMapDrawer } from './RecommendationRouteMapDrawer';
+import { buildRouteMapPoints, routeStopLabel, sortRouteStops } from '../model/routeMapPoints';
 
 interface OrderRecommendationDrawerProps {
   open: boolean;
   result: OrderRecommendationResult | null;
   orders: Order[];
+  acceptedOrderIds?: number[];
+  unavailableOrderIds?: number[];
+  orderTypeId?: number;
   onClose: () => void;
+  onShowOnMap: () => void;
+  showMapAction?: boolean;
 }
 
 function clampFontSize(value: number, min: number, max: number) {
@@ -41,45 +44,49 @@ function formatDistance(value?: number | null) {
   return value >= 1000 ? `${(value / 1000).toFixed(1)} км` : `${Math.round(value)} м`;
 }
 
-function getSafeExternalUrl(value?: string | null) {
-  if (!value) return null;
-
-  try {
-    const url = new URL(value);
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : null;
-  } catch {
-    return null;
-  }
-}
-
 export function OrderRecommendationDrawer({
   open,
   result,
   orders,
+  acceptedOrderIds = [],
+  unavailableOrderIds = [],
+  orderTypeId,
   onClose,
+  onShowOnMap,
+  showMapAction = true,
 }: OrderRecommendationDrawerProps) {
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
-  const [isMapOpen, setIsMapOpen] = useState(false);
   const orderById = useMemo(() => new Map(orders.map((order) => [order.id, order])), [orders]);
   const titleSize = clampFontSize(globalFontSize + 4, 18, 24);
   const sectionSize = clampFontSize(globalFontSize + 1, 15, 19);
   const bodySize = clampFontSize(globalFontSize, 14, 18);
   const helperSize = clampFontSize(globalFontSize - 1, 13, 16);
   const route = result?.route;
+  const acceptedIds = useMemo(() => new Set(acceptedOrderIds), [acceptedOrderIds]);
+  const unavailableIds = useMemo(() => new Set(unavailableOrderIds), [unavailableOrderIds]);
+  const visibleTake = useMemo(
+    () => (result?.take ?? []).filter((item) => !unavailableIds.has(item.id)),
+    [result?.take, unavailableIds]
+  );
   const distance = formatDistance(route?.total_distance_m);
-  const stops = useMemo(() => sortRouteStops(route?.stops), [route?.stops]);
+  const stops = useMemo(
+    () =>
+      sortRouteStops(route?.stops).filter(
+        (stop) => stop.id === null || !unavailableIds.has(stop.id)
+      ),
+    [route?.stops, unavailableIds]
+  );
   const mapPoints = useMemo(() => buildRouteMapPoints(stops, orderById), [orderById, stops]);
-  const externalRouteUrl = getSafeExternalUrl(route?.external_url);
-  const mapRouteUrl = externalRouteUrl || buildYandexMapsRouteUrl(mapPoints);
   const routeSummary = [
     route?.total_minutes ? `Примерно ${route.total_minutes} мин` : '',
     distance || '',
   ]
     .filter(Boolean)
     .join(' · ');
-  const hasDetails = Boolean(
-    result?.take?.length || route?.stops?.length || result?.skip?.length || result?.warnings?.length
+  const visibleWarnings = (result?.warnings ?? []).filter(
+    (warning) => !/остальн.*лучше не брать/i.test(warning)
   );
+  const hasDetails = Boolean(visibleTake.length || stops.length || visibleWarnings.length);
 
   return (
     <SwipeableDrawer
@@ -93,8 +100,12 @@ export function OrderRecommendationDrawer({
           sx: {
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
-            maxHeight: '88vh',
-            backgroundColor: 'background.paper',
+            height: '88dvh',
+            maxHeight: '88dvh',
+            overflow: 'hidden',
+            backgroundColor: (theme) =>
+              theme.palette.mode === 'dark' ? appDarkPalette.aiSurface : appPalette.aiSurface,
+            backgroundImage: 'none',
             border: '1px solid',
             borderColor: 'divider',
             boxShadow: (theme) =>
@@ -105,8 +116,21 @@ export function OrderRecommendationDrawer({
         },
       }}
     >
-      <Box sx={{ px: 2, pt: 1.15, pb: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}>
-        <Box onClick={onClose} sx={{ display: 'flex', justifyContent: 'center', pb: 1.5 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          height: '100%',
+          px: 2,
+          pt: 1.15,
+          pb: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
+        }}
+      >
+        <Box
+          onClick={onClose}
+          sx={{ display: 'flex', flexShrink: 0, justifyContent: 'center', pb: 1.5 }}
+        >
           <Box
             sx={{
               width: 62,
@@ -120,7 +144,7 @@ export function OrderRecommendationDrawer({
           />
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1 }}>
+        <Box sx={{ display: 'flex', flexShrink: 0, alignItems: 'center', gap: 1.25, mb: 1 }}>
           <Box
             sx={{
               width: 44,
@@ -130,37 +154,60 @@ export function OrderRecommendationDrawer({
               placeItems: 'center',
               color: 'primary.main',
               backgroundColor: (theme) =>
-                theme.palette.mode === 'dark' ? appDarkPalette.surfaceAlt : appPalette.soft,
+                theme.palette.mode === 'dark' ? appDarkPalette.brandSoft : appPalette.brandSoft,
             }}
           >
             <AutoAwesomeRoundedIcon />
           </Box>
           <Typography component="h2" sx={{ fontSize: titleSize, fontWeight: 750, lineHeight: 1.2 }}>
-            {result?.title || 'Совет по заказам'}
+            Рекомендации по заказам
           </Typography>
         </Box>
 
-        {result?.summary && (
-          <Typography sx={{ fontSize: bodySize, lineHeight: 1.45, color: 'text.secondary', mb: 2 }}>
+        {result?.summary && unavailableOrderIds.length === 0 && (
+          <Typography
+            sx={{
+              flexShrink: 0,
+              fontSize: bodySize,
+              lineHeight: 1.45,
+              color: 'text.secondary',
+              mb: 2,
+            }}
+          >
             {result.summary}
           </Typography>
         )}
 
-        <Box sx={{ overflowY: 'auto', maxHeight: 'calc(88vh - 170px)', pr: 0.25 }}>
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            pr: 0.25,
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            '&::-webkit-scrollbar': {
+              display: 'none',
+              width: 0,
+              height: 0,
+            },
+          }}
+        >
           {!hasDetails && (
             <Typography sx={{ fontSize: bodySize, color: 'text.secondary', mb: 2 }}>
               Сервер не вернул подробный план. Попробуйте запросить совет ещё раз.
             </Typography>
           )}
 
-          {(result?.take?.length ?? 0) > 0 && (
+          {visibleTake.length > 0 && (
             <Box sx={{ mb: 2.25 }}>
               <Typography sx={{ fontSize: sectionSize, fontWeight: 750, mb: 1 }}>
-                Какие заказы взять
+                {orderTypeId === 2 ? 'Заказы в маршруте' : 'Какие заказы взять'}
               </Typography>
               <Box sx={{ display: 'grid', gap: 1 }}>
-                {result?.take?.map((item) => {
+                {visibleTake.map((item) => {
                   const order = orderById.get(item.id);
+                  const isAccepted = acceptedIds.has(item.id);
                   return (
                     <Box
                       key={item.id}
@@ -170,20 +217,47 @@ export function OrderRecommendationDrawer({
                         border: '1px solid',
                         borderColor: 'divider',
                         backgroundColor: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? appDarkPalette.surfaceAlt
-                            : appPalette.surface,
+                          theme.palette.mode === 'dark' ? appDarkPalette.aiCard : appPalette.aiCard,
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.6 }}>
                         <Chip
                           size="small"
                           label={`${item.seq}`}
-                          sx={{ minWidth: 32, fontWeight: 750 }}
+                          sx={{
+                            minWidth: 32,
+                            fontWeight: 750,
+                            backgroundColor: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? appDarkPalette.surfaceAlt
+                                : appPalette.surfaceAlt,
+                          }}
                         />
-                        <Typography sx={{ fontSize: bodySize, fontWeight: 750 }}>
+                        <Typography
+                          sx={{ minWidth: 0, flex: 1, fontSize: bodySize, fontWeight: 750 }}
+                        >
                           {order?.id_text || `Заказ №${item.id}`}
                         </Typography>
+                        {isAccepted && (
+                          <Box
+                            aria-label="Заказ взят"
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              flex: '0 0 24px',
+                              display: 'grid',
+                              placeItems: 'center',
+                              borderRadius: '50%',
+                              color: '#FFFFFF',
+                              backgroundColor: (theme) =>
+                                theme.palette.mode === 'dark'
+                                  ? appDarkSuccessPalette.main
+                                  : appSuccessPalette.main,
+                            }}
+                          >
+                            <CheckRoundedIcon sx={{ fontSize: 17 }} />
+                          </Box>
+                        )}
                       </Box>
                       {order?.addr && (
                         <Typography sx={{ fontSize: helperSize, color: 'text.secondary', mb: 0.5 }}>
@@ -209,13 +283,13 @@ export function OrderRecommendationDrawer({
             </Box>
           )}
 
-          {(route?.stops?.length ?? 0) > 0 && (
+          {stops.length > 0 && (
             <Box sx={{ mb: 2.25 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
                 <RouteRoundedIcon color="primary" />
                 <Typography sx={{ fontSize: sectionSize, fontWeight: 750 }}>Маршрут</Typography>
               </Box>
-              {routeSummary && (
+              {routeSummary && unavailableOrderIds.length === 0 && (
                 <Typography sx={{ fontSize: helperSize, color: 'text.secondary', mb: 1 }}>
                   {routeSummary}
                 </Typography>
@@ -247,15 +321,12 @@ export function OrderRecommendationDrawer({
                   </Box>
                 ))}
               </Box>
-              {mapPoints.length > 1 && (
+              {showMapAction && mapPoints.length > 1 && (
                 <Button
                   fullWidth
                   variant="outlined"
                   startIcon={<MapRoundedIcon />}
-                  onClick={() => {
-                    setIsMapOpen(true);
-                    log('order_recommendation_map_opened', 'Открыта карта маршрута совета');
-                  }}
+                  onClick={onShowOnMap}
                   sx={{
                     mt: 1.5,
                     minHeight: 44,
@@ -268,43 +339,14 @@ export function OrderRecommendationDrawer({
                   Показать маршрут на карте
                 </Button>
               )}
-              {externalRouteUrl && (
-                <Button
-                  fullWidth
-                  component="a"
-                  href={externalRouteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  endIcon={<LaunchRoundedIcon />}
-                  sx={{ mt: 0.75, minHeight: 44, borderRadius: '14px', textTransform: 'none' }}
-                >
-                  Открыть маршрут
-                </Button>
-              )}
             </Box>
           )}
 
-          {(result?.skip?.length ?? 0) > 0 && (
-            <Box sx={{ mb: 2 }}>
-              <Typography sx={{ fontSize: sectionSize, fontWeight: 750, mb: 0.75 }}>
-                Что пока не брать
-              </Typography>
-              {result?.skip?.map((item) => (
-                <Typography
-                  key={item.id}
-                  sx={{ fontSize: bodySize, lineHeight: 1.4, color: 'text.secondary', mb: 0.5 }}
-                >
-                  {orderById.get(item.id)?.id_text || `Заказ №${item.id}`}: {item.reason}
-                </Typography>
-              ))}
-            </Box>
-          )}
-
-          {(result?.warnings?.length ?? 0) > 0 && (
+          {visibleWarnings.length > 0 && (
             <>
               <Divider sx={{ mb: 1.25 }} />
               <Box sx={{ display: 'grid', gap: 0.75 }}>
-                {result?.warnings?.map((warning) => (
+                {visibleWarnings.map((warning) => (
                   <Box key={warning} sx={{ display: 'flex', gap: 0.75, alignItems: 'flex-start' }}>
                     <ErrorOutlineRoundedIcon
                       sx={{ fontSize: 20, color: 'warning.main', mt: '1px' }}
@@ -326,6 +368,7 @@ export function OrderRecommendationDrawer({
           onClick={onClose}
           sx={{
             minHeight: 44,
+            flexShrink: 0,
             mt: 1.5,
             borderRadius: '14px',
             textTransform: 'none',
@@ -336,18 +379,6 @@ export function OrderRecommendationDrawer({
           Закрыть
         </Button>
       </Box>
-
-      <RecommendationRouteMapDrawer
-        open={isMapOpen}
-        points={mapPoints}
-        summary={routeSummary}
-        externalUrl={mapRouteUrl}
-        fontSize={globalFontSize}
-        onClose={() => {
-          setIsMapOpen(false);
-          log('order_recommendation_map_closed', 'Закрыта карта маршрута совета');
-        }}
-      />
     </SwipeableDrawer>
   );
 }

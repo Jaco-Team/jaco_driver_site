@@ -147,6 +147,8 @@ export function buildSaveSettingsPayload(params: {
   dark_theme: boolean;
   app_theme: 'system' | 'light' | 'dark';
   is_scaleMap: boolean;
+  map_hints: boolean;
+  ai_recommend: boolean;
 }): SaveSettingsPayload {
   return {
     type_data_map: normalizeTypeDataMapForApi(params.groupTypeTime),
@@ -157,6 +159,8 @@ export function buildSaveSettingsPayload(params: {
     dark_theme: params.dark_theme ? 1 : 0,
     app_theme: params.app_theme,
     is_scaleMap: params.is_scaleMap ? 1 : 0,
+    map_hints: params.map_hints ? 1 : 0,
+    ai_recommend: params.ai_recommend ? 1 : 0,
     color: params.color,
     fontSize: parseInt(String(params.fontSize)),
     theme: params.theme,
