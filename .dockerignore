@@ -21,3 +21,11 @@ yarn-error.log*
 
 Dockerfile
 docker-compose*.yml
+
+# Jaco: real environment configuration belongs to OpenBao.
+.env
+.env.*
+**/.env
+**/.env.*
+.sentryclirc
+**/.sentryclirc
