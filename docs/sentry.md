@@ -7,9 +7,15 @@
 SDK не запускается. Разрешён только HTTPS `sentry.jacochef.ru`; в CSP добавлен
 только этот точный origin в `connect-src`. SDK входит в bundle. Tunnel отсутствует.
 
-Включены ошибки; Performance, Replay, browser sessions и Sentry Logs выключены.
-Заголовки распределённой трассировки к API не добавляются. Не передаются
-пользователь, контексты, extra, заголовки, cookies, тело запроса, параметры URL,
+Включены ошибки; Performance, Replay, browser/process sessions и Sentry Logs выключены.
+Заголовки распределённой трассировки к API не добавляются. Сбор отключён явным SDK 11 `dataCollection`: пользователь, cookies, headers,
+HTTP bodies, query params, GraphQL document/variables, genAI inputs/outputs,
+DB payload, queue arguments, frame variables и строки исходного контекста.
+Логи и метрики отбрасываются реальными SDK 11 callbacks `beforeSendLog` и
+`beforeSendMetric`; автоматическая Console integration исключена.
+Объект опций проверяется через `satisfies BrowserOptions`, чтобы удалённые
+опции SDK не принимались незаметно. Дополнительный allowlist в `beforeSend`
+не передаёт пользователя, контексты, extra, заголовки, cookies, тело запроса, параметры URL,
 локальные переменные кадров и вложения. Для breadcrumbs остаются только очищенные
 URL переходов/HTTP, метод и код ответа. Из текста ошибок удаляются распознаваемые
 токены, email и телефоны. Произвольный текст исключения может содержать сведения,
@@ -49,7 +55,7 @@ plugin выключена; endpoint жёстко задан на собстве�
 Запускать только после явного согласия владельца согласно AGENTS.md:
 
 ```sh
-npm test -- tests/monitoring/sentry.test.ts tests/monitoring/sentry-client.test.ts tests/tooling/sentry-build-config.test.mjs
+npm test -- tests/monitoring tests/tooling/sentry-build-config.test.mjs
 npm run typecheck
 npm run lint
 npm test
@@ -69,8 +75,10 @@ manifest штатным механизмом; откат DSN требует но
 
 ## Состояние подготовки
 
-17 октября 2026 локально прошли 12/12 адресных тестов, полный набор —
-632/632 в 85 файлах, TypeScript и ESLint. Две первоначальные ошибки типов
+17 октября 2026 локально прошли 14/14 адресных тестов, полный набор —
+634/634 в 87 файлах, TypeScript и ESLint. Реальные browser/Node SDK проверены
+с синтетическим transport без сети: IP inference в отправленном browser envelope
+равно `never`, session envelopes отсутствуют. Первоначальные ошибки типов
 в новых файлах исправлены; повторный typecheck успешен. Production build,
 GitHub integration, выдача токена, upload, публикация и живая доставка
 подтверждаются отдельно координатором.

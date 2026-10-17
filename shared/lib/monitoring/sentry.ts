@@ -1,4 +1,4 @@
-import type { Breadcrumb, ErrorEvent, EventHint } from '@sentry/nextjs';
+import type { Breadcrumb, BrowserOptions, ErrorEvent, EventHint } from '@sentry/nextjs';
 
 export const SENTRY_ORIGIN = 'https://sentry.jacochef.ru';
 
@@ -114,17 +114,31 @@ export function errorMonitoringOptions(dsn: string) {
   return {
     dsn,
     environment: process.env.NODE_ENV === 'production' ? 'production' : 'development',
-    sendDefaultPii: false,
+    // SDK 11 collection policy; beforeSend remains a second output boundary.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+      httpBodies: [],
+      urlQueryParams: false,
+      graphQL: { document: false, variables: false },
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      stackFrameVariables: false,
+      frameContextLines: 0,
+    },
     sendClientReports: false,
-    enableLogs: false,
+    beforeSendLog: () => null,
+    beforeSendMetric: () => null,
     tracesSampleRate: 0,
     tracePropagationTargets: [],
     integrations: <T extends { name: string }>(defaults: T[]) => defaults.filter((integration) =>
-      !['BrowserSession', 'BrowserTracing', 'Replay', 'ConversationId'].includes(integration.name)),
+      !['BrowserSession', 'ProcessSession', 'BrowserTracing', 'Replay', 'ConversationId', 'Console'].includes(integration.name)),
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 0,
     debug: false,
     beforeSend: sanitizeErrorEvent,
     beforeBreadcrumb: sanitizeBreadcrumb,
-  };
+  } satisfies BrowserOptions;
 }

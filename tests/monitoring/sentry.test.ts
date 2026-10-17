@@ -66,12 +66,22 @@ describe('self-hosted telemetry boundary', () => {
       .toEqual({ url: '/api', method: 'POST', status_code: 401 });
   });
 
-  it('keeps tracing, replay, client reports, logs and default PII disabled', () => {
+  it('disables collection with the SDK 11 API and keeps non-error telemetry off', () => {
     const options = errorMonitoringOptions(dsn);
-    expect(options.integrations([{ name: 'BrowserSession' }, { name: 'GlobalHandlers' }, { name: 'BrowserTracing' }]))
+    expect(options.integrations([{ name: 'BrowserSession' }, { name: 'ProcessSession' }, { name: 'GlobalHandlers' }, { name: 'BrowserTracing' }, { name: 'Console' }]))
       .toEqual([{ name: 'GlobalHandlers' }]);
+    expect(options).not.toHaveProperty('sendDefaultPii');
+    expect(options).not.toHaveProperty('enableLogs');
+    expect(options.beforeSendLog()).toBeNull();
+    expect(options.beforeSendMetric()).toBeNull();
     expect(options).toMatchObject({
-      sendDefaultPii: false, sendClientReports: false, enableLogs: false,
+      dataCollection: {
+        userInfo: false, cookies: false, httpHeaders: false, httpBodies: [],
+        urlQueryParams: false, graphQL: { document: false, variables: false },
+        genAI: { inputs: false, outputs: false }, databaseQueryData: false,
+        queues: false, stackFrameVariables: false, frameContextLines: 0,
+      },
+      sendClientReports: false,
       tracesSampleRate: 0, replaysSessionSampleRate: 0, replaysOnErrorSampleRate: 0,
     });
   });
