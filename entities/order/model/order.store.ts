@@ -10,9 +10,15 @@ import {
   ORDER_STATUS_TYPES,
   TYPE_STATUS_MAP,
 } from './order.types';
-import { normalizeOrderRow, filterOrdersByTypes } from './order.utils';
+import {
+  normalizeOrderRow,
+  filterOrdersByTypes,
+  restoreOrderStatusSelection,
+  ORDER_STATUS_FILTER_VERSION,
+} from './order.utils';
 import { getOrderMapLocationKey } from './orderMapGroups';
 import { getApiErrorInfo } from '@/shared/api/errors';
+import { getAuthToken } from '@/shared/api/token';
 import { log } from '@/components/analytics';
 import { devLog } from '@/shared/lib/devLog';
 import { describeGeolocationError, readDriverPosition } from '@/shared/lib/geolocation';
@@ -36,6 +42,12 @@ import {
 } from '../api/order.api';
 
 const cachedOrders = readOfflineCache()?.orders ?? null;
+const initialStatusSelection = restoreOrderStatusSelection(
+  cachedOrders?.type_dop,
+  cachedOrders?.statusFilterVersion
+);
+const initialSourceOrders = cachedOrders?.sourceOrders ?? cachedOrders?.orders ?? [];
+const initialType = cachedOrders?.type ?? { id: 1, text: 'Активные' };
 
 function getSelectedPointId(): number | null {
   return useSettingsStore.getState().pointId;
@@ -49,12 +61,18 @@ const initialOrdersByContext: Record<string, Order[]> = {
   ...(cachedOrders?.ordersByContext ?? {}),
 };
 let ordersWarmupPromise: Promise<void> | null = null;
-let pendingOrdersWarmup: { pointId: number | null; activeTypeId: number } | null = null;
+let pendingOrdersWarmup: {
+  pointId: number | null;
+  activeTypeId: number;
+  token: string | null;
+} | null = null;
 const inactiveOrdersSyncedAt = new Map<string, number>();
 const INACTIVE_ORDERS_REFRESH_INTERVAL_MS = 45_000;
 let activeOrdersRequestContextKey = '';
+let activeOrdersRequestToken: string | null = null;
 let ordersRequestSequence = 0;
 let latestOrdersRequestId = 0;
+const latestOrdersRequestByContext = new Map<string, number>();
 
 if (cachedOrders && !initialOrdersByContext[getOrdersContextKey(cachedOrders.type.id)]) {
   initialOrdersByContext[getOrdersContextKey(cachedOrders.type.id)] = cachedOrders.sourceOrders;
@@ -105,6 +123,7 @@ function persistOrdersSnapshot(state: {
       ordersByContext: state.ordersByContext,
       type: state.type,
       type_dop: state.type_dop,
+      statusFilterVersion: ORDER_STATUS_FILTER_VERSION,
       update_interval: state.update_interval,
       limit: state.limit,
       limit_count: state.limit_count,
@@ -180,6 +199,7 @@ interface OrdersStore {
   ) => void;
   showModalTypeDop: (is_show: boolean) => void;
   setTypeDop: (type: string[]) => void;
+  setUpdateInterval: (interval: number) => void;
   hideDelOrders: () => Promise<void>;
   setToken: (token: string) => void;
   setNotifToken: (token: string) => void;
@@ -227,8 +247,9 @@ interface OrdersStore {
 
 export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
   const warmOrdersCache = (pointId: number | null, activeTypeId: number): void => {
+    const requestToken = getAuthToken();
     if (ordersWarmupPromise) {
-      pendingOrdersWarmup = { pointId, activeTypeId };
+      pendingOrdersWarmup = { pointId, activeTypeId, token: requestToken };
       return;
     }
 
@@ -266,17 +287,28 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
 
     ordersWarmupPromise = (async () => {
       for (const item of typesToWarm) {
-        if (!isAppOnline() || getSelectedPointId() !== pointId) break;
+        if (!isAppOnline() || getSelectedPointId() !== pointId || getAuthToken() !== requestToken)
+          break;
+
+        const contextKey = getOrdersContextKey(item.id, pointId);
+        if (
+          get().type.id === item.id ||
+          (get().is_check && activeOrdersRequestContextKey === contextKey)
+        )
+          continue;
+        const requestId = ++ordersRequestSequence;
+        latestOrdersRequestByContext.set(contextKey, requestId);
 
         try {
           const response = await fetchOrders({
             point_id: pointId ?? undefined,
             type_orders: item.id,
           });
-          if (!isAppOnline() || getSelectedPointId() !== pointId) break;
+          if (!isAppOnline() || getSelectedPointId() !== pointId || getAuthToken() !== requestToken)
+            break;
+          if (latestOrdersRequestByContext.get(contextKey) !== requestId) continue;
 
           const normalized = normalizeOrdersResponse(response);
-          const contextKey = getOrdersContextKey(item.id, pointId);
           const ordersByContext = {
             ...get().ordersByContext,
             [contextKey]: normalized.orders,
@@ -295,7 +327,12 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       const pending = pendingOrdersWarmup;
       pendingOrdersWarmup = null;
 
-      if (pending && isAppOnline() && getSelectedPointId() === pending.pointId) {
+      if (
+        pending &&
+        isAppOnline() &&
+        getSelectedPointId() === pending.pointId &&
+        getAuthToken() === pending.token
+      ) {
         warmOrdersCache(pending.pointId, pending.activeTypeId);
       }
     });
@@ -350,8 +387,11 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
   };
 
   return {
-    orders: cachedOrders?.orders ?? [],
-    sourceOrders: cachedOrders?.sourceOrders ?? cachedOrders?.orders ?? [],
+    orders:
+      initialType.id === 1 && initialStatusSelection.length !== ORDER_STATUS_TYPES.length
+        ? filterOrdersByTypes(initialSourceOrders, initialStatusSelection, TYPE_STATUS_MAP)
+        : initialSourceOrders,
+    sourceOrders: initialSourceOrders,
     ordersByContext: initialOrdersByContext,
     isOpenMenu: false,
     update_interval: cachedOrders?.update_interval ?? 30,
@@ -359,10 +399,10 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     limit_count: cachedOrders?.limit_count ?? '',
     token: '',
     notifToken: '',
-    type: cachedOrders?.type ?? { id: 1, text: 'Активные' },
+    type: initialType,
     types: ORDER_TYPES,
     types_dop: ORDER_STATUS_TYPES,
-    type_dop: cachedOrders?.type_dop ?? ['1', '2', '3'],
+    type_dop: initialStatusSelection,
     is_showModalTypeDop: false,
     showErrOrder: false,
     textErrOrder: '',
@@ -427,22 +467,20 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     },
 
     setTypeDop: (type) => {
-      const newType = type.length === 0 ? ['1', '2', '3'] : type;
-      set({ type_dop: newType });
+      const newType = type.length === 0 ? get().types_dop.map((status) => String(status.id)) : type;
+      const { sourceOrders, type: currentType, types_dop, typeToStatus } = get();
+      const orders =
+        currentType.id === 1 && newType.length !== types_dop.length
+          ? filterOrdersByTypes(sourceOrders, newType, typeToStatus)
+          : sourceOrders;
 
-      if (!isAppOnline()) {
-        const { sourceOrders, type: currentType, types_dop, typeToStatus } = get();
-        const orders =
-          currentType.id === 1 && newType.length !== types_dop.length
-            ? filterOrdersByTypes(sourceOrders, newType, typeToStatus)
-            : sourceOrders;
+      set({ type_dop: newType, orders });
+      persistOrdersSnapshot({ ...get(), orders, type_dop: newType });
+    },
 
-        set({ orders });
-        persistOrdersSnapshot({ ...get(), orders, type_dop: newType });
-        return;
-      }
-
-      get().getOrders(true);
+    setUpdateInterval: (interval) => {
+      set({ update_interval: interval });
+      persistOrdersSnapshot(get());
     },
 
     hideDelOrders: async () => {
@@ -473,11 +511,16 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     },
 
     getOrders: async (is_reload = false) => {
-      const { type_dop, types_dop, type, is_check } = get();
+      const { type, is_check } = get();
       const pointId = getSelectedPointId();
       const contextKey = getOrdersContextKey(type.id, pointId);
+      const requestToken = getAuthToken();
 
-      if (is_check && activeOrdersRequestContextKey === contextKey) {
+      if (
+        is_check &&
+        activeOrdersRequestContextKey === contextKey &&
+        activeOrdersRequestToken === requestToken
+      ) {
         set({ ordersRefreshPending: true });
         return;
       }
@@ -488,8 +531,13 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       }
 
       const requestId = ++ordersRequestSequence;
+      latestOrdersRequestByContext.set(contextKey, requestId);
       latestOrdersRequestId = requestId;
       activeOrdersRequestContextKey = contextKey;
+      activeOrdersRequestToken = requestToken;
+      const isCurrentResponse = () =>
+        latestOrdersRequestByContext.get(contextKey) === requestId &&
+        getAuthToken() === requestToken;
       set({ is_check: true, ordersRefreshPending: false });
 
       if (is_reload) {
@@ -501,6 +549,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
           point_id: pointId ?? undefined,
           type_orders: type.id,
         });
+        if (!isCurrentResponse()) return;
 
         const normalized = normalizeOrdersResponse(response);
         let orders = normalized.orders;
@@ -509,9 +558,10 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
           [contextKey]: normalized.orders,
         };
         const isCurrentContext = getOrdersContextKey(get().type.id) === contextKey;
+        const { type_dop, types_dop, typeToStatus } = get();
 
         if (type.id === 1 && type_dop.length !== types_dop.length) {
-          orders = filterOrdersByTypes(orders, type_dop, get().typeToStatus);
+          orders = filterOrdersByTypes(orders, type_dop, typeToStatus);
         }
 
         const nextHome = hasHomeMoved(get().home, normalized.home) ? normalized.home : get().home;
@@ -553,6 +603,12 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         log('orders_fetch_success', 'Получение списка заказов');
         warmOrdersCache(pointId, type.id);
       } catch (err) {
+        if (
+          !isCurrentResponse() ||
+          requestId !== latestOrdersRequestId ||
+          getOrdersContextKey(get().type.id) !== contextKey
+        )
+          return;
         devLog('orders_fetch_error', 'Orders fetch error', err);
         log('orders_fetch_fail', 'Ошибка при получении списка заказов');
 
@@ -565,25 +621,27 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         } else {
           get().openErrOrder(formatOrderError(err));
         }
+      } finally {
+        setTimeout(() => {
+          if (requestId !== latestOrdersRequestId) {
+            return;
+          }
+
+          const shouldRefreshCurrent =
+            get().ordersRefreshPending && getAuthToken() === requestToken;
+          activeOrdersRequestContextKey = '';
+          activeOrdersRequestToken = null;
+          set({
+            is_check: false,
+            ordersRefreshPending: false,
+            ...(get().isClick ? {} : { is_load: false }),
+          });
+
+          if (shouldRefreshCurrent) {
+            void get().getOrders(false);
+          }
+        }, 300);
       }
-
-      setTimeout(() => {
-        if (requestId !== latestOrdersRequestId) {
-          return;
-        }
-
-        const shouldRefreshCurrent = get().ordersRefreshPending;
-        activeOrdersRequestContextKey = '';
-        set({
-          is_check: false,
-          ordersRefreshPending: false,
-          ...(get().isClick ? {} : { is_load: false }),
-        });
-
-        if (shouldRefreshCurrent) {
-          void get().getOrders(false);
-        }
-      }, 300);
     },
 
     set_type_location: () => {
@@ -726,15 +784,15 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     },
 
     switchPoint: (pointId) => {
-      const { type, type_dop, types_dop, typeToStatus, ordersByContext } = get();
+      const { type, types_dop, ordersByContext } = get();
+      const type_dop = types_dop.map((status) => String(status.id));
       const cached = ordersByContext[getOrdersContextKey(type.id, pointId)];
       const sourceOrders = cached ?? [];
-      const orders =
-        type.id === 1 && type_dop.length !== types_dop.length
-          ? filterOrdersByTypes(sourceOrders, type_dop, typeToStatus)
-          : sourceOrders;
+      const orders = sourceOrders;
 
       set({
+        type_dop,
+        is_showModalTypeDop: false,
         orders,
         sourceOrders,
         showOrders: [],

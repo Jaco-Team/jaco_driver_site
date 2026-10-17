@@ -37,7 +37,7 @@
   }
 
   & .MuiTypography-root {
-    @include font_custom(1.12rem, 700, $colorText);
+    @include font_custom(min(1.12rem, 26px), 700, $colorText);
   }
 
   & .active {
@@ -111,7 +111,7 @@
 
   & .graph__heroTitle {
     margin: 12px 0 10px;
-    @include font_custom(clamp(2rem, 4.6vw, 3rem), 800, #1e1216);
+    @include font_custom(26px, 800, #1e1216);
     line-height: 1.02;
   }
 
@@ -187,7 +187,7 @@
 
   & .graph__cardTitle {
     margin: 0;
-    @include font_custom(1.42rem, 800, #1f1015);
+    @include font_custom(min(1.42rem, 26px), 800, #1f1015);
     line-height: 1.08;
   }
 
@@ -447,7 +447,7 @@
 
   @media (max-width: 599px) {
     & .graph__heroTitle {
-      font-size: 1.9rem;
+      font-size: 26px;
     }
 
     & .graph__heroText,

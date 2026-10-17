@@ -78,3 +78,27 @@
     white-space: nowrap;
   }
 }
+
+.list__summary--largeText {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  row-gap: 8px;
+
+  & .list__statusButton {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  & .listStats__count {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    text-align: left;
+  }
+
+  & .listStats__limit {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}

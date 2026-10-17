@@ -4,6 +4,7 @@ import { Feedback, FeedbackStore, SnackbarState } from '@/entities/feedback/mode
 import { getFeedbacks, saveFeedbacks } from '@/entities/feedback/api/feedback.api';
 import { isAppOnline, markAppOffline } from '@/features/offline/model/connectivity.store';
 import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
+import { FEEDBACK_IMAGES_ONLY_MESSAGE, isFeedbackImageFile } from './feedbackAttachments';
 
 const initialSnackbar: SnackbarState = {
   open: false,
@@ -203,7 +204,7 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
           return;
         }
 
-        const invalidTypes = img.filter((file) => !file.type.toLowerCase().startsWith('image/'));
+        const invalidTypes = img.filter((file) => !isFeedbackImageFile(file));
 
         if (invalidTypes.length > 0) {
           set({
@@ -212,7 +213,7 @@ export const useFeedbackStore = createWithEqualityFn<FeedbackStore>(
               vertical: 'top',
               horizontal: 'center',
               severity: 'error',
-              message: `Неподдерживаемый тип файлов: ${invalidTypes.map((f) => f.name).join(', ')}`,
+              message: FEEDBACK_IMAGES_ONLY_MESSAGE,
             },
           });
           return;

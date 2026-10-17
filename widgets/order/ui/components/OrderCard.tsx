@@ -17,6 +17,7 @@ import {
   CommentPhonesControl,
   CommentPhonesDrawer,
 } from '@/widgets/order/ui/components/CommentPhonesDrawer';
+import { scaleGlobalFontSize } from '@/shared/lib/fontSize';
 
 interface OrderCardProps {
   item: Order;
@@ -86,6 +87,7 @@ const Label = styled((props: React.ComponentProps<typeof Typography>) => (
 ))({
   display: 'inline',
   fontWeight: 600,
+  fontSize: 'inherit',
 });
 
 const Value = styled((props: React.ComponentProps<typeof Typography>) => (
@@ -93,6 +95,7 @@ const Value = styled((props: React.ComponentProps<typeof Typography>) => (
 ))({
   display: 'inline',
   fontWeight: 400,
+  fontSize: 'inherit',
 });
 
 const ActionButton = styled(Button)({
@@ -433,7 +436,10 @@ export const OrderCard = memo<OrderCardProps>(
         >
           <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
             {/* Номер заказа */}
-            <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
+            <Typography
+              variant="h6"
+              sx={{ fontSize: scaleGlobalFontSize(20, globalFontSize), fontWeight: 500, mb: 2 }}
+            >
               {item.id_text}
             </Typography>
 

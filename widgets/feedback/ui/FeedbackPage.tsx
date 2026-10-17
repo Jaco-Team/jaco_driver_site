@@ -26,7 +26,7 @@ const FeedbackPage: React.FC = () => {
   const listMetaFontSize = clampFeedbackFontSize(normalizedGlobalFontSize - 1, 12, 20);
   const emptyTitleFontSize = clampFeedbackFontSize(normalizedGlobalFontSize + 3, 16, 28);
   const emptyTextFontSize = clampFeedbackFontSize(normalizedGlobalFontSize, 14, 24);
-  const createFabIconFontSize = clampFeedbackFontSize(normalizedGlobalFontSize + 22, 30, 44);
+  const createFabIconFontSize = Math.min(Math.max(normalizedGlobalFontSize + 22, 30), 44);
 
   const {
     addModal,

@@ -102,6 +102,7 @@ export const ORDER_TYPES: OrderType[] = [
 export const ORDER_STATUS_TYPES: OrderType[] = [
   { id: 1, text: 'В очереди' },
   { id: 2, text: 'Готовится' },
+  { id: 4, text: 'На сборке' },
   { id: 3, text: 'Собран' },
 ];
 
@@ -109,6 +110,7 @@ export const TYPE_STATUS_MAP: Record<number, string> = {
   1: 'В очереди',
   2: 'Готовится',
   3: 'Собран',
+  4: 'Готов на кухне',
 };
 
 export const TYPE_SHOW_DEL_TO_INT: Record<string, number> = {

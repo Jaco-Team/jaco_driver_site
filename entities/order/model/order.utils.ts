@@ -1,4 +1,9 @@
-import { Order, TYPE_SHOW_DEL_FROM_INT, TYPE_SHOW_DEL_TO_INT } from './order.types';
+import {
+  Order,
+  ORDER_STATUS_TYPES,
+  TYPE_SHOW_DEL_FROM_INT,
+  TYPE_SHOW_DEL_TO_INT,
+} from './order.types';
 
 function emptyOrder(): Order {
   return {
@@ -115,6 +120,19 @@ export function normalizeModeString(value: any): string {
   }
 
   return normalized;
+}
+
+export const ORDER_STATUS_FILTER_VERSION = 2;
+
+export function restoreOrderStatusSelection(saved?: string[], version?: number): string[] {
+  const allIds = ORDER_STATUS_TYPES.map((status) => String(status.id));
+  const selected = [...new Set((saved ?? []).filter((id) => allIds.includes(id)))];
+  const wasLegacyAll =
+    (version ?? 1) < ORDER_STATUS_FILTER_VERSION &&
+    selected.length === 3 &&
+    ['1', '2', '3'].every((id) => selected.includes(id));
+
+  return selected.length === 0 || wasLegacyAll ? allIds : selected;
 }
 
 export function filterOrdersByTypes(

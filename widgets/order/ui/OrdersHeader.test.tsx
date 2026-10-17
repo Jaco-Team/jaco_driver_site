@@ -33,4 +33,18 @@ describe('OrdersHeader', () => {
     fireEvent.click(button);
     expect(screen.getByTestId('order-status-modal')).toBeInTheDocument();
   });
+
+  it('moves the counters to a separate row for large text', () => {
+    const { container } = render(
+      <OrdersHeader
+        typeText="Активные"
+        limit="12500 / 70000"
+        limitCount="1 / 6"
+        globalFontSize={26}
+        onOpenMenu={vi.fn()}
+      />
+    );
+
+    expect(container.querySelector('.list__summary')).toHaveClass('list__summary--largeText');
+  });
 });

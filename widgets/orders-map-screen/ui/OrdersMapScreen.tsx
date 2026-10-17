@@ -15,6 +15,7 @@ import Typography from '@mui/material/Typography';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationOffIcon from '@mui/icons-material/LocationOff';
 import PinDropIcon from '@mui/icons-material/PinDrop';
+import CachedIcon from '@mui/icons-material/Cached';
 
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { normalizeBooleanSetting, useSettingsStore } from '@/entities/settings';
@@ -33,6 +34,7 @@ import {
 } from '@/entities/order/model/orderMapGroups';
 import { escapeHtml, sanitizeCssColor, sanitizeCssIdent } from '@/shared/lib/escapeHtml';
 import { devLog } from '@/shared/lib/devLog';
+import { resolveMarkerTheme } from '@/shared/lib/markerTheme';
 import { ensureOfflineMapAssets } from '@/shared/lib/offline/offlineMapAssets';
 import { loadOfflineMapRuntime } from '@/shared/lib/offline/offlineMapRuntime';
 import { appDarkSuccessPalette } from '@/shared/styles/appPalette';
@@ -466,6 +468,7 @@ const OrdersMapObjects = memo(function OrdersMapObjects({
 }) {
   const yMapsApi = useYMaps(['templateLayoutFactory']) as YMapsTemplateApi | null;
   const home = orders.home;
+  const theme = resolveMarkerTheme(header.theme, header.darkTheme);
 
   return (
     <>
@@ -480,7 +483,7 @@ const OrdersMapObjects = memo(function OrdersMapObjects({
 
           {orders.location_driver && orders.type_location !== 'none' ? (
             <OrdersMapDriverPoint
-              theme={header.theme}
+              theme={theme}
               mapScale={header.mapScale}
               location_driver={orders.location_driver}
               globalFontSize={header.globalFontSize}
@@ -491,7 +494,7 @@ const OrdersMapObjects = memo(function OrdersMapObjects({
 
           <OrdersMapPoints
             groups={groups}
-            theme={header.theme}
+            theme={theme}
             mapScale={header.mapScale}
             globalFontSize={header.globalFontSize}
             yMapsApi={yMapsApi}
@@ -594,6 +597,31 @@ function OrdersMapOnlineControls({
         onClose={() => setTrafficErrorOpen(false)}
       />
     </>
+  );
+}
+
+function OrdersMapRefreshButton() {
+  const getOrders = useOrdersStore((state) => state.getOrders);
+  const busy = useOrdersStore((state) => state.isClick);
+  const isOnline = useConnectivityStore((state) => state.isOnline);
+  const disabled = busy;
+
+  if (!isOnline) return null;
+
+  return (
+    <button
+      type="button"
+      className="orders-map-refresh"
+      data-testid="orders-map-refresh"
+      aria-label="Обновить заказы"
+      aria-busy={busy}
+      disabled={disabled}
+      onClick={() => {
+        if (!disabled) void getOrders(true);
+      }}
+    >
+      <CachedIcon aria-hidden="true" />
+    </button>
   );
 }
 
@@ -844,7 +872,7 @@ export function OrdersMapScreen() {
           groups={groups}
           home={orders.home}
           dark={isDarkMap}
-          theme={header.theme}
+          theme={resolveMarkerTheme(header.theme, isDarkMap)}
           mapScale={header.mapScale}
           showZoomControls={header.is_scaleMap}
           showCompass={mapHintsEnabled}
@@ -909,6 +937,7 @@ export function OrdersMapScreen() {
               <Map
                 key={`${onlineMapAttempt}:${orders.home.center.join(',')}`}
                 defaultState={orders.home as HomeLocation}
+                options={{ suppressMapOpenBlock: true }}
                 instanceRef={handleOnlineMapInstance}
                 onError={(error) =>
                   setOnlineMapError(
@@ -943,6 +972,8 @@ export function OrdersMapScreen() {
               />
             </YMaps>
           </div>
+
+          <OrdersMapRefreshButton />
 
           <div className="location_svg">
             <Button onClick={orders.set_type_location} aria-label="Показать мою геопозицию">

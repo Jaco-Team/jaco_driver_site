@@ -32,13 +32,13 @@ import { resolveYandexMetrikaIds } from '@/shared/lib/yandexMetrikaIds';
 import { useConnectivityWatch } from '@/features/offline/model/useConnectivityWatch';
 import { useServiceWorker } from '@/features/offline/model/useServiceWorker';
 import { useOfflineCityDownloads } from '@/features/offline-map/model/useOfflineCityDownloads';
+import { DEFAULT_GLOBAL_FONT_SIZE, normalizeGlobalFontSize } from '@/shared/lib/fontSize';
 
 const YANDEX_METRIKA_IDS = resolveYandexMetrikaIds();
 
 const clientEmotionCache = createEmotionCache({ key: 'css' });
 const PUBLIC_ROUTES = new Set(['/auth', '/auth/callback', '/registration', '/initial']);
 const EXCLUDED_GLOBAL_FONT_ROUTES = new Set(['/list_orders', '/map_orders']);
-const DEFAULT_GLOBAL_FONT_SIZE = 16;
 
 export function reportWebVitals(metric: NextWebVitalsMetric) {
   devLog('web_vitals', 'Next web vitals', metric);
@@ -63,10 +63,7 @@ function MyApp(props: MyAppProps) {
   useServiceWorker();
   useOfflineCityDownloads();
   const muiTheme = useMemo(() => createAppTheme(darkTheme), [darkTheme]);
-  const normalizedGlobalFontSize =
-    Number.isFinite(globalFontSize) && globalFontSize > 0
-      ? globalFontSize
-      : DEFAULT_GLOBAL_FONT_SIZE;
+  const normalizedGlobalFontSize = normalizeGlobalFontSize(globalFontSize);
   const appFontSize = EXCLUDED_GLOBAL_FONT_ROUTES.has(router.pathname)
     ? DEFAULT_GLOBAL_FONT_SIZE
     : normalizedGlobalFontSize;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   normalizeBooleanSetting,
@@ -15,6 +15,11 @@ import { logoutAndClearSession } from '@/features/auth/model/logoutSession';
 import type { SnackbarState } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
 import type { UseSettingsFormReturn } from './useSettingsForm.type';
 import { useOrderRecommendationStore } from '@/features/order-recommendation/model/orderRecommendation.store';
+import { DEFAULT_GLOBAL_FONT_SIZE, normalizeGlobalFontSize } from '@/shared/lib/fontSize';
+import { resolveMarkerTheme } from '@/shared/lib/markerTheme';
+import { DEFAULT_DRIVER_SETTINGS } from '@/entities/settings/model/settingsDefaults';
+import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
+import { useOrdersStore } from '@/entities/order/model/order.store';
 
 const initialSnackbarState: SnackbarState = {
   open: false,
@@ -23,11 +28,6 @@ const initialSnackbarState: SnackbarState = {
   severity: 'success',
   message: '',
 };
-
-function normalizeFontSize(value: unknown): number {
-  const parsed = parseInt(String(value ?? ''), 10);
-  return Number.isNaN(parsed) ? 16 : parsed;
-}
 
 function hasSavedDarkTheme(value: unknown): boolean {
   return value !== undefined && value !== null && `${value}`.trim() !== '';
@@ -44,6 +44,7 @@ function getDeviceDarkTheme(): boolean {
 export const useSettingsForm = (): UseSettingsFormReturn => {
   const router = useRouter();
   const session = useSession();
+  const isOnline = useConnectivityStore((state) => state.isOnline);
   const isDemoAccount = session.user?.login?.trim() === '79990000001';
   const [saveMySetting, getMySetting, isSaving, pointId, points, setPointId] = useSettingsStore(
     (state) => [
@@ -88,11 +89,15 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
   const [aiRecommend, setAiRecommend] = useState<boolean>(false);
   const [color, setColor] = useState<string>('#000000');
   const [groupTypeTheme, setGroupTypeTheme] = useState<ThemeType>('white');
-  const [fontSize, setFontSize] = useState<number>(16);
+  const [fontSize, setFontSizeState] = useState<number>(DEFAULT_GLOBAL_FONT_SIZE);
   const [mapScale, setMapScale] = useState<number>(1);
   const [snackbarState, setSnackbarState] = useState<SnackbarState>(initialSnackbarState);
   const [isDeleteSheetOpen, setIsDeleteSheetOpen] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isResetSheetOpen, setIsResetSheetOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const resetInFlight = useRef(false);
+  const isMounted = useRef(true);
   const hasLocalThemeChoiceRef = useRef(false);
 
   useEffect(() => {
@@ -137,7 +142,7 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
       setTypeShowDel((res.type_show_del as TypeShowDel) ?? 'min');
       setGroupTypeTime((res.type_data_map as TypeDataMap) ?? 'norm');
       setGroupTypeTheme((res.theme as ThemeType) ?? 'white');
-      setFontSize(normalizeFontSize(res.fontSize));
+      setFontSizeState(normalizeGlobalFontSize(res.fontSize));
       setMapScale(parseFloat(String(res.mapScale ?? 1)));
       setIsLoad(true);
     };
@@ -151,6 +156,12 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
   }, [applyServerAppTheme, getMySetting, isLoad, session?.isAuth, session?.token, setPointId]);
 
   useEffect(() => () => clearPreviewAppTheme(), [clearPreviewAppTheme]);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const setAppTheme = (nextAppTheme: AppThemePreference): void => {
     hasLocalThemeChoiceRef.current = true;
@@ -158,8 +169,15 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     setPreviewAppTheme(nextAppTheme);
   };
 
+  const setFontSize = useCallback((value: number): void => {
+    setFontSizeState(normalizeGlobalFontSize(value));
+  }, []);
+
   const handleSave = async (): Promise<void> => {
+    if (resetInFlight.current || !isOnline || isSaving) return;
     const darkTheme = appTheme === 'dark' || (appTheme === 'system' && getDeviceDarkTheme());
+    const markerTheme = resolveMarkerTheme(groupTypeTheme, darkTheme);
+    const normalizedFontSize = normalizeGlobalFontSize(fontSize);
     const result = await saveMySetting(
       session?.token,
       groupTypeTime,
@@ -167,8 +185,8 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
       updateInterval,
       centeredMap,
       color,
-      fontSize,
-      groupTypeTheme,
+      normalizedFontSize,
+      markerTheme,
       mapScale,
       darkTheme,
       darkTheme,
@@ -182,8 +200,9 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
       if (!aiRecommend) {
         useOrderRecommendationStore.getState().reset();
       }
-      setGlobalFontSize(fontSize);
-      setTheme(groupTypeTheme);
+      setGlobalFontSize(normalizedFontSize);
+      setGroupTypeTheme(markerTheme);
+      setTheme(markerTheme);
       setHeaderAppTheme(appTheme);
       hasLocalThemeChoiceRef.current = false;
       setGlobalMapScale(String(mapScale));
@@ -202,6 +221,99 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
       severity: 'error',
       message: result?.text || 'Не удалось сохранить настройки',
     }));
+  };
+
+  const openResetSheet = (): void => {
+    if (isOnline && isLoad && !isSaving && !resetInFlight.current) setIsResetSheetOpen(true);
+  };
+
+  const closeResetSheet = (): void => {
+    if (!resetInFlight.current) setIsResetSheetOpen(false);
+  };
+
+  const confirmSettingsReset = async (): Promise<void> => {
+    if (!isOnline || !isLoad || isSaving || resetInFlight.current) return;
+
+    resetInFlight.current = true;
+    setIsResetting(true);
+    const defaults = DEFAULT_DRIVER_SETTINGS;
+    const savedColor = useSettingsStore.getState().settings?.color ?? '';
+    const darkTheme = getDeviceDarkTheme();
+    const markerTheme = resolveMarkerTheme(defaults.theme, darkTheme);
+    const requestToken = session.token;
+    const owner = session.user?.user_id ?? session.user?.id ?? session.user?.login;
+    const isCurrentSession = () => {
+      const current = useAuthStore.getState().session;
+      const currentOwner = current.user?.user_id ?? current.user?.id ?? current.user?.login;
+      return (
+        isMounted.current &&
+        current.isAuth === true &&
+        current.token === requestToken &&
+        String(currentOwner) === String(owner)
+      );
+    };
+
+    try {
+      const result = await saveMySetting(
+        requestToken,
+        defaults.type_data_map,
+        defaults.type_show_del,
+        defaults.update_interval,
+        Boolean(defaults.action_centered_map),
+        savedColor,
+        defaults.fontSize,
+        markerTheme,
+        defaults.mapScale,
+        darkTheme,
+        darkTheme,
+        defaults.app_theme,
+        Boolean(defaults.is_scaleMap),
+        Boolean(defaults.map_hints),
+        Boolean(defaults.ai_recommend)
+      );
+      if (!isCurrentSession()) return;
+      if (!result?.st) throw new Error(result?.text || 'Не удалось сбросить настройки');
+
+      setGroupTypeTime(defaults.type_data_map);
+      setTypeShowDel(defaults.type_show_del);
+      setUpdateInterval(defaults.update_interval);
+      setCenteredMap(false);
+      setAppThemeState(defaults.app_theme);
+      setIsScaleMap(false);
+      setMapHints(true);
+      setAiRecommend(false);
+      setColor(savedColor || '#000000');
+      setGroupTypeTheme(markerTheme);
+      setFontSizeState(defaults.fontSize);
+      setMapScale(defaults.mapScale);
+      setGlobalFontSize(defaults.fontSize);
+      setTheme(markerTheme);
+      setHeaderAppTheme(defaults.app_theme);
+      clearPreviewAppTheme();
+      hasLocalThemeChoiceRef.current = false;
+      setGlobalMapScale(String(defaults.mapScale));
+      useOrdersStore.getState().setUpdateInterval(defaults.update_interval);
+      useOrderRecommendationStore.getState().reset();
+      setIsResetSheetOpen(false);
+      setSnackbarState((previous) => ({
+        ...previous,
+        open: true,
+        severity: 'success',
+        message: 'Настройки сброшены',
+      }));
+    } catch (error) {
+      if (isCurrentSession()) {
+        setSnackbarState((previous) => ({
+          ...previous,
+          open: true,
+          severity: 'error',
+          message: error instanceof Error ? error.message : 'Не удалось сбросить настройки',
+        }));
+      }
+    } finally {
+      resetInFlight.current = false;
+      if (isMounted.current) setIsResetting(false);
+    }
   };
 
   const closeSnackbar = (): void => {
@@ -229,6 +341,8 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
     isDeleteSheetOpen,
     isDeletingAccount,
     isSaving,
+    isResetting,
+    isResetSheetOpen,
     pointId,
     points,
     globalFontSize,
@@ -264,6 +378,9 @@ export const useSettingsForm = (): UseSettingsFormReturn => {
 
     // Действия
     handleSave,
+    openResetSheet,
+    closeResetSheet,
+    confirmSettingsReset,
     closeSnackbar,
     setIsDeleteSheetOpen,
     confirmDemoAccountDeletion,

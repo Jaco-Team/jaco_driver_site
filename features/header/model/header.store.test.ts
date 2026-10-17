@@ -43,7 +43,19 @@ describe('header theme preference', () => {
       previewAppTheme: null,
       deviceDarkTheme: false,
       darkThemeSource: 'device',
+      globalFontSize: 16,
     });
+  });
+
+  it('keeps the global font size within 10–26', () => {
+    useHeaderStore.getState().setGlobalFontSize(9);
+    expect(useHeaderStore.getState().globalFontSize).toBe(10);
+
+    useHeaderStore.getState().setGlobalFontSize(22);
+    expect(useHeaderStore.getState().globalFontSize).toBe(22);
+
+    useHeaderStore.getState().applySettings({ fontSize: 40 });
+    expect(useHeaderStore.getState().globalFontSize).toBe(26);
   });
 
   it('keeps following the device when dark_theme is missing', () => {

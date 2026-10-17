@@ -46,6 +46,7 @@ import { appDarkPalette, appPalette, appSuccessPalette } from '@/shared/styles/a
 import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined';
 import { OrderMapDrawer } from '@/widgets/order/ui/components/OrderMapDrawer';
 import { useAppHeader } from '../model/useAppHeader';
+import { scaleGlobalFontSize } from '@/shared/lib/fontSize';
 
 type NavigationItem = {
   href: string;
@@ -162,7 +163,7 @@ function OrderTypeDrawer() {
           <Typography
             component="div"
             sx={{
-              fontSize: Math.max(globalFontSize + 2, 18),
+              fontSize: scaleGlobalFontSize(18, globalFontSize, 18, 26),
               fontWeight: 500,
               lineHeight: 1.35,
               textAlign: 'center',
@@ -466,7 +467,7 @@ function HeaderMenuDrawer({ onLogout, isOnline }: { onLogout: () => void; isOnli
           <Typography
             component="div"
             sx={{
-              fontSize: Math.max(globalFontSize - 3, 12),
+              fontSize: scaleGlobalFontSize(13, globalFontSize, 12, 26),
               fontWeight: 700,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
@@ -480,7 +481,7 @@ function HeaderMenuDrawer({ onLogout, isOnline }: { onLogout: () => void; isOnli
           <Typography
             component="div"
             sx={{
-              fontSize: Math.max(globalFontSize + 8, 28),
+              fontSize: scaleGlobalFontSize(28, globalFontSize),
               fontWeight: 800,
               lineHeight: 1.1,
               mb: 1,
@@ -536,14 +537,14 @@ function HeaderMenuDrawer({ onLogout, isOnline }: { onLogout: () => void; isOnli
                   boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 }}
               >
-                <AccessTimeRoundedIcon />
+                <AccessTimeRoundedIcon sx={{ fontSize: 24 }} />
               </Box>
 
               <Box sx={{ minWidth: 0 }}>
                 <Typography
                   component="div"
                   sx={{
-                    fontSize: Math.max(globalFontSize - 3, 12),
+                    fontSize: scaleGlobalFontSize(13, globalFontSize, 12, 26),
                     fontWeight: 700,
                     color: 'text.secondary',
                     textTransform: 'uppercase',
@@ -557,7 +558,7 @@ function HeaderMenuDrawer({ onLogout, isOnline }: { onLogout: () => void; isOnli
                 <Typography
                   component="div"
                   sx={{
-                    fontSize: Math.max(globalFontSize + 4, 22),
+                    fontSize: scaleGlobalFontSize(22, globalFontSize),
                     fontWeight: 800,
                     lineHeight: 1,
                     color: 'text.primary',
@@ -575,7 +576,7 @@ function HeaderMenuDrawer({ onLogout, isOnline }: { onLogout: () => void; isOnli
               sx={{
                 px: 1,
                 mb: 1,
-                fontSize: Math.max(globalFontSize - 3, 12),
+                fontSize: scaleGlobalFontSize(13, globalFontSize, 12, 26),
                 fontWeight: 800,
                 color: 'text.secondary',
                 textTransform: 'uppercase',
@@ -661,7 +662,16 @@ function HeaderMenuDrawer({ onLogout, isOnline }: { onLogout: () => void; isOnli
                         },
                       }}
                     >
-                      <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 40,
+                          '& .MuiSvgIcon-root': {
+                            fontSize: 24,
+                          },
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
 
                       <ListItemText primary={item.label} sx={{ my: 0, minWidth: 0 }} />
                     </ListItemButton>
@@ -681,7 +691,7 @@ function HeaderMenuDrawer({ onLogout, isOnline }: { onLogout: () => void; isOnli
                   sx={{
                     px: 1,
                     mb: 1,
-                    fontSize: Math.max(globalFontSize - 3, 12),
+                    fontSize: scaleGlobalFontSize(13, globalFontSize, 12, 26),
                     fontWeight: 800,
                     color: 'text.secondary',
                     textTransform: 'uppercase',
@@ -806,7 +816,13 @@ function HeaderMenuDrawer({ onLogout, isOnline }: { onLogout: () => void; isOnli
               fontWeight: 700,
               textTransform: 'none',
               boxShadow: '0 10px 22px rgba(15, 23, 42, 0.04)',
-              '& .MuiButton-startIcon': { marginLeft: 0, marginRight: '12px' },
+              '& .MuiButton-startIcon': {
+                marginLeft: 0,
+                marginRight: '12px',
+                '& .MuiSvgIcon-root': {
+                  fontSize: 24,
+                },
+              },
               '&:hover': {
                 borderColor: (theme) =>
                   theme.palette.mode === 'dark'
@@ -840,6 +856,8 @@ export function AppHeader() {
     showModalTypeDop,
     getOrders,
     isOrdersActionsVisible,
+    isStatusFilterVisible,
+    isStatusFilterActive,
     isOnline,
     handleLogout,
   } = useAppHeader(routeTitles);
@@ -875,13 +893,38 @@ export function AppHeader() {
           </Typography>
           {isOrdersActionsVisible && (
             <div>
-              <Button
-                className="noselect"
-                style={{ flex: 1 }}
-                onClick={() => showModalTypeDop(true)}
-              >
-                <FilterAlt style={{ color: '#fff' }} />
-              </Button>
+              {isStatusFilterVisible && (
+                <Button
+                  className="noselect"
+                  aria-label={isStatusFilterActive ? 'Фильтр статусов включён' : 'Фильтр статусов'}
+                  aria-pressed={isStatusFilterActive}
+                  sx={{
+                    minWidth: 44,
+                    minHeight: 44,
+                    width: 44,
+                    height: 44,
+                    p: 0,
+                    backgroundColor: 'transparent',
+                    '&:hover, &:active': { backgroundColor: 'transparent' },
+                  }}
+                  onClick={() => showModalTypeDop(true)}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '8px',
+                      backgroundColor: isStatusFilterActive ? '#2196F3' : 'transparent',
+                    }}
+                  >
+                    <FilterAlt sx={{ color: '#fff' }} />
+                  </Box>
+                </Button>
+              )}
               <Button className="noselect" style={{ flex: 1 }} onClick={() => getOrders(true)}>
                 <CachedIcon style={{ color: '#fff' }} />
               </Button>

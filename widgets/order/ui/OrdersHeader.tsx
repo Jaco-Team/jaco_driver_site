@@ -37,7 +37,10 @@ export const OrdersHeader: React.FC<OrdersHeaderProps> = ({
         globalFontSize={globalFontSize}
       />
 
-      <Grid size={12} className="list__summary">
+      <Grid
+        size={12}
+        className={`list__summary${globalFontSize >= 22 ? ' list__summary--largeText' : ''}`}
+      >
         <Button
           aria-label={`Выбрать тип заказов: ${typeText}`}
           variant="text"

@@ -11,6 +11,8 @@ export interface UseSettingsFormReturn {
   isDeleteSheetOpen: boolean;
   isDeletingAccount: boolean;
   isSaving: boolean;
+  isResetting: boolean;
+  isResetSheetOpen: boolean;
   pointId: number | null;
   points: Point[];
   globalFontSize: number;
@@ -39,9 +41,12 @@ export interface UseSettingsFormReturn {
   setAiRecommend: Dispatch<SetStateAction<boolean>>;
   setColor: Dispatch<SetStateAction<string>>;
   setGroupTypeTheme: Dispatch<SetStateAction<ThemeType>>;
-  setFontSize: Dispatch<SetStateAction<number>>;
+  setFontSize: (value: number) => void;
   setMapScale: Dispatch<SetStateAction<number>>;
   handleSave: () => Promise<void>;
+  openResetSheet: () => void;
+  closeResetSheet: () => void;
+  confirmSettingsReset: () => Promise<void>;
   closeSnackbar: () => void;
   setIsDeleteSheetOpen: Dispatch<SetStateAction<boolean>>;
   confirmDemoAccountDeletion: () => Promise<void>;

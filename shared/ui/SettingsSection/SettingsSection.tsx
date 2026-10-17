@@ -3,6 +3,7 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { SectionTitle } from '@/shared/ui/SectionTitle/SectionTitle';
 import { SxProps, Theme } from '@mui/material/styles';
+import { normalizeGlobalFontSize } from '@/shared/lib/fontSize';
 
 interface SettingsSectionProps {
   children: React.ReactNode;
@@ -58,6 +59,8 @@ export const SettingsSectionWithPreview: React.FC<SettingsSectionWithPreviewProp
   children,
   fontSize = 14,
 }) => {
+  const previewFontSize = normalizeGlobalFontSize(fontSize);
+
   //sx={{ mt: '10px' }}
   return (
     <Grid size={12}>
@@ -80,7 +83,12 @@ export const SettingsSectionWithPreview: React.FC<SettingsSectionWithPreviewProp
         ) : (
           <div
             className={`settingsPreviewSurface ${previewClassName ?? ''}`.trim()}
-            style={{ minHeight: previewHeight }}
+            style={
+              {
+                minHeight: previewHeight,
+                '--settings-token-font-size': `${previewFontSize}px`,
+              } as React.CSSProperties
+            }
             role="radiogroup"
             aria-label={title}
           >

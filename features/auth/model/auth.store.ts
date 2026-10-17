@@ -1,5 +1,6 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
+import { useOrdersStore } from '@/entities/order/model/order.store';
 
 import {
   confirmPasswordRecoveryCode as confirmPasswordRecoveryCodeApi,
@@ -54,6 +55,7 @@ interface AuthActions {
 type AuthStore = AuthState & AuthActions;
 
 const EXPLICIT_UNAUTHORIZED_STORAGE_KEY = 'jaco_driver_explicit_unauthorized';
+let sessionGeneration = 0;
 
 function sessionFromUser(user: User, token?: string | null): AuthSession {
   const resolvedToken = `${token ?? user?.token ?? getAuthToken() ?? ''}`.trim();
@@ -75,6 +77,30 @@ function unauthorizedSession(): AuthSession {
     token: '',
     user: null,
   };
+}
+
+function resetOrderStatusFilter(): void {
+  useOrdersStore.getState().setTypeDop([]);
+  useOrdersStore.setState({ is_showModalTypeDop: false });
+}
+
+function resetStatusFilterForSession(
+  previous: AuthSession,
+  next: AuthSession,
+  freshLogin = false
+): void {
+  const previousOwner = previous.user?.user_id ?? previous.user?.id ?? previous.user?.login;
+  const nextOwner = next.user?.user_id ?? next.user?.id ?? next.user?.login;
+  const accountChanged =
+    previousOwner != null && nextOwner != null && String(previousOwner) !== String(nextOwner);
+
+  // Initial session verification is not a new login: preserve the saved filter.
+  if (freshLogin || previous.isAuth === false || accountChanged) {
+    resetOrderStatusFilter();
+  }
+  if (accountChanged) {
+    clearOfflineCache();
+  }
 }
 
 function initialSession(): AuthSession {
@@ -138,15 +164,20 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
     },
 
     setAuthenticated: (user: User) => {
+      sessionGeneration += 1;
+      const session = sessionFromUser(user);
+      resetStatusFilterForSession(get().session, session, true);
       setExplicitUnauthorized(false);
-      set({ session: sessionFromUser(user), authNotice: null });
+      set({ session, authNotice: null, isSessionRefreshing: false });
     },
 
     setUnauthorized: () => {
+      sessionGeneration += 1;
+      resetOrderStatusFilter();
       setExplicitUnauthorized(true);
       clearAuthToken();
       clearOfflineCache();
-      set({ session: unauthorizedSession() });
+      set({ session: unauthorizedSession(), isSessionRefreshing: false });
     },
 
     login: async (login: string, pwd: string, captchaToken = '') => {
@@ -154,12 +185,15 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
         return currentAuthResult(get(), false, 'Уже выполняется вход');
       }
 
-      set({ isSubmitting: true });
+      sessionGeneration += 1;
+      set({ isSubmitting: true, isSessionRefreshing: false });
 
       try {
         const loginResult = await loginToken(login, pwd, 'test', captchaToken);
         const me = await fetchMe();
         const authData = sessionFromUser(me, loginResult.token);
+        sessionGeneration += 1;
+        resetStatusFilterForSession(get().session, authData, true);
         const result = {
           st: true,
           ...authData,
@@ -169,6 +203,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
         setExplicitUnauthorized(false);
         set({
           isSubmitting: false,
+          isSessionRefreshing: false,
           loginErr: '',
           authNotice: null,
           session: authData,
@@ -192,10 +227,12 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
           retry_after: security.retryAfter,
         };
 
+        sessionGeneration += 1;
         setExplicitUnauthorized(true);
         clearAuthToken();
         set({
           isSubmitting: false,
+          isSessionRefreshing: false,
           loginErr: errorText,
           session: authData,
         });
@@ -256,9 +293,11 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
     },
 
     refreshSession: async () => {
-      if (get().session.isAuth === false || readExplicitUnauthorized() || !getAuthToken()) {
+      const requestToken = getAuthToken();
+      if (get().session.isAuth === false || readExplicitUnauthorized() || !requestToken) {
+        sessionGeneration += 1;
         const authData = unauthorizedSession();
-        set({ session: authData });
+        set({ session: authData, isSessionRefreshing: false });
         return {
           st: false,
           ...authData,
@@ -270,11 +309,19 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
         return currentAuthResult(get(), 'load');
       }
 
+      const requestGeneration = ++sessionGeneration;
+      const isCurrentRequest = () =>
+        requestGeneration === sessionGeneration &&
+        getAuthToken() === requestToken &&
+        !readExplicitUnauthorized();
+      const currentResult = () => currentAuthResult(get(), get().session.isAuth);
       set({ isSessionRefreshing: true });
 
       try {
         const me = await fetchMe();
-        const authData = sessionFromUser(me, getAuthToken());
+        if (!isCurrentRequest()) return currentResult();
+        const authData = sessionFromUser(me, requestToken);
+        resetStatusFilterForSession(get().session, authData);
         const result = {
           st: true,
           ...authData,
@@ -286,9 +333,10 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
 
         return result;
       } catch (error) {
+        if (!isCurrentRequest()) return currentResult();
         const errorInfo = getApiErrorInfo(error);
         const status = errorInfo.status;
-        const token = `${getAuthToken() ?? ''}`.trim();
+        const token = requestToken.trim();
 
         if (isConnectivityError(error) && token) {
           markAppOffline();
@@ -324,6 +372,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
         setExplicitUnauthorized(isUnauthorized);
 
         if (isUnauthorized) {
+          resetOrderStatusFilter();
           clearAuthToken();
           clearOfflineCache();
         }
@@ -332,7 +381,9 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
 
         return result;
       } finally {
-        set({ isSessionRefreshing: false });
+        if (requestGeneration === sessionGeneration) {
+          set({ isSessionRefreshing: false });
+        }
       }
     },
   }),

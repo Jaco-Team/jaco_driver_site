@@ -40,6 +40,8 @@ describe('offline map API', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
   });
@@ -93,6 +95,118 @@ describe('offline map API', () => {
     expect(res.json).not.toHaveBeenCalledWith(
       expect.objectContaining({ session: expect.anything() })
     );
+  });
+
+  it.each([403, 500, 503])('does not issue a session after backend HTTP %s', async (status) => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status });
+    vi.stubGlobal('fetch', fetchMock);
+    const res = response();
+
+    await sessionHandler(
+      request({
+        method: 'POST',
+        headers: { authorization: 'Bearer token' },
+        body: { pointId: 7, bounds, minZoom: 10, maxZoom: 10 },
+      }),
+      apiResponse(res)
+    );
+
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledExactlyOnceWith({
+      error: 'Не удалось проверить авторизацию перед загрузкой карты.',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    new TypeError('fetch failed'),
+    new DOMException('Authentication timed out', 'TimeoutError'),
+  ])('does not bypass backend authorization after $name', async (error) => {
+    const fetchMock = vi.fn().mockRejectedValue(error);
+    vi.stubGlobal('fetch', fetchMock);
+    const res = response();
+
+    await sessionHandler(
+      request({
+        method: 'POST',
+        headers: { authorization: 'Bearer token' },
+        body: { pointId: 7, bounds, minZoom: 10, maxZoom: 10 },
+      }),
+      apiResponse(res)
+    );
+
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledExactlyOnceWith({
+      error: 'Backend недоступен. Загрузка карты не начата.',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('bounds a pending authentication request and returns no session on timeout', async () => {
+    vi.useFakeTimers();
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockImplementation((ms) => {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(new DOMException('Timeout', 'TimeoutError')), ms);
+      return controller.signal;
+    });
+    const fetchMock = vi.fn(
+      (_url, options) =>
+        new Promise((_resolve, reject) => {
+          options.signal.addEventListener('abort', () => reject(options.signal.reason), {
+            once: true,
+          });
+        })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const res = response();
+    const pending = sessionHandler(
+      request({
+        method: 'POST',
+        headers: { authorization: 'Bearer token' },
+        body: { pointId: 7, bounds, minZoom: 10, maxZoom: 10 },
+      }),
+      apiResponse(res)
+    );
+
+    expect(timeout).toHaveBeenCalledWith(12_000);
+    await vi.advanceTimersByTimeAsync(11_999);
+    expect(res.json).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    await pending;
+
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledExactlyOnceWith({
+      error: 'Backend недоступен. Загрузка карты не начата.',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows a manual retry only after a new successful backend authentication', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new DOMException('Timeout', 'TimeoutError'))
+      .mockResolvedValueOnce({ ok: true, status: 200 });
+    vi.stubGlobal('fetch', fetchMock);
+    const req = request({
+      method: 'POST',
+      headers: { authorization: 'Bearer token' },
+      body: { pointId: 7, bounds, minZoom: 10, maxZoom: 10 },
+    });
+    const failed = response();
+    await sessionHandler(req, apiResponse(failed));
+    expect(failed.status).toHaveBeenCalledWith(502);
+    expect(failed.json).not.toHaveBeenCalledWith(
+      expect.objectContaining({ session: expect.anything() })
+    );
+
+    const retried = response();
+    await sessionHandler(req, apiResponse(retried));
+    expect(retried.status).toHaveBeenCalledWith(200);
+    expect(verifyOfflineMapSession(retried.json.mock.calls[0][0].session)?.pointId).toBe('7');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    for (const [, options] of fetchMock.mock.calls) {
+      expect(options.headers.Authorization).toBe('Bearer token');
+    }
   });
 
   it('passes detailed cells through the same authenticated session endpoint', async () => {

@@ -228,5 +228,26 @@ describe('settings.utils', () => {
         mapScale: 1.5,
       });
     });
+
+    it('limits font size before sending it to the API', () => {
+      const result = buildSaveSettingsPayload({
+        groupTypeTime: 'norm',
+        type_show_del: 'min',
+        update_interval: 30,
+        centered_map: false,
+        color: '#000000',
+        fontSize: 40,
+        theme: 'white',
+        mapScale: 1,
+        night_map: false,
+        dark_theme: false,
+        app_theme: 'system',
+        is_scaleMap: false,
+        map_hints: true,
+        ai_recommend: false,
+      });
+
+      expect(result.fontSize).toBe(26);
+    });
   });
 });

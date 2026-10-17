@@ -13,6 +13,7 @@ import { readDriverPosition } from '@/shared/lib/geolocation';
 import { isAppOnline, markAppOffline } from '@/features/offline/model/connectivity.store';
 import { readOfflineCache, writeOfflineCache } from '@/shared/lib/offline/cache';
 import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
+import { DEFAULT_GLOBAL_FONT_SIZE, normalizeGlobalFontSize } from '@/shared/lib/fontSize';
 
 interface HeaderState {
   isOpenMenu: boolean;
@@ -63,10 +64,6 @@ interface HeaderActions {
 
 type HeaderStore = HeaderState & HeaderActions;
 
-const DEFAULT_GLOBAL_FONT_SIZE = 16;
-const MIN_GLOBAL_FONT_SIZE = 10;
-const MAX_GLOBAL_FONT_SIZE = 40;
-
 const cachedOffline = readOfflineCache();
 
 let avgTimePromise: Promise<string> | null = null;
@@ -102,22 +99,6 @@ function normalizePointId(value: SettingsData['point_id'] | null): number | null
 
   const parsed = parseInt(`${value}`, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
-
-function normalizeGlobalFontSize(
-  value: SettingsData['fontSize'] | number | string | null | undefined
-): number {
-  if (value === undefined || value === null || `${value}`.trim() === '') {
-    return DEFAULT_GLOBAL_FONT_SIZE;
-  }
-
-  const parsed = parseInt(`${value}`, 10);
-
-  if (Number.isNaN(parsed)) {
-    return DEFAULT_GLOBAL_FONT_SIZE;
-  }
-
-  return Math.min(MAX_GLOBAL_FONT_SIZE, Math.max(MIN_GLOBAL_FONT_SIZE, parsed));
 }
 
 function resolveDarkTheme(preference: AppThemePreference, deviceDarkTheme: boolean): boolean {

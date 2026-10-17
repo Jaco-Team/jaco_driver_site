@@ -5,6 +5,11 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { SectionTitle } from '@/shared/ui/SectionTitle/SectionTitle';
+import {
+  MAX_GLOBAL_FONT_SIZE,
+  MIN_GLOBAL_FONT_SIZE,
+  normalizeGlobalFontSize,
+} from '@/shared/lib/fontSize';
 
 interface FontSizeSliderProps {
   value: number;
@@ -19,15 +24,14 @@ export const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
   value,
   onChange,
   fontSize = 14,
-  min = 10,
-  max = 40,
+  min = MIN_GLOBAL_FONT_SIZE,
+  max = MAX_GLOBAL_FONT_SIZE,
   step = 1,
 }) => {
   const baseFontSize = Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 14;
   const helperFontSize = Math.min(Math.max(baseFontSize - 1, 12), 20);
-  const sampleSmallSize = Math.min(Math.max(value - 2, 12), 18);
-  const sampleMediumSize = Math.min(Math.max(value, 14), 24);
-  const sampleLargeSize = Math.min(Math.max(value + 4, 18), 32);
+  const normalizedValue = normalizeGlobalFontSize(value);
+  const sampleMediumSize = Math.min(Math.max(normalizedValue, 14), 24);
 
   return (
     <Grid size={12} sx={{ mt: '10px' }}>
@@ -38,11 +42,11 @@ export const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
       >
         <SectionTitle title="Размер шрифта" fontSize={baseFontSize} />
         <Typography sx={{ fontSize: helperFontSize, color: 'text.secondary', mb: 1.2 }}>
-          Текущее значение: {value}
+          Текущее значение: {normalizedValue}
         </Typography>
         <Box className="settingsScalePreview">
           <Box className="settingsScalePreview__item">
-            <span style={{ color: 'var(--app-text)', fontSize: 10, lineHeight: 1 }}>Ая</span>
+            <span style={{ color: 'var(--app-text)', fontSize: min, lineHeight: 1 }}>Ая</span>
             <span className="settingsScalePreview__caption">Меньше</span>
           </Box>
           <Box className="settingsScalePreview__item">
@@ -52,20 +56,20 @@ export const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
             <span className="settingsScalePreview__caption">Текущий</span>
           </Box>
           <Box className="settingsScalePreview__item">
-            <span style={{ color: 'var(--app-text)', fontSize: 40, lineHeight: 1 }}>Ая</span>
+            <span style={{ color: 'var(--app-text)', fontSize: max, lineHeight: 1 }}>Ая</span>
             <span className="settingsScalePreview__caption">Больше</span>
           </Box>
         </Box>
         <Box sx={{ px: 0.6, pt: 0.3 }}>
           <Slider
             size="medium"
-            value={value}
+            value={normalizedValue}
             valueLabelDisplay="off"
             step={step}
             max={max}
             min={min}
             color="info"
-            onChange={(_, val) => onChange(val as number)}
+            onChange={(_, val) => onChange(normalizeGlobalFontSize(val))}
           />
         </Box>
       </Paper>

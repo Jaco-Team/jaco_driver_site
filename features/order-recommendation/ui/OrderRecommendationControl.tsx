@@ -99,18 +99,11 @@ function EnabledOrderRecommendationControl({
   } = useOrderRecommendationStore();
   const recommendationOrders = useMemo(
     () =>
-      orders.filter(
+      sourceOrders.filter(
         (order) => Number(order.is_delete ?? 0) !== 1 && Number(order.status_order ?? 0) !== 6
       ),
-    [orders]
+    [sourceOrders]
   );
-
-  const currentSignature = buildOrderRecommendationSignature({
-    orders: recommendationOrders,
-    pointId,
-    limit,
-    limitCount,
-  });
   const hasCurrentResult = Boolean(result && resultOrderTypeId === orderTypeId);
   const isMap = surface === 'map';
   const isOpen = storeIsOpen && presenter === surface && hasCurrentResult;
@@ -166,7 +159,15 @@ function EnabledOrderRecommendationControl({
       return;
     }
 
+    const orderState = useOrdersStore.getState();
+    const analysisOrders = orderState.sourceOrders.filter(
+      (order) => Number(order.is_delete ?? 0) !== 1 && Number(order.status_order ?? 0) !== 6
+    );
+    if (analysisOrders.length === 0) return;
+
     const requestVersion = start();
+    orderState.setTypeDop(orderState.types_dop.map((status) => String(status.id)));
+    orderState.showModalTypeDop(false);
     const isCurrentRequest = () =>
       useOrderRecommendationStore.getState().requestVersion === requestVersion;
     setError('');
@@ -178,7 +179,7 @@ function EnabledOrderRecommendationControl({
       if (!isCurrentRequest()) return;
       const courier = toRecommendationCoordinates(position.latitude, position.longitude);
       const payload = buildOrderRecommendationRequest({
-        orders: recommendationOrders,
+        orders: analysisOrders,
         pointId,
         limit,
         limitCount,
@@ -202,10 +203,10 @@ function EnabledOrderRecommendationControl({
       succeed(
         requestVersion,
         response,
-        currentSignature,
+        buildOrderRecommendationSignature({ orders: analysisOrders, pointId, limit, limitCount }),
         surface,
         orderTypeId,
-        recommendationOrders
+        analysisOrders
       );
       log('order_recommendation_map_opened', 'Построен ИИ-маршрут по заказам');
       if (!isMap) await router.push('/map_orders');

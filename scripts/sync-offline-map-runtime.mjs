@@ -28,17 +28,29 @@ export async function syncOfflineMapRuntime(root = PROJECT_ROOT) {
 
   const originals = new Map();
   const updates = new Map();
+  const bundles = new Map(
+    await Promise.all(
+      BUNDLES.map(async (name) => [name, await read(`node_modules/maplibre-gl/dist/${name}`)])
+    )
+  );
+  // Since 6.14 the production entrypoints are self-contained and the shared
+  // module is an empty compatibility file. Older releases import shared code.
+  const hasSharedCode = bundles.get('maplibre-gl-shared.mjs').trim().length > 0;
   for (const name of BUNDLES) {
     const path = `public/offline-map/runtime/${name}`;
-    const source = await read(`node_modules/maplibre-gl/dist/${name}`);
+    const source = bundles.get(name);
     let output = source.replace(/^\/\/#[ \t]*sourceMappingURL=.*$/gm, '');
     if (name === 'maplibre-gl.mjs' || name === 'maplibre-gl-worker.mjs') {
-      output = replaceRequired(
-        output,
-        /\.\/maplibre-gl-shared\.mjs/g,
-        `./maplibre-gl-shared.mjs?v=${version}`,
-        name
-      );
+      if (hasSharedCode) {
+        output = replaceRequired(
+          output,
+          /\.\/maplibre-gl-shared\.mjs/g,
+          `./maplibre-gl-shared.mjs?v=${version}`,
+          name
+        );
+      } else if (output.includes('maplibre-gl-shared.mjs')) {
+        throw new Error(`Missing runtime marker: shared module is empty in ${name}`);
+      }
     }
     if (name === 'maplibre-gl.mjs') {
       output = replaceRequired(

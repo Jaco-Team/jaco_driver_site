@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import { scaleGlobalFontSize } from '@/shared/lib/fontSize';
 
 import type { GraphErrorModal } from '@/entities/graph/model/types';
 import { useHeaderStore } from '@/features/header/model/header.store';
@@ -54,10 +55,15 @@ export function GraphUiPreview() {
           color: 'var(--app-text)',
         }}
       >
-        <Typography sx={{ fontSize: globalFontSize + 2, fontWeight: 700 }}>
+        <Typography sx={{ fontSize: scaleGlobalFontSize(18, globalFontSize), fontWeight: 700 }}>
           Локальная проверка окон графика
         </Typography>
-        <Typography sx={{ fontSize: globalFontSize - 1, color: 'var(--app-text-muted)' }}>
+        <Typography
+          sx={{
+            fontSize: scaleGlobalFontSize(15, globalFontSize),
+            color: 'var(--app-text-muted)',
+          }}
+        >
           Только тестовые данные. Эти кнопки не отправляют обжалования.
         </Typography>
         <Button variant="outlined" onClick={() => setErrorModal(orderError)}>

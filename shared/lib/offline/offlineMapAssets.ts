@@ -10,10 +10,10 @@ let ensurePromise: Promise<void> | null = null;
 export const OFFLINE_MAP_ASSET_PATHS = [
   OFFLINE_MAP_RUNTIME_URL,
   '/offline-map/yandex-logo-ru.svg',
-  '/offline-map/runtime/maplibre-gl.mjs?v=6.12.0',
-  '/offline-map/runtime/maplibre-gl-shared.mjs?v=6.12.0',
-  '/offline-map/runtime/maplibre-gl-worker.mjs?v=6.12.0',
-  '/offline-map/runtime/maplibre-gl.css?v=6.12.0',
+  '/offline-map/runtime/maplibre-gl.mjs?v=6.14.0',
+  '/offline-map/runtime/maplibre-gl-shared.mjs?v=6.14.0',
+  '/offline-map/runtime/maplibre-gl-worker.mjs?v=6.14.0',
+  '/offline-map/runtime/maplibre-gl.css?v=6.14.0',
 ];
 
 function getAssetRequest(path: string): Request {

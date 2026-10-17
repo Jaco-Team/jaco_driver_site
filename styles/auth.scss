@@ -95,14 +95,14 @@
 
 .auth__heroTitle {
   margin: 26px 0 14px;
-  @include font_custom(clamp(2.25rem, 5vw, 3.5rem), 800, #fff);
+  @include font_custom(26px, 800, #fff);
   line-height: 1.02;
 }
 
 .auth__heroText {
   margin: 0;
   max-width: 520px;
-  @include font_custom(1.06rem, 400, rgba(255, 255, 255, 0.88));
+  @include font_custom(min(1.06rem, 26px), 400, rgba(255, 255, 255, 0.88));
   line-height: 1.65;
 }
 
@@ -128,13 +128,13 @@
   backdrop-filter: blur(12px);
 
   strong {
-    @include font_custom(clamp(1.15rem, 3vw, 1.5rem), 800, #fff);
+    @include font_custom(min(clamp(1.15rem, 3vw, 1.5rem), 26px), 800, #fff);
     line-height: 1.2;
   }
 }
 
 .auth__heroStat--wide strong {
-  font-size: clamp(1.05rem, 2.4vw, 1.32rem);
+  font-size: min(clamp(1.05rem, 2.4vw, 1.32rem), 26px);
 }
 
 .auth__heroStatLabel {
@@ -207,7 +207,7 @@
 
 .auth__panelTitle {
   margin: 12px 0 10px;
-  @include font_custom(clamp(2rem, 4vw, 2.7rem), 800, #1f1015);
+  @include font_custom(26px, 800, #1f1015);
   line-height: 1.05;
 }
 
@@ -320,7 +320,7 @@
   border: 1px solid rgba(37, 18, 22, 0.1);
   background: rgba(255, 255, 255, 0.98);
   box-shadow: 0 10px 24px rgba(24, 17, 20, 0.05);
-  @include font_custom(1.35rem, 700, #1f1015);
+  @include font_custom(min(1.35rem, 26px), 700, #1f1015);
   line-height: 1;
   text-align: center;
   color: #1f1015;
@@ -367,7 +367,7 @@
   .auth__otpBox {
     min-height: 50px;
     border-radius: 14px;
-    font-size: 1.2rem;
+    font-size: min(1.2rem, 26px);
   }
 }
 
@@ -477,6 +477,13 @@
   &:hover {
     background: linear-gradient(135deg, var(--app-brand-dark) 0%, var(--app-brand-deep) 100%);
     box-shadow: 0 20px 36px rgba(166, 0, 42, 0.28);
+  }
+
+  &.Mui-disabled {
+    border: 1px solid var(--app-disabled-border);
+    background: var(--app-disabled-surface);
+    box-shadow: none;
+    color: var(--app-disabled-text);
   }
 }
 
@@ -723,7 +730,7 @@
 
 @media (max-width: 599px) {
   .auth__heroTitle {
-    font-size: 2rem;
+    font-size: 26px;
   }
 
   .auth__heroText,

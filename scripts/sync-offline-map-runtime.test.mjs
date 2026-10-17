@@ -10,7 +10,7 @@ afterEach(async () => {
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
 });
 
-async function fixture() {
+async function fixture({ standalone = false } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'jaco-runtime-'));
   roots.push(root);
   const names = [
@@ -21,13 +21,19 @@ async function fixture() {
   ];
   const urls = names.map((name) => `/offline-map/runtime/${name}?v=6.11.2`);
   const files = {
-    'node_modules/maplibre-gl/package.json': JSON.stringify({ version: '6.12.0' }),
+    'node_modules/maplibre-gl/package.json': JSON.stringify({
+      version: standalone ? '6.14.0' : '6.12.0',
+    }),
     'node_modules/maplibre-gl/dist/maplibre-gl.mjs':
-      '/* BSD license */\nimport "./maplibre-gl-shared.mjs"; const worker = `maplibre-gl-worker.mjs`;\n//# sourceMappingURL=maplibre-gl.mjs.map',
+      '/* BSD license */\n' +
+      (standalone ? '' : 'import "./maplibre-gl-shared.mjs"; ') +
+      'const worker = `maplibre-gl-worker.mjs`;\n//# sourceMappingURL=maplibre-gl.mjs.map',
     'node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs':
-      'import "./maplibre-gl-shared.mjs";\n//# sourceMappingURL=maplibre-gl-worker.mjs.map',
-    'node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs':
-      '/* BSD license */\nexport const version = "6.12.0";',
+      (standalone ? 'self.onmessage = () => {};' : 'import "./maplibre-gl-shared.mjs";') +
+      '\n//# sourceMappingURL=maplibre-gl-worker.mjs.map',
+    'node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs': standalone
+      ? ''
+      : '/* BSD license */\nexport const version = "6.12.0";',
     'node_modules/maplibre-gl/dist/maplibre-gl.css': '.maplibregl-map { position: relative; }',
     'public/offline-map/offline-orders-map.mjs': `import '${urls[0]}';\nglobalThis.JacoOfflineOrdersMap = { version: '26', mount };`,
     'public/sw.js': `const VERSION = 'v40';\nconst PRECACHE = ${JSON.stringify([...urls, '/offline-map/offline-orders-map.mjs?v=26'])};\nconst TILES = 'jaco-yandex-offline-tiles-v1';`,
@@ -67,14 +73,44 @@ describe('offline MapLibre runtime synchronization', () => {
     expect(await read('shared/lib/offline/offlineMapAssets.ts')).not.toContain('6.11.2');
   });
 
-  it('does not bump versions or rewrite files on repeated runs', async () => {
-    const { root, files, read } = await fixture();
-    await syncOfflineMapRuntime(root);
-    const before = await Promise.all(Object.keys(files).map(read));
+  it('supports self-contained production modules with an empty shared compatibility file', async () => {
+    const { root, read } = await fixture({ standalone: true });
     await expect(syncOfflineMapRuntime(root)).resolves.toEqual({
-      version: '6.12.0',
-      changed: false,
+      version: '6.14.0',
+      changed: true,
     });
+    const main = await read('public/offline-map/runtime/maplibre-gl.mjs');
+    expect(main).toContain('/* BSD license */');
+    expect(main).toContain('`maplibre-gl-worker.mjs?v=6.14.0`');
+    expect(main).not.toContain('maplibre-gl-shared.mjs');
+    expect(main).not.toContain('sourceMappingURL');
+    expect(await read('public/offline-map/runtime/maplibre-gl-worker.mjs')).toContain(
+      'self.onmessage'
+    );
+    expect(await read('public/offline-map/runtime/maplibre-gl-shared.mjs')).toBe('');
+    expect(await read('public/sw.js')).toContain('maplibre-gl.mjs?v=6.14.0');
+    expect(await read('public/sw.js')).toContain('jaco-yandex-offline-tiles-v1');
+  });
+
+  it.each([false, true])(
+    'does not rewrite files on repeated runs (standalone: %s)',
+    async (standalone) => {
+      const { root, files, read } = await fixture({ standalone });
+      await syncOfflineMapRuntime(root);
+      const before = await Promise.all(Object.keys(files).map(read));
+      await expect(syncOfflineMapRuntime(root)).resolves.toEqual({
+        version: standalone ? '6.14.0' : '6.12.0',
+        changed: false,
+      });
+      expect(await Promise.all(Object.keys(files).map(read))).toEqual(before);
+    }
+  );
+
+  it('rejects an empty shared module when an entrypoint still imports it', async () => {
+    const { root, files, read } = await fixture();
+    await writeFile(join(root, 'node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs'), '');
+    const before = await Promise.all(Object.keys(files).map(read));
+    await expect(syncOfflineMapRuntime(root)).rejects.toThrow('shared module is empty');
     expect(await Promise.all(Object.keys(files).map(read))).toEqual(before);
   });
 

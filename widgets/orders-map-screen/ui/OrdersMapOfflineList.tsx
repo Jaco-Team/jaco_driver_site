@@ -48,7 +48,7 @@ export function OrdersMapOfflineList({
   globalFontSize,
   onOpenOrders,
 }: OrdersMapOfflineListProps) {
-  const titleFontSize = clampFontSize(globalFontSize + 4, 20, 28);
+  const titleFontSize = clampFontSize(globalFontSize + 4, 20, 26);
   const hintFontSize = clampFontSize(globalFontSize - 1, 13, 16);
   const addressFontSize = clampFontSize(globalFontSize, 14, 20);
   const metaFontSize = clampFontSize(globalFontSize - 2, 12, 15);

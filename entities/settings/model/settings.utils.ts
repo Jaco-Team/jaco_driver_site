@@ -5,6 +5,7 @@ import {
   TypeShowDel,
   SaveSettingsPayload,
 } from '@/entities/settings/model/types';
+import { normalizeGlobalFontSize } from '@/shared/lib/fontSize';
 
 export const TYPE_SHOW_DEL_TO_INT: Record<TypeShowDel, number> = {
   min: 30,
@@ -162,7 +163,7 @@ export function buildSaveSettingsPayload(params: {
     map_hints: params.map_hints ? 1 : 0,
     ai_recommend: params.ai_recommend ? 1 : 0,
     color: params.color,
-    fontSize: parseInt(String(params.fontSize)),
+    fontSize: normalizeGlobalFontSize(params.fontSize),
     theme: params.theme,
     mapScale: parseFloat(String(params.mapScale)),
   };

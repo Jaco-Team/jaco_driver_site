@@ -464,7 +464,10 @@
   right: 16px;
   display: grid;
   width: 44px;
-  height: clamp(190px, 32dvh, 300px);
+  height: min(
+    clamp(190px, 32dvh, 300px),
+    max(80px, calc(100dvh - 400px - env(safe-area-inset-bottom, 0px)))
+  );
   place-items: center;
 
   .MuiSlider-root {
@@ -497,6 +500,48 @@
       box-shadow: none;
     }
   }
+}
+
+.orders-map-refresh {
+  position: absolute;
+  z-index: 100;
+  bottom: calc(152px + env(safe-area-inset-bottom, 0px));
+  right: 16px;
+  display: grid;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--app-text);
+  cursor: pointer;
+  touch-action: manipulation;
+
+  svg {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+    stroke-width: 0.65;
+    stroke-linejoin: round;
+  }
+
+  &:disabled {
+    opacity: 1;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--app-text);
+    outline-offset: 2px;
+  }
+}
+
+:root[data-app-theme='dark'] .orders-map-refresh {
+  color: #fff;
 }
 
 .orders-map-stage__online-map[data-map-theme='light'] .orders-map-zoom {
@@ -626,6 +671,13 @@
 
 .offline-order-marker__label--white_border {
   border: 1px solid #000;
+}
+
+:root[data-app-theme='dark'] .span_text_white_border,
+:root[data-app-theme='dark'] .offline-order-marker__label--white_border {
+  background: #000;
+  color: #fff;
+  border-color: #fff;
 }
 
 .offline-order-marker__label--black {
@@ -880,10 +932,6 @@
   height: 6px;
   border: 1px solid rgba(255, 255, 255, 0.86);
   border-radius: 50%;
-}
-
-:root[data-app-theme='dark'] .span_text_transparent_white {
-  color: #000;
 }
 
 :root[data-app-theme='dark'] .orders-map-compass__indicator {

@@ -83,9 +83,24 @@ function renderDrawer(mode: 'light' | 'dark' = 'light') {
   );
 }
 
+function pointer(target: HTMLElement, type: string, values: Record<string, number> = {}) {
+  // jsdom may not implement PointerEvent; keep the real React pointer handlers.
+  const event = new Event(type, { bubbles: true });
+  Object.assign(event, {
+    pointerId: 1,
+    isPrimary: true,
+    button: 0,
+    clientX: 100,
+    clientY: 100,
+    ...values,
+  });
+  fireEvent(target, event);
+}
+
 describe('OrderMapDrawer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.headerState.globalFontSize = 16;
     mocks.orderState.isOpenOrderMap = true;
     mocks.orderState.isClick = false;
     mocks.orderState.is_load = false;
@@ -100,15 +115,30 @@ describe('OrderMapDrawer', () => {
 
     expect(drawer.className).toContain('MuiDrawer-anchorBottom');
     expect(drawer.className).not.toContain('MuiDrawer-anchorTop');
+    expect(drawer.className).not.toContain('MuiSwipeableDrawer');
     expect(paper.className).toContain('MuiDrawer-paper');
-    expect(paper).toHaveStyle({ top: 'auto', bottom: '0px' });
+    expect(paper).toHaveStyle({
+      top: 'auto',
+      bottom: '0px',
+      height: 'auto',
+      maxHeight: '92dvh',
+      overflow: 'hidden',
+    });
+    expect(screen.getByTestId('order-map-drawer-scroll')).toHaveStyle({
+      minHeight: '0',
+      flex: '0 1 auto',
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      overscrollBehaviorY: 'contain',
+      touchAction: 'pan-y',
+    });
   });
 
   it('uses a dark paper background when the app theme is dark', () => {
     renderDrawer('dark');
 
     expect(screen.getByTestId('order-map-drawer-paper')).toHaveStyle({
-      background: '#18232D',
+      backgroundColor: '#18232D',
     });
   });
 
@@ -187,6 +217,50 @@ describe('OrderMapDrawer', () => {
     expect(screen.queryByTestId('order-card')).not.toBeInTheDocument();
   });
 
+  it('stacks group timing below the order details for large text', () => {
+    mocks.headerState.globalFontSize = 26;
+    const first = {
+      ...defaultOrder,
+      id: 900001,
+      addr: 'улица Ленина, 85',
+      point_text: '12:13 (48 мин.)',
+    };
+    mocks.orderState.showOrders = [first, { ...first, id: 900002 }];
+
+    renderDrawer();
+
+    expect(screen.getByTestId('order-map-group-order-900001')).toHaveStyle({
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      maxWidth: '100%',
+      overflow: 'hidden',
+    });
+  });
+
+  it('keeps a long address group inside the vertical scroll area', () => {
+    mocks.headerState.globalFontSize = 26;
+    const first = {
+      ...defaultOrder,
+      id: 900001,
+      addr: 'улица Новозаводская, 9',
+      point_text: '12:13 (48 мин.)',
+    };
+    mocks.orderState.showOrders = Array.from({ length: 5 }, (_, index) => ({
+      ...first,
+      id: first.id + index,
+      id_text: `#${first.id + index} Заказ`,
+    }));
+
+    renderDrawer();
+
+    expect(screen.getAllByRole('button', { name: /Открыть заказ/ })).toHaveLength(5);
+    expect(screen.getByTestId('order-map-drawer-scroll')).toHaveStyle({
+      minHeight: '0',
+      flex: '0 1 auto',
+      overflowY: 'auto',
+      touchAction: 'pan-y',
+    });
+  });
+
   it('opens confirm for cancel and finish, not for take', () => {
     mocks.orderState.showOrders = [
       {
@@ -223,9 +297,91 @@ describe('OrderMapDrawer', () => {
 
     renderDrawer();
 
-    fireEvent.click(screen.getByTestId('order-map-drawer-handle'));
+    const handle = screen.getByTestId('order-map-drawer-handle');
+    expect(handle).toBeDisabled();
+    pointer(handle, 'pointerdown');
+    pointer(handle, 'pointerup', { clientY: 180 });
+    fireEvent.click(handle);
 
     expect(mocks.orderState.closeOrderMap).not.toHaveBeenCalled();
+  });
+
+  it.each(['light', 'dark'] as const)('provides a wide collapse target in %s mode', (mode) => {
+    renderDrawer(mode);
+
+    const handle = screen.getByRole('button', { name: 'Свернуть карточку заказа' });
+    expect(handle).toHaveStyle({ width: '100%', height: '48px', touchAction: 'none' });
+    expect(screen.getByTestId('order-map-drawer-scroll').contains(handle)).toBe(false);
+    fireEvent.click(handle);
+    expect(mocks.orderState.closeOrderMap).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes on a downward header swipe without a second close from click', () => {
+    renderDrawer();
+    const handle = screen.getByTestId('order-map-drawer-handle');
+
+    pointer(handle, 'pointerdown');
+    pointer(handle, 'pointermove', { clientY: 160 });
+    pointer(handle, 'pointerup', { clientY: 180 });
+    fireEvent.click(handle, { detail: 1 });
+
+    expect(mocks.orderState.closeOrderMap).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    { clientX: 100, clientY: 120 },
+    { clientX: 100, clientY: 20 },
+    { clientX: 180, clientY: 160 },
+  ])('does not close on a short, upward or sideways drag: %o', (end) => {
+    renderDrawer();
+    const handle = screen.getByTestId('order-map-drawer-handle');
+
+    pointer(handle, 'pointerdown');
+    pointer(handle, 'pointermove', end);
+    pointer(handle, 'pointerup', end);
+    fireEvent.click(handle, { detail: 1 });
+
+    expect(mocks.orderState.closeOrderMap).not.toHaveBeenCalled();
+  });
+
+  it('ignores a cancelled drag and allows the next tap', () => {
+    renderDrawer();
+    const handle = screen.getByTestId('order-map-drawer-handle');
+
+    pointer(handle, 'pointerdown');
+    pointer(handle, 'pointermove', { clientY: 180 });
+    pointer(handle, 'pointercancel');
+    pointer(handle, 'pointerup', { clientY: 180 });
+    fireEvent.click(handle, { detail: 1 });
+    expect(mocks.orderState.closeOrderMap).not.toHaveBeenCalled();
+
+    pointer(handle, 'pointerdown');
+    pointer(handle, 'pointerup');
+    fireEvent.click(handle, { detail: 1 });
+    expect(mocks.orderState.closeOrderMap).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not treat a swipe inside the card as a collapse gesture', () => {
+    renderDrawer();
+    const scroll = screen.getByTestId('order-map-drawer-scroll');
+
+    pointer(scroll, 'pointerdown');
+    pointer(scroll, 'pointermove', { clientY: 180 });
+    pointer(scroll, 'pointerup', { clientY: 180 });
+
+    expect(mocks.orderState.closeOrderMap).not.toHaveBeenCalled();
+  });
+
+  it('allows keyboard activation after an unfinished swipe', () => {
+    renderDrawer();
+    const handle = screen.getByTestId('order-map-drawer-handle');
+
+    pointer(handle, 'pointerdown');
+    pointer(handle, 'pointermove', { clientY: 120 });
+    pointer(handle, 'pointerup', { clientY: 120 });
+    fireEvent.click(handle, { detail: 0 });
+
+    expect(mocks.orderState.closeOrderMap).toHaveBeenCalledTimes(1);
   });
 
   it('turns the map sheet red when the order is cancelled', () => {
@@ -240,7 +396,7 @@ describe('OrderMapDrawer', () => {
     renderDrawer();
 
     expect(screen.getByTestId('order-map-drawer-paper')).toHaveStyle({
-      background: ORDER_CARD_DELETED_BG,
+      backgroundColor: ORDER_CARD_DELETED_BG,
     });
     expect(screen.getByTestId('order-card')).toHaveStyle({
       backgroundColor: ORDER_CARD_DELETED_BG,

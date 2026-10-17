@@ -17,6 +17,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useFeedbackStore } from '@/widgets/feedback/model/feedback.store';
 import { feedbackTypes } from '@/entities/feedback/model/types';
 import { clampFeedbackFontSize } from '@/widgets/feedback/model/feedbackTypography';
+import {
+  FEEDBACK_IMAGES_ONLY_MESSAGE,
+  isFeedbackImageFile,
+} from '@/widgets/feedback/model/feedbackAttachments';
 import { appDarkPalette } from '@/shared/styles/appPalette';
 
 interface CreateFeedbackDialogProps {
@@ -30,8 +34,17 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
   onClose,
   globalFontSize,
 }) => {
-  const { type, title, description, img, is_need_notification, setForm, saveFeedbacks, isSaving } =
-    useFeedbackStore();
+  const {
+    type,
+    title,
+    description,
+    img,
+    is_need_notification,
+    setForm,
+    saveFeedbacks,
+    isSaving,
+    setSnackbar,
+  } = useFeedbackStore();
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const imagePreviews = React.useMemo(
     () =>
@@ -59,9 +72,16 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
   };
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []).filter((file) =>
-      file.type.toLowerCase().startsWith('image/')
-    );
+    const selectedFiles = Array.from(event.target.files ?? []);
+    const files = selectedFiles.filter(isFeedbackImageFile);
+    if (files.length !== selectedFiles.length) {
+      setSnackbar({
+        vertical: 'top',
+        horizontal: 'center',
+        severity: 'error',
+        message: FEEDBACK_IMAGES_ONLY_MESSAGE,
+      });
+    }
     if (files.length > 0) {
       setForm('img', [...(img ?? []), ...files]);
     }
@@ -70,9 +90,16 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
 
   const handleDropFiles = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    const files = Array.from(event.dataTransfer.files ?? []).filter((file) =>
-      file.type.toLowerCase().startsWith('image/')
-    );
+    const selectedFiles = Array.from(event.dataTransfer.files ?? []);
+    const files = selectedFiles.filter(isFeedbackImageFile);
+    if (files.length !== selectedFiles.length) {
+      setSnackbar({
+        vertical: 'top',
+        horizontal: 'center',
+        severity: 'error',
+        message: FEEDBACK_IMAGES_ONLY_MESSAGE,
+      });
+    }
     if (files.length > 0) {
       setForm('img', [...(img ?? []), ...files]);
     }
@@ -356,6 +383,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
         <Box
           role="button"
           tabIndex={0}
+          data-testid="feedback-attachment-dropzone"
           onClick={() => fileInputRef.current?.click()}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
@@ -397,6 +425,7 @@ export const CreateFeedbackDialog: React.FC<CreateFeedbackDialogProps> = ({
           hidden
           multiple
           accept="image/*"
+          data-testid="feedback-attachment-input"
           onChange={handleFileInputChange}
         />
 

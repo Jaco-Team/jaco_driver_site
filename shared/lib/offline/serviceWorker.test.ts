@@ -2,8 +2,12 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { OFFLINE_MAP_ASSET_PATHS } from './offlineMapAssets';
+import { OFFLINE_MAP_RUNTIME_URL } from './offlineMapRuntime';
 
 const workerSource = readFileSync(`${import.meta.dirname}/../../../public/sw.js`, 'utf8');
+const workerVersion = workerSource.match(/^const VERSION = '(v\d+)';$/m)?.[1];
+if (!workerVersion) throw new Error('Missing service worker cache version');
+const assetCacheName = `jaco-assets-${workerVersion}`;
 
 function createWorker() {
   const match = vi.fn().mockResolvedValue(undefined);
@@ -83,7 +87,7 @@ describe('service worker network fallbacks', () => {
     await expect(worker.request('/list_orders', 'navigate')).resolves.toBe(offline);
   });
 
-  it.each(['jaco-assets-v45', 'jaco-offline-app-v2'])(
+  it.each([assetCacheName, 'jaco-offline-app-v2'])(
     'serves an immutable Next.js chunk from %s without waiting for the network',
     async (cacheName) => {
       const worker = createWorker();
@@ -107,7 +111,7 @@ describe('service worker network fallbacks', () => {
     worker.fetchMock.mockResolvedValue(response);
 
     await expect(worker.request('/_next/static/chunks/page-456def.js')).resolves.toBe(response);
-    expect(worker.open).toHaveBeenCalledWith('jaco-assets-v45');
+    expect(worker.open).toHaveBeenCalledWith(assetCacheName);
     expect(worker.put).toHaveBeenCalledTimes(1);
     for (const [, options] of worker.match.mock.calls) {
       expect(options).not.toHaveProperty('ignoreSearch');
@@ -117,7 +121,7 @@ describe('service worker network fallbacks', () => {
   it.each([
     ['/list_orders', 'navigate'],
     ['/_next/static/chunks/page-123abc.js', 'cors'],
-    ['/offline-map/offline-orders-map.mjs?v=30', 'cors'],
+    [OFFLINE_MAP_RUNTIME_URL, 'cors'],
   ] as const)('keeps a successful response for %s when the cache is full', async (path, mode) => {
     const worker = createWorker();
     const response = new Response('network response');
@@ -129,7 +133,7 @@ describe('service worker network fallbacks', () => {
 
   it.each([
     ['/_next/static/chunks/page-123abc.js', 'cors'],
-    ['/offline-map/offline-orders-map.mjs?v=30', 'cors'],
+    [OFFLINE_MAP_RUNTIME_URL, 'cors'],
     ['/icon.svg', 'cors'],
     ['/list_orders', 'navigate'],
   ] as const)('uses the network for %s when Cache Storage is unavailable', async (path, mode) => {
@@ -153,6 +157,41 @@ describe('service worker network fallbacks', () => {
 });
 
 describe('offline map service worker cache', () => {
+  it('keeps downloaded tiles and offline pages when a new worker removes obsolete asset caches', async () => {
+    const listeners: Record<string, (event: unknown) => void> = {};
+    const deleteCache = vi.fn().mockResolvedValue(true);
+    const claim = vi.fn().mockResolvedValue(undefined);
+    runInNewContext(workerSource, {
+      self: {
+        clients: { claim },
+        addEventListener: (name: string, callback: (event: unknown) => void) => {
+          listeners[name] = callback;
+        },
+      },
+      caches: {
+        keys: vi
+          .fn()
+          .mockResolvedValue([
+            'jaco-assets-obsolete',
+            'jaco-pages-obsolete',
+            assetCacheName,
+            `jaco-pages-${workerVersion}`,
+            'jaco-offline-app-v2',
+            'jaco-yandex-offline-tiles-v1',
+            'unrelated-cache',
+          ]),
+        delete: deleteCache,
+      },
+    });
+    const waitUntil = vi.fn();
+    listeners.activate({ waitUntil });
+    expect(waitUntil).toHaveBeenCalledTimes(1);
+    await waitUntil.mock.calls[0][0];
+
+    expect(deleteCache.mock.calls).toEqual([['jaco-assets-obsolete'], ['jaco-pages-obsolete']]);
+    expect(claim).toHaveBeenCalledTimes(1);
+  });
+
   it.each(OFFLINE_MAP_ASSET_PATHS)(
     'serves %s offline despite a different Accept-Encoding header',
     async (path) => {

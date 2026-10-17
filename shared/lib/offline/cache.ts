@@ -17,6 +17,7 @@ export interface OfflineOrdersSnapshot {
   ordersByContext?: Record<string, Order[]>;
   type: OrderType;
   type_dop: string[];
+  statusFilterVersion?: number;
   update_interval: number;
   limit: string;
   limit_count: string;

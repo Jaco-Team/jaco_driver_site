@@ -13,6 +13,7 @@ import { styled } from '@mui/material/styles';
 
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { appDarkPalette, appPalette, appSuccessPalette } from '@/shared/styles/appPalette';
+import { scaleGlobalFontSize } from '@/shared/lib/fontSize';
 
 const SELECTED_TYPE_BG_LIGHT = appPalette.surfaceAlt;
 const SELECTED_TYPE_TEXT_LIGHT = appPalette.text;
@@ -162,7 +163,10 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
             }}
           >
             <Box />
-            <TitleText variant="h6" style={{ fontSize: globalFontSize + 2, lineHeight: 1.35 }}>
+            <TitleText
+              variant="h6"
+              style={{ fontSize: scaleGlobalFontSize(18, globalFontSize), lineHeight: 1.35 }}
+            >
               Список заказов
             </TitleText>
             <IconButton

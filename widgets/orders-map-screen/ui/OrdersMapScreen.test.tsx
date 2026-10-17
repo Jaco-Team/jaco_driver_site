@@ -37,6 +37,7 @@ const mocks = vi.hoisted(() => {
     },
     orderState: {
       orders: [],
+      sourceOrders: [],
       update_interval: 30,
       type: { id: 1, text: 'Активные' },
       limit: '1/5',
@@ -55,9 +56,11 @@ const mocks = vi.hoisted(() => {
         { id: 2, text: 'Готовится' },
       ],
       type_dop: ['1', '2'],
+      typeToStatus: { 1: 'В очереди', 2: 'Готовится' },
       is_showModalTypeDop: false,
       isClick: false,
       is_load: false,
+      is_check: false,
       getOrders: vi.fn(),
       showOrdersMap: vi.fn(),
       setType: vi.fn(),
@@ -105,9 +108,11 @@ vi.mock('@pbe/react-yandex-maps', async () => {
     Map: ({
       children,
       instanceRef,
+      options,
     }: {
       children: React.ReactNode;
       instanceRef?: (ref: any) => void;
+      options?: { suppressMapOpenBlock?: boolean };
     }) => {
       useEffect(() => {
         instanceRef?.(mocks.mapInstance);
@@ -115,7 +120,11 @@ vi.mock('@pbe/react-yandex-maps', async () => {
         return () => instanceRef?.(null);
       }, [instanceRef]);
 
-      return <div data-testid="map">{children}</div>;
+      return (
+        <div data-testid="map" data-suppress-map-open-block={options?.suppressMapOpenBlock}>
+          {children}
+        </div>
+      );
     },
     Placemark: ({ onClick }: { onClick?: () => void }) => {
       useEffect(() => {
@@ -213,6 +222,10 @@ describe('OrdersMapScreen', () => {
     mocks.orderState.type = { id: 1, text: 'Активные' };
     mocks.orderState.orders = [];
     mocks.orderState.update_interval = 30;
+    mocks.orderState.isClick = false;
+    mocks.orderState.is_load = false;
+    mocks.orderState.is_check = false;
+    mocks.headerState.is_scaleMap = true;
     mocks.isOnline = true;
     mocks.headerState.night_map = false;
     mocks.headerState.darkTheme = false;
@@ -225,6 +238,7 @@ describe('OrdersMapScreen', () => {
     render(<OrdersMapScreen />);
 
     expect(screen.getByTestId('map')).toBeInTheDocument();
+    expect(screen.getByTestId('map')).toHaveAttribute('data-suppress-map-open-block', 'true');
     expect(screen.getByRole('button', { name: 'Показать пробки на карте' })).toBeInTheDocument();
     expect(screen.getByRole('slider', { name: 'Масштаб карты' })).toBeInTheDocument();
     expect(screen.getByText('1/5')).toBeInTheDocument();
@@ -240,6 +254,55 @@ describe('OrdersMapScreen', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Скрыть пробки на карте' }));
     expect(mocks.trafficSetMap).toHaveBeenLastCalledWith(null);
+  });
+
+  it('refreshes orders using the same action as the header', () => {
+    render(<OrdersMapScreen />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Обновить заказы' }));
+
+    expect(mocks.orderState.getOrders).toHaveBeenCalledTimes(1);
+    expect(mocks.orderState.getOrders).toHaveBeenCalledWith(true);
+    expect(mocks.setZoom).not.toHaveBeenCalled();
+  });
+
+  it('keeps the refresh control when zoom is disabled and the theme is dark', () => {
+    mocks.headerState.is_scaleMap = false;
+    mocks.headerState.darkTheme = true;
+    render(<OrdersMapScreen />);
+
+    expect(screen.queryByRole('slider', { name: 'Масштаб карты' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Обновить заказы' })).toBeEnabled();
+  });
+
+  it.each(['is_check', 'is_load'])('accepts refresh while regular loading %s is active', (flag) => {
+    mocks.orderState[flag] = true;
+    render(<OrdersMapScreen />);
+
+    const refresh = screen.getByRole('button', { name: 'Обновить заказы' });
+    expect(refresh).toBeEnabled();
+    fireEvent.click(refresh);
+    expect(mocks.orderState.getOrders).toHaveBeenCalledWith(true);
+  });
+
+  it('blocks refresh only during an order action', () => {
+    mocks.orderState.isClick = true;
+    render(<OrdersMapScreen />);
+
+    const refresh = screen.getByRole('button', { name: 'Обновить заказы' });
+    expect(refresh).toBeDisabled();
+    fireEvent.click(refresh);
+    expect(mocks.orderState.getOrders).not.toHaveBeenCalled();
+  });
+
+  it('hides refresh offline and restores it when the connection returns', () => {
+    mocks.isOnline = false;
+    const { rerender } = render(<OrdersMapScreen />);
+    expect(screen.queryByRole('button', { name: 'Обновить заказы' })).not.toBeInTheDocument();
+
+    mocks.isOnline = true;
+    rerender(<OrdersMapScreen />);
+    expect(screen.getByRole('button', { name: 'Обновить заказы' })).toBeInTheDocument();
   });
 
   it('does not show the cached map before the online map is ready', () => {

@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { PointerEvent } from 'react';
 import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
 import CircularProgress from '@mui/material/CircularProgress';
-import SwipeableDrawer from '@mui/material/SwipeableDrawer';
+import Drawer from '@mui/material/Drawer';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
@@ -15,6 +16,7 @@ import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { roboto } from '@/shared/config/fonts';
 import { OrderCard, ORDER_CARD_DELETED_BG } from '@/widgets/order/ui/components/OrderCard';
+import { scaleGlobalFontSize } from '@/shared/lib/fontSize';
 
 export function OrderMapDrawer() {
   const theme = useTheme();
@@ -49,13 +51,33 @@ export function OrderMapDrawer() {
   const selectedOrder = showOrders.find((item) => item.id === selectedOrderId) ?? null;
 
   const actionsBusy = isClick || is_load;
+  const drag = useRef<{ pointerId: number; x: number; y: number; moved: boolean } | null>(null);
+  const ignoreDragClick = useRef(false);
+
+  useEffect(() => {
+    if (drag.current) ignoreDragClick.current = true;
+    drag.current = null;
+  }, [isOpenOrderMap, groupKey, actionsBusy]);
+
   const sheetDeleted =
     showOrders.length > 0 && showOrders.every((item) => parseInt(`${item?.is_delete}`, 10) === 1);
 
   const closeDrawer = () => {
     if (actionsBusy) return;
+    drag.current = null;
     setSelection({ groupKey: '', orderId: null });
     closeOrderMap();
+  };
+
+  const finishDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    const start = drag.current;
+    if (!start || start.pointerId !== event.pointerId) return;
+    drag.current = null;
+    const dx = Math.abs(event.clientX - start.x);
+    const dy = event.clientY - start.y;
+    // A drag must not turn into a tap when the browser emits click on release.
+    ignoreDragClick.current = start.moved || dx > 8 || Math.abs(dy) > 8;
+    if (dy >= 48 && dy > dx * 1.25) closeDrawer();
   };
 
   const handleAction = (action: string, orderId: number) => {
@@ -70,12 +92,10 @@ export function OrderMapDrawer() {
   };
 
   return (
-    <SwipeableDrawer
+    <Drawer
       anchor="bottom"
       open={isOpenOrderMap}
       onClose={closeDrawer}
-      onOpen={() => {}}
-      disableSwipeToOpen
       data-testid="order-map-drawer"
       className={`modalOrderMap ${roboto.variable}`}
       slotProps={{
@@ -84,13 +104,16 @@ export function OrderMapDrawer() {
           sx: {
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
-            maxHeight: '75vh',
+            maxHeight: '92dvh',
             height: 'auto',
             bottom: 0,
             top: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
             background: sheetDeleted ? ORDER_CARD_DELETED_BG : theme.palette.background.paper,
             color: sheetDeleted ? '#fff' : theme.palette.text.primary,
             overflow: 'hidden',
+            overscrollBehavior: 'contain',
             border: `1px solid ${theme.palette.divider}`,
             boxShadow: isDarkTheme
               ? '0 24px 44px rgba(0, 0, 0, 0.46)'
@@ -99,26 +122,72 @@ export function OrderMapDrawer() {
         } as any,
       }}
     >
-      <Box sx={{ position: 'relative' }}>
+      <Box
+        sx={{
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          height: 'auto',
+          minHeight: 0,
+          maxHeight: '92dvh',
+          overflow: 'hidden',
+        }}
+      >
         <Box
           sx={{
             px: 2.5,
-            pt: 1.15,
-            pb: 'calc(env(safe-area-inset-bottom, 0px) + 14px)',
-            maxHeight: '75vh',
-            overflowY: 'auto',
+            flexShrink: 0,
           }}
         >
-          <Box
+          <ButtonBase
+            aria-label="Свернуть карточку заказа"
+            disabled={actionsBusy}
             sx={{
               width: '100%',
+              height: 48,
               display: 'flex',
               justifyContent: 'center',
-              pb: 1.25,
-              cursor: actionsBusy ? 'default' : 'pointer',
+              touchAction: 'none',
+              userSelect: 'none',
+              cursor: actionsBusy ? 'default' : 'grab',
             }}
             data-testid="order-map-drawer-handle"
-            onClick={closeDrawer}
+            onPointerDown={(event) => {
+              if (actionsBusy || event.button !== 0 || event.isPrimary === false) return;
+              ignoreDragClick.current = false;
+              drag.current = {
+                pointerId: event.pointerId,
+                x: event.clientX,
+                y: event.clientY,
+                moved: false,
+              };
+              event.currentTarget.setPointerCapture?.(event.pointerId);
+            }}
+            onPointerMove={(event) => {
+              const start = drag.current;
+              if (!start || start.pointerId !== event.pointerId) return;
+              if (Math.abs(event.clientX - start.x) > 8 || Math.abs(event.clientY - start.y) > 8) {
+                start.moved = true;
+              }
+            }}
+            onPointerUp={finishDrag}
+            onPointerCancel={() => {
+              drag.current = null;
+              ignoreDragClick.current = true;
+            }}
+            onLostPointerCapture={() => {
+              if (drag.current) {
+                drag.current = null;
+                ignoreDragClick.current = true;
+              }
+            }}
+            onClick={(event) => {
+              if (event.detail !== 0 && ignoreDragClick.current) {
+                ignoreDragClick.current = false;
+                return;
+              }
+              closeDrawer();
+            }}
           >
             <Box
               sx={{
@@ -130,16 +199,7 @@ export function OrderMapDrawer() {
                   : 'rgba(31, 43, 54, 0.2)',
               }}
             />
-          </Box>
-
-          {isGroup && !selectedOrder ? (
-            <OrderGroupList
-              actionsBusy={actionsBusy}
-              globalFontSize={globalFontSize}
-              orders={showOrders}
-              onSelect={(orderId) => setSelection({ groupKey, orderId })}
-            />
-          ) : null}
+          </ButtonBase>
 
           {isGroup && selectedOrder ? (
             <ButtonBase
@@ -177,6 +237,31 @@ export function OrderMapDrawer() {
               </Box>
             </ButtonBase>
           ) : null}
+        </Box>
+
+        <Box
+          data-testid="order-map-drawer-scroll"
+          sx={{
+            flex: '0 1 auto',
+            minHeight: 0,
+            px: 2.5,
+            pb: 'calc(env(safe-area-inset-bottom, 0px) + 14px)',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            overscrollBehaviorY: 'contain',
+            touchAction: 'pan-y',
+            WebkitOverflowScrolling: 'touch',
+            boxSizing: 'border-box',
+          }}
+        >
+          {isGroup && !selectedOrder ? (
+            <OrderGroupList
+              actionsBusy={actionsBusy}
+              globalFontSize={globalFontSize}
+              orders={showOrders}
+              onSelect={(orderId) => setSelection({ groupKey, orderId })}
+            />
+          ) : null}
 
           {(isGroup ? (selectedOrder ? [selectedOrder] : []) : showOrders).map((item) => (
             <OrderCard
@@ -211,7 +296,7 @@ export function OrderMapDrawer() {
           </Box>
         ) : null}
       </Box>
-    </SwipeableDrawer>
+    </Drawer>
   );
 }
 
@@ -232,12 +317,15 @@ function OrderGroupList({
   );
 
   return (
-    <Box data-testid="order-map-group-list" sx={{ pb: 0.75 }}>
+    <Box
+      data-testid="order-map-group-list"
+      sx={{ width: '100%', maxWidth: '100%', minWidth: 0, pb: 0.75 }}
+    >
       <Typography
         data-testid="order-map-group-title"
         sx={{
           color: 'text.primary',
-          fontSize: globalFontSize + 4,
+          fontSize: scaleGlobalFontSize(20, globalFontSize),
           fontWeight: 700,
           lineHeight: 1.35,
         }}
@@ -264,10 +352,15 @@ function OrderGroupList({
               backgroundColor: theme.palette.background.paper,
               border: `1px solid ${theme.palette.divider}`,
               borderRadius: '16px',
-              display: 'flex',
+              display: 'grid',
               gap: 1.25,
-              justifyContent: 'space-between',
+              gridTemplateColumns:
+                globalFontSize >= 22 ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(100px, 42%)',
               minHeight: 76,
+              minWidth: 0,
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+              overflow: 'hidden',
               px: 1.75,
               py: 1.5,
               textAlign: 'left',
@@ -304,17 +397,31 @@ function OrderGroupList({
               </Typography>
             </Box>
 
-            <Box sx={{ alignItems: 'center', display: 'flex', flex: '0 1 42%', gap: 0.75 }}>
+            <Box
+              sx={{
+                alignItems: 'center',
+                display: 'flex',
+                gap: 0.75,
+                justifyContent: globalFontSize >= 22 ? 'space-between' : 'flex-end',
+                minWidth: 0,
+                width: '100%',
+              }}
+            >
               <Typography
                 sx={{
                   color: 'text.primary',
                   fontSize: Math.max(12, globalFontSize - 1),
                   fontWeight: 600,
+                  minWidth: 0,
+                  overflowWrap: 'anywhere',
                 }}
               >
                 {item.point_text || item.to_time || ''}
               </Typography>
-              <Typography aria-hidden sx={{ color: 'text.secondary', fontSize: 28, lineHeight: 1 }}>
+              <Typography
+                aria-hidden
+                sx={{ color: 'text.secondary', flexShrink: 0, fontSize: 28, lineHeight: 1 }}
+              >
                 ›
               </Typography>
             </Box>

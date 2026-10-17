@@ -172,6 +172,68 @@ describe('feedback store', () => {
     expect(formData.getAll('images[]')).toEqual([first, second]);
   });
 
+  it('does not send video even when it was injected into the draft', async () => {
+    const video = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
+    useFeedbackStore.setState({
+      title: 'Видео',
+      description: 'Видео нельзя отправлять',
+      img: [video],
+    });
+
+    await useFeedbackStore.getState().saveFeedbacks();
+
+    expect(mocks.saveFeedbacks).not.toHaveBeenCalled();
+    expect(useFeedbackStore.getState().snackbar).toMatchObject({
+      open: true,
+      severity: 'error',
+      message: 'Можно загружать только изображения.',
+    });
+  });
+
+  it.each([false, true])(
+    'rejects mixed attachments before multipart submission (video first: %s)',
+    async (videoFirst) => {
+      const image = new File(['photo'], 'photo.jpg', { type: 'image/jpeg' });
+      const video = new File(['video'], 'clip.jpg', { type: 'video/mp4' });
+      const attachments = videoFirst ? [video, image] : [image, video];
+      useFeedbackStore.setState({
+        title: 'Смешанные вложения',
+        description: 'Фото и видео',
+        img: attachments,
+        addModal: true,
+      });
+
+      await useFeedbackStore.getState().saveFeedbacks();
+
+      expect(mocks.saveFeedbacks).not.toHaveBeenCalled();
+      expect(mocks.getFeedbacks).not.toHaveBeenCalled();
+      expect(useFeedbackStore.getState()).toMatchObject({
+        title: 'Смешанные вложения',
+        description: 'Фото и видео',
+        img: attachments,
+        addModal: true,
+        isSaving: false,
+        snackbar: { open: true, severity: 'error', message: 'Можно загружать только изображения.' },
+      });
+    }
+  );
+
+  it('sends images with missing MIME and normalized MIME without losing files', async () => {
+    mocks.saveFeedbacks.mockResolvedValue({ message: 'Сохранено' });
+    mocks.getFeedbacks.mockResolvedValue({ data: [] });
+    const files = [
+      new File(['one'], 'PHOTO.JPG'),
+      new File(['two'], 'second.png', { type: ' IMAGE/PNG ' }),
+    ];
+    useFeedbackStore.setState({ title: 'Фото', description: 'Два изображения', img: files });
+
+    await useFeedbackStore.getState().saveFeedbacks();
+
+    expect(mocks.saveFeedbacks).toHaveBeenCalledTimes(1);
+    expect((mocks.saveFeedbacks.mock.calls[0][0] as FormData).getAll('images[]')).toEqual(files);
+    expect(useFeedbackStore.getState().isSaving).toBe(false);
+  });
+
   it('clears the previously loaded list without keeping feedback offline', async () => {
     useFeedbackStore.setState({
       feedbacks: sampleFeedbacks,

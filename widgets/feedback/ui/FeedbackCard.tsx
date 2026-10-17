@@ -18,7 +18,7 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
   const normalizedTitle = String(feedback.title ?? '').trim();
   const normalizedDescription = (feedback.description || '').trim();
   const isCompactCard = normalizedTitle.length <= 24 && normalizedDescription.length <= 40;
-  const titleFontSize = clampFeedbackFontSize(globalFontSize + 5, 18, 30);
+  const titleFontSize = clampFeedbackFontSize(globalFontSize + 5, 18, 26);
   const descriptionFontSize = clampFeedbackFontSize(globalFontSize, 14, 24);
   const footerFontSize = clampFeedbackFontSize(globalFontSize - 2, 12, 20);
   const chipFontSize = clampFeedbackFontSize(globalFontSize - 2, 12, 19);

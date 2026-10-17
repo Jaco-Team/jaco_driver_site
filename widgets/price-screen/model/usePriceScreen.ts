@@ -10,6 +10,7 @@ import { useConnectivityStore } from '@/features/offline/model/connectivity.stor
 import { useRetryOnlineRequest } from '@/features/offline/model/useRetryOnlineRequest';
 import { devLog } from '@/shared/lib/devLog';
 import { log } from '@/components/analytics';
+import { scaleGlobalFontSize } from '@/shared/lib/fontSize';
 import type {
   ActivePricePicker,
   PriceMetricRowData,
@@ -199,7 +200,10 @@ export function usePriceScreen(): UsePriceScreenResult {
     () => `${formatPrice(statPrice?.my_price)} ₽`,
     [formatPrice, statPrice]
   );
-  const totalPriceFontSize = useMemo(() => Math.max(globalFontSize * 2.6, 48), [globalFontSize]);
+  const totalPriceFontSize = useMemo(
+    () => scaleGlobalFontSize(26, globalFontSize),
+    [globalFontSize]
+  );
   const startDateLabel = useMemo(() => formatDate(startDate), [formatDate, startDate]);
   const endDateLabel = useMemo(() => formatDate(endDate), [endDate, formatDate]);
   const pickerValue = useMemo(

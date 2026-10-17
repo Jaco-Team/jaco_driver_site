@@ -1,17 +1,16 @@
-const DEFAULT_GLOBAL_FONT_SIZE = 16;
-const MIN_GLOBAL_FONT_SIZE = 10;
-const MAX_GLOBAL_FONT_SIZE = 40;
+import {
+  MAX_GLOBAL_FONT_SIZE,
+  MIN_GLOBAL_FONT_SIZE,
+  normalizeGlobalFontSize,
+} from '@/shared/lib/fontSize';
 
 export function normalizeFeedbackFontSize(value: number | null | undefined): number {
-  const parsed = Number(value);
-
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return DEFAULT_GLOBAL_FONT_SIZE;
-  }
-
-  return Math.min(MAX_GLOBAL_FONT_SIZE, Math.max(MIN_GLOBAL_FONT_SIZE, parsed));
+  return normalizeGlobalFontSize(value);
 }
 
 export function clampFeedbackFontSize(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
+  const normalizedMin = Math.min(MAX_GLOBAL_FONT_SIZE, Math.max(MIN_GLOBAL_FONT_SIZE, min));
+  const normalizedMax = Math.min(MAX_GLOBAL_FONT_SIZE, Math.max(normalizedMin, max));
+
+  return Math.min(normalizedMax, Math.max(normalizedMin, value));
 }

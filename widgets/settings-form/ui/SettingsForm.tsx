@@ -28,15 +28,23 @@ import { TypeShowDel } from '@/entities/settings';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
 import { OfflineCityMapsSettings } from '@/features/offline-map/ui/OfflineCityMapsSettings';
+import { scaleGlobalFontSize } from '@/shared/lib/fontSize';
+import { resolveMarkerTheme } from '@/shared/lib/markerTheme';
+import { useHeaderStore } from '@/features/header/model/header.store';
+import { SETTINGS_RESET_CONFIRMATION } from '@/entities/settings/model/settingsDefaults';
 
 export const SettingsForm: React.FC = () => {
   const isOnline = useConnectivityStore((state) => state.isOnline);
+  const isDarkMap = useHeaderStore((state) => state.darkTheme);
   const [isCafeSheetOpen, setIsCafeSheetOpen] = useState(false);
   const {
     isDemoAccount,
     isDeleteSheetOpen,
     isDeletingAccount,
     isSaving,
+    isResetting,
+    isResetSheetOpen,
+    isLoad,
     pointId,
     points,
     globalFontSize,
@@ -67,6 +75,9 @@ export const SettingsForm: React.FC = () => {
     setFontSize,
     setMapScale,
     handleSave,
+    openResetSheet,
+    closeResetSheet,
+    confirmSettingsReset,
     closeSnackbar,
     setIsDeleteSheetOpen,
     confirmDemoAccountDeletion,
@@ -114,13 +125,18 @@ export const SettingsForm: React.FC = () => {
   const currentPoint = pointOptions.find((p) => String(p.id) === String(pointId ?? '')) ?? null;
   const normalizedGlobalFontSize =
     Number.isFinite(globalFontSize) && globalFontSize > 0 ? globalFontSize : 16;
-  const introTitleFontSize = Math.min(Math.max(normalizedGlobalFontSize + 4, 18), 32);
-  const introTextFontSize = Math.min(Math.max(normalizedGlobalFontSize, 14), 24);
-  const dialogActionFontSize = Math.min(Math.max(normalizedGlobalFontSize + 1, 14), 18);
+  const introTitleFontSize = scaleGlobalFontSize(20, normalizedGlobalFontSize, 18, 26);
+  const introTextFontSize = scaleGlobalFontSize(16, normalizedGlobalFontSize, 14, 24);
+  const dialogActionFontSize = scaleGlobalFontSize(17, normalizedGlobalFontSize, 14, 18);
 
   const getTokenClassName = (variant: string): string => `settingsToken settingsToken--${variant}`;
+  const visibleMarkerTheme = resolveMarkerTheme(groupTypeTheme, isDarkMap);
   const selectPoint = (point: Point | null) => {
     const nextPointId = point?.id ?? null;
+    if (String(nextPointId ?? '') === String(pointId ?? '')) {
+      setIsCafeSheetOpen(false);
+      return;
+    }
     setPointId(nextPointId);
     useOrdersStore.getState().switchPoint(nextPointId);
     setIsCafeSheetOpen(false);
@@ -242,26 +258,29 @@ export const SettingsForm: React.FC = () => {
             <PlacemarkIcon fill={groupTypeTheme === 'classic' ? 'red' : 'blue'} />
             <span className={getTokenClassName('ya')}>Классический яндекс</span>
           </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={groupTypeTheme === 'transparent'}
-            className="settingsPreviewChoice settingsPreviewChoice--marker"
-            onClick={() => setGroupTypeTheme('transparent')}
-          >
-            <Location fill={groupTypeTheme === 'transparent' ? 'red' : 'blue'} />
-            <span className={getTokenClassName('transparent')}>21:46 (53 мин.)</span>
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={groupTypeTheme === 'transparent_white'}
-            className="settingsPreviewChoice settingsPreviewChoice--marker"
-            onClick={() => setGroupTypeTheme('transparent_white')}
-          >
-            <Location fill={groupTypeTheme === 'transparent_white' ? 'red' : 'blue'} />
-            <span className={getTokenClassName('transparentWhite')}>21:46 (53 мин.)</span>
-          </button>
+          {isDarkMap ? (
+            <button
+              type="button"
+              role="radio"
+              aria-checked={visibleMarkerTheme === 'transparent_white'}
+              className="settingsPreviewChoice settingsPreviewChoice--marker"
+              onClick={() => setGroupTypeTheme('transparent_white')}
+            >
+              <Location fill={visibleMarkerTheme === 'transparent_white' ? 'red' : 'blue'} />
+              <span className={getTokenClassName('transparentWhite')}>21:46 (53 мин.)</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              role="radio"
+              aria-checked={visibleMarkerTheme === 'transparent'}
+              className="settingsPreviewChoice settingsPreviewChoice--marker"
+              onClick={() => setGroupTypeTheme('transparent')}
+            >
+              <Location fill={visibleMarkerTheme === 'transparent' ? 'red' : 'blue'} />
+              <span className={getTokenClassName('transparent')}>21:46 (53 мин.)</span>
+            </button>
+          )}
           <button
             type="button"
             role="radio"
@@ -354,9 +373,23 @@ export const SettingsForm: React.FC = () => {
         <SaveButton
           onClick={handleSave}
           isSaving={isSaving}
-          disabled={!isOnline}
+          disabled={!isOnline || isResetting}
           fontSize={globalFontSize}
         />
+
+        <Grid size={12}>
+          <Button
+            className="settingsResetButton"
+            fullWidth
+            variant="outlined"
+            disabled={!isOnline || !isLoad || isSaving || isResetting}
+            onClick={openResetSheet}
+            sx={{ fontSize: scaleGlobalFontSize(17, normalizedGlobalFontSize, 15, 24) }}
+            data-testid="settings-reset"
+          >
+            Сбросить настройки
+          </Button>
+        </Grid>
 
         {isDemoAccount ? (
           <SettingsSection
@@ -390,6 +423,62 @@ export const SettingsForm: React.FC = () => {
 
       <SwipeableDrawer
         anchor="bottom"
+        open={isResetSheetOpen}
+        onOpen={openResetSheet}
+        onClose={closeResetSheet}
+        disableSwipeToOpen
+        slotProps={{ paper: { className: 'settingsResetSheet' } }}
+      >
+        <Box
+          className="settingsResetSheet__content"
+          data-testid="settings-reset-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="settings-reset-title"
+          aria-describedby="settings-reset-description"
+        >
+          <Box className="settingsDeleteSheet__handle" />
+          <Box className="settingsResetSheet__scroll">
+            <Typography
+              component="h2"
+              id="settings-reset-title"
+              className="settingsDeleteSheet__title"
+              sx={{ fontSize: scaleGlobalFontSize(22, normalizedGlobalFontSize, 20, 26) }}
+            >
+              Сбросить настройки?
+            </Typography>
+            <Typography
+              id="settings-reset-description"
+              className="settingsDeleteSheet__text"
+              sx={{ fontSize: scaleGlobalFontSize(16, normalizedGlobalFontSize, 14, 21) }}
+            >
+              {SETTINGS_RESET_CONFIRMATION}
+            </Typography>
+          </Box>
+          <Box className="settingsResetSheet__actions">
+            <Button
+              disabled={isResetting}
+              onClick={closeResetSheet}
+              sx={{ fontSize: scaleGlobalFontSize(17, normalizedGlobalFontSize, 15, 24) }}
+              data-testid="settings-reset-cancel"
+            >
+              Отмена
+            </Button>
+            <Button
+              disabled={!isOnline || !isLoad || isSaving || isResetting}
+              onClick={() => void confirmSettingsReset()}
+              aria-busy={isResetting}
+              sx={{ fontSize: scaleGlobalFontSize(17, normalizedGlobalFontSize, 15, 24) }}
+              data-testid="settings-reset-confirm"
+            >
+              {isResetting ? 'Сбрасываем...' : 'Сбросить и сохранить'}
+            </Button>
+          </Box>
+        </Box>
+      </SwipeableDrawer>
+
+      <SwipeableDrawer
+        anchor="bottom"
         open={isCafeSheetOpen}
         onOpen={() => setIsCafeSheetOpen(true)}
         onClose={() => setIsCafeSheetOpen(false)}
@@ -399,7 +488,7 @@ export const SettingsForm: React.FC = () => {
           <Box className="settingsCafeSheet__handle" />
           <Typography
             className="settingsCafeSheet__title"
-            sx={{ fontSize: Math.min(Math.max(normalizedGlobalFontSize + 8, 22), 30) }}
+            sx={{ fontSize: scaleGlobalFontSize(24, normalizedGlobalFontSize, 22, 26) }}
           >
             Выберите кафе
           </Typography>
@@ -412,7 +501,7 @@ export const SettingsForm: React.FC = () => {
                 aria-checked={String(point.id) === String(pointId)}
                 selected={String(point.id) === String(pointId)}
                 onClick={() => selectPoint(point)}
-                sx={{ fontSize: Math.min(Math.max(normalizedGlobalFontSize + 2, 16), 22) }}
+                sx={{ fontSize: scaleGlobalFontSize(18, normalizedGlobalFontSize, 16, 22) }}
               >
                 {point.name}
               </ListItemButton>
@@ -434,7 +523,7 @@ export const SettingsForm: React.FC = () => {
           <Box className="settingsDeleteSheet__handle" />
           <Typography
             className="settingsDeleteSheet__title"
-            sx={{ fontSize: Math.min(Math.max(normalizedGlobalFontSize + 6, 20), 28) }}
+            sx={{ fontSize: scaleGlobalFontSize(22, normalizedGlobalFontSize, 20, 26) }}
           >
             Удалить аккаунт?
           </Typography>

@@ -9,6 +9,8 @@ import { isAppOnline, markAppOffline } from '@/features/offline/model/connectivi
 import { readOfflineCache, writeOfflineCache } from '@/shared/lib/offline/cache';
 import { isConnectivityError } from '@/shared/lib/offline/isConnectivityError';
 import type { Point } from '@/entities/point';
+import { normalizeGlobalFontSize } from '@/shared/lib/fontSize';
+import { getAuthToken } from '@/shared/api/token';
 import {
   DriverSettingsPayload,
   SaveSettingsPayload,
@@ -80,6 +82,7 @@ interface SettingsActions {
 type SettingsStore = SettingsState & SettingsActions;
 
 let settingsFetchPromise: Promise<SettingsResponse> | null = null;
+let settingsRevision = 0;
 const SETTINGS_POINT_ID_STORAGE_KEY = 'jaco_driver_selected_cafe_id';
 
 function sortPointsByCityThenId(points: Point[]): Point[] {
@@ -99,6 +102,7 @@ function normalizeSettingsPayload(payload: DriverSettingsPayload): {
   pointId: number | null;
   points: Point[];
   cityId: string;
+  clearStoredPoint: boolean;
 } {
   const settings = unwrapSettingsPayload(payload);
   const points = sortPointsByCityThenId(
@@ -111,12 +115,9 @@ function normalizeSettingsPayload(payload: DriverSettingsPayload): {
     storedPointId !== null && (points.length === 0 || hasPoint(points, storedPointId));
   const pointId = isStoredPointAvailable ? storedPointId : normalizePointId(settings?.point_id);
 
-  if (storedPointId !== null && !isStoredPointAvailable && points.length > 0) {
-    writeStoredPointId(null);
-  }
-
   const normalizedSettings = {
     ...settings,
+    fontSize: normalizeGlobalFontSize(settings?.fontSize),
     point_id: pointId,
     map_hints: settings?.map_hints ?? 1,
     ai_recommend: settings?.ai_recommend ?? 0,
@@ -129,6 +130,7 @@ function normalizeSettingsPayload(payload: DriverSettingsPayload): {
     pointId,
     points,
     cityId: normalizeIdString(settings?.city_id),
+    clearStoredPoint: storedPointId !== null && !isStoredPointAvailable && points.length > 0,
   };
 }
 
@@ -168,6 +170,17 @@ function mergePointIdIntoSettings(
 
 const initialPointId = readStoredPointId();
 const cachedSettings = readOfflineCache()?.settings ?? null;
+const normalizedCachedSettings = cachedSettings
+  ? {
+      ...cachedSettings,
+      settings: cachedSettings.settings
+        ? {
+            ...cachedSettings.settings,
+            fontSize: normalizeGlobalFontSize(cachedSettings.settings.fontSize),
+          }
+        : null,
+    }
+  : null;
 
 function persistSettingsSnapshot(state: {
   settings: SettingsResponse | null;
@@ -188,12 +201,12 @@ function persistSettingsSnapshot(state: {
 export const useSettingsStore = createWithEqualityFn<SettingsStore>(
   (set, get) => ({
     isClick: false,
-    settings: cachedSettings?.settings ?? null,
+    settings: normalizedCachedSettings?.settings ?? null,
     settingsSynced: false,
-    pointId: cachedSettings?.pointId ?? initialPointId,
-    cityId: cachedSettings?.cityId ?? '',
-    points: cachedSettings?.points ?? [],
-    point_id: cachedSettings?.pointId ?? initialPointId,
+    pointId: normalizedCachedSettings?.pointId ?? initialPointId,
+    cityId: normalizedCachedSettings?.cityId ?? '',
+    points: normalizedCachedSettings?.points ?? [],
+    point_id: normalizedCachedSettings?.pointId ?? initialPointId,
 
     saveMySetting: async (
       token: string | undefined,
@@ -212,6 +225,8 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       map_hints: boolean,
       ai_recommend: boolean
     ) => {
+      if (!isAppOnline()) return { st: false, text: 'Нет интернета. Настройки не сохранены.' };
+      const sessionToken = getAuthToken();
       if (get().isClick === false) {
         set({ isClick: true });
       } else {
@@ -240,6 +255,10 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
           { data?: SaveSettingsPayload; settings?: SettingsResponse; message?: string },
           SaveSettingsPayload
         >(apiRoutes.settings.save, data);
+        if (getAuthToken() !== sessionToken) {
+          return { st: false, text: 'Сессия изменилась. Настройки не применены.' };
+        }
+        settingsRevision += 1;
         log('settings_save_success', 'Успешное сохранение настроек');
         const savedSettings = response?.settings ?? response?.data;
         const currentPointId = get().pointId;
@@ -247,6 +266,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
           ...(get().settings ?? {}),
           ...data,
           ...(savedSettings ?? {}),
+          fontSize: normalizeGlobalFontSize(savedSettings?.fontSize ?? data.fontSize),
           point_id: currentPointId,
         } as SettingsResponse;
         set({
@@ -323,9 +343,15 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
       }
 
       settingsFetchPromise = (async () => {
+        const requestRevision = settingsRevision;
         try {
           const payload = (await fetchDriverSettings()) as DriverSettingsPayload;
           const normalized = normalizeSettingsPayload(payload);
+
+          if (requestRevision !== settingsRevision) return get().settings ?? normalized.settings;
+
+          // Normalization must not change storage for an obsolete response.
+          if (normalized.clearStoredPoint) writeStoredPointId(null);
 
           set({
             settings: normalized.settings,
@@ -339,6 +365,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
 
           return normalized.settings;
         } catch (error) {
+          if (requestRevision !== settingsRevision && get().settings) return get().settings!;
           if (isConnectivityError(error)) {
             markAppOffline();
             const cached = readOfflineCache()?.settings;
@@ -348,14 +375,18 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
             }
 
             if (cached?.settings) {
+              const normalizedCachedResponse = {
+                ...cached.settings,
+                fontSize: normalizeGlobalFontSize(cached.settings.fontSize),
+              } as SettingsResponse;
               set({
-                settings: cached.settings,
+                settings: normalizedCachedResponse,
                 pointId: cached.pointId,
                 points: cached.points,
                 cityId: cached.cityId,
                 point_id: cached.pointId,
               });
-              return cached.settings;
+              return normalizedCachedResponse;
             }
           }
 

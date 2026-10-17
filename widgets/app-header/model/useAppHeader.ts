@@ -9,6 +9,7 @@ import { useSettingsStore } from '@/entities/settings';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useConnectivityStore } from '@/features/offline/model/connectivity.store';
+import { useOrderRecommendationStore } from '@/features/order-recommendation/model/orderRecommendation.store';
 import { devLog } from '@/shared/lib/devLog';
 import type { UseAppHeaderResult } from './useAppHeader.type';
 
@@ -49,12 +50,19 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
     state.getMyAvgTime,
   ]);
 
-  const [myCurrentLocation, showModalTypeDop, getOrders] = useOrdersStore((state) => [
-    state.MyCurrentLocation,
-    state.showModalTypeDop,
-    state.getOrders,
-  ]);
+  const [myCurrentLocation, showModalTypeDop, getOrders, orderType, selectedStatuses, statusTypes] =
+    useOrdersStore((state) => [
+      state.MyCurrentLocation,
+      state.showModalTypeDop,
+      state.getOrders,
+      state.type,
+      state.type_dop,
+      state.types_dop,
+    ]);
   const isOnline = useConnectivityStore((state) => state.isOnline);
+  const isRecommendationActive = useOrderRecommendationStore(
+    (state) => state.isLoading || state.result !== null
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -169,6 +177,10 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
 
   const pageTitle = resolvePageTitle(pathname, routeTitles, activePageRU);
   const isOrdersActionsVisible = pathname === '/list_orders' || pathname === '/map_orders';
+  const isStatusFilterVisible =
+    isOrdersActionsVisible && orderType.id === 1 && !isRecommendationActive;
+  const isStatusFilterActive =
+    isStatusFilterVisible && selectedStatuses.length < statusTypes.length;
 
   return {
     pathname,
@@ -178,6 +190,8 @@ export function useAppHeader(routeTitles: RouteTitles): UseAppHeaderResult {
     showModalTypeDop,
     getOrders,
     isOrdersActionsVisible,
+    isStatusFilterVisible,
+    isStatusFilterActive,
     isOnline,
     handleLogout,
   };
