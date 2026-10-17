@@ -1,8 +1,11 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 
+const localRequire = createRequire(import.meta.url);
+const dsn = 'https://0123456789abcdef0123456789abcdef@sentry.jacochef.ru/3';
 const source = readFileSync(new URL('../../next.config.js', import.meta.url), 'utf8');
 function load(env = {}) {
   let options;
@@ -10,6 +13,9 @@ function load(env = {}) {
   runInNewContext(source, {
     module: configModule, URL, process: { env: { NODE_ENV: 'production', ...env } },
     require(name) {
+      if (name === './shared/lib/monitoring/sentry-dsn') {
+        return localRequire('../../shared/lib/monitoring/sentry-dsn.js');
+      }
       if (name !== '@sentry/nextjs/config') throw new Error('Unexpected import');
       return { withSentryConfig(config, sentryOptions) { options = sentryOptions; return config; } };
     },
@@ -35,13 +41,22 @@ describe('self-hosted release publication boundary', () => {
 
   it('requires both credential and full source commit before uploading', () => {
     expect(() => load({ SENTRY_UPLOAD_SOURCEMAPS: '1' })).toThrow('SENTRY_BUILD_CREDENTIAL_OR_RELEASE_MISSING');
-    expect(() => load({ SENTRY_UPLOAD_SOURCEMAPS: '1', SENTRY_AUTH_TOKEN: 'synthetic', SENTRY_RELEASE: 'bad' }))
+    expect(() => load({ SENTRY_UPLOAD_SOURCEMAPS: '1', SENTRY_AUTH_TOKEN: 'synthetic', NEXT_PUBLIC_SENTRY_DSN: dsn, SENTRY_RELEASE: 'bad' }))
       .toThrow('SENTRY_BUILD_CREDENTIAL_OR_RELEASE_MISSING');
   });
 
+  it.each([undefined, '', dsn.replace('sentry.jacochef.ru', 'sentry.io'),
+    dsn.replace('/3', '/3/envelope/'), `${dsn}?token=secret`, dsn.replace('@', ':private@')])(
+    'rejects missing, stale SaaS and malformed public DSNs before upload: %s', (invalidDsn) => {
+      expect(() => load({ SENTRY_UPLOAD_SOURCEMAPS: '1', SENTRY_AUTH_TOKEN: 'synthetic',
+        SENTRY_RELEASE: `jaco-driver-frontend@${'a'.repeat(40)}`, NEXT_PUBLIC_SENTRY_DSN: invalidDsn }))
+        .toThrow('SENTRY_BUILD_PUBLIC_DSN_INVALID');
+    }
+  );
+
   it('optionally associates the build with the exact repository commit without claiming a deployment', () => {
     const commit = 'a'.repeat(40);
-    const { options } = load({ SENTRY_UPLOAD_SOURCEMAPS: '1', SENTRY_AUTH_TOKEN: 'synthetic',
+    const { options } = load({ SENTRY_UPLOAD_SOURCEMAPS: '1', SENTRY_AUTH_TOKEN: 'synthetic', NEXT_PUBLIC_SENTRY_DSN: dsn,
       SENTRY_RELEASE: `jaco-driver-frontend@${commit}`, SENTRY_SET_COMMITS: '1', SENTRY_ORG: 'own-org', SENTRY_PROJECT: 'own-project' });
     expect(options.release).toMatchObject({ name: `jaco-driver-frontend@${commit}`, create: true,
       finalize: true, setCommits: { repo: 'Jaco-Team/jaco_driver_site', commit }, deploy: false });
@@ -53,7 +68,7 @@ describe('self-hosted release publication boundary', () => {
   });
 
   it('uploads debug-id sourcemaps and creates releases without a GitHub integration', () => {
-    const { options } = load({ SENTRY_UPLOAD_SOURCEMAPS: '1', SENTRY_AUTH_TOKEN: 'synthetic',
+    const { options } = load({ SENTRY_UPLOAD_SOURCEMAPS: '1', SENTRY_AUTH_TOKEN: 'synthetic', NEXT_PUBLIC_SENTRY_DSN: dsn,
       SENTRY_RELEASE: `jaco-driver-frontend@${'a'.repeat(40)}` });
     expect(options.sourcemaps.disable).toBe(false);
     expect(options.release).toMatchObject({ create: true, finalize: true, setCommits: false, deploy: false });

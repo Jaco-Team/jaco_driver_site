@@ -1,8 +1,10 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+const localRequire = createRequire(import.meta.url);
 const source = readFileSync(new URL('../../next.config.js', import.meta.url), 'utf8');
 const envNames = [
   'NODE_ENV',
@@ -34,6 +36,9 @@ async function loadContract(overrides = {}) {
     URL,
     process: { env },
     require(name) {
+      if (name === './shared/lib/monitoring/sentry-dsn') {
+        return localRequire('../../shared/lib/monitoring/sentry-dsn.js');
+      }
       // Only Sentry's build wrapper is removed. CSP, headers and rewrites execute
       // from the real config; no SDK, env file or network is involved.
       if (name !== '@sentry/nextjs/config') throw new Error(`Unexpected import: ${name}`);

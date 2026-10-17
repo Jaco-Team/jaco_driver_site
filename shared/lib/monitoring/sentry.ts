@@ -1,21 +1,6 @@
 import type { Breadcrumb, BrowserOptions, ErrorEvent, EventHint } from '@sentry/nextjs';
 
-export const SENTRY_ORIGIN = 'https://sentry.jacochef.ru';
-
-// The DSN is a public routing key, but telemetry must never fall back to SaaS.
-export function selfHostedDsn(value: string | undefined): string | undefined {
-  if (!value) return undefined;
-  try {
-    const url = new URL(value);
-    if (
-      url.origin !== SENTRY_ORIGIN || url.password || url.search || url.hash ||
-      !/^[a-zA-Z0-9]{16,64}$/.test(url.username) || !/^\/[0-9]+$/.test(url.pathname)
-    ) return undefined;
-    return value;
-  } catch {
-    return undefined;
-  }
-}
+export { SENTRY_ORIGIN, selfHostedDsn } from './sentry-dsn';
 
 export function safeUrl(value: string): string {
   try {

@@ -155,6 +155,7 @@ const nextConfig = {
 };
 
 const { withSentryConfig } = require('@sentry/nextjs/config');
+const { selfHostedDsn } = require('./shared/lib/monitoring/sentry-dsn');
 const sentryRelease = process.env.SENTRY_RELEASE;
 const sentryCommit = sentryRelease?.match(/^jaco-driver-frontend@([a-f0-9]{40})$/)?.[1];
 const uploadSourcemaps = process.env.SENTRY_UPLOAD_SOURCEMAPS === '1';
@@ -162,6 +163,9 @@ const uploadSourcemaps = process.env.SENTRY_UPLOAD_SOURCEMAPS === '1';
 const associateCommits = process.env.SENTRY_SET_COMMITS === '1';
 if (uploadSourcemaps && (!process.env.SENTRY_AUTH_TOKEN || !sentryCommit)) {
   throw new Error('SENTRY_BUILD_CREDENTIAL_OR_RELEASE_MISSING');
+}
+if (uploadSourcemaps && !selfHostedDsn(process.env.NEXT_PUBLIC_SENTRY_DSN)) {
+  throw new Error('SENTRY_BUILD_PUBLIC_DSN_INVALID');
 }
 
 module.exports = withSentryConfig(nextConfig, {
