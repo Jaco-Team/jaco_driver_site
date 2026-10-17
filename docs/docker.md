@@ -1,7 +1,9 @@
 # Docker
 
 Production-сборка остаётся Next.js standalone на Node.js 24 с пользователем
-`1001:1001`. Серверный runtime не содержит npm/npx. Доступ извне проходит
+`1001:1001`. Серверный runtime не содержит npm/npx или `.map` из Next build.
+Для production upload sourcemaps используется только BuildKit secret;
+токен никогда не передаётся через ARG/ENV образа: [контракт Sentry](./sentry.md). Доступ извне проходит
 через Nginx на хосте; приложение публикует `3225` только на loopback.
 
 ## Production через OpenBao

@@ -26,7 +26,7 @@ Project documentation lives in [docs/README.md](./docs/README.md). Keep this roo
 - Zustand for app state and API actions
   -Axios for API requests
 - Yandex Metrika + custom analytics helpers
-- Sentry initialized in `pages/_app.tsx`
+- Sentry initialized in `instrumentation-client.ts` (client) and `instrumentation.js` (server/edge); contract: `docs/sentry.md`
 
 ## Repository Map
 

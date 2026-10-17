@@ -46,8 +46,6 @@ const cspDirectives = [
     'https://yoomoney.ru',
     'https://*.yoomoney.ru',
     'https://www.gstatic.com',
-    'https://*.sentry.io',
-    'https://*.ingest.sentry.io',
     'https://smartcaptcha.yandexcloud.net',
     'https://*.smartcaptcha.yandexcloud.net',
     'https://smartcaptcha.cloud.yandex.ru',
@@ -75,8 +73,7 @@ const cspDirectives = [
     'https://www.gstatic.com',
     'https://firebaseinstallations.googleapis.com',
     'https://fcmregistrations.googleapis.com',
-    'https://*.sentry.io',
-    'https://*.ingest.sentry.io',
+    'https://sentry.jacochef.ru',
     'https://smartcaptcha.yandexcloud.net',
     'https://*.smartcaptcha.yandexcloud.net',
     'https://smartcaptcha.cloud.yandex.ru',
@@ -157,41 +154,37 @@ const nextConfig = {
   },
 };
 
-// Injected content via Sentry wizard below
-
 const { withSentryConfig } = require('@sentry/nextjs/config');
+const sentryRelease = process.env.SENTRY_RELEASE;
+const sentryCommit = sentryRelease?.match(/^jaco-driver-frontend@([a-f0-9]{40})$/)?.[1];
+const uploadSourcemaps = process.env.SENTRY_UPLOAD_SOURCEMAPS === '1';
+// Repository association is optional; debug-id symbolication does not need GitHub.
+const associateCommits = process.env.SENTRY_SET_COMMITS === '1';
+if (uploadSourcemaps && (!process.env.SENTRY_AUTH_TOKEN || !sentryCommit)) {
+  throw new Error('SENTRY_BUILD_CREDENTIAL_OR_RELEASE_MISSING');
+}
 
 module.exports = withSentryConfig(nextConfig, {
-  // For all available options, see:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/build/
-
-  org: 'mister-jaco-llc',
-  project: 'driver_site',
-
-  // Only print logs for uploading source maps in CI
-  silent: !process.env.CI,
-
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
+  sentryUrl: 'https://sentry.jacochef.ru/',
+  org: process.env.SENTRY_ORG || 'sentry',
+  project: process.env.SENTRY_PROJECT || 'javascript-react',
+  telemetry: false,
+  silent: true,
+  debug: false,
   widenClientFileUpload: true,
-
-  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-  // This can increase your server load as well as your hosting bill.
-  // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
-  // side errors will fail.
-  tunnelRoute: '/monitoring',
-
-  webpack: {
-    // Automatically annotate React components to show their full name in breadcrumbs and session replay
-    reactComponentAnnotation: {
-      enabled: true,
-    },
-
-    // Automatically tree-shake Sentry logger statements to reduce bundle size
-    treeshake: {
-      removeDebugLogging: true,
-    },
-
-    // Enables automatic instrumentation of Vercel Cron Monitors.
-    automaticVercelMonitors: true,
+  sourcemaps: {
+    disable: !uploadSourcemaps,
+    deleteSourcemapsAfterUpload: true,
   },
+  release: {
+    name: sentryRelease,
+    create: uploadSourcemaps,
+    finalize: uploadSourcemaps,
+    setCommits: uploadSourcemaps && associateCommits ? {
+      repo: 'Jaco-Team/jaco_driver_site', commit: sentryCommit,
+    } : false,
+    deploy: false,
+  },
+  bundleSizeOptimizations: { excludeDebugStatements: true, excludeTracing: true },
+  errorHandler: () => { throw new Error('SENTRY_RELEASE_OR_SOURCEMAP_UPLOAD_FAILED'); },
 });

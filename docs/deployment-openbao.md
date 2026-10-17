@@ -26,8 +26,11 @@ frontend ещё не публикуется: контроллер проверя
 Нельзя отправлять туда полный env, пароли, токены, `YANDEX_TILES_API_KEY`, ключ
 TLS, данные OpenBao или серверные CAPTCHA-ключи.
 
-CI использует только временный `github.token` для публикации GHCR. Настройки
-приложения не берутся из GitHub secrets/variables. Старый `build.yml` с прямым
+CI использует временный `github.token` для публикации GHCR. Настройки
+приложения не берутся из GitHub secrets/variables. Отдельное исключение —
+CI-only `SENTRY_AUTH_TOKEN` для upload sourcemaps через BuildKit secret;
+публичные `SENTRY_ORG`/`SENTRY_PROJECT` задают назначение release. Они не являются
+runtime env приложения и не расширяют public snapshot; контракт — [Sentry](./sentry.md). Старый `build.yml` с прямым
 SSH-деплоем удалён из production-ветки; другие ветки этим не меняются.
 
 `NEXT_PUBLIC_*` встраиваются в клиент при `next build`. Изменить их только

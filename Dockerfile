@@ -39,6 +39,12 @@ ARG NEXT_PUBLIC_YANDEX_METRIKA_ID
 ARG NEXT_PUBLIC_YANDEX_MAPS_API_KEY
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY
+# Public build metadata only. The upload token is exclusively a BuildKit secret.
+ARG SENTRY_RELEASE
+ARG SENTRY_ORG=sentry
+ARG SENTRY_PROJECT=javascript-react
+ARG SENTRY_UPLOAD_SOURCEMAPS=0
+ARG SENTRY_SET_COMMITS=0
 
 ENV NEXT_PUBLIC_API_ORIGIN=$NEXT_PUBLIC_API_ORIGIN
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
@@ -54,7 +60,10 @@ COPY . .
 
 # The online API 2.1 map needs its browser key at build time.
 RUN test -n "$NEXT_PUBLIC_YANDEX_MAPS_API_KEY" || (echo "NEXT_PUBLIC_YANDEX_MAPS_API_KEY is required for the production build" >&2; exit 1)
-RUN npm run build
+RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
+    npm run build \
+    && find .next -type f -name '*.map' -delete \
+    && test -z "$(find .next -type f -name '*.map' -print -quit)"
 
 FROM base AS runner
 
