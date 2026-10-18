@@ -1,0 +1,65 @@
+name: Security Image Check
+on:
+  pull_request:
+    branches: [api-laravel]
+permissions:
+  contents: read
+concurrency:
+  group: security-image-check-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  image:
+    name: Isolated frontend image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      DOCKER_BUILD_SUMMARY: 'false'
+      DOCKER_BUILD_RECORD_UPLOAD: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Apply the existing context guard
+        run: python3 .github/scripts/jaco-driver/prepare-build-context.py --dockerfile Dockerfile
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build amd64 locally with public synthetic config only
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: Dockerfile
+          target: runner
+          platforms: linux/amd64
+          pull: true
+          load: true
+          push: false
+          tags: jaco-security-ci:local
+          github-token: ''
+          provenance: false
+          sbom: false
+          build-args: |
+            NEXT_PUBLIC_API_ORIGIN=https://api.example.invalid
+            NEXT_PUBLIC_API_URL=https://api.example.invalid
+            NEXT_PUBLIC_LEGACY_API_ORIGIN=https://legacy.example.invalid
+            NEXT_PUBLIC_MEDIA_ORIGIN=https://media.example.invalid
+            NEXT_PUBLIC_YANDEX_METRIKA_ID=0
+            NEXT_PUBLIC_YANDEX_MAPS_API_KEY=ci-synthetic-map-key
+            NEXT_PUBLIC_SENTRY_DSN=
+            NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY=ci-synthetic-captcha-key
+      - name: Check nonroot runtime packages and isolated auth page
+        run: python3 .github/scripts/jaco-driver/security-image-check.py frontend runtime
+      - name: Scan the local archive and verify the targeted fixes
+        run: python3 .github/scripts/jaco-driver/security-image-check.py frontend scan
+      - name: Always remove local containers, image and private scan data
+        if: always()
+        run: python3 .github/scripts/jaco-driver/security-image-check.py frontend cleanup
+      - name: Retain only the typed scan and public machine summary
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: security-image-check-frontend
+          path: |
+            ${{ runner.temp }}/security-image-artifacts/summary.json
+            ${{ runner.temp }}/security-image-artifacts/trivy.json
+          if-no-files-found: ignore
+          include-hidden-files: false
+          retention-days: 7
