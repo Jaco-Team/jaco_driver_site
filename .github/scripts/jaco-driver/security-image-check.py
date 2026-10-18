@@ -241,12 +241,12 @@ def scan(component, summary, private, artifacts):
            "--user", uid + ":" + gid, "--env", "HOME=/tmp", "--env", "DOCKER_CONFIG=/tmp/docker",
            "--cap-drop", "ALL", "--security-opt", "no-new-privileges:true",
            "--pids-limit", "256", "--memory", "2g", "--cpus", "2", "--log-driver", "none",
-           "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=256m,uid=" + uid + ",gid=" + gid,
+           "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=1g,uid=" + uid + ",gid=" + gid,
            "--mount", "type=bind,src=" + str(private) + ",dst=/scan,readonly",
            "--mount", "type=bind,src=" + str(private / "cache") + ",dst=/cache",
            "--mount", "type=bind,src=" + str(private / "output") + ",dst=/out",
            "--workdir", "/scan", TRIVY, "image", "--input", "/scan/image.tar", "--cache-dir", "/cache",
-           "--scanners", "vuln", "--list-all-pkgs", "--ignorefile", "/dev/null", "--exit-code", "0",
+           "--scanners", "vuln", "--parallel", "1", "--list-all-pkgs", "--ignorefile", "/dev/null", "--exit-code", "0",
            "--format", "json", "--output", "/out/trivy-private.json", "--timeout", "10m", timeout=720, action="scanner_run")
     report = private / "output/trivy-private.json"
     need(report.stat().st_size <= 32 * 1024 * 1024, "SCAN_REPORT_SIZE_LIMIT")
