@@ -304,7 +304,7 @@ def main():
             summary.setdefault("command_failure", error.diagnostic)
         if artifacts:
             (artifacts / "summary.json").write_text(json.dumps(summary, sort_keys=True, indent=2) + "\n")
-        print(json.dumps({"status": "failed", "code": summary["error_code"]}))
+        print(json.dumps({"status": "failed", "code": summary["error_code"], "command_failure": summary.get("command_failure")}))
         raise SystemExit(1)
     summary["status"] = "failed" if summary.get("error_code") else (
         "passed" if summary.get("runtime") == "passed" and summary.get("scan") == "targeted_fixes_passed" else "incomplete"
