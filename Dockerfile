@@ -1,13 +1,14 @@
 # syntax=docker/dockerfile:1
 
-FROM node:24-alpine AS base
+FROM node:24.22.0-alpine3.24@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS base
 
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HUSKY=0
 
-RUN apk add --no-cache libc6-compat
+# The pinned upstream base still carries zlib r0; require Alpine's security fix.
+RUN apk add --no-cache libc6-compat zlib=1.3.2-r1
 
 FROM base AS deps
 
