@@ -178,7 +178,7 @@ def runtime(component, summary):
     else:
         version = docker("exec", CONTAINER, "node", "--version")
         need(version == "v24.22.0", "NODE_VERSION_MISMATCH")
-        package = docker("exec", CONTAINER, "apk", "info", "-v", "zlib")
+        package = docker("exec", CONTAINER, "apk", "info", "--exists", "-v", "zlib=1.3.2-r1")
         need(package == "zlib-1.3.2-r1", "ZLIB_VERSION_MISMATCH")
         inventory = {"zlib": "1.3.2-r1"}
         probes = json.loads(docker("exec", CONTAINER, "node", "-e", NODE_PROBE))
