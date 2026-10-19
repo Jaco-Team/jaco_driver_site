@@ -1,4 +1,5 @@
-# All real env is sourced by the controller from OpenBao.
+# Application env is sourced by the controller from OpenBao.
+# The scoped Sentry upload token is a CI-only secret mounted by BuildKit.
 name: Driver Frontend Publish
 on:
   push:
@@ -106,7 +107,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
-      - name: Build and publish with validated public snapshot args only
+      - name: Require the scoped Sentry upload credential without printing it
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: test -n "$SENTRY_AUTH_TOKEN" || { echo 'SENTRY_UPLOAD_CREDENTIAL_MISSING' >&2; exit 1; }
+      - name: Build and publish with validated public snapshot and public release metadata
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -131,6 +136,13 @@ jobs:
             NEXT_PUBLIC_YANDEX_MAPS_API_KEY=${{ env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }}
             NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }}
             NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY=${{ env.NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
+            SENTRY_RELEASE=jaco-driver-frontend@${{ github.sha }}
+            SENTRY_ORG=${{ vars.SENTRY_ORG || 'sentry' }}
+            SENTRY_PROJECT=${{ vars.SENTRY_PROJECT || 'javascript-react' }}
+            SENTRY_UPLOAD_SOURCEMAPS=1
+            SENTRY_SET_COMMITS=${{ vars.SENTRY_SET_COMMITS || '0' }}
+          secrets: |
+            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
           provenance: mode=min
           sbom: true
           cache-from: type=gha,scope=driver-frontend-production
