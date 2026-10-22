@@ -220,7 +220,7 @@ def runtime(component, summary):
         need([row["status"] for row in probes] == [200, 200, 401] and all(row["health_ok"] for row in probes), "API_WORKER_SMOKE_FAILED")
     else:
         version = docker("exec", CONTAINER, "node", "--version", action="node_version")
-        need(version == "v24.22.0", "NODE_VERSION_MISMATCH")
+        need(version == "v24.22.1", "NODE_VERSION_MISMATCH")
         package = docker("exec", CONTAINER, "apk", "info", "--exists", "-v", "zlib=1.3.2-r1", action="alpine_zlib")
         need(package == "zlib-1.3.2-r1", "ZLIB_VERSION_MISMATCH")
         inventory = {"zlib": "1.3.2-r1"}
