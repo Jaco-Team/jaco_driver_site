@@ -160,6 +160,8 @@ export default function RegistrationPage() {
 
             {errorText ? (
               <div className="auth__error">{errorText}</div>
+            ) : activeStep === 0 ? (
+              <p className="auth__panelText auth__recoveryNote">{helperText}</p>
             ) : (
               <div className="auth__hint">{helperText}</div>
             )}
