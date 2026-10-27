@@ -286,6 +286,36 @@
   }
 }
 
+.auth__channels {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.auth__channelsLabel {
+  margin-bottom: 8px;
+  color: var(--app-text-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.auth__channelOptions .MuiToggleButton-root {
+  min-height: 48px;
+  border-color: var(--app-border);
+  background: var(--app-surface-alt);
+  color: var(--app-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: none;
+
+  &.Mui-selected,
+  &.Mui-selected:hover {
+    background: var(--app-surface-raised);
+    color: var(--app-brand);
+  }
+}
+
 .auth__otp {
   display: flex;
   flex-direction: column;

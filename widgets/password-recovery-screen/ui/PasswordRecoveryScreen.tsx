@@ -11,8 +11,10 @@ import Button from '@mui/material/Button';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
-const steps = ['Телефон', 'Подтверждение'];
+const steps = ['Телефон', 'Код', 'Пароль'];
 
 import Meta from '@/components/meta';
 
@@ -35,15 +37,21 @@ export default function RegistrationPage() {
     setMyLogin,
     myPWD,
     setMyPWD,
+    repeatPWD,
+    setRepeatPWD,
+    deliveryChannel,
+    setDeliveryChannel,
     submitOnEnter,
     requestRecoveryCode,
     myCode,
     setMyCode,
     confirmRecoveryCode,
+    saveRecoveryPassword,
+    editRequest,
+    backToCode,
     errorText,
     helperText,
     captchaRequired,
-    showResendCaptcha,
     captchaResetKey,
     setCaptchaToken,
     resetCaptcha,
@@ -78,7 +86,7 @@ export default function RegistrationPage() {
             <h2 className="auth__panelTitle">{panelTitle}</h2>
             <p className="auth__panelText">{panelText}</p>
 
-            <Stepper activeStep={activeStep} alternativeLabel className="auth__stepper">
+            <Stepper activeStep={passwordChanged ? steps.length : activeStep} alternativeLabel className="auth__stepper">
               {steps.map((label, key) => (
                 <Step key={key}>
                   <StepLabel>{label}</StepLabel>
@@ -96,14 +104,24 @@ export default function RegistrationPage() {
                     disabled={loader}
                     onChange={(e) => setMyLogin(e.target.value)}
                   />
-                  <PasswordInput
-                    disabled={loader}
-                    label="Новый пароль"
-                    value={myPWD}
-                    onChange={(e) => setMyPWD(e.target.value)}
-                    onKeyPress={submitOnEnter(requestRecoveryCode)}
-                  />
-                  <PasswordRequirementsList password={myPWD} />
+                  <fieldset className="auth__channels">
+                    <legend className="auth__channelsLabel">Способ получения кода</legend>
+                    <ToggleButtonGroup
+                      className="auth__channelOptions"
+                      value={deliveryChannel}
+                      exclusive
+                      fullWidth
+                      disabled={loader}
+                      aria-label="Способ получения кода"
+                      onChange={(_event, value) => {
+                        if (value) setDeliveryChannel(value);
+                      }}
+                    >
+                      <ToggleButton value="sms">SMS</ToggleButton>
+                      <ToggleButton value="telegram">Telegram</ToggleButton>
+                      <ToggleButton value="voice">Звонок</ToggleButton>
+                    </ToggleButtonGroup>
+                  </fieldset>
                   {captchaRequired && SMARTCAPTCHA_CLIENT_KEY ? (
                     <YandexSmartCaptcha
                       resetKey={captchaResetKey}
@@ -112,17 +130,31 @@ export default function RegistrationPage() {
                     />
                   ) : null}
                 </>
-              ) : (
+              ) : activeStep === 1 ? (
                 <OtpCodeInput
-                  label="Код из смс"
+                  label="Код подтверждения"
                   value={myCode}
                   onChange={setMyCode}
-                  onComplete={(code) => {
-                    void confirmRecoveryCode(code);
-                  }}
                   disabled={loader}
                   autoFocus
                 />
+              ) : (
+                <>
+                  <PasswordInput
+                    disabled={loader}
+                    label="Новый пароль"
+                    value={myPWD}
+                    onChange={(e) => setMyPWD(e.target.value)}
+                  />
+                  <PasswordInput
+                    disabled={loader}
+                    label="Повторите пароль"
+                    value={repeatPWD}
+                    onChange={(e) => setRepeatPWD(e.target.value)}
+                    onKeyPress={submitOnEnter(saveRecoveryPassword)}
+                  />
+                  <PasswordRequirementsList password={myPWD} />
+                </>
               )}
             </div>
 
@@ -138,31 +170,24 @@ export default function RegistrationPage() {
                 fullWidth
                 className="auth__primaryButton"
                 disabled={!canSubmit}
-                onClick={() => (activeStep === 0 ? requestRecoveryCode() : confirmRecoveryCode())}
+                onClick={() => {
+                  if (activeStep === 0) void requestRecoveryCode();
+                  else if (activeStep === 1) confirmRecoveryCode();
+                  else void saveRecoveryPassword();
+                }}
               >
                 {retryAfter > 0
                   ? `Повторить через ${retryAfter} с`
                   : activeStep === 0
                     ? 'Получить код'
-                    : 'Подтвердить'}
+                    : activeStep === 1
+                      ? 'Подтвердить'
+                      : 'Сохранить пароль'}
               </Button>
             )}
 
             {activeStep === 1 && !passwordChanged && (
               <>
-                {showResendCaptcha &&
-                captchaRequired &&
-                SMARTCAPTCHA_CLIENT_KEY &&
-                sendRetryAfter <= 0 ? (
-                  <>
-                    <div className="auth__hint">Проверка для повторной отправки</div>
-                    <YandexSmartCaptcha
-                      resetKey={captchaResetKey}
-                      onSuccess={setCaptchaToken}
-                      onTokenExpired={resetCaptcha}
-                    />
-                  </>
-                ) : null}
                 <Button
                   fullWidth
                   disabled={!canResend}
@@ -174,7 +199,16 @@ export default function RegistrationPage() {
                     ? `Отправить код повторно через ${sendRetryAfter} с`
                     : 'Отправить код повторно'}
                 </Button>
+                <Button fullWidth disabled={loader} onClick={editRequest}>
+                  Изменить номер или способ
+                </Button>
               </>
+            )}
+
+            {activeStep === 2 && !passwordChanged && (
+              <Button fullWidth disabled={loader} onClick={backToCode}>
+                Назад к коду
+              </Button>
             )}
 
             <div className="auth__linkRow">
