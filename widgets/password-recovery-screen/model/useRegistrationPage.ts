@@ -155,6 +155,7 @@ export function useRegistrationPage(): UseRegistrationPageResult {
         setWait(setConfirmRetryUntil, 0);
         setActiveStep(1);
       } else {
+        if (res.captcha_required && activeStep === 1) setActiveStep(0);
         setErrorText(
           res.captcha_required && !SMARTCAPTCHA_CLIENT_KEY
             ? 'Проверка безопасности недоступна. Попробуйте позже.'
@@ -232,8 +233,13 @@ export function useRegistrationPage(): UseRegistrationPageResult {
         'Введите шестизначный код подтверждения.',
         'Придумайте и повторите новый пароль.',
       ][activeStep];
+  const channelHelp: Record<RecoveryDeliveryChannel, string> = {
+    sms: 'Придёт SMS с 6-значным кодом',
+    telegram: 'Код придёт в чат с ботом, Telegram должен быть привязан к номеру',
+    voice: 'Робот позвонит и продиктует код',
+  };
   const helperText = [
-    'Если номер зарегистрирован, код подтверждения будет отправлен.',
+    channelHelp[deliveryChannel],
     'Используйте код из последнего сообщения или звонка.',
     'Используйте строчные и заглавные латинские буквы и цифры.',
   ][activeStep];
