@@ -43,6 +43,22 @@
     "prewin": "npm run sync:offline-map",
     "win": "next dev -p 3225"
   },
+  "browserslist": {
+    "production": [
+      "chrome >= 111",
+      "edge >= 111",
+      "firefox >= 111",
+      "safari >= 15",
+      "ios_saf >= 15"
+    ],
+    "development": [
+      "chrome >= 111",
+      "edge >= 111",
+      "firefox >= 111",
+      "safari >= 15",
+      "ios_saf >= 15"
+    ]
+  },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
