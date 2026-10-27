@@ -6,8 +6,11 @@ import {
   confirmPasswordRecoveryCode as confirmPasswordRecoveryCodeApi,
   fetchMe,
   loginToken,
+  requestRecoveryCode as requestRecoveryCodeApi,
+  resetRecoveryPassword as resetRecoveryPasswordApi,
   sendPasswordRecoveryCode as requestPasswordRecoveryCodeApi,
 } from '@/features/auth/api/auth.api';
+import type { RecoveryDeliveryChannel } from '@/features/auth/api/auth.api';
 import { getApiErrorInfo, getAuthErrorMessage, getAuthSecurityState } from '@/shared/api/errors';
 import { clearAuthToken, getAuthToken } from '@/shared/api/token';
 import { clearOfflineCache } from '@/shared/lib/offline/cache';
@@ -49,6 +52,8 @@ interface AuthActions {
     captchaToken?: string
   ) => Promise<ApiResponse>;
   confirmPasswordRecoveryCode: (login: string, code: string) => Promise<ApiResponse>;
+  requestRecoveryCode: (login: string, channel: RecoveryDeliveryChannel, captchaToken?: string) => Promise<ApiResponse>;
+  resetRecoveryPassword: (login: string, code: string, password: string) => Promise<ApiResponse>;
   refreshSession: () => Promise<AuthResult>;
 }
 
@@ -286,6 +291,44 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
           data: errorInfo.data,
           retry_after: getAuthSecurityState(error).retryAfter,
           locked: errorInfo.status === 429,
+        };
+      } finally {
+        set({ isSubmitting: false });
+      }
+    },
+
+    requestRecoveryCode: async (login, channel, captchaToken = '') => {
+      if (get().isSubmitting) return { st: false, text: 'Подождите' };
+      set({ isSubmitting: true });
+      try {
+        return await requestRecoveryCodeApi(login, channel, captchaToken);
+      } catch (error) {
+        const info = getApiErrorInfo(error);
+        const security = getAuthSecurityState(error);
+        return {
+          st: false,
+          text: getAuthErrorMessage(error, 'Не удалось отправить код восстановления.'),
+          status: info.status ?? undefined,
+          ...(typeof security.captchaRequired === 'boolean' ? { captcha_required: security.captchaRequired } : {}),
+          retry_after: security.retryAfter,
+        };
+      } finally {
+        set({ isSubmitting: false });
+      }
+    },
+
+    resetRecoveryPassword: async (login, code, password) => {
+      if (get().isSubmitting) return { st: false, text: 'Подождите' };
+      set({ isSubmitting: true });
+      try {
+        return await resetRecoveryPasswordApi(login, code, password);
+      } catch (error) {
+        const info = getApiErrorInfo(error);
+        return {
+          st: false,
+          text: getAuthErrorMessage(error, 'Не удалось обновить пароль.'),
+          status: info.status ?? undefined,
+          retry_after: getAuthSecurityState(error).retryAfter,
         };
       } finally {
         set({ isSubmitting: false });
