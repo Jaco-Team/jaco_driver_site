@@ -5,6 +5,8 @@ import { apiRoutes, getSsoLoginUrl } from '@/shared/api/routes';
 import { setAuthToken } from '@/shared/api/token';
 import type { ApiResponse, User } from '@/shared/api/types';
 
+export type RecoveryDeliveryChannel = 'sms' | 'telegram' | 'voice';
+
 interface TokenLoginResponse {
   token?: string;
   token_type?: string;
@@ -101,6 +103,32 @@ export async function confirmPasswordRecoveryCode(
       login: login.trim(),
       code,
     }
+  );
+}
+
+export async function requestRecoveryCode(
+  login: string,
+  deliveryChannel: RecoveryDeliveryChannel,
+  captchaToken: string = ''
+): Promise<ApiResponse> {
+  return connector.rest.post<
+    ApiResponse,
+    { login: string; delivery_channel: RecoveryDeliveryChannel; captcha_token?: string }
+  >(apiRoutes.auth.passwordRecoveryRequest, {
+    login: login.trim(),
+    delivery_channel: deliveryChannel,
+    ...(captchaToken ? { captcha_token: captchaToken } : {}),
+  });
+}
+
+export async function resetRecoveryPassword(
+  login: string,
+  code: string,
+  password: string
+): Promise<ApiResponse> {
+  return connector.rest.post<ApiResponse, { login: string; code: string; password: string }>(
+    apiRoutes.auth.passwordRecoveryReset,
+    { login: login.trim(), code, password }
   );
 }
 

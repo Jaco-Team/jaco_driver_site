@@ -1,20 +1,14 @@
 import type { Dispatch, KeyboardEvent, SetStateAction } from 'react';
 
-import type { useAuthStore } from '@/features/auth/model/auth.store';
+import type { RecoveryDeliveryChannel } from '@/features/auth/api/auth.api';
 
-export type RecoveryStep = 0 | 1;
+export type RecoveryStep = 0 | 1 | 2;
 
 export type SubmitHandler = () => void | Promise<void>;
 
 export type SubmitOnEnter = (
   handler: SubmitHandler
 ) => (event: KeyboardEvent<HTMLInputElement>) => void;
-
-type AuthStoreState = ReturnType<typeof useAuthStore.getState>;
-
-export type RequestPasswordRecoveryCode = AuthStoreState['requestPasswordRecoveryCode'];
-export type ConfirmPasswordRecoveryCode = AuthStoreState['confirmPasswordRecoveryCode'];
-export type LoginByPassword = AuthStoreState['login'];
 
 export interface UseRegistrationPageResult {
   loader: boolean;
@@ -25,15 +19,21 @@ export interface UseRegistrationPageResult {
   setMyLogin: Dispatch<SetStateAction<string>>;
   myPWD: string;
   setMyPWD: (value: string) => void;
+  repeatPWD: string;
+  setRepeatPWD: (value: string) => void;
+  deliveryChannel: RecoveryDeliveryChannel;
+  setDeliveryChannel: Dispatch<SetStateAction<RecoveryDeliveryChannel>>;
   submitOnEnter: SubmitOnEnter;
   requestRecoveryCode: () => Promise<void>;
   myCode: string;
   setMyCode: (value: string) => void;
-  confirmRecoveryCode: (codeOverride?: string) => Promise<void>;
+  confirmRecoveryCode: () => void;
+  saveRecoveryPassword: () => Promise<void>;
+  editRequest: () => void;
+  backToCode: () => void;
   errorText: string;
   helperText: string;
   captchaRequired: boolean;
-  showResendCaptcha: boolean;
   captchaResetKey: number;
   setCaptchaToken: (token: string) => void;
   resetCaptcha: () => void;
