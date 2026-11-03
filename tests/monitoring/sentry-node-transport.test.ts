@@ -13,7 +13,10 @@ describe('real SDK Node envelope without networking', () => {
       ...errorMonitoringOptions(dsn),
       defaultIntegrations: Sentry.getDefaultIntegrationsWithoutPerformance(),
       transport: () => ({
-        send: async (envelope) => { envelopes.push(envelope); return { statusCode: 200 }; },
+        send: async (envelope) => {
+          envelopes.push(envelope);
+          return { statusCode: 200 };
+        },
         flush: async () => true,
       }),
     });

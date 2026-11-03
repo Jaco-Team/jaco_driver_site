@@ -184,11 +184,17 @@ module.exports = withSentryConfig(nextConfig, {
     name: sentryRelease,
     create: uploadSourcemaps,
     finalize: uploadSourcemaps,
-    setCommits: uploadSourcemaps && associateCommits ? {
-      repo: 'Jaco-Team/jaco_driver_site', commit: sentryCommit,
-    } : false,
+    setCommits:
+      uploadSourcemaps && associateCommits
+        ? {
+            repo: 'Jaco-Team/jaco_driver_site',
+            commit: sentryCommit,
+          }
+        : false,
     deploy: false,
   },
   bundleSizeOptimizations: { excludeDebugStatements: true, excludeTracing: true },
-  errorHandler: () => { throw new Error('SENTRY_RELEASE_OR_SOURCEMAP_UPLOAD_FAILED'); },
+  errorHandler: () => {
+    throw new Error('SENTRY_RELEASE_OR_SOURCEMAP_UPLOAD_FAILED');
+  },
 });

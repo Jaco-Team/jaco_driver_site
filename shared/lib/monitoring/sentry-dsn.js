@@ -11,9 +11,14 @@ function selfHostedDsn(value) {
   try {
     const url = new URL(value);
     if (
-      url.origin !== SENTRY_ORIGIN || url.password || url.search || url.hash ||
-      !/^[a-zA-Z0-9]{16,64}$/.test(url.username) || !/^\/[0-9]+$/.test(url.pathname)
-    ) return undefined;
+      url.origin !== SENTRY_ORIGIN ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      !/^[a-zA-Z0-9]{16,64}$/.test(url.username) ||
+      !/^\/[0-9]+$/.test(url.pathname)
+    )
+      return undefined;
     return value;
   } catch {
     return undefined;

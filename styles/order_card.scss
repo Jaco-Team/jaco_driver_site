@@ -82,6 +82,80 @@
   }
 }
 
+.deletedOrdersDrawer {
+  & .MuiPaper-root.MuiDrawer-paper.MuiDrawer-paperAnchorBottom {
+    height: auto;
+    max-height: 75vh;
+    border-radius: 28px 28px 0 0;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    color: var(--app-text);
+    box-shadow: 0 24px 44px var(--app-shadow);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  & .lineModal {
+    width: 56px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--app-border);
+    margin: 12px auto 18px;
+  }
+
+  & .deletedOrdersTitle {
+    margin: 0 20px 16px;
+    color: var(--app-text);
+    text-align: center;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  & .deletedOrdersList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: min(42vh, 320px);
+    overflow-y: auto;
+    padding: 0 20px;
+  }
+
+  & .deletedOrdersCard {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border: 1px solid var(--app-border);
+    border-radius: 16px;
+    background: var(--app-surface-raised);
+  }
+
+  & .deletedOrdersNumber {
+    color: var(--app-text);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  & .deletedOrdersAddress {
+    color: var(--app-text-muted);
+    line-height: 1.4;
+  }
+
+  & .deletedOrdersButton {
+    align-self: stretch;
+    min-height: 50px;
+    margin: 18px 20px 20px;
+    border-radius: 12px;
+    background: var(--app-brand);
+    color: var(--app-on-brand);
+    font-weight: 700;
+    text-transform: none;
+
+    &:hover {
+      background: var(--app-brand-dark);
+    }
+  }
+}
+
 .flex.flex-col.justify-center.font-bold {
   display: none;
 }

@@ -11,17 +11,24 @@ describe('real SDK browser envelope without networking', () => {
     const client = Sentry.init({
       ...errorMonitoringOptions(dsn),
       transport: () => ({
-        send: async (envelope) => { envelopes.push(envelope); return { statusCode: 200 }; },
+        send: async (envelope) => {
+          envelopes.push(envelope);
+          return { statusCode: 200 };
+        },
         flush: async () => true,
       }),
     });
     try {
       expect(client).toBeDefined();
       expect(client?.getIntegrationByName('BrowserSession')).toBeUndefined();
-      client?.captureEvent({ message: 'synthetic privacy boundary',
+      client?.captureEvent({
+        message: 'synthetic privacy boundary',
         user: { id: 'synthetic-user', email: 'private@example.org', ip_address: '192.0.2.123' },
-        request: { url: 'https://driver.jacochef.ru/list_orders?token=synthetic-secret',
-          headers: { Authorization: 'Bearer synthetic-secret' }, cookies: { session: 'synthetic-secret' } },
+        request: {
+          url: 'https://driver.jacochef.ru/list_orders?token=synthetic-secret',
+          headers: { Authorization: 'Bearer synthetic-secret' },
+          cookies: { session: 'synthetic-secret' },
+        },
       });
       document.dispatchEvent(new Event('visibilitychange'));
       expect(await client?.flush(2000)).toBe(true);
@@ -31,7 +38,9 @@ describe('real SDK browser envelope without networking', () => {
       expect(event.sdk?.settings).toMatchObject({ infer_ip: 'never' });
       expect(event.user).toBeUndefined();
       expect(event.request).toEqual({ url: 'https://driver.jacochef.ru/list_orders' });
-      expect(JSON.stringify(envelopes)).not.toMatch(/synthetic-secret|private@example|192\.0\.2\.123/);
+      expect(JSON.stringify(envelopes)).not.toMatch(
+        /synthetic-secret|private@example|192\.0\.2\.123/
+      );
     } finally {
       await client?.close(2000);
     }

@@ -267,48 +267,54 @@ function DeletedOrdersDrawer() {
       anchor="bottom"
       open={Boolean(delOrders?.length)}
       onClose={hideDelOrders}
-      className={`modalOrderMap ${roboto.variable}`}
+      className={`deletedOrdersDrawer ${roboto.variable}`}
       onOpen={() => {}}
+      slotProps={{
+        paper: {
+          sx: {
+            borderTopLeftRadius: '28px',
+            borderTopRightRadius: '28px',
+            overflow: 'hidden',
+          },
+        },
+      }}
     >
       <div className="lineModal" />
 
       <Typography
-        style={{
-          fontSize: globalFontSize,
-          paddingTop: 10,
-          paddingBottom: 10,
-          color: 'var(--app-text)',
-          textAlign: 'center',
-          fontWeight: 'bold',
-        }}
+        className="deletedOrdersTitle"
+        style={{ fontSize: Math.min(Math.max(globalFontSize + 3, 17), 23) }}
         component="h6"
       >
-        Удаленные заказы
+        Удалённые заказы
       </Typography>
 
-      <div
-        className="modalOrderDelContent"
-        style={{
-          height: 300,
-          width: '100%',
-          overflow: 'auto',
-          padding: 20,
-          paddingTop: 10,
-        }}
-      >
-        {delOrders?.map((item, index: number) => (
-          <div key={index} style={{ display: 'flex', flexDirection: 'column' }}>
-            <Typography component="span" style={{ fontSize: globalFontSize }}>
-              Удаленный заказ #{item.id}
+      <div className="deletedOrdersList">
+        {delOrders?.map((item) => (
+          <div key={item.id} className="deletedOrdersCard">
+            <Typography
+              component="span"
+              className="deletedOrdersNumber"
+              style={{ fontSize: globalFontSize }}
+            >
+              Заказ №{item.id}
             </Typography>
-            <Typography component="span" style={{ fontSize: globalFontSize }}>
+            <Typography
+              component="span"
+              className="deletedOrdersAddress"
+              style={{ fontSize: globalFontSize }}
+            >
               Адрес: {item.addr}
             </Typography>
           </div>
         ))}
       </div>
 
-      <Button className="btnGOOD" onClick={hideDelOrders} style={{ fontSize: globalFontSize }}>
+      <Button
+        className="deletedOrdersButton"
+        onClick={hideDelOrders}
+        style={{ fontSize: globalFontSize }}
+      >
         Хорошо
       </Button>
     </SwipeableDrawer>
