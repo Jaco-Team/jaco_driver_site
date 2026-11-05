@@ -166,6 +166,32 @@ describe('orders store actions', () => {
     expect(useOrdersStore.getState().isClick).toBe(false);
   });
 
+  it('starts one finish request when payment checks overlap', async () => {
+    let resolveCheck: (value: { st: boolean }) => void = () => undefined;
+    mocks.checkPayOrder.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCheck = resolve;
+      })
+    );
+    const params = {
+      data: { order_id: 866503, is_map: false },
+      latitude: '53.5',
+      longitude: '49.4',
+    };
+
+    const first = useOrdersStore.getState().getCheckStatusPay(params);
+    await useOrdersStore.getState().getCheckStatusPay(params);
+    resolveCheck({ st: true });
+    await first;
+
+    expect(mocks.checkPayOrder).toHaveBeenCalledTimes(1);
+    expect(mocks.actionOrder).toHaveBeenCalledTimes(1);
+    expect(mocks.actionOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 866503, type_action: 3 })
+    );
+    expect(useOrdersStore.getState().isClick).toBe(false);
+  });
+
   it('does not close the card and skips the request when geolocation is blocked', async () => {
     mocks.readDriverPosition.mockResolvedValue({
       latitude: '',

@@ -17,6 +17,7 @@ import { useHeaderStore } from '@/features/header/model/header.store';
 import { roboto } from '@/shared/config/fonts';
 import { OrderCard, ORDER_CARD_DELETED_BG } from '@/widgets/order/ui/components/OrderCard';
 import { scaleGlobalFontSize } from '@/shared/lib/fontSize';
+import { GeolocationWaitCountdown } from '@/shared/ui/GeolocationWaitCountdown';
 
 export function OrderMapDrawer() {
   const theme = useTheme();
@@ -286,13 +287,16 @@ export function OrderMapDrawer() {
               position: 'absolute',
               inset: 0,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
+              px: 2,
               backgroundColor: isDarkTheme ? 'rgba(24, 35, 45, 0.72)' : 'rgba(255, 255, 255, 0.72)',
               zIndex: 2,
             }}
           >
             <CircularProgress />
+            <GeolocationWaitCountdown fontSize={globalFontSize} />
           </Box>
         ) : null}
       </Box>

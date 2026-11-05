@@ -54,6 +54,7 @@ interface HeaderActions {
   getMyAvgTime: (token: string, pointId?: string | number | null) => Promise<void>;
   setActivePageRU: (activePageRU: string) => void;
   getSettings: (token: string) => Promise<void>;
+  refreshPointFlags: (pointId: number | null) => Promise<void>;
   check_pos: (func: (lat: number, lng: number) => void) => Promise<void>;
   checkMyPos: () => void;
   saveMyPos: (latitude?: number | string, longitude?: number | string) => Promise<void>;
@@ -68,6 +69,7 @@ const cachedOffline = readOfflineCache();
 
 let avgTimePromise: Promise<string> | null = null;
 let avgTimeKey = '';
+let pointFlagsRequestId = 0;
 const pointPhonesCache = new Map<string, PointPhonesPayload | null>();
 const pointPhonesRequests = new Map<string, Promise<PointPhonesPayload | null>>();
 
@@ -277,6 +279,35 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     getSettings: async (_token: string) => {
       const payload = await fetchDriverSettings();
       get().applySettings(payload.settings ?? {});
+    },
+
+    // При смене кафе обновляем только флаги меню: остальные настройки и выбранная
+    // точка остаются как есть. Ответ на прошлый выбор кафе игнорируется.
+    refreshPointFlags: async (pointId: number | null) => {
+      const requestId = ++pointFlagsRequestId;
+
+      if (!canRunProtectedRequest() || !isAppOnline()) {
+        return;
+      }
+
+      try {
+        const payload = await fetchDriverSettings(pointId);
+        if (requestId !== pointFlagsRequestId) return;
+
+        const settings = (payload.settings ?? {}) as SettingsData;
+        set((state) => ({
+          is_need_avg_time: hasSettingValue(settings.driver_avg_time)
+            ? normalizeBoolLike(settings.driver_avg_time)
+            : state.is_need_avg_time,
+          is_need_page_stat: hasSettingValue(settings.driver_page_stat_time)
+            ? normalizeBoolLike(settings.driver_page_stat_time)
+            : state.is_need_page_stat,
+        }));
+      } catch (error) {
+        if (isConnectivityError(error)) {
+          markAppOffline();
+        }
+      }
     },
 
     check_pos: async (func: (lat: number, lng: number) => void) => {

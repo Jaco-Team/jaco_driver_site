@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { fetchDriverSettings } from '@/entities/settings/api/settings.api';
 import { useHeaderStore } from './header.store';
 
 vi.mock('@/entities/settings/api/settings.api', () => ({
@@ -138,6 +139,62 @@ describe('header theme preference', () => {
       appTheme: 'dark',
       previewAppTheme: null,
       darkTheme: true,
+    });
+  });
+});
+
+describe('header menu flags after a cafe switch', () => {
+  beforeEach(() => {
+    vi.mocked(fetchDriverSettings).mockReset();
+    useHeaderStore.setState({
+      is_need_avg_time: true,
+      is_need_page_stat: true,
+      globalFontSize: 18,
+      pointId: 1,
+    });
+  });
+
+  it('requests settings for the selected cafe and updates only the menu flags', async () => {
+    vi.mocked(fetchDriverSettings).mockResolvedValue({
+      settings: { point_id: 1, driver_avg_time: 0, driver_page_stat_time: 0, fontSize: 12 },
+    });
+
+    await useHeaderStore.getState().refreshPointFlags(2);
+
+    expect(fetchDriverSettings).toHaveBeenCalledWith(2);
+    expect(useHeaderStore.getState()).toMatchObject({
+      is_need_avg_time: false,
+      is_need_page_stat: false,
+      globalFontSize: 18,
+      pointId: 1,
+    });
+  });
+
+  it('keeps current flags when the response has no value for them', async () => {
+    vi.mocked(fetchDriverSettings).mockResolvedValue({ settings: { point_id: 2 } });
+
+    await useHeaderStore.getState().refreshPointFlags(2);
+
+    expect(useHeaderStore.getState()).toMatchObject({
+      is_need_avg_time: true,
+      is_need_page_stat: true,
+    });
+  });
+
+  it('ignores a response for a previously selected cafe', async () => {
+    let resolveFirst: (value: unknown) => void = () => undefined;
+    vi.mocked(fetchDriverSettings)
+      .mockReturnValueOnce(new Promise((resolve) => (resolveFirst = resolve)) as never)
+      .mockResolvedValueOnce({ settings: { driver_avg_time: 1, driver_page_stat_time: 1 } });
+
+    const first = useHeaderStore.getState().refreshPointFlags(2);
+    await useHeaderStore.getState().refreshPointFlags(1);
+    resolveFirst({ settings: { driver_avg_time: 0, driver_page_stat_time: 0 } });
+    await first;
+
+    expect(useHeaderStore.getState()).toMatchObject({
+      is_need_avg_time: true,
+      is_need_page_stat: true,
     });
   });
 });

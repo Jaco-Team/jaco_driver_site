@@ -7,6 +7,7 @@ import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import { useOrdersPage } from '../model/useOrdersPage';
 import { useOrdersAutoRefresh } from '../model/useOrdersAutoRefresh';
+import { useOrdersRefreshOnReturn } from '../model/useOrdersRefreshOnReturn';
 import { OrdersHeader } from './OrdersHeader';
 import { OrdersList } from './OrdersList';
 import { OrderConfirmModal } from './components/OrderConfirmModal';
@@ -59,6 +60,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onFilterOpen }) => {
   }));
 
   useOrdersAutoRefresh({ isEnabled: isAuth === true });
+  useOrdersRefreshOnReturn(isAuth === true);
 
   const actionsBusy = is_load || isClick;
 

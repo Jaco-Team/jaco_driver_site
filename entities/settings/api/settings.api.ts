@@ -8,8 +8,14 @@ export interface PointPhonesPayload {
   phone_center?: string | null;
 }
 
-export async function fetchDriverSettings(): Promise<DriverSettingsPayload> {
-  const data = await connector.rest.get<DriverSettingsPayload>(apiRoutes.settings.get);
+export async function fetchDriverSettings(
+  pointId?: string | number | null
+): Promise<DriverSettingsPayload> {
+  const normalizedPointId = normalizePointId(pointId);
+  const data = await connector.rest.get<DriverSettingsPayload>(
+    apiRoutes.settings.get,
+    normalizedPointId ? { params: { point_id: normalizedPointId } } : undefined
+  );
   if (data && typeof data === 'object') {
     return data;
   }

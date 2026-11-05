@@ -139,6 +139,8 @@ export const SettingsForm: React.FC = () => {
     }
     setPointId(nextPointId);
     useOrdersStore.getState().switchPoint(nextPointId);
+    // Среднее время и «Статистика» в меню включаются настройками кафе.
+    void useHeaderStore.getState().refreshPointFlags(nextPointId);
     setIsCafeSheetOpen(false);
   };
 

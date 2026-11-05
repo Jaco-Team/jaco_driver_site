@@ -7,8 +7,45 @@ export interface GeolocationReadResult {
   message: string | null;
 }
 
+export interface ReadDriverPositionOptions {
+  /** Показать курьеру обратный отсчёт до конца ожидания геопозиции. */
+  showWait?: boolean;
+}
+
 const FIRST_TRY_TIMEOUT_MS = 15000;
 const RETRY_TIMEOUT_MS = 10000;
+
+export interface GeolocationWaitState {
+  /** Когда ожидание закончится по таймауту. */
+  deadlineAt: number;
+  /** Когда начался текущий этап ожидания. */
+  startedAt: number;
+}
+
+// Ожидание геопозиции, которое видит курьер (для обратного отсчёта).
+let waitState: GeolocationWaitState | null = null;
+let waitToken = 0;
+const waitListeners = new Set<() => void>();
+
+function setWaitDeadline(deadlineAt: number | null): void {
+  waitState = deadlineAt === null ? null : { deadlineAt, startedAt: Date.now() };
+  waitListeners.forEach((listener) => listener());
+}
+
+export function getGeolocationWaitState(): GeolocationWaitState | null {
+  return waitState;
+}
+
+export function getGeolocationWaitDeadline(): number | null {
+  return waitState?.deadlineAt ?? null;
+}
+
+export function subscribeGeolocationWait(listener: () => void): () => void {
+  waitListeners.add(listener);
+  return () => {
+    waitListeners.delete(listener);
+  };
+}
 
 function isGeolocationError(value: unknown): value is GeolocationPositionError {
   return Boolean(value && typeof value === 'object' && 'code' in value);
@@ -135,7 +172,28 @@ function toResult(
   };
 }
 
-export async function readDriverPosition(): Promise<GeolocationReadResult> {
+export async function readDriverPosition(
+  options: ReadDriverPositionOptions = {}
+): Promise<GeolocationReadResult> {
+  if (!options.showWait) {
+    return readPosition(() => undefined);
+  }
+
+  const token = ++waitToken;
+  const markStage = (timeoutMs: number) => {
+    if (token === waitToken) setWaitDeadline(Date.now() + timeoutMs);
+  };
+
+  try {
+    return await readPosition(markStage);
+  } finally {
+    if (token === waitToken) setWaitDeadline(null);
+  }
+}
+
+async function readPosition(
+  markStage: (remainingMs: number) => void
+): Promise<GeolocationReadResult> {
   if (!('geolocation' in navigator)) {
     const described = describeGeolocationError(new Error('Geolocation is not supported'));
 
@@ -153,6 +211,8 @@ export async function readDriverPosition(): Promise<GeolocationReadResult> {
   }
 
   try {
+    // Вторая попытка может понадобиться, поэтому отсчёт сразу включает её время.
+    markStage(FIRST_TRY_TIMEOUT_MS + RETRY_TIMEOUT_MS);
     const coords = await requestPosition({
       enableHighAccuracy: true,
       timeout: FIRST_TRY_TIMEOUT_MS,
@@ -168,6 +228,7 @@ export async function readDriverPosition(): Promise<GeolocationReadResult> {
     }
 
     try {
+      markStage(RETRY_TIMEOUT_MS);
       const coords = await requestPosition({
         enableHighAccuracy: false,
         timeout: RETRY_TIMEOUT_MS,

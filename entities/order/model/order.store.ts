@@ -346,7 +346,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       return { latitude: '', longitude: '' };
     }
 
-    const result = await readDriverPosition();
+    const result = await readDriverPosition({ showWait: true });
 
     if (result.blocked) {
       get().openErrOrder(result.message || 'Не удалось определить местоположение.');
@@ -358,6 +358,8 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       longitude: result.longitude,
     };
   };
+
+  let payStatusCheckInFlight = false;
 
   const runLockedOrderAction = async (fn: () => Promise<void>): Promise<void> => {
     if (get().isClick) {
@@ -665,7 +667,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         set({ is_load: true });
         log('driver_location', 'Показать текущее местоположение водителя на карте');
 
-        const result = await readDriverPosition();
+        const result = await readDriverPosition({ showWait: true });
 
         if (result.blocked) {
           get().openErrOrder(result.message || 'Не удалось определить местоположение.');
@@ -974,7 +976,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       return runLockedOrderAction(async () => {
         get().setActiveConfirm(false);
 
-        const result = await readDriverPosition();
+        const result = await readDriverPosition({ showWait: true });
         if (result.blocked) {
           get().openErrOrder(result.message || 'Не удалось определить местоположение.');
           return;
@@ -1003,10 +1005,23 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     getCheckStatusPay: async ({ data, latitude = '', longitude = '' }) => {
       const { order_id, is_map } = data;
 
-      const res = await apiCheckPayOrder(get().token, order_id, getSelectedPointId());
+      // PayModel polls every 5 seconds; a slow check must not start a second finish.
+      if (payStatusCheckInFlight || get().isClick) {
+        return;
+      }
 
-      if (isApiOk(res?.st)) {
-        await get().actionOrder({ latitude, longitude, data: { order_id, type: 3, is_map } });
+      payStatusCheckInFlight = true;
+
+      try {
+        const res = await apiCheckPayOrder(get().token, order_id, getSelectedPointId());
+
+        if (isApiOk(res?.st)) {
+          await runLockedOrderAction(() =>
+            get().actionOrder({ latitude, longitude, data: { order_id, type: 3, is_map } })
+          );
+        }
+      } finally {
+        payStatusCheckInFlight = false;
       }
     },
   };

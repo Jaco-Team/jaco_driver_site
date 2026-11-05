@@ -42,6 +42,7 @@ import { useOrdersStore } from '@/entities/order/model/order.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
 import PayModel from '@/components/PayModel';
 import { roboto } from '@/shared/config/fonts';
+import { GeolocationWaitCountdown } from '@/shared/ui/GeolocationWaitCountdown';
 import { appDarkPalette, appPalette, appSuccessPalette } from '@/shared/styles/appPalette';
 import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined';
 import { OrderMapDrawer } from '@/widgets/order/ui/components/OrderMapDrawer';
@@ -324,14 +325,19 @@ function DeletedOrdersDrawer() {
 function OrdersLoadingBackdrop() {
   const isLoading = useOrdersStore((state) => state.is_load);
   const isOpenOrderMap = useOrdersStore((state) => state.isOpenOrderMap);
+  const globalFontSize = useHeaderStore((state) => state.globalFontSize);
 
   if (isOpenOrderMap) {
     return null;
   }
 
   return (
-    <Backdrop style={{ zIndex: 9999, color: '#fff' }} open={isLoading}>
+    <Backdrop
+      style={{ zIndex: 9999, color: '#fff', flexDirection: 'column', padding: 16 }}
+      open={isLoading}
+    >
       <CircularProgress color="inherit" />
+      <GeolocationWaitCountdown fontSize={globalFontSize} color="#fff" />
     </Backdrop>
   );
 }

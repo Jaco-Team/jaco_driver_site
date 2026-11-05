@@ -42,6 +42,7 @@ import { roboto } from '@/shared/ui/Font';
 import { ErrorModal } from '@/shared/ui/ErrorModal/ErrorModal';
 import { OrdersFilterSheet } from '@/widgets/order/ui/components/OrdersFilterSheet';
 import { OrderConfirmModal } from '@/widgets/order/ui/components/OrderConfirmModal';
+import { useOrdersRefreshOnReturn } from '@/widgets/order/model/useOrdersRefreshOnReturn';
 import { useOrdersMapScreen } from '../model/useOrdersMapScreen';
 import { OrdersMapCompass } from './OrdersMapCompass';
 import { OrdersMapRasterFilter } from './OrdersMapRasterFilter';
@@ -708,6 +709,7 @@ export function OrdersMapScreen() {
     centerOnCoordinate,
     handleConfirm,
   } = useOrdersMapScreen();
+  useOrdersRefreshOnReturn();
   const acceptedOrderIds = useOrderRecommendationStore((state) => state.acceptedOrderIds);
   const recommendationOrderTypeId = useOrderRecommendationStore((state) => state.orderTypeId);
   const isRecommendationRouteVisible = useOrderRecommendationStore((state) => state.isRouteVisible);

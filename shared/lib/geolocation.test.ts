@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { describeGeolocationError, readDriverPosition } from './geolocation';
+import {
+  describeGeolocationError,
+  getGeolocationWaitDeadline,
+  readDriverPosition,
+  subscribeGeolocationWait,
+} from './geolocation';
 
 type GeoError = { code: number; message: string };
 
@@ -172,6 +177,60 @@ describe('geolocation', () => {
         longitude: '49.41',
         blocked: false,
       });
+    });
+  });
+
+  describe('geolocation wait countdown', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('shows the remaining wait for both attempts and clears it at the end', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-03T10:00:00Z'));
+      const start = Date.now();
+      const deadlines: Array<number | null> = [];
+      const unsubscribe = subscribeGeolocationWait(() =>
+        deadlines.push(getGeolocationWaitDeadline())
+      );
+      installGeolocation({
+        permission: 'granted',
+        positions: [
+          { ok: false, error: { code: 3, message: 'Timeout expired' } },
+          { ok: false, error: { code: 3, message: 'Timeout expired' } },
+        ],
+      });
+
+      await readDriverPosition({ showWait: true });
+      unsubscribe();
+
+      expect(deadlines).toEqual([start + 25000, start + 10000, null]);
+      expect(getGeolocationWaitDeadline()).toBeNull();
+    });
+
+    it('does not start a countdown for background reads', async () => {
+      const listener = vi.fn();
+      const unsubscribe = subscribeGeolocationWait(listener);
+      installGeolocation({
+        permission: 'granted',
+        positions: [{ ok: true, coords: { latitude: 53.51, longitude: 49.41 } }],
+      });
+
+      await readDriverPosition();
+      unsubscribe();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('clears the countdown when access is denied', async () => {
+      installGeolocation({
+        permission: 'granted',
+        positions: [{ ok: false, error: { code: 1, message: 'User denied Geolocation' } }],
+      });
+
+      await readDriverPosition({ showWait: true });
+
+      expect(getGeolocationWaitDeadline()).toBeNull();
     });
   });
 });
