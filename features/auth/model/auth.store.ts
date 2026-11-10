@@ -3,10 +3,8 @@ import { shallow } from 'zustand/shallow';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 
 import {
-  confirmPasswordRecoveryCode as confirmPasswordRecoveryCodeApi,
   fetchMe,
   loginToken,
-  sendPasswordRecoveryCode as requestPasswordRecoveryCodeApi,
 } from '@/features/auth/api/auth.api';
 import { getApiErrorInfo, getAuthErrorMessage, getAuthSecurityState } from '@/shared/api/errors';
 import { clearAuthToken, getAuthToken } from '@/shared/api/token';
@@ -43,12 +41,6 @@ interface AuthActions {
   setAuthenticated: (user: User) => void;
   setUnauthorized: () => void;
   login: (login: string, pwd: string, captchaToken?: string) => Promise<AuthResult>;
-  requestPasswordRecoveryCode: (
-    login: string,
-    pwd: string,
-    captchaToken?: string
-  ) => Promise<ApiResponse>;
-  confirmPasswordRecoveryCode: (login: string, code: string) => Promise<ApiResponse>;
   refreshSession: () => Promise<AuthResult>;
 }
 
@@ -238,57 +230,6 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
         });
 
         return result;
-      }
-    },
-
-    requestPasswordRecoveryCode: async (login: string, pwd: string, captchaToken = '') => {
-      if (get().isSubmitting) {
-        return { st: false, text: 'Подождите' };
-      }
-
-      set({ isSubmitting: true });
-
-      try {
-        return await requestPasswordRecoveryCodeApi(login, pwd, captchaToken);
-      } catch (error) {
-        const errorInfo = getApiErrorInfo(error);
-        const security = getAuthSecurityState(error);
-        return {
-          st: false,
-          text: getAuthErrorMessage(error, 'Не удалось отправить код восстановления.'),
-          status: errorInfo.status ?? undefined,
-          data: errorInfo.data,
-          ...(typeof security.captchaRequired === 'boolean'
-            ? { captcha_required: security.captchaRequired }
-            : {}),
-          retry_after: security.retryAfter,
-        };
-      } finally {
-        set({ isSubmitting: false });
-      }
-    },
-
-    confirmPasswordRecoveryCode: async (login: string, code: string) => {
-      if (get().isSubmitting) {
-        return { st: false, text: 'Подождите' };
-      }
-
-      set({ isSubmitting: true });
-
-      try {
-        return await confirmPasswordRecoveryCodeApi(login, code);
-      } catch (error) {
-        const errorInfo = getApiErrorInfo(error);
-        return {
-          st: false,
-          text: getAuthErrorMessage(error, 'Не удалось подтвердить код восстановления.'),
-          status: errorInfo.status ?? undefined,
-          data: errorInfo.data,
-          retry_after: getAuthSecurityState(error).retryAfter,
-          locked: errorInfo.status === 429,
-        };
-      } finally {
-        set({ isSubmitting: false });
       }
     },
 

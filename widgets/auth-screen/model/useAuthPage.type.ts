@@ -7,7 +7,7 @@ export interface UseAuthPageResult {
   loginWithSso: () => void;
   loginFN: () => Promise<void>;
   myLogin: string;
-  setMyLogin: Dispatch<SetStateAction<string>>;
+  setMyLogin: (value: string) => void;
   myPWD: string;
   setMyPWD: Dispatch<SetStateAction<string>>;
   loginErr: string;

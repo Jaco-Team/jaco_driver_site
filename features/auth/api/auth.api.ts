@@ -76,34 +76,6 @@ export async function exchangeSsoLoginCode(loginCode: string): Promise<string> {
   return token;
 }
 
-export async function sendPasswordRecoveryCode(
-  login: string,
-  password: string,
-  captchaToken: string = ''
-): Promise<ApiResponse> {
-  return connector.rest.post<
-    ApiResponse,
-    { login: string; password: string; captcha_token?: string }
-  >(apiRoutes.auth.passwordRecoverySendCode, {
-    login: login.trim(),
-    password,
-    ...(captchaToken ? { captcha_token: captchaToken } : {}),
-  });
-}
-
-export async function confirmPasswordRecoveryCode(
-  login: string,
-  code: string
-): Promise<ApiResponse> {
-  return connector.rest.post<ApiResponse, { login: string; code: string }>(
-    apiRoutes.auth.passwordRecoveryConfirmCode,
-    {
-      login: login.trim(),
-      code,
-    }
-  );
-}
-
 export const fetchMe = async (): Promise<User> =>
   connector.rest.get<User>(apiRoutes.auth.me, { timeout: apiConfig.sessionTimeoutMs });
 

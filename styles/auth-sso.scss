@@ -1,0 +1,680 @@
+// Вход и восстановление пароля в том же виде, что страница входа SSO и ШЭФ.
+// Правила перенесены из laravel-api-driver/resources/views/idp/partials/styles.blade.php:
+// при изменении оформления правьте оба места. Страничные правила той страницы
+// (body, сброс box-sizing) заменены областью .sso ниже.
+
+.sso,
+.sso *,
+.sso *::before,
+.sso *::after {
+  box-sizing: border-box;
+}
+
+.sso [hidden] {
+  display: none !important;
+}
+
+.sso {
+  font-family: var(--font-inter), Arial, sans-serif;
+  color: var(--sso-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// :where не добавляет веса селектору: правила классов ниже (цвет и размер текста
+// кнопок) должны побеждать этот сброс, как на исходной странице.
+:where(.sso) button,
+:where(.sso) input {
+  font: inherit;
+  color: inherit;
+}
+
+:root {
+    color-scheme: light;
+    --sso-crimson: #A50021;
+    --sso-crimson-hover: #8B001C;
+    --sso-ring: rgba(165, 0, 33, .10);
+    --sso-ink: #111827;
+    --sso-label: #1F2937;
+    --sso-muted: #6B7280;
+    --sso-border: #E5E7EB;
+    --sso-border-hover: #9CA3AF;
+    --sso-error: #B91C1C;
+    --sso-success: #15803D;
+}
+
+
+
+
+
+.sso {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 32px 16px;
+    background: linear-gradient(145deg, #F4F6FA 0%, #FFFFFF 100%);
+}
+
+.sso-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 16px;
+    border-radius: 24px;
+    background: #FFFFFF;
+    box-shadow: 0 12px 40px rgba(17, 24, 39, .06), 0 2px 8px rgba(17, 24, 39, .02);
+}
+
+@media (min-width: 600px) {
+    .sso-card {
+        padding: 32px;
+    }
+}
+
+.sso-logo {
+    display: block;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 24px;
+    object-fit: contain;
+}
+
+.sso-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin: 0 0 16px -6px;
+    padding: 6px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--sso-muted);
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+
+.sso-back:hover {
+    background: rgba(17, 24, 39, .04);
+}
+
+.sso-back svg,
+.sso-eye svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.sso-success-icon {
+    display: block;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 28px;
+    fill: var(--sso-success);
+}
+
+.sso-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -.025em;
+}
+
+.sso-subtitle {
+    margin: 0 0 24px;
+    color: var(--sso-muted);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.sso-subtitle--code {
+    line-height: 1.6;
+}
+
+.sso-subtitle--success {
+    margin-bottom: 32px;
+}
+
+.sso-subtitle__phone {
+    color: #374151;
+    white-space: nowrap;
+}
+
+.sso-gap-2 {
+    margin-top: 16px;
+}
+
+.sso-gap-3 {
+    margin-top: 24px;
+}
+
+.sso-label {
+    display: block;
+    margin: 0 0 8px;
+    color: var(--sso-label);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.sso-label--plain {
+    color: var(--sso-ink);
+}
+
+.sso-input-wrap {
+    position: relative;
+}
+
+.sso-input {
+    display: block;
+    width: 100%;
+    height: 48px;
+    padding: 0 12px;
+    border: 1px solid var(--sso-border);
+    border-radius: 12px;
+    outline: none;
+    background: #FFFFFF;
+    color: #212121;
+    /* В ШЭФ текст полей набран Roboto: берём его, если он есть на устройстве. */
+    font-family: Roboto, var(--font-inter), Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.sso-input::placeholder {
+    color: var(--sso-muted);
+    opacity: 1;
+}
+
+.sso-input:hover {
+    border-color: var(--sso-border-hover);
+}
+
+.sso-input:focus {
+    border-color: var(--sso-crimson);
+    box-shadow: 0 0 0 3px var(--sso-ring);
+}
+
+.sso-input[aria-invalid="true"] {
+    border-color: var(--sso-error);
+}
+
+.sso-input:disabled {
+    opacity: .6;
+}
+
+.sso-input--password {
+    padding-right: 60px;
+}
+
+.sso-eye {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--sso-muted);
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.sso-eye:hover {
+    background: rgba(17, 24, 39, .04);
+}
+
+.sso-eye [data-eye="off"],
+.sso-eye[aria-pressed="true"] [data-eye="on"] {
+    display: none;
+}
+
+.sso-eye[aria-pressed="true"] [data-eye="off"] {
+    display: block;
+}
+
+.sso-field-error {
+    margin: 8px 0 0;
+    color: var(--sso-error);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.sso-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    margin-top: 16px;
+    color: #374151;
+    font-size: 16px;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.sso-remember input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--sso-crimson);
+    cursor: pointer;
+}
+
+/* Переключатель способа получения кода (JacoPeriodSwitch). */
+.sso-segment {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: repeat(var(--count, 3), minmax(0, 1fr));
+    min-height: 64px;
+    padding: 8px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #F3F3F3;
+}
+
+.sso-segment__thumb {
+    --position: calc(var(--index, 0) / var(--count, 3));
+    --tail: calc((var(--count, 3) - var(--index, 0) - 1) / var(--count, 3));
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: calc(var(--position) * 100% + 8px * (1 - var(--position) * 2));
+    right: calc(var(--tail) * 100% + 8px * (1 - var(--tail) * 2));
+    z-index: 0;
+    border: 1px solid rgba(255, 255, 255, .82);
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, .88) 0%, rgba(255, 255, 255, .68) 100%);
+    box-shadow: 0 3px 10px rgba(17, 24, 39, .08), inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(17, 24, 39, .035);
+    pointer-events: none;
+    transition: right 260ms cubic-bezier(.2, .9, .3, 1), left 380ms cubic-bezier(.22, 1.12, .36, 1) 170ms;
+}
+
+.sso-segment[data-direction="backward"] .sso-segment__thumb {
+    transition: left 260ms cubic-bezier(.2, .9, .3, 1), right 380ms cubic-bezier(.22, 1.12, .36, 1) 170ms;
+}
+
+.sso-segment__tab {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    min-height: 48px;
+    padding: 0 4px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #5E5E5E;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 180ms ease 120ms, transform 120ms ease;
+}
+
+.sso-segment__tab:active {
+    transform: scale(.985);
+}
+
+.sso-segment__tab[aria-selected="true"] {
+    color: var(--sso-crimson);
+}
+
+.sso-segment__tab:disabled {
+    color: #A6A6A6;
+    cursor: default;
+}
+
+.sso-segment__tab svg {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+/* Подсказки способов лежат друг на друге, чтобы высота блока не прыгала. */
+.sso-helpers {
+    display: grid;
+    margin-top: 8px;
+}
+
+.sso-helper {
+    grid-area: 1 / 1;
+    min-width: 0;
+    margin: 0;
+    color: var(--sso-muted);
+    font-size: 16px;
+    line-height: 1.5;
+    visibility: hidden;
+}
+
+.sso-helper[data-active="true"] {
+    visibility: visible;
+}
+
+/* Шесть ячеек кода. */
+.sso-code {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.sso-code__cell {
+    width: 100%;
+    min-width: 0;
+    height: 56px;
+    padding: 0;
+    border: 1px solid var(--sso-border);
+    border-radius: 12px;
+    outline: none;
+    background: #FFFFFF;
+    color: var(--sso-ink);
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.sso-code__cell:focus {
+    border-color: var(--sso-crimson);
+    box-shadow: 0 0 0 3px var(--sso-ring);
+}
+
+.sso-code__cell:disabled {
+    opacity: .6;
+}
+
+.sso-code[data-error="true"] .sso-code__cell {
+    border-color: var(--sso-error);
+    animation: sso-shake 240ms ease-in-out;
+}
+
+@keyframes sso-shake {
+    0%, 100% { transform: translateX(0); }
+    25%, 75% { transform: translateX(-4px); }
+    50% { transform: translateX(4px); }
+}
+
+.sso-resend {
+    margin-top: 24px;
+    text-align: center;
+}
+
+.sso-resend__wait {
+    margin: 0;
+    color: var(--sso-muted);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.sso-text-button {
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.sso-text-button:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+.sso-text-button--accent {
+    min-height: 24px;
+    color: var(--sso-crimson);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.75;
+}
+
+.sso-text-button--inline {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin-left: 4px;
+    color: var(--sso-crimson);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.75;
+}
+
+.sso-text-button--small {
+    display: block;
+    margin: 4px auto 0;
+    padding: 4px;
+    color: var(--sso-muted);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.75;
+}
+
+.sso-text-button--small:hover:not(:disabled) {
+    color: var(--sso-crimson);
+}
+
+.sso-rules {
+    display: grid;
+    gap: 8px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sso-rules li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--sso-muted);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.sso-rules li[data-met="true"] {
+    color: var(--sso-success);
+}
+
+.sso-rules svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.sso-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.sso-captcha {
+    margin-top: 16px;
+}
+
+.sso-note {
+    margin: 16px 0 0;
+    color: var(--sso-muted);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.sso-error {
+    margin-top: 16px;
+    color: var(--sso-error);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.sso-error p {
+    margin: 0;
+}
+
+.sso-error__title {
+    font-weight: 600;
+}
+
+.sso-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 48px;
+    margin-top: 24px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--sso-crimson);
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.75;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .25s ease, opacity .25s ease;
+}
+
+.sso-primary:hover:not(:disabled) {
+    background: var(--sso-crimson-hover);
+}
+
+.sso-primary:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+.sso-primary[aria-busy="true"] {
+    opacity: 1;
+}
+
+.sso-primary--flush {
+    margin-top: 0;
+}
+
+.sso-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, .35);
+    border-top-color: #FFFFFF;
+    border-radius: 50%;
+    animation: sso-spin .8s linear infinite;
+}
+
+@keyframes sso-spin {
+    to { transform: rotate(360deg); }
+}
+
+.sso-link {
+    display: block;
+    width: 100%;
+    min-height: 32px;
+    margin-top: 16px;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--sso-muted);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.75;
+    text-align: center;
+    cursor: pointer;
+    transition: color .15s ease;
+}
+
+.sso-link:hover:not(:disabled) {
+    color: var(--sso-crimson);
+}
+
+.sso-link:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+.sso-back:focus-visible,
+.sso-eye:focus-visible,
+.sso-text-button:focus-visible,
+.sso-primary:focus-visible,
+.sso-link:focus-visible {
+    outline: 2px solid var(--sso-crimson);
+    outline-offset: 3px;
+}
+
+.sso-segment__tab:focus-visible {
+    outline: 2px solid var(--sso-crimson);
+    outline-offset: -2px;
+}
+
+/* Автозаполнение: событие animationstart сообщает скрипту, что поле заполнено. */
+@keyframes sso-autofill {
+    from { opacity: 1; }
+    to { opacity: 1; }
+}
+
+.sso-input:-webkit-autofill {
+    animation-name: sso-autofill;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sso-segment__thumb,
+    .sso-segment__tab {
+        transition: none !important;
+    }
+
+    .sso-code[data-error="true"] .sso-code__cell {
+        animation: none;
+    }
+}
+
+/* Второй способ входа на сайте курьеров: на странице SSO такой кнопки нет. */
+.sso-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 48px;
+    margin-top: 12px;
+    padding: 0 18px;
+    border: 1px solid var(--sso-border);
+    border-radius: 12px;
+    background: #FFFFFF;
+    color: var(--sso-ink);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.75;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color .15s ease, background-color .15s ease;
+}
+
+.sso-secondary:hover:not(:disabled) {
+    border-color: var(--sso-border-hover);
+    background: #F9FAFB;
+}
+
+.sso-secondary:focus-visible {
+    outline: 2px solid var(--sso-crimson);
+    outline-offset: 2px;
+}
+
+.sso-secondary:disabled {
+    opacity: .4;
+    cursor: default;
+}

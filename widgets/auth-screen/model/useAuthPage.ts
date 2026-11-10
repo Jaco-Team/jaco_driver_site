@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { log } from '@/components/analytics';
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { redirectToSsoLogin } from '@/features/auth/api/auth.api';
+import { parsePhoneInput } from '@/shared/lib/phoneInput';
 import { SMARTCAPTCHA_CLIENT_KEY } from '@/shared/ui/YandexSmartCaptcha';
 
 import { UseAuthPageResult } from './useAuthPage.type';
@@ -17,7 +18,7 @@ export function useAuthPage(): UseAuthPageResult {
     setLoginErr: state.setLoginErr,
   }));
 
-  const [myLogin, setMyLogin] = useState('');
+  const [myLogin, setMyLoginState] = useState('');
   const [myPWD, setMyPWD] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
@@ -49,6 +50,11 @@ export function useAuthPage(): UseAuthPageResult {
     return () => window.clearInterval(timer);
   }, [retryAfter]);
 
+  // Номер показываем маской, как на странице входа SSO; серверу уходит +7XXXXXXXXXX.
+  function setMyLogin(value: string): void {
+    setMyLoginState(parsePhoneInput(value).display);
+  }
+
   function resetCaptcha(): void {
     setCaptchaToken('');
     setCaptchaResetKey((key) => key + 1);
@@ -68,7 +74,7 @@ export function useAuthPage(): UseAuthPageResult {
       return;
     }
 
-    const res = await login(myLogin, myPWD, captchaToken);
+    const res = await login(parsePhoneInput(myLogin).apiValue || myLogin.trim(), myPWD, captchaToken);
 
     if (res.captcha_required) {
       setCaptchaRequired(true);
@@ -94,7 +100,10 @@ export function useAuthPage(): UseAuthPageResult {
   }
 
   const canSubmit =
-    retryAfter <= 0 && (!captchaRequired || Boolean(SMARTCAPTCHA_CLIENT_KEY && captchaToken));
+    myLogin.trim().length > 0 &&
+    myPWD.length > 0 &&
+    retryAfter <= 0 &&
+    (!captchaRequired || Boolean(SMARTCAPTCHA_CLIENT_KEY && captchaToken));
 
   return {
     loginWithSso,

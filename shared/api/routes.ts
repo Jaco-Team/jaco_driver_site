@@ -7,8 +7,9 @@ function normalizeAssetPath(value: string): string {
 export const apiRoutes = {
   auth: {
     tokenLogin: '/api/v1/auth/token/login',
-    passwordRecoverySendCode: '/api/v1/auth/password/recovery/send-code',
-    passwordRecoveryConfirmCode: '/api/v1/auth/password/recovery/confirm-code',
+    passwordRecoveryChannels: '/api/v1/auth/password/recovery/channels',
+    passwordRecoveryRequestCode: '/api/v1/auth/password/recovery/request-code',
+    passwordRecoveryReset: '/api/v1/auth/password/recovery/reset',
     me: '/api/v1/auth/me',
     sessionMeta: '/api/v1/auth/session/meta',
     logout: '/api/v1/auth/logout',

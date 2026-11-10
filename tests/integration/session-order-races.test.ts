@@ -21,8 +21,6 @@ vi.mock('@/entities/settings', () => ({
 vi.mock('@/features/auth/api/auth.api', () => ({
   fetchMe: mocks.fetchMe,
   loginToken: vi.fn(),
-  sendPasswordRecoveryCode: vi.fn(),
-  confirmPasswordRecoveryCode: vi.fn(),
 }));
 vi.mock('@/features/offline/model/connectivity.store', () => ({
   isAppOnline: () => true,

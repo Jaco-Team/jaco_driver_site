@@ -1,22 +1,17 @@
 import Meta from '@/components/meta';
 
-import Link from 'next/link';
-import Image from 'next/image';
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-
 import { log } from '@/components/analytics';
 import { useAuthStore } from '@/features/auth/model/auth.store';
 import { useHeaderStore } from '@/features/header/model/header.store';
+import { formatCountdown } from '@/shared/lib/phoneInput';
+import AuthCard from '@/shared/ui/auth/AuthCard';
+import AuthPasswordField from '@/shared/ui/auth/AuthPasswordField';
 import { SnackbarNotification } from '@/shared/ui/SnackbarNotification/SnackbarNotification';
-
-import MyTextInput from '@/shared/ui/MyTextInput';
-import PasswordInput from '@/shared/ui/PasswordInput';
 import YandexSmartCaptcha, { SMARTCAPTCHA_CLIENT_KEY } from '@/shared/ui/YandexSmartCaptcha';
-import { roboto } from '@/shared/ui/Font';
 
 import { useAuthPage } from '../model/useAuthPage';
 
+/** Вход в том же виде, что страница входа SSO и ШЭФ. */
 export default function AuthPage() {
   const authNotice = useAuthStore((state) => state.authNotice);
   const setAuthNotice = useAuthStore((state) => state.setAuthNotice);
@@ -38,6 +33,11 @@ export default function AuthPage() {
     canSubmit,
   } = useAuthPage();
 
+  function goToRecovery(): void {
+    log('auth_go_to_resetpwd', 'Восстановление пароля', undefined);
+    router.push('/registration', { scroll: false });
+  }
+
   return (
     <Meta title="Авторизация">
       <SnackbarNotification
@@ -51,106 +51,73 @@ export default function AuthPage() {
         onClose={() => setAuthNotice(null)}
         fontSize={globalFontSize}
       />
-      <Grid
-        container
-        spacing={3}
-        className={'auth ' + roboto.variable}
-        sx={{
-          justifyContent: 'center',
-        }}
-      >
-        <Grid size={{ xs: 12, md: 8, lg: 5 }}>
-          <section className="auth__panel auth__panel--solo">
-            <div className="auth__logoBadge">
-              <Image alt={'Лого'} src="/Logo.png" width={92} height={92} priority={true} />
-            </div>
+      <AuthCard title="Вход в аккаунт" subtitle="Введите номер телефона и пароль">
+        <form
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            void loginFN();
+          }}
+        >
+          <label className="sso-label" htmlFor="auth-login">
+            Номер телефона
+          </label>
+          <input
+            className="sso-input"
+            type="tel"
+            id="auth-login"
+            name="username"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="+7 (999) 123-45-67"
+            value={myLogin}
+            onChange={(event) => setMyLogin(event.target.value)}
+          />
 
-            <span className="auth__eyebrow">Авторизация</span>
-            <h2 className="auth__panelTitle">Вход в аккаунт</h2>
-            <p className="auth__panelText">
-              Введите номер телефона и пароль, чтобы продолжить работу в приложении.
-            </p>
+          <div className="sso-gap-3">
+            <AuthPasswordField
+              label="Пароль"
+              subject="пароль"
+              name="password"
+              autoComplete="current-password"
+              value={myPWD}
+              onChange={setMyPWD}
+            />
+          </div>
 
-            <div className="auth__fieldGroup">
-              <MyTextInput
-                label="Номер телефона"
-                ariaLabel="Номер телефона"
-                name="username"
-                autoComplete="username"
-                inputMode="tel"
-                type={'text'}
-                value={myLogin}
-                onChange={(e) => setMyLogin(e.target.value)}
-              />
-              <PasswordInput
-                label="Пароль"
-                ariaLabel="Пароль"
-                name="password"
-                autoComplete="current-password"
-                value={myPWD}
-                onChange={(e) => setMyPWD(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && loginFN()}
-              />
-            </div>
-
-            {SMARTCAPTCHA_CLIENT_KEY && captchaRequired ? (
+          {SMARTCAPTCHA_CLIENT_KEY && captchaRequired ? (
+            <div className="sso-captcha">
               <YandexSmartCaptcha
                 resetKey={captchaResetKey}
                 onSuccess={setCaptchaToken}
                 onTokenExpired={resetCaptcha}
               />
-            ) : null}
-
-            {loginErr ? (
-              <div className="auth__error">{loginErr}</div>
-            ) : (
-              <div className="auth__hint">
-                Используйте номер телефона, указанный в вашем рабочем аккаунте.
-              </div>
-            )}
-
-            <Button
-              variant="contained"
-              fullWidth
-              className="auth__primaryButton"
-              disabled={!canSubmit}
-              onClick={() => loginFN()}
-            >
-              {retryAfter > 0 ? 'Попробуйте позже' : 'Войти'}
-            </Button>
-
-            <Button
-              variant="outlined"
-              fullWidth
-              className="auth__secondaryButton"
-              onClick={loginWithSso}
-            >
-              Продолжить через SSO
-            </Button>
-
-            <div className="auth__linkRow">
-              <span className="auth__linkCaption">Не получается войти?</span>
-              <Link
-                className="auth__link"
-                href="/registration"
-                onClick={(e) => {
-                  e.preventDefault();
-                  let done = false;
-                  const go = () => {
-                    if (done) return;
-                    done = true;
-                    router.push('/registration', { scroll: false });
-                  };
-                  log('auth_go_to_resetpwd', 'Восстановление пароля', undefined);
-                  setTimeout(go, 200);
-                }}
-              >
-                Восстановить пароль
-              </Link>
             </div>
-          </section>
-        </Grid>
-      </Grid>
+          ) : null}
+
+          {loginErr ? (
+            <div className="sso-error" role="alert">
+              <p>{loginErr}</p>
+            </div>
+          ) : null}
+
+          {retryAfter > 0 ? (
+            <p className="sso-note">Повторите через {formatCountdown(retryAfter)}</p>
+          ) : null}
+
+          <button className="sso-primary" type="submit" disabled={!canSubmit}>
+            Войти
+          </button>
+
+          <button className="sso-secondary" type="button" onClick={loginWithSso}>
+            Продолжить через SSO
+          </button>
+
+          <button className="sso-link" type="button" onClick={goToRecovery}>
+            Восстановить пароль
+          </button>
+        </form>
+      </AuthCard>
     </Meta>
   );
 }

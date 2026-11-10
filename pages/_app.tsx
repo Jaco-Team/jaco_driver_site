@@ -7,6 +7,7 @@ import '../styles/list.scss';
 import '../styles/map.scss';
 import '../styles/order_card.scss';
 import '../styles/auth.scss';
+import '../styles/auth-sso.scss';
 import '../styles/settings.scss';
 import '../styles/setting_style.scss';
 import 'maplibre-gl/dist/maplibre-gl.css';

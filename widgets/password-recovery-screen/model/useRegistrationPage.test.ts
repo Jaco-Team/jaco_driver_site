@@ -1,11 +1,12 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useRegistrationPage } from './useRegistrationPage';
 
 const mocks = vi.hoisted(() => ({
-  requestPasswordRecoveryCode: vi.fn(),
-  confirmPasswordRecoveryCode: vi.fn(),
+  fetchRecoveryChannels: vi.fn(),
+  requestRecoveryCode: vi.fn(),
+  resetPasswordWithCode: vi.fn(),
   login: vi.fn(),
   push: vi.fn(),
 }));
@@ -14,19 +15,15 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push }),
 }));
 
+vi.mock('@/features/auth/api/passwordRecovery.api', () => ({
+  fetchRecoveryChannels: mocks.fetchRecoveryChannels,
+  requestRecoveryCode: mocks.requestRecoveryCode,
+  resetPasswordWithCode: mocks.resetPasswordWithCode,
+}));
+
 vi.mock('@/features/auth/model/auth.store', () => ({
-  useAuthStore: (
-    selector: (state: {
-      requestPasswordRecoveryCode: typeof mocks.requestPasswordRecoveryCode;
-      confirmPasswordRecoveryCode: typeof mocks.confirmPasswordRecoveryCode;
-      login: typeof mocks.login;
-    }) => unknown
-  ) =>
-    selector({
-      requestPasswordRecoveryCode: mocks.requestPasswordRecoveryCode,
-      confirmPasswordRecoveryCode: mocks.confirmPasswordRecoveryCode,
-      login: mocks.login,
-    }),
+  useAuthStore: (selector: (state: { login: typeof mocks.login }) => unknown) =>
+    selector({ login: mocks.login }),
 }));
 
 vi.mock('@/components/analytics', () => ({
@@ -37,11 +34,43 @@ vi.mock('@/shared/ui/YandexSmartCaptcha', () => ({
   SMARTCAPTCHA_CLIENT_KEY: '',
 }));
 
-describe('useRegistrationPage without captcha key', () => {
+const ok = (extra: Record<string, unknown> = {}) => ({
+  st: true,
+  text: '',
+  errorCode: '',
+  retryAfter: 0,
+  resendAfter: 0,
+  captchaRequired: false,
+  ...extra,
+});
+const fail = (extra: Record<string, unknown> = {}) => ok({ st: false, text: 'Отказ', ...extra });
+
+async function mount() {
+  const hook = renderHook(() => useRegistrationPage());
+
+  await waitFor(() => expect(mocks.fetchRecoveryChannels).toHaveBeenCalled());
+  await act(async () => {});
+
+  return hook;
+}
+
+async function reachPasswordStep(result: { current: ReturnType<typeof useRegistrationPage> }) {
+  act(() => result.current.setPhone('79991234567'));
+  await act(async () => result.current.submit());
+  act(() => result.current.setCode('123456'));
+  act(() => result.current.submit());
+  act(() => {
+    result.current.setPassword('NewPassword9');
+    result.current.setRepeatPassword('NewPassword9');
+  });
+}
+
+describe('useRegistrationPage: code first, like the SSO page', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    mocks.requestPasswordRecoveryCode.mockResolvedValue({ st: true });
-    mocks.confirmPasswordRecoveryCode.mockResolvedValue({ st: true });
+    mocks.fetchRecoveryChannels.mockResolvedValue(['sms', 'telegram', 'voice']);
+    mocks.requestRecoveryCode.mockResolvedValue(ok({ text: 'Запрос принят', resendAfter: 30 }));
+    mocks.resetPasswordWithCode.mockResolvedValue(ok());
     mocks.login.mockResolvedValue({ st: true });
   });
 
@@ -49,290 +78,223 @@ describe('useRegistrationPage without captcha key', () => {
     vi.useRealTimers();
   });
 
-  it('sends a recovery code without a captcha token', async () => {
-    const { result } = renderHook(() => useRegistrationPage());
+  it('offers the channels the server allows and sends the code through the chosen one', async () => {
+    const { result } = await mount();
 
-    act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
-    });
+    expect(result.current.channels).toEqual(['sms', 'telegram', 'voice']);
+    expect(result.current.canSubmit).toBe(false);
 
-    expect(result.current.canSubmit).toBe(true);
+    act(() => result.current.setPhone('79991234567'));
+    act(() => result.current.setChannel('telegram'));
+    expect(result.current.phone).toBe('+7 (999) 123-45-67');
 
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
+    await act(async () => result.current.submit());
 
-    expect(mocks.requestPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', 'Password1', '');
-    expect(result.current.activeStep).toBe(1);
-    expect(result.current.errorText).toBe('');
+    expect(mocks.requestRecoveryCode).toHaveBeenCalledWith('+79991234567', 'telegram', '');
+    expect(result.current.step).toBe('code');
+    expect(result.current.maskedPhone).toBe('+7 (999) ***-**-67');
+    expect(result.current.recoveryMessage).toBe('Запрос принят');
+    expect(result.current.resendAfter).toBe(30);
   });
+
+  it('keeps SMS selected when the saved choice is no longer offered', async () => {
+    mocks.fetchRecoveryChannels.mockResolvedValue(['sms']);
+    const { result } = await mount();
+
+    expect(result.current.channels).toEqual(['sms']);
+    expect(result.current.channel).toBe('sms');
+  });
+
+  it('does not ask the server for an incomplete number', async () => {
+    const { result } = await mount();
+
+    act(() => result.current.setPhone('7999'));
+    await act(async () => result.current.resend());
+
+    expect(mocks.requestRecoveryCode).not.toHaveBeenCalled();
+    expect(result.current.phoneError).toBe('Введите номер в формате +7 или 8');
+  });
+
   it('does not send duplicate requests before React updates the loading state', async () => {
-    let complete!: (value: { st: boolean }) => void;
-    mocks.requestPasswordRecoveryCode.mockReturnValueOnce(
-      new Promise((resolve) => {
-        complete = resolve;
-      })
-    );
-    const { result } = renderHook(() => useRegistrationPage());
+    let finish!: (value: unknown) => void;
+    mocks.requestRecoveryCode.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+    const { result } = await mount();
+
+    act(() => result.current.setPhone('79991234567'));
     act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
+      result.current.submit();
+      result.current.submit();
     });
-    await act(async () => {
-      const first = result.current.requestRecoveryCode();
-      const second = result.current.requestRecoveryCode();
-      expect(mocks.requestPasswordRecoveryCode).toHaveBeenCalledTimes(1);
-      complete({ st: true });
-      await Promise.all([first, second]);
-    });
+
+    expect(mocks.requestRecoveryCode).toHaveBeenCalledTimes(1);
+    await act(async () => finish(ok()));
+    expect(result.current.step).toBe('code');
   });
 
-  it('allows SMS confirmation during the resend cooldown', async () => {
-    mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({ st: true, resend_after: 30 });
-    const { result } = renderHook(() => useRegistrationPage());
-    act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
-    });
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    act(() => {
-      result.current.setMyCode('123456');
-    });
-    expect(result.current.sendRetryAfter).toBe(30);
-    expect(result.current.retryAfter).toBe(0);
-    expect(result.current.canSubmit).toBe(true);
-    await act(async () => {
-      await result.current.confirmRecoveryCode();
-    });
-    expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456');
+  it('shows an unknown number under the phone field, like in Chef', async () => {
+    mocks.requestRecoveryCode.mockResolvedValue(
+      fail({ errorCode: 'account_not_found', text: 'Аккаунт с таким номером не найден.' })
+    );
+    const { result } = await mount();
+
+    act(() => result.current.setPhone('79991234567'));
+    await act(async () => result.current.submit());
+
+    expect(result.current.step).toBe('request');
+    expect(result.current.phoneError).toBe('Аккаунт с таким номером не найден.');
+    expect(result.current.error).toBeNull();
+
+    // Правка номера снимает серверную ошибку.
+    act(() => result.current.setPhone('79991234568'));
+    expect(result.current.phoneError).toBe('');
   });
 
-  it('waits for a confirm block and prevents rapid duplicate verification', async () => {
-    vi.useFakeTimers();
-    let complete!: (value: { st: boolean; retry_after: number; text: string }) => void;
-    mocks.confirmPasswordRecoveryCode.mockReturnValueOnce(
-      new Promise((resolve) => {
-        complete = resolve;
-      })
-    );
-    const { result } = renderHook(() => useRegistrationPage());
-    act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
-    });
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    act(() => {
-      result.current.setMyCode('123456');
-    });
-    await act(async () => {
-      const first = result.current.confirmRecoveryCode();
-      const second = result.current.confirmRecoveryCode();
-      expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledTimes(1);
-      complete({ st: false, retry_after: 2, text: 'Повторите позже' });
-      await Promise.all([first, second]);
-    });
+  it('checks the code on the server only together with the new password', async () => {
+    const { result } = await mount();
+
+    act(() => result.current.setPhone('79991234567'));
+    await act(async () => result.current.submit());
+
+    act(() => result.current.setCode('12'));
+    act(() => result.current.submit());
+    expect(result.current.step).toBe('code');
+    expect(result.current.error).toEqual({ text: 'Введите 6 цифр кода', code: false });
+
+    act(() => result.current.setCode('12a3456789'));
+    expect(result.current.code).toBe('123456');
+    act(() => result.current.submit());
+
+    expect(result.current.step).toBe('password');
+    expect(mocks.resetPasswordWithCode).not.toHaveBeenCalled();
+  });
+
+  it('saves the password only when every rule is met, then signs in with it', async () => {
+    const { result } = await mount();
+
+    await reachPasswordStep(result);
+    act(() => result.current.setRepeatPassword('NewPassword'));
+    expect(result.current.passwordRules).toEqual({ length: true, characters: true, match: false });
     expect(result.current.canSubmit).toBe(false);
-    await act(async () => {
-      await result.current.confirmRecoveryCode();
-    });
-    expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledTimes(1);
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-    expect(result.current.canSubmit).toBe(true);
+    await act(async () => result.current.submit());
+    expect(mocks.resetPasswordWithCode).not.toHaveBeenCalled();
+
+    // Пробелы в пароль не попадают.
+    act(() => result.current.setRepeatPassword('New Password9'));
+    expect(result.current.repeatPassword).toBe('NewPassword9');
+    await act(async () => result.current.submit());
+
+    expect(mocks.resetPasswordWithCode).toHaveBeenCalledWith('+79991234567', '123456', 'NewPassword9');
+    expect(result.current.step).toBe('success');
+
+    await act(async () => result.current.submit());
+
+    expect(mocks.login).toHaveBeenCalledWith('+79991234567', 'NewPassword9');
+    expect(mocks.push).toHaveBeenCalledWith('/list_orders', { scroll: false });
   });
 
-  it('keeps a changed password successful even when automatic login fails', async () => {
-    mocks.login.mockResolvedValueOnce({ st: false, text: 'Временная ошибка входа' });
-    const { result } = renderHook(() => useRegistrationPage());
-    act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
-    });
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    act(() => {
-      result.current.setMyCode('123456');
-    });
-    await act(async () => {
-      await result.current.confirmRecoveryCode();
-    });
-    expect(result.current.passwordChanged).toBe(true);
-    expect(result.current.errorText).toContain('Пароль изменён');
-    await act(async () => {
-      await result.current.confirmRecoveryCode();
-    });
-    expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledTimes(1);
+  it('sends the driver to the login page when signing in with the new password fails', async () => {
+    mocks.login.mockResolvedValue({ st: false, text: 'Ошибка' });
+    const { result } = await mount();
+
+    await reachPasswordStep(result);
+    await act(async () => result.current.submit());
+    await act(async () => result.current.submit());
+
+    expect(mocks.push).toHaveBeenCalledWith('/auth', { scroll: false });
   });
 
-  it('ignores a recovery reply after leaving the screen', async () => {
-    let complete!: (value: { st: boolean }) => void;
-    mocks.requestPasswordRecoveryCode.mockReturnValueOnce(
-      new Promise((resolve) => {
-        complete = resolve;
-      })
+  it('returns to the code step when the server rejects the code', async () => {
+    mocks.resetPasswordWithCode.mockResolvedValue(
+      fail({ errorCode: 'invalid_code', text: 'Код не подошёл' })
     );
-    const { result, unmount } = renderHook(() => useRegistrationPage());
-    act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
+    const { result } = await mount();
+
+    await reachPasswordStep(result);
+    await act(async () => result.current.submit());
+
+    expect(result.current.step).toBe('code');
+    expect(result.current.code).toBe('');
+    expect(result.current.error).toEqual({ text: 'Код не подошёл', code: true });
+    // Новый пароль остаётся: после верного кода вводить его заново не нужно.
+    expect(result.current.password).toBe('NewPassword9');
+  });
+
+  it('waits before another save when the server asks to', async () => {
+    mocks.resetPasswordWithCode.mockResolvedValue(
+      fail({ errorCode: 'too_many_requests', retryAfter: 20 })
+    );
+    const { result } = await mount();
+
+    await reachPasswordStep(result);
+    await act(async () => result.current.submit());
+
+    expect(result.current.step).toBe('password');
+    expect(result.current.retryAfter).toBe(20);
+    expect(result.current.canSubmit).toBe(false);
+  });
+
+  it('counts the resend delay down and follows time spent in the background', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+    vi.setSystemTime(new Date('2026-11-10T10:00:00Z'));
+    const hook = renderHook(() => useRegistrationPage());
+    await act(async () => {});
+    const { result } = hook;
+
+    act(() => result.current.setPhone('79991234567'));
+    await act(async () => result.current.submit());
+    expect(result.current.resendAfter).toBe(30);
+
+    await act(async () => {
+      vi.advanceTimersByTime(10_000);
     });
-    let pending!: Promise<void>;
+    expect(result.current.resendAfter).toBe(20);
+
+    vi.setSystemTime(new Date('2026-11-10T10:00:31Z'));
     act(() => {
-      pending = result.current.requestRecoveryCode();
+      window.dispatchEvent(new Event('focus'));
     });
+    expect(result.current.resendAfter).toBe(0);
+  });
+
+  it('ignores a reply that arrives after leaving the screen', async () => {
+    let finish!: (value: unknown) => void;
+    mocks.requestRecoveryCode.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+    const { result, unmount } = await mount();
+
+    act(() => result.current.setPhone('79991234567'));
+    act(() => result.current.submit());
     unmount();
-    await act(async () => {
-      complete({ st: true });
-      await pending;
-    });
-    expect(mocks.push).not.toHaveBeenCalled();
+
+    await act(async () => finish(ok()));
+    expect(result.current.step).toBe('request');
   });
 
-  it.each([
-    {
-      st: false,
-      status: 429,
-      retry_after: 30,
-      text: 'Повторная отправка будет доступна через 30 с.',
-    },
-    { st: false, captcha_required: true, text: 'Подтвердите, что вы не робот' },
-  ])('keeps the original code available after a failed resend: %j', async (failure) => {
-    mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({ st: true });
-    mocks.requestPasswordRecoveryCode.mockResolvedValueOnce(failure);
-    const { result } = renderHook(() => useRegistrationPage());
-    act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
-    });
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    act(() => {
-      result.current.setMyCode('123456');
-    });
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    expect(result.current.activeStep).toBe(1);
-    expect(result.current.myCode).toBe('123456');
-    expect(result.current.canSubmit).toBe(true);
-    expect(result.current.errorText).toBe(
-      'captcha_required' in failure && failure.captcha_required
-        ? 'Проверка безопасности недоступна. Попробуйте позже.'
-        : failure.text
+  it('explains a server CAPTCHA challenge when the site has no CAPTCHA key', async () => {
+    mocks.requestRecoveryCode.mockResolvedValue(
+      fail({ errorCode: 'captcha_required', captchaRequired: true, text: 'Подтвердите, что вы не робот' })
     );
-    await act(async () => {
-      await result.current.confirmRecoveryCode();
-    });
-    expect(mocks.confirmPasswordRecoveryCode).toHaveBeenCalledWith('79870001122', '123456');
+    const { result } = await mount();
+
+    act(() => result.current.setPhone('79991234567'));
+    await act(async () => result.current.submit());
+    expect(result.current.captchaVisible).toBe(false);
+
+    await act(async () => result.current.submit());
+    expect(result.current.error?.text).toBe('Проверка безопасности недоступна. Попробуйте позже.');
+    expect(mocks.requestRecoveryCode).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the original code available after a resend network failure', async () => {
-    mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({ st: true });
-    mocks.requestPasswordRecoveryCode.mockRejectedValueOnce(new Error('Network Error'));
-    const { result } = renderHook(() => useRegistrationPage());
-    act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
-    });
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    act(() => {
-      result.current.setMyCode('123456');
-    });
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    expect(result.current.activeStep).toBe(1);
-    expect(result.current.myCode).toBe('123456');
-    expect(result.current.canSubmit).toBe(true);
-    expect(result.current.loader).toBe(false);
-    expect(result.current.errorText).toContain('Попробуйте ещё раз');
-  });
+  it('goes back one step and lets the driver edit the number', async () => {
+    const { result } = await mount();
 
-  it('explains a server CAPTCHA challenge when the client key is missing', async () => {
-    mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({ st: false, captcha_required: true });
-    const { result } = renderHook(() => useRegistrationPage());
-    act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
-    });
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    expect(result.current.captchaRequired).toBe(true);
-    expect(result.current.canSubmit).toBe(false);
-    expect(result.current.errorText).toBe('Проверка безопасности недоступна. Попробуйте позже.');
-  });
+    await reachPasswordStep(result);
+    act(() => result.current.back());
+    expect(result.current.step).toBe('code');
+    act(() => result.current.back());
+    expect(result.current.step).toBe('request');
 
-  it('reconciles resend and confirmation deadlines after time passes in the background', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-10-07T12:00:00Z'));
-    mocks.requestPasswordRecoveryCode.mockResolvedValueOnce({ st: true, resend_after: 30 });
-    mocks.confirmPasswordRecoveryCode.mockResolvedValueOnce({
-      st: false,
-      retry_after: 10,
-      locked: true,
-    });
-    const { result } = renderHook(() => useRegistrationPage());
-    act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
-    });
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    act(() => {
-      result.current.setMyCode('123456');
-    });
-    await act(async () => {
-      await result.current.confirmRecoveryCode();
-    });
-    expect(result.current.sendRetryAfter).toBe(30);
-    expect(result.current.retryAfter).toBe(10);
-    act(() => {
-      vi.setSystemTime(new Date('2026-10-07T12:01:00Z'));
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
-    expect(result.current.sendRetryAfter).toBe(0);
-    expect(result.current.retryAfter).toBe(0);
-    expect(result.current.canSubmit).toBe(true);
-    expect(result.current.canResend).toBe(true);
-  });
-
-  it('clears the previous code and confirmation lock only after a successful resend', async () => {
-    mocks.confirmPasswordRecoveryCode.mockResolvedValueOnce({
-      st: false,
-      retry_after: 600,
-      locked: true,
-    });
-    const { result } = renderHook(() => useRegistrationPage());
-    act(() => {
-      result.current.setMyLogin('79870001122');
-      result.current.setMyPWD('Password1');
-    });
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    act(() => {
-      result.current.setMyCode('123456');
-    });
-    await act(async () => {
-      await result.current.confirmRecoveryCode();
-    });
-    expect(result.current.retryAfter).toBe(600);
-    await act(async () => {
-      await result.current.requestRecoveryCode();
-    });
-    expect(result.current.myCode).toBe('');
-    expect(result.current.retryAfter).toBe(0);
+    await act(async () => {});
+    act(() => result.current.goToLogin());
+    expect(mocks.push).toHaveBeenCalledWith('/auth', { scroll: false });
   });
 });
