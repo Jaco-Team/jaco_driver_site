@@ -277,7 +277,8 @@ export const useHeaderStore = createWithEqualityFn<HeaderStore>(
     },
 
     getSettings: async (_token: string) => {
-      const payload = await fetchDriverSettings();
+      // Флаги меню зависят от кафе, поэтому запрашиваем настройки выбранного.
+      const payload = await fetchDriverSettings(useSettingsStore.getState().pointId);
       get().applySettings(payload.settings ?? {});
     },
 

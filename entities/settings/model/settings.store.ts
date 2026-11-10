@@ -344,11 +344,22 @@ export const useSettingsStore = createWithEqualityFn<SettingsStore>(
 
       settingsFetchPromise = (async () => {
         const requestRevision = settingsRevision;
+        // Флаги меню (среднее время, «Статистика») — настройки кафе: сервер отдаёт
+        // их для выбранного кафе, поэтому передаём его и при обычном обновлении.
+        const requestedPointId = get().pointId ?? readStoredPointId();
         try {
-          const payload = (await fetchDriverSettings()) as DriverSettingsPayload;
+          const payload = (await fetchDriverSettings(requestedPointId)) as DriverSettingsPayload;
           const normalized = normalizeSettingsPayload(payload);
 
           if (requestRevision !== settingsRevision) return get().settings ?? normalized.settings;
+
+          if ((get().pointId ?? readStoredPointId()) !== requestedPointId) {
+            // Кафе сменили, пока шёл запрос: флаги в ответе относятся к прежнему
+            // кафе. Текущие уже запросил refreshPointFlags, их не трогаем.
+            const stale = normalized.settings as Record<string, unknown>;
+            delete stale.driver_avg_time;
+            delete stale.driver_page_stat_time;
+          }
 
           // Normalization must not change storage for an obsolete response.
           if (normalized.clearStoredPoint) writeStoredPointId(null);

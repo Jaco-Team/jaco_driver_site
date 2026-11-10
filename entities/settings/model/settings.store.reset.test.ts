@@ -234,4 +234,49 @@ describe('settings reset persistence', () => {
     expect(useSettingsStore.getState().settings?.fontSize).toBe(18);
     expect(readOfflineCache()?.settings?.pointId).toBe(20);
   });
+
+  it('requests menu flags of the selected cafe on a regular settings load', async () => {
+    mocks.fetchDriverSettings.mockResolvedValueOnce({
+      // settings.point_id is the home cafe; the flags belong to the requested one.
+      settings: { fontSize: 18, point_id: 20, driver_avg_time: 0, driver_page_stat_time: 1 },
+      all_points: [
+        { id: 13, name: 'Кафе', city_id: 1 },
+        { id: 20, name: 'Домашнее кафе', city_id: 2 },
+      ],
+    });
+
+    const settings = await useSettingsStore.getState().getMySetting('token', true);
+
+    expect(mocks.fetchDriverSettings).toHaveBeenCalledWith(13);
+    expect(useSettingsStore.getState().pointId).toBe(13);
+    expect(settings).toMatchObject({ point_id: 13, driver_avg_time: 0, driver_page_stat_time: 1 });
+  });
+
+  it('drops menu flags of the previous cafe when the cafe changed during the load', async () => {
+    let finishLoad!: (value: unknown) => void;
+    mocks.fetchDriverSettings.mockReturnValueOnce(new Promise((resolve) => (finishLoad = resolve)));
+    useSettingsStore.setState({
+      points: [
+        { id: 13, name: 'Кафе', city_id: 1, base: 'test' },
+        { id: 20, name: 'Другое кафе', city_id: 2, base: 'test' },
+      ],
+    });
+
+    const pending = useSettingsStore.getState().getMySetting('token', true);
+    useSettingsStore.getState().setPointId(20);
+    finishLoad({
+      settings: { fontSize: 18, point_id: 13, driver_avg_time: 1, driver_page_stat_time: 1 },
+      all_points: [
+        { id: 13, name: 'Кафе', city_id: 1 },
+        { id: 20, name: 'Другое кафе', city_id: 2 },
+      ],
+    });
+    const settings = await pending;
+
+    expect(mocks.fetchDriverSettings).toHaveBeenCalledWith(13);
+    expect(useSettingsStore.getState().pointId).toBe(20);
+    expect(settings).not.toHaveProperty('driver_avg_time');
+    expect(settings).not.toHaveProperty('driver_page_stat_time');
+    expect(settings).toMatchObject({ fontSize: 18, point_id: 20 });
+  });
 });
