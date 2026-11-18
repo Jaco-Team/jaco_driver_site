@@ -8,7 +8,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV HUSKY=0
 
 # Keep Alpine's zlib security fix required alongside the pinned Node base.
-RUN apk add --no-cache libc6-compat zlib=1.3.2-r1
+RUN apk add --no-cache libc6-compat zlib=1.4-r0
 
 FROM base AS deps
 
