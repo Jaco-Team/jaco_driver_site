@@ -17,7 +17,7 @@ SCANNER_CONTAINER = "jaco-security-trivy-check"
 TRIVY = "aquasec/trivy:0.74.0@sha256:ee940acbf1f58ebadb42d01434ce4609530bf1b52536afbd1eee66cd7123c5c9"
 VERSIONS = {
     "backend": {"perl-base": "5.36.0-7+deb12u4", "libpcre2-8-0": "10.42-1+deb12u2", "league/commonmark": "2.10.2"},
-    "frontend": {"zlib": "1.3.2-r1"},
+    "frontend": {"zlib": "1.4-r0", "follow-redirects": "1.16.3"},
 }
 TARGETS = {
     "backend": {
@@ -31,7 +31,10 @@ TARGETS = {
         "golang.org/x/text": {"CVE-2026-56851"},
         "google.golang.org/grpc": {"CVE-2026-84304", "CVE-2026-84445", "GHSA-hrxh-6v49-42gf"},
     },
-    "frontend": {"zlib": {"CVE-2026-85091"}},
+    "frontend": {
+        "zlib": {"CVE-2026-85091", "CVE-2026-4738"},
+        "follow-redirects": {"CVE-2026-116689", "GHSA-mrwp-f3q8-3g9p"},
+    },
 }
 TOKEN = re.compile(r"(?:@[A-Za-z0-9][A-Za-z0-9._-]*/)?[A-Za-z0-9][A-Za-z0-9._+/-]*(?::[A-Za-z0-9][A-Za-z0-9._+-]*)?")
 VERSION = re.compile(r"(?:[vV]?\d[A-Za-z0-9.+_:~*-]*(?:, *[vV]?\d[A-Za-z0-9.+_:~*-]*)*|unknown|\(devel\))")
@@ -52,7 +55,7 @@ def need(condition, code):
 ACTIONS = frozenset({
     "image_user", "image_id", "runtime_start", "runtime_user", "runtime_health",
     "php_version", "debian_packages", "commonmark_version", "backend_smoke",
-    "node_version", "alpine_zlib", "frontend_smoke", "image_save", "scanner_pull",
+    "node_version", "alpine_zlib", "follow_redirects_version", "frontend_smoke", "image_save", "scanner_pull",
     "scanner_run", "cleanup_runtime", "cleanup_scanner", "cleanup_image",
 })
 
@@ -221,9 +224,11 @@ def runtime(component, summary):
     else:
         version = docker("exec", CONTAINER, "node", "--version", action="node_version")
         need(version == "v24.22.1", "NODE_VERSION_MISMATCH")
-        package = docker("exec", CONTAINER, "apk", "info", "--exists", "-v", "zlib=1.3.2-r1", action="alpine_zlib")
-        need(package == "zlib-1.3.2-r1", "ZLIB_VERSION_MISMATCH")
-        inventory = {"zlib": "1.3.2-r1"}
+        zlib = VERSIONS["frontend"]["zlib"]
+        package = docker("exec", CONTAINER, "apk", "info", "--exists", "-v", "zlib=" + zlib, action="alpine_zlib")
+        need(package == "zlib-" + zlib, "ZLIB_VERSION_MISMATCH")
+        redirects = docker("exec", CONTAINER, "node", "-p", "require('follow-redirects/package.json').version", action="follow_redirects_version")
+        inventory = {"zlib": zlib, "follow-redirects": redirects}
         probes = json.loads(docker("exec", CONTAINER, "node", "-e", NODE_PROBE, action="frontend_smoke"))
         need([row["status"] for row in probes] == [200, 200], "FRONTEND_AUTH_PAGE_SMOKE_FAILED")
     need(inventory == VERSIONS[component], "TARGET_RUNTIME_VERSION_MISMATCH")
