@@ -74,7 +74,11 @@ export function useAuthPage(): UseAuthPageResult {
       return;
     }
 
-    const res = await login(parsePhoneInput(myLogin).apiValue || myLogin.trim(), myPWD, captchaToken);
+    const res = await login(
+      parsePhoneInput(myLogin).apiValue || myLogin.trim(),
+      myPWD,
+      captchaToken
+    );
 
     if (res.captcha_required) {
       setCaptchaRequired(true);

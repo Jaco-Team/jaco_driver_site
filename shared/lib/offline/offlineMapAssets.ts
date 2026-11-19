@@ -20,11 +20,24 @@ function getAssetRequest(path: string): Request {
   return new Request(new URL(path, window.location.origin).href);
 }
 
+function linkedAppAssets(html: string): URL[] {
+  return [...html.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
+    .map((match) => new URL(match[1], window.location.origin))
+    .filter(
+      (url) =>
+        url.origin === window.location.origin &&
+        (url.pathname.startsWith('/_next/static/') || /\.(?:css|woff2?)$/i.test(url.pathname))
+    );
+}
+
 export async function hasOfflineMapAssets(): Promise<boolean> {
   if (typeof window === 'undefined' || !('caches' in window)) {
     return false;
   }
 
+  const controller = navigator.serviceWorker?.controller;
+  if (!controller || new URL(controller.scriptURL, window.location.origin).pathname !== '/sw.js')
+    return false;
   const cache = await caches.open(OFFLINE_APP_CACHE_NAME);
   const responses = await Promise.all(
     [...OFFLINE_MAP_ASSET_PATHS, ...OFFLINE_APP_ROUTES].map((path) =>
@@ -32,7 +45,17 @@ export async function hasOfflineMapAssets(): Promise<boolean> {
     )
   );
 
-  return responses.every(Boolean);
+  if (!responses.every((response) => response?.ok)) return false;
+  // A cached HTML shell without its JS/CSS cannot reopen after a cold start.
+  for (let index = 0; index < OFFLINE_APP_ROUTES.length; index += 1) {
+    const response = responses[OFFLINE_MAP_ASSET_PATHS.length + index]!;
+    const assets = linkedAppAssets(await response.clone().text());
+    const cached = await Promise.all(
+      assets.map((url) => cache.match(new Request(url.href), { ignoreVary: true }))
+    );
+    if (!cached.every((item) => item?.ok)) return false;
+  }
+  return true;
 }
 
 async function cacheOfflineAppAssets(): Promise<void> {
@@ -69,19 +92,16 @@ async function cacheOfflineAppAssets(): Promise<void> {
 
     await cache.put(routeRequest, routeResponse.clone());
     const html = await routeResponse.text();
-    const linkedAssets = [...html.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
-      .map((match) => new URL(match[1], window.location.origin))
-      .filter(
-        (url) =>
-          url.origin === window.location.origin &&
-          (url.pathname.startsWith('/_next/static/') || /\.(?:css|woff2?)$/i.test(url.pathname))
-      );
-
-    await Promise.allSettled(
+    const linkedAssets = linkedAppAssets(html);
+    await Promise.all(
       linkedAssets.map(async (url) => {
         const request = new Request(url.href);
+        const cached = await cache.match(request, { ignoreVary: true });
+        if (cached?.ok) return;
         const response = await fetch(request, { cache: 'no-store' });
-        if (response.ok) await cache.put(request, response);
+        if (!response.ok)
+          throw new Error('Не удалось сохранить файлы для открытия сайта без интернета.');
+        await cache.put(request, response);
       })
     );
   }
@@ -96,6 +116,9 @@ export function ensureOfflineMapAssets(): Promise<void> {
       .catch((error) => {
         ensurePromise = null;
         throw error;
+      })
+      .finally(() => {
+        ensurePromise = null;
       });
   }
 

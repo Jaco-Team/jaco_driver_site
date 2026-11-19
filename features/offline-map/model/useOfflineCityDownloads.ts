@@ -31,8 +31,10 @@ export function useOfflineCityDownloads(): void {
         document.visibilityState === 'visible' &&
         useConnectivityStore.getState().isOnline &&
         useAuthStore.getState().session.isAuth === true
-      )
+      ) {
+        void store.refreshAvailability();
         store.resumePending();
+      }
     };
     const onPageShow = () => {
       pageActive.current = true;
@@ -42,16 +44,19 @@ export function useOfflineCityDownloads(): void {
     window.addEventListener('pagehide', onPageHide);
     window.addEventListener('pageshow', onPageShow);
     document.addEventListener('visibilitychange', onVisible);
+    navigator.serviceWorker?.addEventListener('controllerchange', onVisible);
     return () => {
       window.removeEventListener(YANDEX_OFFLINE_MAP_EVENT, onProgress);
       window.removeEventListener('pagehide', onPageHide);
       window.removeEventListener('pageshow', onPageShow);
       document.removeEventListener('visibilitychange', onVisible);
+      navigator.serviceWorker?.removeEventListener('controllerchange', onVisible);
     };
   }, []);
 
   useEffect(() => {
     const store = useOfflineMapStore.getState();
+    void store.refreshAvailability();
     if (isAuth === false) {
       cancelOfflineMapDetailDownloads();
       store.pauseAll(false);

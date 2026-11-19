@@ -80,7 +80,10 @@ describe('password recovery API (code first, like the SSO page)', () => {
     });
 
     post.mockRejectedValueOnce({
-      response: { status: 422, data: { st: false, error_code: 'captcha_required', captcha_required: true } },
+      response: {
+        status: 422,
+        data: { st: false, error_code: 'captcha_required', captcha_required: true },
+      },
     });
     await expect(requestRecoveryCode('+79991234567', 'sms')).resolves.toMatchObject({
       st: false,
@@ -92,7 +95,9 @@ describe('password recovery API (code first, like the SSO page)', () => {
   it('sends the code together with the new password', async () => {
     post.mockResolvedValueOnce({ st: true, text: 'Пароль успешно обновлен!' });
 
-    await expect(resetPasswordWithCode('+79991234567', '123456', 'NewPassword9')).resolves.toMatchObject({
+    await expect(
+      resetPasswordWithCode('+79991234567', '123456', 'NewPassword9')
+    ).resolves.toMatchObject({
       st: true,
     });
     expect(post).toHaveBeenCalledWith(apiRoutes.auth.passwordRecoveryReset, {
@@ -102,7 +107,9 @@ describe('password recovery API (code first, like the SSO page)', () => {
     });
 
     post.mockRejectedValueOnce(new Error('network'));
-    await expect(resetPasswordWithCode('+79991234567', '123456', 'NewPassword9')).resolves.toMatchObject({
+    await expect(
+      resetPasswordWithCode('+79991234567', '123456', 'NewPassword9')
+    ).resolves.toMatchObject({
       st: false,
       text: 'Не удалось обновить пароль. Попробуйте позже.',
     });

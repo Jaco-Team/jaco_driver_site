@@ -11,6 +11,7 @@ import {
   type OfflineRuntimeGroup,
 } from '@/shared/lib/offline/offlineMapRuntime';
 import type { MapViewport } from '../model/mapViewport';
+import { useOfflineMapStore } from '@/entities/offline-map/model/offlineMap.store';
 import { OrdersMapCompass } from './OrdersMapCompass';
 import { OrdersMapRasterFilter } from './OrdersMapRasterFilter';
 import { OrdersMapOfflineList } from './OrdersMapOfflineList';
@@ -57,6 +58,14 @@ export function OrdersOfflineMap({
   const onHomeClickRef = useRef(onHomeClick);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState('');
+  // Reopen when validation finds eviction, expiry metadata or a repaired map.
+  // Progress of an update does not change the installed package.
+  const savedMapsState = useOfflineMapStore((state) =>
+    Object.entries(state.maps)
+      .map(([id, map]) => `${id}:${map.expiresAt}:${Boolean(map.incomplete)}`)
+      .sort()
+      .join('|')
+  );
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const runtimeGroups = useMemo<OfflineRuntimeGroup[]>(
     () =>
@@ -168,7 +177,17 @@ export function OrdersOfflineMap({
       }
       mapHandle?.destroy();
     };
-  }, [dark, globalFontSize, home, homeCenter, mapScale, pointId, showZoomControls, theme]);
+  }, [
+    dark,
+    globalFontSize,
+    home,
+    homeCenter,
+    mapScale,
+    pointId,
+    showZoomControls,
+    theme,
+    savedMapsState,
+  ]);
 
   const centerOnCoordinate = (coordinate: [number, number]) => {
     mapHandleRef.current?.centerOnCoordinate(coordinate);

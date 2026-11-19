@@ -135,6 +135,25 @@ const order = {
 };
 
 describe('offline marker coordinate anchors', () => {
+  it.each([
+    [{ incomplete: true, expiresAt: Date.now() + 60_000 }, 'Карта скачана не полностью'],
+    [{ expiresAt: Date.now() - 1000 }, 'Срок хранения карты истёк'],
+  ])('rejects an unusable stored city with its actual reason', async (state, reason) => {
+    await expect(
+      openMap([order], {
+        regions: {
+          'city:tolyatti': {
+            cityId: 'tolyatti',
+            minZoom: 10,
+            maxZoom: 14,
+            bounds: { west: 49.2, south: 53.4, east: 49.7, north: 53.7 },
+            ...state,
+          },
+        },
+      })
+    ).rejects.toThrow(reason);
+  });
+
   it('rejects a legacy automatically cached point area without a city package', async () => {
     await expect(
       openMap([order], {
@@ -149,7 +168,7 @@ describe('offline marker coordinate anchors', () => {
           },
         },
       })
-    ).rejects.toThrow('Скачайте город в настройках');
+    ).rejects.toThrow('Карта этого города не скачана');
   });
 
   it('overlays completed house-level detail while retaining the base source for uncovered areas', async () => {

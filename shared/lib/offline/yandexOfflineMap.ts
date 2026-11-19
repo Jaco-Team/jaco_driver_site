@@ -47,6 +47,7 @@ export interface OfflineMapTile {
 }
 
 export interface OfflineMapMetadata {
+  incomplete?: boolean;
   kind?: 'detail';
   parentCityId?: string;
   cityId?: string;
@@ -515,7 +516,7 @@ export function readOfflineMapMetadata(pointId: number | string | null): Offline
   if (pointId === null || pointId === undefined) return null;
 
   const metadata = readOfflineMapRegistry().regions[String(pointId)] ?? null;
-  return metadata && metadata.expiresAt > Date.now() ? metadata : null;
+  return metadata && !metadata.incomplete && metadata.expiresAt > Date.now() ? metadata : null;
 }
 
 export async function validateOfflineCityMaps(): Promise<Record<string, OfflineMapMetadata>> {
@@ -548,8 +549,24 @@ export async function validateOfflineCityMaps(): Promise<Record<string, OfflineM
       (metadata.kind === 'detail' &&
         (!metadata.parentCityId || !validCityIds.has(metadata.parentCityId)))
   );
-  const removed = [...missingCities, ...obsolete];
+  const removed = obsolete;
   const current = readOfflineMapRegistry();
+  let changed = false;
+  for (const metadata of Object.values(snapshot.regions)) {
+    if (!metadata.cityId) continue;
+    const currentEntry = current.regions[metadata.pointId];
+    if (
+      !currentEntry ||
+      currentEntry.savedAt !== metadata.savedAt ||
+      currentEntry.lastUsedAt !== metadata.lastUsedAt
+    )
+      continue;
+    const incomplete = missingPointIds.has(metadata.pointId);
+    if (Boolean(currentEntry.incomplete) !== incomplete) {
+      current.regions[metadata.pointId] = { ...currentEntry, incomplete };
+      changed = true;
+    }
+  }
   for (const metadata of removed) {
     if (
       current.regions[metadata.pointId]?.savedAt === metadata.savedAt &&
@@ -558,10 +575,8 @@ export async function validateOfflineCityMaps(): Promise<Record<string, OfflineM
       delete current.regions[metadata.pointId];
     }
   }
-  if (removed.length) {
-    writeRegistry(current);
-    await removeUnreferencedTiles(current);
-  }
+  if (removed.length || changed) writeRegistry(current);
+  if (removed.length) await removeUnreferencedTiles(current);
   return current.regions;
 }
 

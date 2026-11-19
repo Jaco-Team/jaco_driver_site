@@ -279,4 +279,22 @@ describe('city map download and resume', () => {
     });
     expect(readOfflineMapMetadata('city:tolyatti')).toBeNull();
   });
+
+  it('retains surviving tiles for repair when part of a complete city was evicted', async () => {
+    cache.match.mockResolvedValue(cached);
+    await downloadOfflineCityMap('tolyatti', 'token', new AbortController().signal);
+    const plan = getOfflineCityPlan('tolyatti');
+    const urls = listOfflineMapTiles(plan.bounds, plan.minZoom, plan.maxZoom).map((tile) =>
+      getOfflineTileUrl(tile)
+    );
+    cache.keys.mockResolvedValue(urls.slice(1).map((url) => new Request(url)));
+    await validateOfflineCityMaps();
+    expect(readOfflineMapMetadata(plan.pointId)).toBeNull();
+    const registry = JSON.parse(localStorage.getItem(YANDEX_OFFLINE_METADATA_KEY)!);
+    expect(registry.regions[plan.pointId].incomplete).toBe(true);
+    expect(cache.delete).not.toHaveBeenCalled();
+    cache.keys.mockResolvedValue(urls.map((url) => new Request(url)));
+    await validateOfflineCityMaps();
+    expect(readOfflineMapMetadata(plan.pointId)).not.toBeNull();
+  });
 });

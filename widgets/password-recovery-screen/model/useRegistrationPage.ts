@@ -98,7 +98,8 @@ export function useRegistrationPage(): UseRegistrationPageResult {
     match: password.length > 0 && password === repeatPassword,
   };
   const captchaAvailable = Boolean(SMARTCAPTCHA_CLIENT_KEY);
-  const captchaVisible = captchaRequired && captchaAvailable && (step === 'request' || step === 'code');
+  const captchaVisible =
+    captchaRequired && captchaAvailable && (step === 'request' || step === 'code');
   const captchaSatisfied = !captchaRequired || (captchaAvailable && Boolean(captchaToken));
 
   function startWait(setDeadline: (value: number) => void, seconds: number): void {
@@ -217,7 +218,12 @@ export function useRegistrationPage(): UseRegistrationPageResult {
   }
 
   async function savePassword(): Promise<void> {
-    if (inFlight.current || !passwordRules.length || !passwordRules.characters || !passwordRules.match) {
+    if (
+      inFlight.current ||
+      !passwordRules.length ||
+      !passwordRules.characters ||
+      !passwordRules.match
+    ) {
       return;
     }
 
@@ -308,7 +314,10 @@ export function useRegistrationPage(): UseRegistrationPageResult {
       : step === 'code'
         ? code.length === AUTH_CODE_LENGTH
         : step === 'password'
-          ? passwordRules.length && passwordRules.characters && passwordRules.match && retryAfter <= 0
+          ? passwordRules.length &&
+            passwordRules.characters &&
+            passwordRules.match &&
+            retryAfter <= 0
           : true);
 
   return {

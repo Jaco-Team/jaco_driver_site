@@ -34,7 +34,8 @@ async function readOfflineMap(center) {
   const regions =
     registry?.version === 2
       ? Object.values(registry.regions || {}).filter(
-          (region) => region.kind !== 'detail' && region.expiresAt > Date.now()
+          (region) =>
+            region.kind !== 'detail' && !region.incomplete && region.expiresAt > Date.now()
         )
       : [];
   const containing = regions.filter(
@@ -49,8 +50,21 @@ async function readOfflineMap(center) {
   const metadata = cityMap;
 
   if (!metadata) {
+    const saved = Object.values(registry?.regions || {}).find(
+      (region) =>
+        region.cityId &&
+        (!isCoordinate(center) ||
+          (center[0] >= region.bounds.south &&
+            center[0] <= region.bounds.north &&
+            center[1] >= region.bounds.west &&
+            center[1] <= region.bounds.east))
+    );
     throw new Error(
-      'Карта этой области ещё не сохранена. Скачайте город в настройках при подключённом интернете.'
+      saved?.expiresAt <= Date.now()
+        ? 'Срок хранения карты истёк. Скачайте её заново с интернетом.'
+        : saved?.incomplete
+          ? 'Карта скачана не полностью. Продолжите скачивание с интернетом.'
+          : 'Карта этого города не скачана. Скачайте её с интернетом.'
     );
   }
 
@@ -653,7 +667,7 @@ async function mount({
   }
 }
 
-globalThis.JacoOfflineOrdersMap = { version: '32', mount };
+globalThis.JacoOfflineOrdersMap = { version: '33', mount };
 globalThis.dispatchEvent(new Event('jaco-offline-orders-map-ready'));
 
 export { mount };

@@ -25,7 +25,9 @@ export default function AuthCard({
   children,
 }: AuthCardProps) {
   const subtitleClass =
-    subtitleVariant === 'default' ? 'sso-subtitle' : `sso-subtitle sso-subtitle--${subtitleVariant}`;
+    subtitleVariant === 'default'
+      ? 'sso-subtitle'
+      : `sso-subtitle sso-subtitle--${subtitleVariant}`;
 
   return (
     <main className={`sso ${inter.variable}`}>

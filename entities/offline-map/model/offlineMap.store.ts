@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { hasOfflineMapAssets } from '@/shared/lib/offline/offlineMapAssets';
 
 import { getAuthToken } from '@/shared/api/token';
 import { getOfflineMapCity } from '@/shared/config/offlineMapCities';
@@ -15,6 +16,8 @@ import {
   type OfflineMapMetadata,
 } from '@/shared/lib/offline/yandexOfflineMap';
 
+let availabilityRefresh: Promise<void> | null = null;
+
 const SELECTED_CITY_KEY = 'jaco_offline_selected_city';
 const activeDownloads = new Map<
   string,
@@ -27,6 +30,9 @@ const activeDownloads = new Map<
 
 interface OfflineMapState {
   hydrated: boolean;
+  checking: boolean;
+  assetsReady: boolean | null;
+  refreshAvailability: () => Promise<void>;
   selectedCityId: string;
   jobs: Record<string, OfflineMapDownloadProgress>;
   maps: Record<string, OfflineMapMetadata>;
@@ -45,6 +51,8 @@ interface OfflineMapState {
 
 export const useOfflineMapStore = create<OfflineMapState>((set, get) => ({
   hydrated: false,
+  checking: false,
+  assetsReady: null,
   selectedCityId: '',
   jobs: {},
   maps: {},
@@ -61,6 +69,8 @@ export const useOfflineMapStore = create<OfflineMapState>((set, get) => ({
     const pending = readPendingCityDownloads();
     set({
       hydrated: true,
+      checking: true,
+      assetsReady: null,
       selectedCityId: getOfflineMapCity(selectedCityId) ? selectedCityId : '',
       maps: readOfflineMapRegistry().regions,
       jobs: Object.fromEntries(
@@ -77,9 +87,29 @@ export const useOfflineMapStore = create<OfflineMapState>((set, get) => ({
         ])
       ),
     });
-    void validateOfflineCityMaps()
-      .then(() => set({ maps: readOfflineMapRegistry().regions }))
-      .catch(() => undefined);
+    void get().refreshAvailability();
+  },
+
+  refreshAvailability: () => {
+    if (availabilityRefresh) return availabilityRefresh;
+    availabilityRefresh = (async () => {
+      try {
+        const [maps, assetsReady] = await Promise.all([
+          validateOfflineCityMaps(),
+          hasOfflineMapAssets(),
+        ]);
+        set({ maps, assetsReady, checking: false });
+      } catch {
+        set({
+          checking: false,
+          assetsReady: false,
+          error: 'Не удалось проверить сохранённые файлы карты. Повторите с интернетом.',
+        });
+      }
+    })().finally(() => {
+      availabilityRefresh = null;
+    });
+    return availabilityRefresh;
   },
 
   selectCity: (id) => {
@@ -101,6 +131,7 @@ export const useOfflineMapStore = create<OfflineMapState>((set, get) => ({
       jobs,
       ...(progress.status === 'ready' ? { maps: readOfflineMapRegistry().regions } : {}),
     });
+    if (progress.status === 'ready') void get().refreshAvailability();
   },
 
   download: async (id, refresh = false) => {
@@ -163,6 +194,7 @@ export const useOfflineMapStore = create<OfflineMapState>((set, get) => ({
       } finally {
         activeDownloads.delete(id);
         set({ busyCityId: null });
+        await get().refreshAvailability();
       }
     });
     activeDownloads.set(id, { controller, promise, autoResume: true });

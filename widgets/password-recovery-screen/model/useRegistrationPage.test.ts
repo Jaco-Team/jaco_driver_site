@@ -183,7 +183,11 @@ describe('useRegistrationPage: code first, like the SSO page', () => {
     expect(result.current.repeatPassword).toBe('NewPassword9');
     await act(async () => result.current.submit());
 
-    expect(mocks.resetPasswordWithCode).toHaveBeenCalledWith('+79991234567', '123456', 'NewPassword9');
+    expect(mocks.resetPasswordWithCode).toHaveBeenCalledWith(
+      '+79991234567',
+      '123456',
+      'NewPassword9'
+    );
     expect(result.current.step).toBe('success');
 
     await act(async () => result.current.submit());
@@ -271,7 +275,11 @@ describe('useRegistrationPage: code first, like the SSO page', () => {
 
   it('explains a server CAPTCHA challenge when the site has no CAPTCHA key', async () => {
     mocks.requestRecoveryCode.mockResolvedValue(
-      fail({ errorCode: 'captcha_required', captchaRequired: true, text: 'Подтвердите, что вы не робот' })
+      fail({
+        errorCode: 'captcha_required',
+        captchaRequired: true,
+        text: 'Подтвердите, что вы не робот',
+      })
     );
     const { result } = await mount();
 

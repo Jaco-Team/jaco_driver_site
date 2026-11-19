@@ -2,10 +2,7 @@ import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import { useOrdersStore } from '@/entities/order/model/order.store';
 
-import {
-  fetchMe,
-  loginToken,
-} from '@/features/auth/api/auth.api';
+import { fetchMe, loginToken } from '@/features/auth/api/auth.api';
 import { getApiErrorInfo, getAuthErrorMessage, getAuthSecurityState } from '@/shared/api/errors';
 import { clearAuthToken, getAuthToken } from '@/shared/api/token';
 import { clearOfflineCache } from '@/shared/lib/offline/cache';

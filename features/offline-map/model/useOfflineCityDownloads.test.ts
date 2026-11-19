@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
     applyProgress: vi.fn(),
     pauseAll: vi.fn(),
     resumePending: vi.fn(),
+    refreshAvailability: vi.fn().mockResolvedValue(undefined),
   },
   auth: { session: { isAuth: true as boolean | string } },
   connection: { isOnline: true },

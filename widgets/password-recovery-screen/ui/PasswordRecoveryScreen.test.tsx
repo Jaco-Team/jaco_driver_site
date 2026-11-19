@@ -64,7 +64,9 @@ async function renderScreen() {
 
 function typeCode(code: string): void {
   code.split('').forEach((digit, index) => {
-    fireEvent.change(screen.getByLabelText(`Цифра ${index + 1} кода`), { target: { value: digit } });
+    fireEvent.change(screen.getByLabelText(`Цифра ${index + 1} кода`), {
+      target: { value: digit },
+    });
   });
 }
 
@@ -93,7 +95,9 @@ describe('PasswordRecoveryScreen: the same steps as the SSO page', () => {
     // Способ получения кода: SMS выбрана, подпись под переключателем меняется вместе с ним.
     expect(screen.getByRole('tab', { name: 'SMS' }).getAttribute('aria-selected')).toBe('true');
     fireEvent.click(screen.getByRole('tab', { name: 'Звонок' }));
-    expect(screen.getByText('Робот позвонит и продиктует код').getAttribute('data-active')).toBe('true');
+    expect(screen.getByText('Робот позвонит и продиктует код').getAttribute('data-active')).toBe(
+      'true'
+    );
 
     await act(async () => {
       fireEvent.click(submit);
@@ -113,13 +117,21 @@ describe('PasswordRecoveryScreen: the same steps as the SSO page', () => {
     expect(save.disabled).toBe(true);
 
     fireEvent.change(screen.getByLabelText('Новый пароль'), { target: { value: 'NewPassword9' } });
-    fireEvent.change(screen.getByLabelText('Повторите пароль'), { target: { value: 'NewPassword9' } });
-    expect(screen.getByText('Пароли совпадают').closest('li')?.getAttribute('data-met')).toBe('true');
+    fireEvent.change(screen.getByLabelText('Повторите пароль'), {
+      target: { value: 'NewPassword9' },
+    });
+    expect(screen.getByText('Пароли совпадают').closest('li')?.getAttribute('data-met')).toBe(
+      'true'
+    );
 
     await act(async () => {
       fireEvent.click(save);
     });
-    expect(mocks.resetPasswordWithCode).toHaveBeenCalledWith('+79991234567', '123456', 'NewPassword9');
+    expect(mocks.resetPasswordWithCode).toHaveBeenCalledWith(
+      '+79991234567',
+      '123456',
+      'NewPassword9'
+    );
 
     expect(screen.getByRole('heading', { name: 'Пароль изменён' })).toBeTruthy();
     expect(screen.getByText('Теперь вы можете войти с новым паролем')).toBeTruthy();
@@ -151,7 +163,9 @@ describe('PasswordRecoveryScreen: the same steps as the SSO page', () => {
     typeCode('123456');
     fireEvent.click(screen.getByRole('button', { name: 'Подтвердить' }));
     fireEvent.change(screen.getByLabelText('Новый пароль'), { target: { value: 'NewPassword9' } });
-    fireEvent.change(screen.getByLabelText('Повторите пароль'), { target: { value: 'NewPassword9' } });
+    fireEvent.change(screen.getByLabelText('Повторите пароль'), {
+      target: { value: 'NewPassword9' },
+    });
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Сохранить пароль' }));
     });
@@ -159,9 +173,9 @@ describe('PasswordRecoveryScreen: the same steps as the SSO page', () => {
     expect(screen.getByRole('heading', { name: 'Введите код' })).toBeTruthy();
     expect(screen.getByText('Неверный код')).toBeTruthy();
     expect(screen.getByText('Код не подошёл или устарел')).toBeTruthy();
-    expect(screen.getByRole('group', { name: 'Код подтверждения, 6 цифр' }).getAttribute('data-error')).toBe(
-      'true'
-    );
+    expect(
+      screen.getByRole('group', { name: 'Код подтверждения, 6 цифр' }).getAttribute('data-error')
+    ).toBe('true');
 
     fireEvent.click(screen.getByRole('button', { name: 'Изменить' }));
     expect(screen.getByRole('heading', { name: 'Восстановление пароля' })).toBeTruthy();

@@ -26,6 +26,11 @@ import { SectionTitle } from '@/shared/ui/SectionTitle/SectionTitle';
 import { SettingsSection } from '@/shared/ui/SettingsSection/SettingsSection';
 import { log } from '@/components/analytics';
 
+import {
+  getOfflineMapAvailability,
+  getOfflineMapUnavailableReason,
+} from '@/shared/lib/offline/offlineMapAvailability';
+
 function formatBytes(value: number): string {
   return `${(value / 1024 / 1024).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} МБ`;
 }
@@ -107,7 +112,11 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
     const timer = window.setTimeout(() => setCheckedAt(Date.now()), delay);
     return () => window.clearTimeout(timer);
   }, [expiresAt, checkedAt]);
-  const ready = Boolean(expiresAt && expiresAt > checkedAt);
+  const availability = state.checking
+    ? 'checking'
+    : getOfflineMapAvailability(metadata, checkedAt, state.assetsReady);
+  const ready = availability === 'ready';
+  const mapUsable = getOfflineMapAvailability(metadata, checkedAt) === 'ready';
   const needsUpgrade = Boolean(ready && plan && metadata && metadata.maxZoom < plan.maxZoom);
   const downloading = job?.status === 'downloading';
   const progress = job?.total ? Math.min(100, Math.floor((job.completed / job.total) * 100)) : 0;
@@ -156,7 +165,7 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
             <Typography component="div" sx={{ fontSize: metaSize, color: 'text.secondary' }}>
               Карта города · примерно {formatBytes(plan.estimatedBytes)}
             </Typography>
-            {ready && !job ? (
+            {ready ? (
               <Box className="offlineCitySettings__ready">
                 <CheckRoundedIcon />
                 <Typography component="span" sx={{ fontSize }}>
@@ -166,11 +175,20 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
             ) : null}
             {metadata ? (
               <Typography component="div" sx={{ fontSize: metaSize, color: 'text.secondary' }}>
-                {ready ? 'Сохранена' : 'Нужно обновить'} ·{' '}
-                {new Date(metadata.savedAt).toLocaleDateString('ru-RU')}
+                Сохранена · {new Date(metadata.savedAt).toLocaleDateString('ru-RU')}
               </Typography>
             ) : null}
           </Box>
+        ) : null}
+        {metadata && !ready ? (
+          <Typography sx={{ fontSize: metaSize, color: 'text.secondary' }}>
+            {getOfflineMapUnavailableReason(availability)}
+          </Typography>
+        ) : null}
+        {needsUpgrade ? (
+          <Typography sx={{ fontSize: metaSize, color: 'text.secondary' }}>
+            Есть обновление
+          </Typography>
         ) : null}
         {job ? (
           <Box className="offlineCitySettings__progress" role="status" aria-live="polite">
@@ -247,10 +265,20 @@ export function OfflineCityMapsSettings({ globalFontSize }: { globalFontSize: nu
               startIcon={
                 job ? <PlayArrowRoundedIcon /> : ready ? <RefreshCwIcon /> : <DownloadRoundedIcon />
               }
-              onClick={() => startDownload(ready && !needsUpgrade && !job)}
+              onClick={() =>
+                startDownload(
+                  mapUsable && availability !== 'assets_missing' && !needsUpgrade && !job
+                )
+              }
               sx={{ fontSize }}
             >
-              {job ? 'Продолжить' : needsUpgrade ? 'Докачать' : ready ? 'Обновить' : 'Скачать'}
+              {job || metadata?.incomplete
+                ? 'Продолжить'
+                : needsUpgrade
+                  ? 'Докачать'
+                  : mapUsable
+                    ? 'Обновить'
+                    : 'Скачать'}
             </Button>
           )}
           {(metadata || job) && !downloading ? (

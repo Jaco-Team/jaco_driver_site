@@ -134,7 +134,7 @@ describe('offline city settings', () => {
     act(() => vi.advanceTimersByTime(60_000));
 
     expect(screen.queryByText('Доступна офлайн')).not.toBeInTheDocument();
-    expect(screen.getByText(/Нужно обновить/)).toBeInTheDocument();
+    expect(screen.getByText(/Срок хранения карты истёк/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Скачать' })).toBeInTheDocument();
   });
   it('does not offer an already expired map as available', () => {
@@ -170,5 +170,21 @@ describe('offline city settings', () => {
     unmount();
     expect(vi.getTimerCount()).toBe(0);
   });
+
+  it.each(['downloading', 'paused', 'error'])(
+    'shows the old map as available during update status %s',
+    (status) => {
+      mocks.state.maps = {
+        'city:samara': {
+          maxZoom: 15,
+          savedAt: Date.now(),
+          expiresAt: Date.now() + 60_000,
+        },
+      };
+      mocks.state.jobs = { samara: { status, completed: 1, total: 10 } };
+      render(<OfflineCityMapsSettings globalFontSize={16} />);
+      expect(screen.getByText('Доступна офлайн')).toBeInTheDocument();
+    }
+  );
 });
 import type { ReactNode } from 'react';

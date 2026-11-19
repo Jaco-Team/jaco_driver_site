@@ -20,7 +20,12 @@ const CHANNEL_OPTIONS: Record<RecoveryChannel, AuthChannelOption<RecoveryChannel
     helper: 'Код придёт в чат с ботом, Telegram должен быть привязан к номеру',
     icon: 'telegram',
   },
-  voice: { value: 'voice', label: 'Звонок', helper: 'Робот позвонит и продиктует код', icon: 'voice' },
+  voice: {
+    value: 'voice',
+    label: 'Звонок',
+    helper: 'Робот позвонит и продиктует код',
+    icon: 'voice',
+  },
 };
 
 const TITLES: Record<RecoveryStep, string> = {
