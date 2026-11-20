@@ -17,6 +17,7 @@ const envNames = [
 ];
 
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllEnvs();
   vi.resetModules();
 });
@@ -98,6 +99,40 @@ describe('explicit API env agrees with the real client and Next.js security conf
       expect(apiConfig.apiBaseUrl).toBe('http://localhost:8080');
       expect(csp['connect-src']).toContain(apiConfig.apiBaseUrl);
       expect(rewrites).toEqual([]);
+    }
+  );
+
+  it.each([
+    ['http://localhost:8080', 'true', 45_000, 60_000],
+    ['http://127.0.0.1:8080', 'true', 45_000, 60_000],
+    ['http://localhost:8080', 'false', 45_000, undefined],
+    ['https://apidriver.jacochef.ru', 'true', 15_000, undefined],
+  ])(
+    'keeps saved completion and proxy budgets aligned for %s, proxy=%s',
+    async (origin, proxy, timeout, proxyTimeout) => {
+      const { config } = await loadContract({
+        NEXT_PUBLIC_API_ORIGIN: origin,
+        NEXT_PUBLIC_API_PROXY: proxy,
+      });
+      const { connector } = await import('../../shared/api/connector');
+      const { actionOrder } = await import('../../entities/order/api/order.api');
+      const post = vi.spyOn(connector.rest, 'post').mockResolvedValue({ st: true });
+      const command = {
+        type: 'actionOrder',
+        id: 937369,
+        type_action: 3,
+        point_id: 1,
+        completed_at: '2026-11-20T08:12:02.948Z',
+        latitude: '',
+        longitude: '',
+      };
+      await actionOrder(command, 'test-session');
+      expect(post).toHaveBeenCalledWith('/api/v1/orders/action_order', command, {
+        timeout,
+        headers: { 'X-Driver-Expected-Token': 'test-session' },
+      });
+      expect(config.experimental?.proxyTimeout).toBe(proxyTimeout);
+      if (proxyTimeout !== undefined) expect(proxyTimeout).toBeGreaterThan(timeout);
     }
   );
 

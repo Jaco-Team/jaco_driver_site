@@ -1,5 +1,6 @@
 import type { ApiResponse } from '@/shared/api/types';
 import { connector } from '@/shared/api/connector';
+import { apiConfig } from '@/shared/api/config';
 import { apiRoutes } from '@/shared/api/routes';
 import { Order, DelOrder, PayData, HomeLocation } from '../model/order.types';
 import { normalizeOrderRow } from '../model/order.utils';
@@ -26,6 +27,7 @@ interface ActionOrderRequest {
   id: number;
   point_id?: number;
   type_action: number;
+  completed_at?: string;
   latitude: string;
   longitude: string;
 }
@@ -61,10 +63,19 @@ export async function fetchOrders(request: GetOrdersRequest): Promise<GetOrdersR
   });
 }
 
-export async function actionOrder(request: ActionOrderRequest): Promise<ApiResponse> {
+export async function actionOrder(
+  request: ActionOrderRequest,
+  expectedToken?: string
+): Promise<ApiResponse> {
   return connector.rest.post<ApiResponse, ActionOrderRequest>(
     apiRoutes.orders.actionOrder,
-    request
+    request,
+    expectedToken
+      ? {
+          timeout: apiConfig.sessionTimeoutMs,
+          headers: { 'X-Driver-Expected-Token': expectedToken },
+        }
+      : undefined
   );
 }
 

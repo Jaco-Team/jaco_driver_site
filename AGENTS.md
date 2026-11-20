@@ -254,3 +254,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Проверка бизнес-изменений с тестовой БД
+
+Для ручной проверки действий с заказами, времени, кассы и статистики сначала
+прочитайте [docs/testing/test-database.md](./docs/testing/test-database.md).
+Там сохранены история настройки локального API на тестовую MariaDB,
+проверок и очистки. Набор 20.11.2026 удалён вместе с внешними скриптами
+и приватным state-файлом; старые пути не являются доступными инструментами.
+Демо-аккаунт проверяет свои UI-фикстуры и не подтверждает записи в БД.
+Локальный URL клиента сам по себе не доказывает тестовую БД: проверяются оба
+подключения Laravel. Существующие ограничения на самостоятельные запуски
+агентом сохраняются.

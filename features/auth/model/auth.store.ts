@@ -1,3 +1,4 @@
+import { setFinishOwner } from '@/entities/order/model/pendingFinishes';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import { useOrdersStore } from '@/entities/order/model/order.store';
@@ -47,6 +48,8 @@ const EXPLICIT_UNAUTHORIZED_STORAGE_KEY = 'jaco_driver_explicit_unauthorized';
 let sessionGeneration = 0;
 
 function sessionFromUser(user: User, token?: string | null): AuthSession {
+  const owner = user?.user_id ?? user?.id ?? user?.login;
+  setFinishOwner(owner == null ? null : String(owner));
   const resolvedToken = `${token ?? user?.token ?? getAuthToken() ?? ''}`.trim();
 
   return {
@@ -164,6 +167,7 @@ export const useAuthStore = createWithEqualityFn<AuthStore>(
       sessionGeneration += 1;
       resetOrderStatusFilter();
       setExplicitUnauthorized(true);
+      setFinishOwner(null);
       clearAuthToken();
       clearOfflineCache();
       set({ session: unauthorizedSession(), isSessionRefreshing: false });

@@ -77,9 +77,9 @@ export function readOfflineCache(): OfflineCache | null {
 
 export function writeOfflineCache(
   patch: Partial<Pick<OfflineCache, 'orders' | 'settings' | 'phones'>>
-): void {
+): boolean {
   if (typeof window === 'undefined') {
-    return;
+    return false;
   }
 
   try {
@@ -93,8 +93,10 @@ export function writeOfflineCache(
     };
 
     window.localStorage.setItem(OFFLINE_CACHE_KEY, JSON.stringify(next));
+    return true;
   } catch {
-    // Quota or private mode — ignore, online mode still works.
+    // Keep the durable completion guard if the fresh snapshot cannot be stored.
+    return false;
   }
 }
 

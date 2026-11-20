@@ -1,3 +1,4 @@
+import { pendingFinishes } from '@/entities/order/model/pendingFinishes';
 import { useEffect, useRef } from 'react';
 
 import { useOrdersStore } from '@/entities/order/model/order.store';
@@ -11,6 +12,15 @@ export function useConnectivityWatch(): boolean {
   const isOnline = useConnectivityStore((state) => state.isOnline);
   const startConnectivityWatch = useConnectivityStore((state) => state.startConnectivityWatch);
   const wasOnlineRef = useRef(isOnline);
+
+  useEffect(() => {
+    const sync = () => {
+      void (isOnline ? pendingFinishes.flush() : pendingFinishes.hydrate()).catch(() => undefined);
+    };
+    sync();
+    const timer = window.setInterval(sync, 15000);
+    return () => window.clearInterval(timer);
+  }, [isOnline]);
 
   useEffect(() => {
     return startConnectivityWatch();

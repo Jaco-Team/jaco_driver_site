@@ -1,3 +1,4 @@
+import { finishOwner, pendingFinishes } from './pendingFinishes';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { shallow } from 'zustand/shallow';
 import {
@@ -115,8 +116,8 @@ function persistOrdersSnapshot(state: {
   home: HomeLocation | null;
   driver_pay: boolean;
   driver_need_gps: boolean;
-}): void {
-  writeOfflineCache({
+}): boolean {
+  return writeOfflineCache({
     orders: {
       orders: state.orders,
       sourceOrders: state.sourceOrders,
@@ -132,6 +133,29 @@ function persistOrdersSnapshot(state: {
       driver_need_gps: state.driver_need_gps,
     },
   });
+}
+
+// A request may finish after another section has confirmed completion.
+// Preserve only transitions that happened while this request was waiting.
+function preserveNewlyCompletedOrders(
+  orders: Order[],
+  before: Record<string, Order[]>,
+  current: Record<string, Order[]>,
+  scopePrefix: string
+): Order[] {
+  const completedIn = (cache: Record<string, Order[]>) =>
+    Object.entries(cache)
+      .filter(([key]) => key.startsWith(scopePrefix))
+      .flatMap(([, rows]) => rows.filter((order) => Number(order.status_order) === 6));
+  const alreadyCompleted = new Set(completedIn(before).map((order) => order.id));
+  const newlyCompleted = new Map(
+    completedIn(current)
+      .filter((order) => !alreadyCompleted.has(order.id))
+      .map((order) => [order.id, order])
+  );
+  return orders.map((order) =>
+    Number(order.status_order) === 6 ? order : (newlyCompleted.get(order.id) ?? order)
+  );
 }
 
 function hasHomeMoved(current: HomeLocation | null, next: HomeLocation | null): boolean {
@@ -246,6 +270,23 @@ interface OrdersStore {
 }
 
 export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
+  const confirmFinishedOrders = async (
+    orders: Order[],
+    pointId: number | null,
+    requestOwner: string | null,
+    persisted: boolean
+  ): Promise<void> => {
+    if (!persisted || finishOwner() !== requestOwner) return;
+    const ids = orders
+      .filter(
+        (order) =>
+          Number(order.status_order) === 6 &&
+          pendingFinishes.find(requestOwner, pointId, order.id)?.acknowledged
+      )
+      .map((order) => order.id);
+    if (ids.length > 0) await pendingFinishes.confirmAcknowledged(requestOwner, pointId, ids);
+  };
+
   const warmOrdersCache = (pointId: number | null, activeTypeId: number): void => {
     const requestToken = getAuthToken();
     if (ordersWarmupPromise) {
@@ -299,6 +340,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         const requestId = ++ordersRequestSequence;
         latestOrdersRequestByContext.set(contextKey, requestId);
 
+        const cacheBeforeRequest = get().ordersByContext;
         try {
           const response = await fetchOrders({
             point_id: pointId ?? undefined,
@@ -309,6 +351,12 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
           if (latestOrdersRequestByContext.get(contextKey) !== requestId) continue;
 
           const normalized = normalizeOrdersResponse(response);
+          normalized.orders = preserveNewlyCompletedOrders(
+            normalized.orders,
+            cacheBeforeRequest,
+            get().ordersByContext,
+            `${pointId ?? 'all'}:`
+          );
           const ordersByContext = {
             ...get().ordersByContext,
             [contextKey]: normalized.orders,
@@ -361,12 +409,15 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
 
   let payStatusCheckInFlight = false;
 
-  const runLockedOrderAction = async (fn: () => Promise<void>): Promise<void> => {
+  const runLockedOrderAction = async (
+    fn: () => Promise<void>,
+    allowOffline = false
+  ): Promise<void> => {
     if (get().isClick) {
       return;
     }
 
-    if (!isAppOnline()) {
+    if (!allowOffline && !isAppOnline()) {
       if (get().modalConfirm) get().setActiveConfirm(false);
       get().openErrOrder(formatOrderError(new Error('offline')));
       return;
@@ -378,7 +429,9 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       await fn();
     } catch (err) {
       devLog('orders_action_error', 'Order action error', err);
-      get().openErrOrder(formatOrderError(err));
+      get().openErrOrder(
+        err instanceof Error && !isAppOnline() ? err.message : formatOrderError(err)
+      );
     } finally {
       set({ isClick: false, is_load: false });
     }
@@ -440,7 +493,13 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
     },
 
     setActiveConfirm: (active, order_finish_id, is_map, type_confirm, order_finish_is_delete) => {
-      if (active && !isAppOnline()) {
+      if (
+        active &&
+        order_finish_id != null &&
+        pendingFinishes.find(finishOwner(), getSelectedPointId(), order_finish_id)?.acknowledged
+      )
+        return;
+      if (active && type_confirm !== 'finish' && !isAppOnline()) {
         get().openErrOrder(formatOrderError(new Error('offline')));
         return;
       }
@@ -517,6 +576,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
       const pointId = getSelectedPointId();
       const contextKey = getOrdersContextKey(type.id, pointId);
       const requestToken = getAuthToken();
+      const requestOwner = finishOwner();
 
       if (
         is_check &&
@@ -546,6 +606,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         set({ is_load: true });
       }
 
+      const cacheBeforeRequest = get().ordersByContext;
       try {
         const response = await fetchOrders({
           point_id: pointId ?? undefined,
@@ -554,9 +615,33 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
         if (!isCurrentResponse()) return;
 
         const normalized = normalizeOrdersResponse(response);
+        normalized.orders = preserveNewlyCompletedOrders(
+          normalized.orders,
+          cacheBeforeRequest,
+          get().ordersByContext,
+          `${pointId ?? 'all'}:`
+        );
         let orders = normalized.orders;
+        const completed = new Map(
+          normalized.orders
+            .filter(
+              (order) =>
+                Number(order.status_order) === 6 &&
+                pendingFinishes.find(requestOwner, pointId, order.id)?.acknowledged
+            )
+            .map((order) => [order.id, order])
+        );
+        const prefix = `${pointId ?? 'all'}:`;
+        const reconciledCache = Object.fromEntries(
+          Object.entries(get().ordersByContext).map(([key, cached]) => [
+            key,
+            key.startsWith(prefix)
+              ? cached.map((order) => completed.get(order.id) ?? order)
+              : cached,
+          ])
+        );
         const ordersByContext = {
-          ...get().ordersByContext,
+          ...reconciledCache,
           [contextKey]: normalized.orders,
         };
         const isCurrentContext = getOrdersContextKey(get().type.id) === contextKey;
@@ -574,6 +659,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
             ? {
                 orders,
                 sourceOrders: normalized.orders,
+                showOrders: get().showOrders.map((order) => completed.get(order.id) ?? order),
                 update_interval: normalized.update_interval,
                 limit: normalized.limit,
                 limit_count: normalized.limit_count,
@@ -585,7 +671,7 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
             : {}),
         });
 
-        persistOrdersSnapshot({
+        const persisted = persistOrdersSnapshot({
           ...get(),
           ordersByContext,
           ...(isCurrentContext
@@ -601,6 +687,10 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
               }
             : {}),
         });
+
+        if (isCurrentContext) {
+          await confirmFinishedOrders(normalized.orders, pointId, requestOwner, persisted);
+        }
 
         log('orders_fetch_success', 'Получение списка заказов');
         warmOrdersCache(pointId, type.id);
@@ -829,6 +919,39 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
 
     actionOrder: async ({ data, latitude, longitude }) => {
       const { order_id, type, is_map, point_id } = data;
+      if (
+        pendingFinishes.find(finishOwner(), point_id ?? getSelectedPointId(), order_id)
+          ?.acknowledged
+      )
+        return;
+      if (
+        type !== 3 &&
+        pendingFinishes.find(finishOwner(), point_id ?? getSelectedPointId(), order_id)
+      ) {
+        get().openErrOrder('Завершение сохранено. Ожидает отправки.');
+        return;
+      }
+
+      if (type === 3) {
+        const owner = finishOwner();
+        const pointId = point_id ?? getSelectedPointId();
+        if (!owner || !pointId) throw new Error('Не удалось определить курьера и кафе.');
+        await pendingFinishes.put({
+          owner,
+          pointId,
+          orderId: order_id,
+          completedAt: new Date().toISOString(),
+          latitude,
+          longitude,
+        });
+        get().setShowPay(false);
+        await pendingFinishes.flush().catch(() => undefined);
+        const pending = pendingFinishes.find(owner, pointId, order_id);
+        if (pending && !pending.acknowledged)
+          get().openErrOrder(pending.error || 'Завершение сохранено. Ожидает отправки.');
+        if (!pending) get().closeOrderMap();
+        return;
+      }
 
       const res = await apiActionOrder({
         type: 'actionOrder',
@@ -909,18 +1032,34 @@ export const useOrdersStore = createWithEqualityFn<OrdersStore>((set, get) => {
 
     actionFinishOrder: (order_id, is_map = false) => {
       return runLockedOrderAction(async () => {
+        if (pendingFinishes.find(finishOwner(), getSelectedPointId(), order_id)?.acknowledged)
+          return;
         log('confirm_finish', 'Заказ завершен');
         startOrderAction();
 
+        const completedAt = new Date().toISOString();
+        const owner = finishOwner();
+        const pointId = getSelectedPointId();
+        if (!owner || !pointId) throw new Error('Не удалось определить курьера и кафе.');
         const coords = await resolveDriverCoords();
         if (!coords) return;
-
-        await get().actionOrder({
+        if (finishOwner() !== owner || getSelectedPointId() !== pointId) return;
+        await pendingFinishes.put({
+          owner,
+          pointId,
+          orderId: order_id,
+          completedAt,
           latitude: coords.latitude,
           longitude: coords.longitude,
-          data: { order_id, type: 3, is_map },
         });
-      });
+        if (finishOwner() !== owner || getSelectedPointId() !== pointId) return;
+        get().closeOrderMap();
+        await pendingFinishes.flush().catch(() => undefined);
+        const pending = pendingFinishes.find(owner, pointId, order_id);
+        if (pending && !pending.acknowledged)
+          get().openErrOrder(pending.error || 'Завершение сохранено. Ожидает отправки.');
+        if (!pending && isAppOnline()) await get().getOrders();
+      }, true);
     },
 
     actionCencelOrder: (order_id, is_map = false) => {

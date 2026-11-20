@@ -30,6 +30,11 @@ const isApiProxyEnabled =
     `${process.env.NEXT_PUBLIC_API_PROXY || ''}`.trim().toLowerCase()
   ) && Boolean(apiProxyTarget);
 
+// Local API clients wait up to 45 seconds. The proxy must not close their
+// connection first at its default 30-second limit.
+const isLocalApiProxy =
+  isApiProxyEnabled && ['localhost', '127.0.0.1', '::1'].includes(new URL(apiProxyTarget).hostname);
+
 const cspDirectives = [
   "default-src 'self'",
   [
@@ -116,6 +121,7 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  ...(isLocalApiProxy ? { experimental: { proxyTimeout: 60_000 } } : {}),
   images: {
     localPatterns: [
       {

@@ -18,6 +18,11 @@ export const http: AxiosInstance = axios.create({
 http.interceptors.request.use(
   (config) => {
     const authToken = getAuthToken();
+    const expected = config.headers.get('X-Driver-Expected-Token');
+    if (expected) {
+      config.headers.delete('X-Driver-Expected-Token');
+      if (expected !== authToken) return Promise.reject(new Error('Сессия изменилась.'));
+    }
 
     if (authToken) {
       config.headers = config.headers ?? {};

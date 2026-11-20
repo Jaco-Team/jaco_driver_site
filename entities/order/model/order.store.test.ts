@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { pendingFinishes, setFinishOwner } from './pendingFinishes';
 import { useOrdersStore } from './order.store';
 import { ORDER_STATUS_TYPES, TYPE_STATUS_MAP } from './order.types';
 import { writeOfflineCache } from '@/shared/lib/offline/cache';
@@ -91,11 +92,15 @@ vi.mock('@/shared/lib/devLog', () => ({
 }));
 
 describe('orders store actions', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     mocks.isOnline = true;
     mocks.pointId = 12;
     mocks.token = null;
+    localStorage.removeItem('jaco_driver_pending_finishes_v1');
+    setFinishOwner('7');
+    await pendingFinishes.hydrate();
+    vi.mocked(writeOfflineCache).mockReturnValue(true);
     mocks.readDriverPosition.mockResolvedValue({
       latitude: '53.5',
       longitude: '49.4',
@@ -167,6 +172,7 @@ describe('orders store actions', () => {
   });
 
   it('starts one finish request when payment checks overlap', async () => {
+    mocks.token = 'test-token';
     let resolveCheck: (value: { st: boolean }) => void = () => undefined;
     mocks.checkPayOrder.mockReturnValueOnce(
       new Promise((resolve) => {
@@ -187,7 +193,8 @@ describe('orders store actions', () => {
     expect(mocks.checkPayOrder).toHaveBeenCalledTimes(1);
     expect(mocks.actionOrder).toHaveBeenCalledTimes(1);
     expect(mocks.actionOrder).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 866503, type_action: 3 })
+      expect.objectContaining({ id: 866503, type_action: 3 }),
+      'test-token'
     );
     expect(useOrdersStore.getState().isClick).toBe(false);
   });
@@ -208,18 +215,47 @@ describe('orders store actions', () => {
     expect(useOrdersStore.getState().textErrOrder).toContain('Нет доступа к геолокации');
   });
 
-  it('shows an offline error on the first tap without opening confirmation or calling the API', () => {
+  it('allows finish confirmation offline without calling GPS or the API yet', () => {
     mocks.isOnline = false;
     useOrdersStore.setState({ modalConfirm: false });
 
     useOrdersStore.getState().setActiveConfirm(true, 866503, true, 'finish', false);
 
     const state = useOrdersStore.getState();
-    expect(state.modalConfirm).toBe(false);
-    expect(state.showErrOrder).toBe(true);
-    expect(state.textErrOrder).toContain('Нет интернета');
+    expect(state.modalConfirm).toBe(true);
+    expect(state.showErrOrder).toBe(false);
     expect(mocks.readDriverPosition).not.toHaveBeenCalled();
     expect(mocks.actionOrder).not.toHaveBeenCalled();
+  });
+
+  it('persists the confirmation time before GPS finishes and keeps it offline', async () => {
+    mocks.token = 'test-token';
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-11-20T10:00:00.000Z'));
+      mocks.isOnline = false;
+      let resolveGps!: (value: unknown) => void;
+      mocks.readDriverPosition.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveGps = resolve;
+          })
+      );
+      const action = useOrdersStore.getState().actionFinishOrder(123);
+      vi.setSystemTime(new Date('2026-11-20T10:00:25.000Z'));
+      resolveGps({ latitude: '53.5', longitude: '49.4', blocked: false });
+      await action;
+      const saved = JSON.parse(localStorage.getItem('jaco_driver_pending_finishes_v1')!);
+      expect(saved[0]).toMatchObject({
+        owner: '7',
+        pointId: 12,
+        orderId: 123,
+        completedAt: '2026-11-20T10:00:00.000Z',
+      });
+      expect(mocks.actionOrder).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('continues take without coordinates after a GPS timeout', async () => {
@@ -270,17 +306,25 @@ describe('orders store actions', () => {
     expect(mocks.actionOrder).toHaveBeenCalledTimes(1);
   });
 
-  it('sends finish and cancel with the matching type_action', async () => {
+  it('sends finish with type_action 3 and blocks cancellation after acceptance', async () => {
+    mocks.token = 'test-token';
     await useOrdersStore.getState().actionFinishOrder(10, true);
     await useOrdersStore.getState().actionCencelOrder(10, true);
 
-    expect(mocks.actionOrder).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ id: 10, type_action: 3 })
+    expect(mocks.actionOrder).toHaveBeenCalledTimes(1);
+    expect(mocks.actionOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 10, type_action: 3 }),
+      'test-token'
     );
-    expect(mocks.actionOrder).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ id: 10, type_action: 2 })
+    expect(pendingFinishes.find('7', 12, 10)?.acknowledged).toBe(true);
+  });
+
+  it('sends cancel with type_action 2 for an order without an accepted completion', async () => {
+    await useOrdersStore.getState().actionCencelOrder(11, true);
+
+    expect(mocks.actionOrder).toHaveBeenCalledTimes(1);
+    expect(mocks.actionOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 11, type_action: 2 })
     );
   });
 

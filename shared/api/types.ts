@@ -1,5 +1,6 @@
 export interface ApiResponse<T = unknown> {
   st: boolean;
+  retryable?: boolean;
   text?: string;
   data?: T;
   status?: number;

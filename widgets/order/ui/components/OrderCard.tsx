@@ -1,3 +1,6 @@
+import { usePendingFinish } from '@/entities/order/model/pendingFinishes';
+import { FinishStatus } from './FinishStatus';
+import { useSettingsStore } from '@/entities/settings';
 import React, { useState, memo, useMemo, useEffect } from 'react';
 import { Card, CardContent, Typography, Chip, Box, Button, styled } from '@mui/material';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
@@ -386,6 +389,8 @@ MyOrderActions.displayName = 'MyOrderActions';
 // Основной компонент с memo
 export const OrderCard = memo<OrderCardProps>(
   ({ item, is_map = false, globalFontSize, actionsDisabled = false, onAction, onPay }) => {
+    const pointId = useSettingsStore((state) => state.pointId);
+    const pendingFinish = usePendingFinish(pointId, item.id);
     // Мемоизируем вычисляемые значения
     const isDeleted = getIsDeleted(item);
     const isMy = getIsMy(item);
@@ -585,7 +590,12 @@ export const OrderCard = memo<OrderCardProps>(
             )}
 
             {/* Кнопки действий */}
-            {!isGet ? (
+            {pendingFinish && statusOrder !== 6 ? (
+              <FinishStatus
+                globalFontSize={globalFontSize}
+                acknowledged={pendingFinish.acknowledged}
+              />
+            ) : !isGet ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <PhoneButton
                   variant="contained"
