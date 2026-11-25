@@ -86,8 +86,10 @@ jobs:
   publish:
     name: Publish frontend image and metadata
     needs: required_checks
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/api-laravel' && github.sha == inputs.source_sha && needs.required_checks.result == 'success'
-    runs-on: ubuntu-24.04
+    if: github.event_name == 'workflow_dispatch' && github.actor_id == '341564021' && github.ref == 'refs/heads/api-laravel' && github.sha == inputs.source_sha && needs.required_checks.result == 'success'
+    runs-on:
+      group: driver-frontend-publish
+      labels: jaco-driver-front-publish
     timeout-minutes: 30
     permissions:
       contents: read
