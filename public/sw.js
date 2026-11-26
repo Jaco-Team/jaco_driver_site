@@ -4,7 +4,7 @@
  * are not stored here: they live in localStorage (shared/lib/offline/cache.ts).
  */
 
-const VERSION = 'v48';
+const VERSION = 'v51';
 const NETWORK_TIMEOUT_MS = 15_000;
 const PAGE_CACHE = `jaco-pages-${VERSION}`;
 const ASSET_CACHE = `jaco-assets-${VERSION}`;
@@ -19,11 +19,11 @@ const PRECACHE_URLS = [
   '/favicon.ico',
   '/icon.svg',
   '/apple-touch-icon.png',
-  '/offline-map/runtime/maplibre-gl.mjs?v=6.16.0',
-  '/offline-map/runtime/maplibre-gl-shared.mjs?v=6.16.0',
-  '/offline-map/runtime/maplibre-gl-worker.mjs?v=6.16.0',
-  '/offline-map/runtime/maplibre-gl.css?v=6.16.0',
-  '/offline-map/offline-orders-map.mjs?v=33',
+  '/offline-map/runtime/maplibre-gl.mjs?v=6.19.0',
+  '/offline-map/runtime/maplibre-gl-shared.mjs?v=6.19.0',
+  '/offline-map/runtime/maplibre-gl-worker.mjs?v=6.19.0',
+  '/offline-map/runtime/maplibre-gl.css?v=6.19.0',
+  '/offline-map/offline-orders-map.mjs?v=36',
   '/offline-map/yandex-logo-ru.svg',
 ];
 

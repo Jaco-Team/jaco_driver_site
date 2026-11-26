@@ -33,6 +33,11 @@ import { resolveYandexMetrikaIds } from '@/shared/lib/yandexMetrikaIds';
 import { useConnectivityWatch } from '@/features/offline/model/useConnectivityWatch';
 import { useServiceWorker } from '@/features/offline/model/useServiceWorker';
 import { useOfflineCityDownloads } from '@/features/offline-map/model/useOfflineCityDownloads';
+import {
+  isLocalCabinetPreviewEnabled,
+  readDevCabinetOptions,
+} from '@/shared/config/cabinetPreview';
+import { prepareOfflineCabinetPage } from '@/shared/lib/offline/offlineMapAssets';
 import { DEFAULT_GLOBAL_FONT_SIZE, normalizeGlobalFontSize } from '@/shared/lib/fontSize';
 
 const YANDEX_METRIKA_IDS = resolveYandexMetrikaIds();
@@ -53,21 +58,32 @@ function MyApp(props: MyAppProps) {
     session?: unknown;
   };
   const router = useRouter();
-  const isCheckingSession = useSyncExternalStore(
+  const isCabinetRoute = router.pathname === '/lk';
+  const isCabinetQueryPending = isCabinetRoute && isLocalCabinetPreviewEnabled() && !router.isReady;
+  const cabinetOptions =
+    isCabinetRoute && router.isReady && typeof window !== 'undefined'
+      ? readDevCabinetOptions(router.query, window.location.host)
+      : undefined;
+  const cabinetPreview = cabinetOptions?.cabinetPreview;
+  const isPublicRoute = PUBLIC_ROUTES.has(router.pathname) || Boolean(cabinetPreview);
+  const authStatus = useSyncExternalStore(
     useAuthStore.subscribe,
-    () => useAuthStore.getState().session.isAuth === 'load',
-    () => true
+    () => useAuthStore.getState().session.isAuth,
+    () => 'load' as const
   );
   const globalFontSize = useHeaderStore((state) => state.globalFontSize);
-  const darkTheme = useHeaderStore((state) => state.darkTheme);
-  useConnectivityWatch();
+  const storedDarkTheme = useHeaderStore((state) => state.darkTheme);
+  const darkTheme = cabinetPreview?.theme ? cabinetPreview.theme === 'dark' : storedDarkTheme;
+  const isOnline = useConnectivityWatch();
   useServiceWorker();
   useOfflineCityDownloads();
   const muiTheme = useMemo(() => createAppTheme(darkTheme), [darkTheme]);
   const normalizedGlobalFontSize = normalizeGlobalFontSize(globalFontSize);
-  const appFontSize = EXCLUDED_GLOBAL_FONT_ROUTES.has(router.pathname)
-    ? DEFAULT_GLOBAL_FONT_SIZE
-    : normalizedGlobalFontSize;
+  const appFontSize =
+    cabinetPreview?.fontSize ??
+    (EXCLUDED_GLOBAL_FONT_ROUTES.has(router.pathname)
+      ? DEFAULT_GLOBAL_FONT_SIZE
+      : normalizedGlobalFontSize);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -114,7 +130,7 @@ function MyApp(props: MyAppProps) {
   }, [router.events]);
 
   useEffect(() => {
-    if (PUBLIC_ROUTES.has(router.pathname)) {
+    if (isPublicRoute || isCabinetQueryPending) {
       return;
     }
 
@@ -123,7 +139,22 @@ function MyApp(props: MyAppProps) {
     }
 
     void useAuthStore.getState().refreshSession();
-  }, [router.pathname]);
+  }, [isCabinetQueryPending, isPublicRoute, router.pathname]);
+
+  useEffect(() => {
+    if (
+      process.env.NODE_ENV !== 'production' ||
+      process.env.NEXT_PUBLIC_ENABLE_SW === '0' ||
+      authStatus !== true ||
+      !isOnline
+    ) {
+      return;
+    }
+
+    void prepareOfflineCabinetPage().catch((error) => {
+      devLog('offline_cabinet_cache_failed', 'Не удалось сохранить экран ЛК для офлайна', error);
+    });
+  }, [authStatus, isOnline]);
 
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -160,10 +191,10 @@ function MyApp(props: MyAppProps) {
       <ThemeProvider theme={muiTheme}>
         <CssBaseline enableColorScheme />
         <YandexMetrika ids={YANDEX_METRIKA_IDS} />
-        {isCheckingSession && !PUBLIC_ROUTES.has(router.pathname) ? (
+        {isCabinetQueryPending || (authStatus === 'load' && !isPublicRoute) ? (
           <SessionLoading fontSize={normalizedGlobalFontSize} />
         ) : (
-          <Component {...pagePropsWithoutSession} />
+          <Component {...pagePropsWithoutSession} {...cabinetOptions} />
         )}
       </ThemeProvider>
     </AppCacheProvider>

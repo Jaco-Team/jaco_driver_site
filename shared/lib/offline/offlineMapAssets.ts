@@ -10,10 +10,10 @@ let ensurePromise: Promise<void> | null = null;
 export const OFFLINE_MAP_ASSET_PATHS = [
   OFFLINE_MAP_RUNTIME_URL,
   '/offline-map/yandex-logo-ru.svg',
-  '/offline-map/runtime/maplibre-gl.mjs?v=6.16.0',
-  '/offline-map/runtime/maplibre-gl-shared.mjs?v=6.16.0',
-  '/offline-map/runtime/maplibre-gl-worker.mjs?v=6.16.0',
-  '/offline-map/runtime/maplibre-gl.css?v=6.16.0',
+  '/offline-map/runtime/maplibre-gl.mjs?v=6.19.0',
+  '/offline-map/runtime/maplibre-gl-shared.mjs?v=6.19.0',
+  '/offline-map/runtime/maplibre-gl-worker.mjs?v=6.19.0',
+  '/offline-map/runtime/maplibre-gl.css?v=6.19.0',
 ];
 
 function getAssetRequest(path: string): Request {
@@ -58,6 +58,36 @@ export async function hasOfflineMapAssets(): Promise<boolean> {
   return true;
 }
 
+async function cacheOfflinePage(cache: Cache, route: string): Promise<void> {
+  const routeRequest = getAssetRequest(route);
+  const routeResponse = await fetch(routeRequest, { cache: 'no-store' });
+
+  if (!routeResponse.ok) {
+    throw new Error(`Не удалось сохранить страницу ${route}.`);
+  }
+
+  const html = await routeResponse.clone().text();
+  const linkedAssets = linkedAppAssets(html);
+  await Promise.all(
+    linkedAssets.map(async (url) => {
+      const request = new Request(url.href);
+      const cached = await cache.match(request, { ignoreVary: true });
+      if (cached?.ok) return;
+      const response = await fetch(request, { cache: 'no-store' });
+      if (!response.ok)
+        throw new Error('Не удалось сохранить файлы для открытия сайта без интернета.');
+      await cache.put(request, response);
+    })
+  );
+  await cache.put(routeRequest, routeResponse);
+}
+
+export async function prepareOfflineCabinetPage(): Promise<void> {
+  if (!('caches' in window)) return;
+  const cache = await caches.open(OFFLINE_APP_CACHE_NAME);
+  await cacheOfflinePage(cache, '/lk');
+}
+
 async function cacheOfflineAppAssets(): Promise<void> {
   if (typeof window === 'undefined' || !('caches' in window)) {
     throw new Error('Браузер не поддерживает локальное хранение карты.');
@@ -83,27 +113,7 @@ async function cacheOfflineAppAssets(): Promise<void> {
   }
 
   for (const route of OFFLINE_APP_ROUTES) {
-    const routeRequest = getAssetRequest(route);
-    const routeResponse = await fetch(routeRequest, { cache: 'no-store' });
-
-    if (!routeResponse.ok) {
-      throw new Error(`Не удалось сохранить страницу ${route}.`);
-    }
-
-    await cache.put(routeRequest, routeResponse.clone());
-    const html = await routeResponse.text();
-    const linkedAssets = linkedAppAssets(html);
-    await Promise.all(
-      linkedAssets.map(async (url) => {
-        const request = new Request(url.href);
-        const cached = await cache.match(request, { ignoreVary: true });
-        if (cached?.ok) return;
-        const response = await fetch(request, { cache: 'no-store' });
-        if (!response.ok)
-          throw new Error('Не удалось сохранить файлы для открытия сайта без интернета.');
-        await cache.put(request, response);
-      })
-    );
+    await cacheOfflinePage(cache, route);
   }
 
   void navigator.storage?.persist?.().catch(() => false);

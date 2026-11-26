@@ -5,6 +5,7 @@ function normalizeAssetPath(value: string): string {
 }
 
 export const apiRoutes = {
+  cabinet: '/api/v1/cabinet',
   auth: {
     tokenLogin: '/api/v1/auth/token/login',
     passwordRecoveryChannels: '/api/v1/auth/password/recovery/channels',
