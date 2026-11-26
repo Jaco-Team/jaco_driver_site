@@ -1,0 +1,90 @@
+name: Reusable frontend checks
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    name: Node checks
+    # Choose the machine from GitHub's event, before any pull request code runs.
+    runs-on: >-
+      ${{ fromJSON(
+        github.repository_id == '684074771' &&
+        github.workflow_ref == format('Jaco-Team/jaco_driver_site/.github/workflows/production-image.yml@{0}', github.ref) &&
+        ((github.event_name == 'pull_request' && github.base_ref == 'api-laravel' &&
+          github.event.pull_request.head.repo.id == 684074771 && github.event.pull_request.base.repo.id == 684074771) ||
+         (github.ref == 'refs/heads/api-laravel' &&
+          (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' &&
+           github.actor_id == '341564021' && github.triggering_actor == 'jaco-driver-deploy-reg[bot]')))) &&
+        '{"group":"driver-frontend-required-checks","labels":"jaco-driver-front-checks"}' || '"ubuntu-24.04"') }}
+    timeout-minutes: 20
+    cache-mode: none
+    env:
+      SOURCE_SHA: ${{ github.event.inputs.source_sha }}
+      PUBLIC_CONFIG_JSON: ${{ github.event.inputs.public_config_json }}
+      PUBLIC_CONFIG_SHA256: ${{ github.event.inputs.public_config_sha256 }}
+      PUBLIC_CONFIG_VERSION: ${{ github.event.inputs.public_config_version }}
+      BUILD_REQUEST_ID: ${{ github.event.inputs.build_request_id }}
+      DISPATCH_WORKFLOW_SHA: ${{ github.workflow_sha }}
+    steps:
+      - name: Verify the caller, source and runner before checking out code
+        env:
+          EXECUTION_ENVIRONMENT: ${{ runner.environment }}
+        run: |
+          python3 - <<'PYTHON'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          env = os.environ
+          repo = 'Jaco-Team/jaco_driver_site'
+          ref = env['GITHUB_REF']
+          if env['GITHUB_REPOSITORY'] != repo or env['GITHUB_REPOSITORY_ID'] != '684074771':
+              raise SystemExit('UNREVIEWED_FRONTEND_TARGET')
+          if env['GITHUB_WORKFLOW_REF'] != f'{repo}/.github/workflows/production-image.yml@{ref}':
+              raise SystemExit('UNREVIEWED_FRONTEND_CALLER')
+          event = env['GITHUB_EVENT_NAME']
+          expected_runner = 'self-hosted'
+          if event == 'pull_request':
+              payload = json.loads(Path(env['GITHUB_EVENT_PATH']).read_text())
+              pr = payload['pull_request']
+              if ref != f"refs/pull/{payload['number']}/merge" or pr['base']['ref'] != 'api-laravel' or pr['base']['repo']['id'] != 684074771:
+                  raise SystemExit('UNREVIEWED_FRONTEND_PR_TARGET')
+              if pr['head']['repo']['id'] != 684074771:
+                  expected_runner = 'github-hosted'
+          elif ref != 'refs/heads/api-laravel' or event not in ('push', 'workflow_dispatch'):
+              raise SystemExit('UNREVIEWED_FRONTEND_EVENT')
+          if event == 'workflow_dispatch':
+              if env['GITHUB_ACTOR_ID'] != '341564021' or env['GITHUB_TRIGGERING_ACTOR'] != 'jaco-driver-deploy-reg[bot]':
+                  raise SystemExit('UNREVIEWED_FRONTEND_DISPATCHER')
+              source = env['SOURCE_SHA']
+              if not re.fullmatch(r'[a-f0-9]{40}', source) or source != env['GITHUB_SHA'] or source != env['DISPATCH_WORKFLOW_SHA']:
+                  raise SystemExit('DISPATCH_HEAD_MISMATCH')
+          if env['EXECUTION_ENVIRONMENT'] != expected_runner:
+              raise SystemExit('UNREVIEWED_FRONTEND_RUNNER')
+          print('Verified frontend source and ' + expected_runner + ' runner')
+          PYTHON
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Reject tracked runtime env and exclude env from Docker context
+        run: python3 .github/scripts/jaco-driver/prepare-build-context.py --dockerfile Dockerfile
+      - name: Validate the controller-supplied public snapshot
+        if: github.event_name == 'workflow_dispatch'
+        run: python3 .github/scripts/jaco-driver/prepare-public-build.py
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Install existing dependencies
+        run: npm ci
+      - name: Existing frontend lint
+        run: npm run lint
+      - name: Existing frontend typecheck
+        run: npm run typecheck
+      - name: Existing frontend tests
+        run: npm test
