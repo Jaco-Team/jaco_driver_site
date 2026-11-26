@@ -1,0 +1,40 @@
+name: Reusable courier tests
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test
+    runs-on: >-
+      ${{ fromJSON(
+        github.repository_id == '684074771' &&
+        github.workflow_ref == format('Jaco-Team/jaco_driver_site/.github/workflows/test.yml@{0}', github.ref) &&
+        (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 684074771 && github.event.pull_request.base.repo.id == 684074771)) &&
+        '{"group":"driver-frontend-tests","labels":"jaco-driver-tests"}' || '"ubuntu-24.04"') }}
+    cache-mode: none
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
