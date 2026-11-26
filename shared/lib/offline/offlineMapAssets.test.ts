@@ -5,6 +5,7 @@ import {
   OFFLINE_MAP_ASSET_PATHS,
   hasOfflineMapAssets,
   ensureOfflineMapAssets,
+  prepareOfflineCabinetPage,
 } from './offlineMapAssets';
 
 describe('offline application assets', () => {
@@ -46,6 +47,30 @@ describe('offline application assets', () => {
     ]) {
       expect(matchedUrls).toContain(new URL(route, window.location.origin).href);
     }
+  });
+
+  it('prepares the cabinet HTML and its local scripts without fetching personal data or map assets', async () => {
+    const cache = { match: vi.fn(), put: vi.fn() };
+    const open = vi.fn(async () => cache);
+    vi.stubGlobal('caches', { open });
+    const fetchPage = vi.fn(async (request: Request) => {
+      if (request.url.endsWith('/lk')) {
+        return new Response(
+          '<script src="/_next/static/chunks/pages/lk.js"></script><img src="/api/v1/cabinet">'
+        );
+      }
+      return new Response('script');
+    });
+    vi.stubGlobal('fetch', fetchPage);
+
+    await prepareOfflineCabinetPage();
+
+    expect(open).toHaveBeenCalledWith(OFFLINE_APP_CACHE_NAME);
+    const paths = ['/lk', '/_next/static/chunks/pages/lk.js'];
+    expect(fetchPage.mock.calls.map(([request]) => new URL(request.url).pathname)).toEqual(paths);
+    expect(cache.put.mock.calls.map(([request]) => new URL(request.url).pathname)).toEqual(
+      [...paths].reverse()
+    );
   });
 
   it('reports an incomplete cache when any required entry is absent', async () => {

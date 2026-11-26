@@ -1,4 +1,4 @@
-import * as maplibregl from '/offline-map/runtime/maplibre-gl.mjs?v=6.16.0';
+import * as maplibregl from '/offline-map/runtime/maplibre-gl.mjs?v=6.19.0';
 
 const CACHE_NAME = 'jaco-yandex-offline-tiles-v1';
 const METADATA_KEY = 'jaco_yandex_offline_maps_v2';
@@ -667,7 +667,7 @@ async function mount({
   }
 }
 
-globalThis.JacoOfflineOrdersMap = { version: '33', mount };
+globalThis.JacoOfflineOrdersMap = { version: '36', mount };
 globalThis.dispatchEvent(new Event('jaco-offline-orders-map-ready'));
 
 export { mount };

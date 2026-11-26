@@ -5,6 +5,7 @@ import { type ReactElement, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import Backdrop from '@mui/material/Backdrop';
 import Box from '@mui/material/Box';
@@ -70,6 +71,7 @@ const routeTitles: Record<string, string> = {
   '/registration': 'Восстановление пароля',
   '/list_orders': 'Список заказов',
   '/map_orders': 'Карта заказов',
+  '/lk': 'Личный кабинет',
   '/feedback': 'Предложения',
   '/price': 'Расчет',
   '/graph': 'График работы',
@@ -379,6 +381,7 @@ function HeaderMenuDrawer({ onLogout, isOnline }: { onLogout: () => void; isOnli
       label: 'Карта заказов',
       icon: <MapRoundedIcon />,
     },
+    { href: '/lk', label: 'Личный кабинет', icon: <AccountCircleRoundedIcon /> },
     {
       href: '/price',
       label: 'Расчет',

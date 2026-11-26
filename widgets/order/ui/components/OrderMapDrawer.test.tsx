@@ -121,9 +121,10 @@ describe('OrderMapDrawer', () => {
       top: 'auto',
       bottom: '0px',
       height: 'auto',
-      maxHeight: '92dvh',
       overflow: 'hidden',
     });
+    const maxHeight = Number.parseFloat(getComputedStyle(paper).maxHeight);
+    expect(maxHeight).toBeCloseTo(window.innerHeight * 0.92);
     expect(screen.getByTestId('order-map-drawer-scroll')).toHaveStyle({
       minHeight: '0',
       flex: '0 1 auto',
